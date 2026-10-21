@@ -42,7 +42,7 @@ juce::String MacroParams::textFor (int index, float normalised)
     const auto& m = textMaps[(size_t) index];
     if (! m.mapped())
         return "-";
-    return macroValueText (textGlobals, m, macroPlain (m, normalised));
+    return macroValueText (textGlobals, m, macroPlain (m, normalised, textNotes[(size_t) index]));
 }
 
 bool MacroParams::applyFromHost (Project& p, Engine& engine, int shownTrack)
@@ -59,7 +59,7 @@ bool MacroParams::applyFromHost (Project& p, Engine& engine, int shownTrack)
             continue;   // VIMA sent this value itself: the target already has it
         const auto& m = p.macros[(size_t) i];
         if (m.mapped())
-            changed = applyMacroValue (p, engine.queuedPattern, m, shownTrack, macroPlain (m, v)) || changed;
+            changed = applyMacroValue (p, engine.queuedPattern, m, shownTrack, macroPlain (m, v, macroNotes (p, m, shownTrack))) || changed;
     }
     return changed;
 }
@@ -72,10 +72,12 @@ void MacroParams::capture (const Project& p, int shownTrack)
         const auto v = macroTargetValue (p, maps[(size_t) i], shownTrack);
         valid[(size_t) i] = v.has_value();
         values[(size_t) i] = v.value_or (0);
+        notes[(size_t) i] = macroNotes (p, maps[(size_t) i], shownTrack);
     }
     const juce::SpinLock::ScopedLockType sl (textLock);
     textMaps = maps;
     textGlobals = p.globals;
+    textNotes = notes;
 }
 
 void MacroParams::pushToHost()
@@ -94,8 +96,9 @@ void MacroParams::pushToHost()
             continue;
         e.lastPushed = plain;
         e.lastMap = m;
-        const float norm = macroNormalized (m, plain);
-        if (macroPlain (m, static_cast<juce::AudioProcessorParameter*> (e.param)->getValue()) == macroPlain (m, norm))
+        const auto& n = notes[(size_t) i];
+        const float norm = macroNormalized (m, plain, n);
+        if (macroPlain (m, static_cast<juce::AudioProcessorParameter*> (e.param)->getValue(), n) == macroPlain (m, norm, n))
             continue;   // the macro already shows this value (for example the host set it)
         e.pushed = norm;
         e.param->beginChangeGesture();

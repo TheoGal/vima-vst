@@ -11,6 +11,7 @@
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Model.h"
 #include "Engine.h"
+#include "Macros.h"
 #include <array>
 #include <atomic>
 
@@ -62,10 +63,12 @@ private:
     std::array<MacroMap, numMacros> maps {};
     std::array<int, numMacros> values {};
     std::array<bool, numMacros> valid {};
+    std::array<MacroNotes, numMacros> notes {};
 
     // copy used by getText (any thread)
     juce::SpinLock textLock;
     std::array<MacroMap, numMacros> textMaps {};
+    std::array<MacroNotes, numMacros> textNotes {};
     Globals textGlobals;
     juce::String textFor (int index, float normalised);
 };

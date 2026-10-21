@@ -641,7 +641,8 @@ void testMacros()
     macro (0)->setValueNotifyingHost (macroNormalized (m (0), 33));
     macro (1)->setValueNotifyingHost (macroNormalized (m (1), 12));
     macro (3)->setValueNotifyingHost (1.0f);
-    macro (4)->setValueNotifyingHost (macroNormalized (m (4), 7));
+    const auto noteMap = m (4);
+    macro (4)->setValueNotifyingHost (proc->read ([&] (const Project& p) { return macroNormalized (noteMap, 7, macroNotes (p, noteMap, 3)); }));
     macro (5)->setValueNotifyingHost (0.5f);
     block();
     check (proc->read ([] (const Project& p) { return p.patterns[0].tracks[3].steps[4].velocity; }) == 33,
@@ -662,6 +663,20 @@ void testMacros()
            "macro on Pattern queues the pattern");
     proc->edit (-1, [] (Project& p) { p.currentPattern = 0; });
     proc->engine.queuedPattern = -1;
+
+    // notes follow the scale like the note knob: C minor = C D D# F G G# A#
+    proc->edit (-1, [] (Project& p) { p.globals.scale = 1; p.globals.root = 0; p.patterns[0].tracks[1].scaleOn = true; });
+    auto noteAt = [&] (float v)
+    {
+        macro (4)->setValueNotifyingHost (v);
+        block();
+        return proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[1].steps[0].pitchClass; });
+    };
+    check (noteAt (1.0f) == 10 && noteAt (0.5f) == 5 && noteAt (0.0f) == 0, "scale on: the note macro moves through the 7 notes of C minor (top A#, middle F, bottom C)");
+    check (macroPositions (noteMap, proc->read ([&] (const Project& p) { return macroNotes (p, noteMap, 3); })) == 7, "7 positions in C minor");
+    proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[1].scaleOn = false; });
+    check (noteAt (1.0f / 11.0f) == 1, "scale off: all 12 notes (C#)");
+    proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[1].scaleOn = true; });
 
     // project -> host
     proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[3].steps[4].velocity = 90; });

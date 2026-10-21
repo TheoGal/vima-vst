@@ -315,7 +315,7 @@ Targets:
 
 - **SHOWN** = the track shown in the main window (saved with the project), for use with controllers: the same macros always control the track on screen. **CURRENT** = the playing pattern.
 - **Range**: each mapping has MIN and MAX (default: the full range). The whole macro travel covers MIN to MAX. MIN above MAX inverts the direction.
-- **Note** covers C to B (the stored note). When the track's scale is on, the note that sounds is shown. **Octave** covers the octave range from Settings.
+- **Note** follows the scale like the step's note knob: when the target track's scale is on, the macro moves only through in-scale notes between MIN and MAX (C minor over C-B = 7 positions spread over the whole travel); with the scale off, through all 12. MIN / MAX are set as note names. **Octave** covers the octave range from Settings.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing, pattern switch, chain, SHOWN track switch, remapping), the macro moves to match, as a short gesture so hosts can record it. A target value outside MIN / MAX is shown at the nearest end and is not overwritten by that.
 - The host shows the target value as the macro's value text ("96", "1/16", "B01 · 05"); unmapped macros show "-".
 - Host changes are not added to undo. Mappings are saved with the project.
@@ -367,6 +367,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
 - 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.
 - 2026-10-21: Reduced to 8 tracks and 64 patterns (4 banks of 16). Pattern change by CC now reaches every pattern.
 - 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.

@@ -40,9 +40,22 @@ std::optional<int> macroTargetValue (const Project&, const MacroMap&, int shownT
 // Returns true if the project changed.
 bool applyMacroValue (Project&, std::atomic<int>& queuedPattern, const MacroMap&, int shownTrack, int plain);
 
-// Macro value (0..1) <-> target value, through the mapping's MIN / MAX
-int macroPlain (const MacroMap&, float normalized);
-float macroNormalized (const MacroMap&, int plain);
+// The notes a Note macro may land on: all 12, or only in-scale notes when the target track's
+// scale is on (like the step's note knob)
+struct MacroNotes
+{
+    bool scaleOn = false;
+    std::uint16_t mask = 0xFFF;   // scale mask relative to root
+    int root = 0;
+    bool allows (int pitchClass) const;
+};
+MacroNotes macroNotes (const Project&, const MacroMap&, int shownTrack);
+
+// Macro value (0..1) <-> target value, through the mapping's MIN / MAX. A Note macro moves
+// through the allowed notes between MIN and MAX, evenly spread over the macro's travel.
+int macroPlain (const MacroMap&, float normalized, const MacroNotes& = {});
+float macroNormalized (const MacroMap&, int plain, const MacroNotes& = {});
+int macroPositions (const MacroMap&, const MacroNotes& = {});   // distinct values over the travel
 
 juce::String macroValueText (const Project&, const MacroMap&, int shownTrack, int plain);
 // Same without the project (no scale applied to notes): for host display

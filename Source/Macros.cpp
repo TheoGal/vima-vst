@@ -83,7 +83,9 @@ std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int sh
         case MacroTarget::swing:       return (int) tp.swing;
         case MacroTarget::scaleOn:     return tp.scaleOn ? 1 : 0;
         case MacroTarget::stepOn:      return s.on ? 1 : 0;
-        case MacroTarget::note:        return (int) s.pitchClass;
+        case MacroTarget::note:        // the note that sounds, as the step's note knob shows it
+            return tp.scaleOn ? (((quantizeToScale (p.globals.scaleMask(), p.globals.root, 60 + s.pitchClass) % 12) + 12) % 12)
+                              : (int) s.pitchClass;
         case MacroTarget::octave:      return (int) s.octave;
         case MacroTarget::velocity:    return (int) s.velocity;
         case MacroTarget::gate:        return (int) s.gate;
@@ -131,14 +133,76 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
     return true;
 }
 
-int macroPlain (const MacroMap& m, float normalized)
+bool MacroNotes::allows (int pc) const
+{
+    return ! scaleOn || inScale (mask, root, ((pc % 12) + 12) % 12);
+}
+
+MacroNotes macroNotes (const Project& p, const MacroMap& m, int shownTrack)
+{
+    MacroNotes n;
+    if (m.target != MacroTarget::note)
+        return n;
+    n.scaleOn = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) macroTrack (m, shownTrack)].scaleOn;
+    n.mask = p.globals.scaleMask();
+    n.root = p.globals.root;
+    return n;
+}
+
+namespace
+{
+    // Allowed notes from MIN to MAX (in that direction), at most 12
+    int noteList (const MacroMap& m, const MacroNotes& n, std::array<int, 12>& out)
+    {
+        const int lo = juce::jlimit (0, 11, (int) m.min), hi = juce::jlimit (0, 11, (int) m.max);
+        const int dir = hi >= lo ? 1 : -1;
+        int count = 0;
+        for (int pc = lo;; pc += dir)
+        {
+            if (n.allows (pc)) out[(size_t) count++] = pc;
+            if (pc == hi) break;
+        }
+        if (count == 0)   // no allowed note in the range: the nearest in-scale note to MIN
+            out[(size_t) count++] = ((quantizeToScale (n.mask, n.root, 60 + lo) % 12) + 12) % 12;
+        return count;
+    }
+}
+
+int macroPositions (const MacroMap& m, const MacroNotes& n)
+{
+    if (m.target == MacroTarget::note)
+    {
+        std::array<int, 12> list {};
+        return noteList (m, n, list);
+    }
+    return std::abs (m.max - m.min) + 1;
+}
+
+int macroPlain (const MacroMap& m, float normalized, const MacroNotes& n)
 {
     const float f = juce::jlimit (0.0f, 1.0f, normalized);
+    if (m.target == MacroTarget::note)
+    {
+        std::array<int, 12> list {};
+        const int count = noteList (m, n, list);
+        return list[(size_t) juce::jlimit (0, count - 1, juce::roundToInt (f * (float) (count - 1)))];
+    }
     return juce::roundToInt ((float) m.min + (float) (m.max - m.min) * f);
 }
 
-float macroNormalized (const MacroMap& m, int plain)
+float macroNormalized (const MacroMap& m, int plain, const MacroNotes& n)
 {
+    if (m.target == MacroTarget::note)
+    {
+        std::array<int, 12> list {};
+        const int count = noteList (m, n, list);
+        if (count < 2)
+            return 0.0f;
+        int best = 0;
+        for (int k = 1; k < count; ++k)   // the position of this note, or the nearest one
+            if (std::abs (list[(size_t) k] - plain) < std::abs (list[(size_t) best] - plain)) best = k;
+        return (float) best / (float) (count - 1);
+    }
     if (m.max == m.min)
         return 0.0f;
     return juce::jlimit (0.0f, 1.0f, (float) (plain - m.min) / (float) (m.max - m.min));
@@ -176,15 +240,7 @@ juce::String macroValueText (const Globals& g, const MacroMap& m, int v)
 
 juce::String macroValueText (const Project& p, const MacroMap& m, int shownTrack, int v)
 {
-    if (m.target == MacroTarget::note)
-    {
-        // show the note that sounds: the scale applies when the track's scale is on
-        const auto& tp = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) macroTrack (m, shownTrack)];
-        int pc = ((v % 12) + 12) % 12;
-        if (tp.scaleOn)
-            pc = ((quantizeToScale (p.globals.scaleMask(), p.globals.root, 60 + pc) % 12) + 12) % 12;
-        return pitchClassName (pc);
-    }
+    juce::ignoreUnused (shownTrack);   // note values are already the sounding note
     return plainText (m, v, p.globals.middleCIsC4);
 }
 

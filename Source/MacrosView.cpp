@@ -70,12 +70,13 @@ void MacroCell::paint (juce::Graphics& g)
     const auto& t = Theme::current();
     const int i = macroIndex();
     const int shown = ctx.ui.track;
-    struct Info { MacroMap map; std::optional<int> value; juce::String text; };
+    struct Info { MacroMap map; std::optional<int> value; juce::String text; MacroNotes notes; };
     const auto info = ctx.proc.read ([i, shown] (const Project& p)
     {
         Info r;
         r.map = p.macros[(size_t) i];
         r.value = macroTargetValue (p, r.map, shown);
+        r.notes = macroNotes (p, r.map, shown);
         if (r.value) r.text = macroValueText (p, r.map, shown, *r.value);
         if (r.value && r.map.target == MacroTarget::pattern)   // compact "02·07" inside the knob
             r.text = juce::String (*r.value / patternsPerBank + 1).paddedLeft ('0', 2) + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7"))
@@ -109,7 +110,7 @@ void MacroCell::paint (juce::Graphics& g)
     draw::arc (g, centre, radius, 3.0f, 1.0f, t.sliderTrack);
     if (info.value)
     {
-        draw::arc (g, centre, radius, 3.0f, macroNormalized (info.map, *info.value), colour);
+        draw::arc (g, centre, radius, 3.0f, macroNormalized (info.map, *info.value, info.notes), colour);
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (10.0f));
         g.drawText (info.text, juce::Rectangle<float> (radius * 2.0f, 14.0f).withCentre (centre), juce::Justification::centred);
@@ -141,8 +142,11 @@ void MacroCell::mouseDown (const juce::MouseEvent& e)
     if (! m.mapped() || e.mods.isPopupMenu())
         return;
     const int shown = ctx.ui.track;
-    const auto v = ctx.proc.read ([&m, shown] (const Project& p) { return macroTargetValue (p, m, shown); });
-    dragStart = v ? macroNormalized (m, *v) : 0.0f;
+    dragStart = ctx.proc.read ([&m, shown] (const Project& p)
+    {
+        const auto v = macroTargetValue (p, m, shown);
+        return v ? macroNormalized (m, *v, macroNotes (p, m, shown)) : 0.0f;
+    });
     dragStartY = e.getScreenY();
     dragging = true;
     ctx.proc.macros.beginGesture (i);
@@ -168,11 +172,17 @@ void MacroCell::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const auto m = ctx.macroCopy (i);
     if (! m.mapped() || juce::exactlyEqual (w.deltaY, 0.0f)) return;
     const int shown = ctx.ui.track;
-    const auto v = ctx.proc.read ([&m, shown] (const Project& p) { return macroTargetValue (p, m, shown); });
-    if (! v) return;
-    const int next = *v + (w.deltaY > 0 ? 1 : -1);
+    // one wheel step = the next value the macro can reach (the next in-scale note for notes)
+    const auto pos = ctx.proc.read ([&m, shown] (const Project& p) -> std::optional<std::pair<float, int>>
+    {
+        const auto v = macroTargetValue (p, m, shown);
+        if (! v) return std::nullopt;
+        const auto n = macroNotes (p, m, shown);
+        return std::make_pair (macroNormalized (m, *v, n), macroPositions (m, n));
+    });
+    if (! pos || pos->second < 2) return;
     ctx.proc.macros.beginGesture (i);
-    setNormalised (macroNormalized (m, next));
+    setNormalised (pos->first + (w.deltaY > 0 ? 1.0f : -1.0f) / (float) (pos->second - 1));
     ctx.proc.macros.endGesture (i);
 }
 
@@ -304,8 +314,7 @@ MacrosView::MacrosView (Context& c) : ctx (c)
         k.format = [this] (int v)
         {
             const auto m = ctx.macroCopy (ctx.ui.selectedMacro);
-            const int shown = ctx.ui.track;
-            return ctx.proc.read ([&m, shown, v] (const Project& p) { return macroValueText (p, m, shown, v); });
+            return macroValueText (ctx.globalsCopy(), m, v);
         };
         addChildComponent (k);
     };
