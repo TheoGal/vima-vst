@@ -308,15 +308,11 @@ void StepGrid::mouseDown (const juce::MouseEvent& e)
     const int len = ctx.trackCopy().length;
     if (i >= len) return;
 
-    if (ctx.ui.pasteArmed)
+    if (! ctx.ui.clip.empty())
     {
-        const int t = ctx.ui.track;
-        const auto clip = ctx.ui.clip;
-        std::uint32_t written = 0;
-        ctx.edit (true, [&] (Project& p) { written = pasteSteps (p, p.currentPattern, t, i, clip); });
-        ctx.ui.pasteArmed = false;
-        ctx.ui.pasteHover = -1;
-        ctx.ui.selection = written;   // the pasted steps become the selection
+        // COPIED: no selection, the click picks where the paste lands
+        ctx.ui.pasteStart = i;
+        dragFrom = -1;
         ctx.changed();
         return;
     }
@@ -359,23 +355,11 @@ void StepGrid::mouseUp (const juce::MouseEvent&) { dragFrom = -1; }
 void StepGrid::mouseMove (const juce::MouseEvent& e)
 {
     const int i = ledIndexAt (e.getPosition(), false);
-    setMouseCursor (i >= 0 ? (ctx.ui.pasteArmed ? juce::MouseCursor::CopyingCursor : juce::MouseCursor::PointingHandCursor)
+    setMouseCursor (i >= 0 ? (! ctx.ui.clip.empty() ? juce::MouseCursor::CopyingCursor : juce::MouseCursor::PointingHandCursor)
                            : juce::MouseCursor::NormalCursor);
-    if (ctx.ui.pasteArmed && i != ctx.ui.pasteHover)
-    {
-        ctx.ui.pasteHover = i;
-        repaintLeds();
-    }
 }
 
-void StepGrid::mouseExit (const juce::MouseEvent&)
-{
-    if (ctx.ui.pasteHover >= 0)
-    {
-        ctx.ui.pasteHover = -1;
-        repaintLeds();
-    }
-}
+void StepGrid::mouseExit (const juce::MouseEvent&) {}
 
 void StepGrid::paint (juce::Graphics& g)
 {
@@ -384,11 +368,12 @@ void StepGrid::paint (juce::Graphics& g)
     const auto accent = ctx.modeAccent();
     const bool playing = ctx.proc.engine.isPlaying;
     const int play = playing ? ctx.proc.engine.playStep[(size_t) ctx.ui.track].load() : -1;
-    const auto sel = ctx.ui.selection & rangeMask (0, len - 1);
+    const bool copied = ! ctx.ui.clip.empty();
+    const auto sel = copied ? 0u : ctx.ui.selection & rangeMask (0, len - 1);
     std::uint32_t ghostMask = 0;
-    if (ctx.ui.pasteArmed && ctx.ui.pasteHover >= 0)
+    if (copied && ctx.ui.pasteStart >= 0)
         for (const auto& c : ctx.ui.clip)
-            if (ctx.ui.pasteHover + c.offset < len) ghostMask |= (1u << (ctx.ui.pasteHover + c.offset));
+            if (ctx.ui.pasteStart + c.offset < len) ghostMask |= (1u << (ctx.ui.pasteStart + c.offset));
 
     for (int i = 0; i < maxSteps; ++i)
     {

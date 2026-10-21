@@ -156,7 +156,7 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 - Every operation on steps (shift, randomize, smooth, copy, paste, and any future step operation) on any lane, including probability, works on **the selected steps if there is a selection**, otherwise on **all steps of the current track's pattern** (within its length).
 - "No selection" is equivalent to "all steps".
-- The scope is visible from the Selection readout in the operations panel (for example "STEPS 05 - 12 · 8" for a range, "STEPS 01 03 06 · 3" for separate steps (the first five numbers, then "…"), or "NONE (ALL STEPS)"). No extra explanatory text is shown.
+- The Selection box shows one line, "LENGTH: 7, STEPS: 4": length = first to last step in scope, steps = how many. With nothing selected it describes all steps; while COPIED is lit it describes the clipboard. No other explanatory text is shown.
 - Operations on a non-adjacent selection act on exactly those steps (Smooth averages only those steps).
 
 ## 9. Step operations
@@ -165,14 +165,14 @@ All destructive operations are undoable. Multi-level undo, at least 32 levels, c
 
 ### 9.1 Copy / Paste
 
-- Operations always act on the currently selected track. Copy/paste is the way to move steps between tracks.
-- COPY copies the steps in scope (the selection, or all steps if none) to a clipboard. The clipboard stays when switching tracks.
-- Copied steps **keep their spacing**: copying steps 1, 3 and 6 and pasting at 9 writes steps 9, 11 and 14. The steps in the gaps are left unchanged.
-- PASTE arms paste mode (the button lights up and shows the number of copied steps, for example "PASTE 8"). The user then clicks the LED of the start step, on the same or any other track, and the steps are pasted from there. While armed, hovering an LED previews where the steps will land. Pressing PASTE again cancels.
-- After pasting, the pasted steps become the selection.
-- Paste copies all lanes of each step (on/off, note, octave, velocity, gate, probability, CC).
-- A paste that runs past the destination track's length is **cut off** at the last step. It never wraps around to step 1.
-- Paste mode stays armed when switching tracks, so the user can copy on one track, switch, and paste.
+- Operations always act on the currently selected track. Copy/paste is the way to move steps between tracks and patterns.
+- **COPY** copies the steps in scope (the selection, or all steps within the length if none), but **only the lanes armed in LANES** (the same chips as Randomize and Smooth; in CC mode that is ON and CC). The lanes are fixed at the moment of copying. With no lane armed, COPY does nothing.
+- After COPY the button lights up and reads **COPIED**, and the selection is gone: while COPIED is lit there is no selection at all. A click on an LED only picks the **landing step** (where the first copied step goes); dragging and Ctrl-click do not select.
+- Once a landing step is picked, a **ghost preview** on the LEDs shows where the steps will land. Copied steps **keep their spacing**: copying steps 1, 3 and 6 and landing at 9 writes steps 9, 11 and 14; the steps in the gaps are left unchanged.
+- **PASTE** (dimmed until a landing step is picked) writes the copied lanes there. COPIED stays lit, so the user can pick another landing step, switch track or pattern, and paste again.
+- Clicking **COPIED** empties the clipboard and turns it back into COPY. **CLEAR** deselects, and when COPIED is lit also empties the clipboard and removes the ghost preview.
+- A paste that runs past the destination track's length is **cut off** at the last step. It never wraps around to step 1. Paste can be undone.
+- While COPIED is lit, Randomize, Smooth and Shift act on all steps (there is no selection).
 
 ### 9.2 Randomize
 
@@ -284,7 +284,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### 12.4 Operations panel (bottom, left to right)
 
-1. **Selection**: readout of the current selection (or "NONE (ALL STEPS)", or the paste state such as "PASTE 8 FROM T03"), with COPY, PASTE and CLEAR.
+1. **Selection**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
 2. **Lanes**: toggle chips shared by Randomize and Smooth (see 9.2, 9.3).
 3. **Ranges**: min/max bar per lane, in that lane's color. Ranges of lanes that are not selected are dimmed.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent).
@@ -367,6 +367,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".
 - 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
 - 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.
 - 2026-10-21: Reduced to 8 tracks and 64 patterns (4 banks of 16). Pattern change by CC now reaches every pattern.

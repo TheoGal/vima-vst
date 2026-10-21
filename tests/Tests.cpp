@@ -777,24 +777,69 @@ int main (int argc, char** argv)
 
             std::vector<Step> original;
             for (int i = 4; i <= 7; ++i) original.push_back (stepOf (2, i));
+            auto setLanes = [&] (bool all)
+            {
+                proc->edit (-1, [all] (Project& p)
+                {
+                    auto& g = p.globals;
+                    g.laneOn = g.laneOct = g.laneVel = g.laneGate = g.laneProb = g.laneCC = all;
+                    g.laneNote = true;
+                });
+                ed.refreshAll();
+            };
+            setLanes (true);
 
             if (auto* copy = findPill (ed, "COPY")) click (*copy);
-            check (ctx.ui.clip.size() == 4, "COPY takes the 4 selected steps");
+            check (ctx.ui.clip.size() == 4 && ctx.ui.clipSpan == 4, "COPY takes the 4 selected steps");
+            check (findPill (ed, "COPIED") != nullptr && ctx.ui.selection == 0, "COPY lights up as COPIED, and there is no selection");
 
             ctx.ui.track = 4;   // as the track dropdown does
-            ctx.ui.selection = 0;
             ed.refreshAll();
             auto before = stepOf (4, 10);
-            if (auto* paste = findPill (ed, "PASTE 4")) click (*paste);
-            check (ctx.ui.pasteArmed, "PASTE arms paste mode");
             click (*grid, ledPos (10));
+            check (ctx.ui.pasteStart == 10 && ctx.ui.selection == 0 && stepOf (4, 10) == before,
+                   "while COPIED, an LED click only picks where the paste lands");
+            grid->mouseDown (mouseEvent (*grid, ledPos (12), ledPos (12)));
+            grid->mouseDrag (mouseEvent (*grid, ledPos (15), ledPos (12), true));
+            grid->mouseUp (mouseEvent (*grid, ledPos (15), ledPos (12), true));
+            check (ctx.ui.pasteStart == 12 && ctx.ui.selection == 0, "dragging does not select while COPIED");
+            click (*grid, ledPos (10));
+            if (auto* paste = findPill (ed, "PASTE")) click (*paste);
             bool same = true;
-            for (int k = 0; k < 4; ++k) same = same && stepOf (4, 10 + k) == original[(size_t) k];
-            check (same && ! ctx.ui.pasteArmed, "clicking LED 11 on track 5 pastes the steps there");
-            check (ctx.ui.selection == rangeMask (10, 13), "the pasted steps become the selection");
+            for (int k = 0; k < 4; ++k)
+            {
+                auto a = stepOf (4, 10 + k), b = original[(size_t) k];
+                a.cc = b.cc;   // note mode: the CC lane is not copied
+                same = same && a == b;
+            }
+            check (same, "PASTE writes the steps at step 11 of track 5 (note-mode lanes)");
+            check (findPill (ed, "COPIED") != nullptr && ctx.ui.pasteStart == 10, "COPIED stays lit after pasting, for more pastes");
 
             if (auto* undo = findPill (ed, "UNDO")) click (*undo);
             check (stepOf (4, 10) == before, "UNDO restores the paste");
+
+            if (auto* copied = findPill (ed, "COPIED")) click (*copied);
+            check (ctx.ui.clip.empty() && ctx.ui.pasteStart < 0 && findPill (ed, "COPY") != nullptr, "clicking COPIED empties the clipboard");
+
+            // only the armed lanes are copied
+            setLanes (false);   // NOTE only
+            proc->edit (-1, [] (Project& p)
+            {
+                auto& s0 = p.patterns[(size_t) p.currentPattern].tracks[4].steps[0];
+                auto& s5 = p.patterns[(size_t) p.currentPattern].tracks[4].steps[5];
+                s0.pitchClass = 7; s0.velocity = 30;
+                s5.pitchClass = 2; s5.velocity = 99;
+            });
+            click (*grid, ledPos (0));
+            if (auto* copy = findPill (ed, "COPY")) click (*copy);
+            click (*grid, ledPos (5));
+            if (auto* paste = findPill (ed, "PASTE")) click (*paste);
+            check (stepOf (4, 5).pitchClass == 7 && stepOf (4, 5).velocity == 99, "with only NOTE armed, PASTE writes the note and leaves velocity");
+
+            if (auto* clr = findPill (ed, "CLEAR")) click (*clr);
+            check (ctx.ui.clip.empty() && ctx.ui.pasteStart < 0 && ctx.ui.selection == 0, "CLEAR empties the clipboard and removes the ghost");
+            setLanes (true);
+            proc->edit (-1, [] (Project& p) { p.globals.laneOct = p.globals.laneProb = false; });
 
             // step on/off and knobs in the first cell
             auto* cell = findChild<StepCell> (ed, 0);
@@ -950,6 +995,20 @@ int main (int argc, char** argv)
         ctx.ui.selection = rangeMask (4, 11);
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-dark-notes.png"));
+        {
+            const auto sc = ctx.scope();
+            ctx.ui.clip = proc->read ([&] (const Project& p) { return copySteps (p, sc); });
+            ctx.ui.clipLanes = activeLanes (ctx.globalsCopy(), false);
+            ctx.ui.clipSpan = ctx.ui.clip.back().offset + 1;
+            ctx.ui.selection = 0;
+            ctx.ui.pasteStart = 20;
+            ed.refreshAll();
+            snapshot (ed, outDir.getChildFile ("main-copied.png"));
+            ctx.ui.clip.clear();
+            ctx.ui.pasteStart = -1;
+            ctx.ui.selection = rangeMask (4, 11);
+            ed.refreshAll();
+        }
 
         ctx.ui.slider = SliderLane::probability;
         ed.refreshAll();

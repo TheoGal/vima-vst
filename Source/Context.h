@@ -19,10 +19,12 @@ struct UiState
 
     std::uint32_t selection = 0;     // selected steps (bit n = step n); 0 = none = all steps
 
-    std::vector<ClipStep> clip;  // copied steps (with their spacing)
-    int clipFrom = -1;           // track the steps were copied from
-    bool pasteArmed = false;
-    int pasteHover = -1;
+    // Copy / paste (SPEC.md 9.1): while the clipboard holds steps ("COPIED"), there is no
+    // selection; an LED click only picks where the paste lands.
+    std::vector<ClipStep> clip;  // copied steps (with their spacing); empty = nothing copied
+    std::vector<Lane> clipLanes; // lanes armed when copying: only these are pasted
+    int clipSpan = 0;            // first to last copied step
+    int pasteStart = -1;         // landing step of the paste (-1 = not picked yet)
 
     bool patternsView = false;
     int viewBank = 0;            // bank shown in the patterns view

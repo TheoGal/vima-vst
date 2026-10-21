@@ -62,9 +62,10 @@ struct ClipStep
     Step step;
 };
 std::vector<ClipStep> copySteps (const Project&, const Scope&);
-// Paste with the first copied step at `start`, keeping the spacing. Steps past the track length
-// are cut off. Returns the set of steps written.
-std::uint32_t pasteSteps (Project&, int pattern, int track, int start, const std::vector<ClipStep>&);
+// Paste with the first copied step at `start`, keeping the spacing. Only the given lanes are
+// written (empty = whole steps). Steps past the track length are cut off. Returns the steps written.
+std::uint32_t pasteSteps (Project&, int pattern, int track, int start, const std::vector<ClipStep>&,
+                          const std::vector<Lane>& lanes = {});
 
 // ---- undo ---------------------------------------------------------------------------
 class UndoHistory

@@ -63,24 +63,6 @@ namespace
         return t.text2;
     }
 
-    juce::String pad2 (int v) { return juce::String (v).paddedLeft ('0', 2); }
-
-    // "STEPS 05 - 12 · 8" for a contiguous selection, "STEPS 01 03 06 · 3" otherwise
-    juce::String selectionText (std::uint32_t sel)
-    {
-        juce::Array<int> steps;
-        for (int i = 0; i < maxSteps; ++i)
-            if ((sel >> i) & 1u) steps.add (i);
-        const juce::String dot (juce::CharPointer_UTF8 (" \xc2\xb7 "));
-        const bool contiguous = steps.getLast() - steps.getFirst() + 1 == steps.size();
-        if (contiguous)
-            return "STEPS " + pad2 (steps.getFirst() + 1) + " - " + pad2 (steps.getLast() + 1) + dot + juce::String (steps.size());
-        juce::String list;
-        for (int k = 0; k < juce::jmin (5, steps.size()); ++k) list << pad2 (steps[k] + 1) << " ";
-        if (steps.size() > 5) list << juce::String (juce::CharPointer_UTF8 ("\xe2\x80\xa6 "));
-        return "STEPS " + list.trimEnd() + dot + juce::String (steps.size());
-    }
-
     const std::vector<Lane>& noteLanes()
     {
         static const std::vector<Lane> l { Lane::on, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability };
@@ -271,42 +253,67 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     auto smallFont = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f); };
     auto plain = [] { const auto& t = Theme::current(); return Pill::outline (t.border2, t.text2); };
 
-    copyBtn.text = [] { return juce::String ("COPY"); };
+    // COPY -> lit "COPIED" (clipboard full). Clicking COPIED empties the clipboard.
+    copyBtn.text = [this] { return juce::String (ctx.ui.clip.empty() ? "COPY" : "COPIED"); };
     copyBtn.font = smallFont;
-    copyBtn.look = plain;
+    copyBtn.look = [this, plain]
+    {
+        if (ctx.ui.clip.empty()) return plain();
+        return Pill::filled (ctx.modeAccent(), Theme::current().onAccent);
+    };
     copyBtn.onClick = [this]
     {
+        if (! ctx.ui.clip.empty())
+        {
+            ctx.ui.clip.clear();
+            ctx.ui.pasteStart = -1;
+            ctx.changed();
+            return;
+        }
+        const auto lanes = activeLanes (ctx.globalsCopy(), ctx.ui.ccMode);
+        if (lanes.empty()) return;   // no lane armed: nothing to copy
         const auto sc = ctx.scope();
         ctx.ui.clip = ctx.proc.read ([&] (const Project& p) { return copySteps (p, sc); });
-        ctx.ui.clipFrom = ctx.ui.track;
-        ctx.ui.pasteArmed = false;
+        ctx.ui.clipLanes = lanes;
+        ctx.ui.clipSpan = ctx.ui.clip.empty() ? 0 : ctx.ui.clip.back().offset + 1;
+        ctx.ui.selection = 0;        // no selection while COPIED
+        ctx.ui.pasteStart = -1;
         ctx.changed();
     };
     addAndMakeVisible (copyBtn);
 
-    pasteBtn.text = [this] { return ctx.ui.clip.empty() ? juce::String ("PASTE") : "PASTE " + juce::String ((int) ctx.ui.clip.size()); };
+    // PASTE writes the copied lanes at the landing step (the ghost preview). COPIED stays lit.
+    pasteBtn.text = [] { return juce::String ("PASTE"); };
     pasteBtn.font = smallFont;
     pasteBtn.look = [this]
     {
         const auto& t = Theme::current();
-        if (ctx.ui.pasteArmed) return Pill::filled (ctx.modeAccent(), t.onAccent);
-        return Pill::outline (t.border2, t.text2);
+        const bool ready = ! ctx.ui.clip.empty() && ctx.ui.pasteStart >= 0;
+        return Pill::outline (ready ? ctx.modeAccent() : t.border2, t.text2);
     };
-    pasteBtn.alpha = [this] { return ctx.ui.clip.empty() ? 0.4f : 1.0f; };
+    pasteBtn.alpha = [this] { return (! ctx.ui.clip.empty() && ctx.ui.pasteStart >= 0) ? 1.0f : 0.4f; };
     pasteBtn.onClick = [this]
     {
-        if (ctx.ui.clip.empty()) return;
-        ctx.ui.pasteArmed = ! ctx.ui.pasteArmed;
-        ctx.ui.pasteHover = -1;
-        ctx.changed();
+        if (ctx.ui.clip.empty() || ctx.ui.pasteStart < 0) return;
+        const int t = ctx.ui.track, start = ctx.ui.pasteStart;
+        const auto clip = ctx.ui.clip;
+        const auto lanes = ctx.ui.clipLanes;
+        ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, lanes); });
     };
     addAndMakeVisible (pasteBtn);
 
     clearBtn.text = [] { return juce::String ("CLEAR"); };
     clearBtn.font = smallFont;
     clearBtn.look = plain;
-    clearBtn.alpha = [this] { return ctx.hasSelection() ? 1.0f : 0.4f; };
-    clearBtn.onClick = [this] { ctx.ui.selection = 0; ctx.changed(); };
+    // CLEAR: deselect; when COPIED, also empty the clipboard (and the ghost preview)
+    clearBtn.alpha = [this] { return (ctx.hasSelection() || ! ctx.ui.clip.empty()) ? 1.0f : 0.4f; };
+    clearBtn.onClick = [this]
+    {
+        ctx.ui.selection = 0;
+        ctx.ui.clip.clear();
+        ctx.ui.pasteStart = -1;
+        ctx.changed();
+    };
     addAndMakeVisible (clearBtn);
 
     // Lane chips (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
@@ -509,17 +516,24 @@ void OpsPanel::paint (juce::Graphics& g)
 
     draw::label (g, "SELECTION", selCol.withHeight (12), t.muted);
     {
-        const int len = ctx.trackCopy().length;
-        const auto sel = ctx.ui.selection & rangeMask (0, len - 1);
-        const bool hasSel = sel != 0;
-        juce::String text;
-        if (ctx.ui.pasteArmed)
-            text = "PASTE " + juce::String ((int) ctx.ui.clip.size()) + " FROM T" + juce::String (ctx.ui.clipFrom + 1).paddedLeft ('0', 2);
-        else if (hasSel)
-            text = selectionText (sel);
+        // "LENGTH: 7, STEPS: 4": the clipboard while COPIED, else the selection (or all steps)
+        const bool copied = ! ctx.ui.clip.empty();
+        int span = 0, count = 0;
+        if (copied)
+        {
+            span = ctx.ui.clipSpan;
+            count = (int) ctx.ui.clip.size();
+        }
         else
-            text = "NONE (ALL STEPS)";
-        g.setColour (hasSel || ctx.ui.pasteArmed ? t.text : t.muted);
+        {
+            const auto sc = ctx.scope();
+            int last = -1;
+            for (int i = 0; i < maxSteps; ++i) if (sc.contains (i)) last = i;
+            span = last >= 0 ? last - sc.first() + 1 : 0;
+            count = sc.count();
+        }
+        const auto text = "LENGTH: " + juce::String (span) + ", STEPS: " + juce::String (count);
+        g.setColour (copied || ctx.hasSelection() ? t.text : t.muted);
         g.setFont (Fonts::monoSemi (13.0f));
         g.drawText (text, selCol.withTrimmedTop (22).withHeight (18), juce::Justification::centredLeft);
     }

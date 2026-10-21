@@ -243,7 +243,6 @@ void Header::showTrackMenu()
                          if (result <= 0) return;
                          ctx.ui.track = result - 1;
                          ctx.ui.selection = 0;   // switching tracks clears the selection
-                         ctx.ui.pasteHover = -1;
                          ctx.changed();
                      });
 }

@@ -308,7 +308,8 @@ std::vector<ClipStep> copySteps (const Project& p, const Scope& sc)
     return clip;
 }
 
-std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const std::vector<ClipStep>& clip)
+std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const std::vector<ClipStep>& clip,
+                          const std::vector<Lane>& lanes)
 {
     auto& tp = trackOf (p, pattern, track);
     std::uint32_t written = 0;
@@ -316,7 +317,22 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
     {
         const int i = start + c.offset;
         if (i < 0 || i >= tp.length) continue;   // cut off at the track length, never wrap
-        tp.steps[(size_t) i] = c.step;
+        auto& s = tp.steps[(size_t) i];
+        if (lanes.empty())
+            s = c.step;
+        for (auto l : lanes)
+        {
+            switch (l)
+            {
+                case Lane::on:          s.on = c.step.on; break;
+                case Lane::note:        s.pitchClass = c.step.pitchClass; break;
+                case Lane::octave:      s.octave = c.step.octave; break;
+                case Lane::velocity:    s.velocity = c.step.velocity; break;
+                case Lane::gate:        s.gate = c.step.gate; break;
+                case Lane::probability: s.probability = c.step.probability; break;
+                case Lane::cc:          s.cc = c.step.cc; break;
+            }
+        }
         written |= (1u << i);
     }
     return written;
