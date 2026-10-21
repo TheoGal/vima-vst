@@ -109,6 +109,31 @@ struct ChainEntry
     std::uint8_t repeats = 1;   // 1..99
 };
 
+// Fixed-size chain list: copying it never allocates (it is read while the audio lock is held)
+class Chain
+{
+public:
+    int size() const { return count; }
+    bool isEmpty() const { return count == 0; }
+    void clear() { count = 0; }
+    void add (ChainEntry e) { if (count < maxChainEntries) entries[(size_t) count++] = e; }
+    void remove (int i)
+    {
+        if (i < 0 || i >= count) return;
+        for (int k = i; k < count - 1; ++k) entries[(size_t) k] = entries[(size_t) k + 1];
+        --count;
+    }
+    ChainEntry operator[] (int i) const { return entries[(size_t) juce::jlimit (0, maxChainEntries - 1, i)]; }
+    ChainEntry& getReference (int i) { return entries[(size_t) juce::jlimit (0, maxChainEntries - 1, i)]; }
+    const ChainEntry& getReference (int i) const { return entries[(size_t) juce::jlimit (0, maxChainEntries - 1, i)]; }
+    const ChainEntry* begin() const { return entries.data(); }
+    const ChainEntry* end() const { return entries.data() + count; }
+
+private:
+    std::array<ChainEntry, maxChainEntries> entries {};
+    int count = 0;
+};
+
 // Randomize lane ranges (global, shared by all tracks)
 struct LaneRange { int min, max; };
 
@@ -131,7 +156,7 @@ struct Globals
 
     bool chainOn = false;
     bool chainLoop = true;
-    juce::Array<ChainEntry> chain;
+    Chain chain;
 
     // Randomize / smooth lane selection and ranges
     bool laneOn = true, laneNote = true, laneOct = false, laneVel = true, laneGate = true, laneProb = false, laneCC = true;

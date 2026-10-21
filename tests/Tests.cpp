@@ -9,6 +9,8 @@
 #include "../Source/Engine.h"
 #include "../Source/Operations.h"
 #include "../Source/Popovers.h"
+#include "../Source/StepGrid.h"
+#include "../Source/OpsPanel.h"
 
 #include <map>
 #include <memory>
@@ -492,6 +494,58 @@ void snapshot (juce::Component& c, const juce::File& file)
     savePng (c.createComponentSnapshot (c.getLocalBounds(), true, 1.0f), file);
 }
 
+// ---- simulated mouse input --------------------------------------------------------------
+juce::MouseEvent mouseEvent (juce::Component& c, juce::Point<int> p, juce::Point<int> downAt, bool dragged = false,
+                             juce::ModifierKeys mods = juce::ModifierKeys (juce::ModifierKeys::leftButtonModifier))
+{
+    auto src = juce::Desktop::getInstance().getMainMouseSource();
+    const auto now = juce::Time::getCurrentTime();
+    return juce::MouseEvent (src, p.toFloat(), mods, 1.0f, 0.0f, 0.0f, 0.0f, 0.0f, &c, &c, now, downAt.toFloat(), now, 1, dragged);
+}
+
+void click (juce::Component& c, juce::Point<int> p)
+{
+    c.mouseDown (mouseEvent (c, p, p));
+    c.mouseUp (mouseEvent (c, p, p));
+}
+
+void click (juce::Component& c) { click (c, c.getLocalBounds().getCentre()); }
+
+// Drag vertically by dy pixels (negative = up). Uses screen positions, like the knobs do.
+void dragY (juce::Component& c, int dy)
+{
+    const auto start = c.getLocalBounds().getCentre();
+    c.mouseDown (mouseEvent (c, start, start));
+    c.mouseDrag (mouseEvent (c, start.translated (0, dy), start, true));
+    c.mouseUp (mouseEvent (c, start.translated (0, dy), start, true));
+}
+
+Pill* findPill (juce::Component& root, const juce::String& text)
+{
+    for (auto* child : root.getChildren())
+    {
+        if (auto* p = dynamic_cast<Pill*> (child); p != nullptr && p->isVisible() && p->text && p->text() == text)
+            return p;
+        if (auto* found = findPill (*child, text))
+            return found;
+    }
+    return nullptr;
+}
+
+template <typename T> T* findChild (juce::Component& root, int skip = 0)
+{
+    for (auto* child : root.getChildren())
+    {
+        if (auto* t = dynamic_cast<T*> (child))
+        {
+            if (skip-- == 0) return t;
+        }
+        else if (auto* found = findChild<T> (*child, skip))
+            return found;
+    }
+    return nullptr;
+}
+
 // Demo content, similar to the mockups
 void fillDemo (Project& p)
 {
@@ -537,6 +591,127 @@ int main (int argc, char** argv)
     testOutputs();
     testPatterns();
     testOperations();
+
+    section ("Editor interactions (simulated mouse)");
+    {
+        auto proc = std::make_unique<VimaProcessor>();
+        proc->edit (-1, [] (Project& p) { fillDemo (p); });
+        std::unique_ptr<juce::AudioProcessorEditor> base (proc->createEditor());
+        auto& ed = *dynamic_cast<VimaEditor*> (base.get());
+        auto& ctx = ed.context();
+        auto stepOf = [&] (int track, int i) { return proc->read ([=] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[(size_t) track].steps[(size_t) i]; }); };
+        ctx.ui.track = 2;
+        ed.refreshAll();
+
+        auto* grid = findChild<StepGrid> (ed);
+        check (grid != nullptr, "step grid exists");
+        if (grid != nullptr)
+        {
+            // LED x position of step i in row 1
+            auto ledPos = [&] (int i)
+            {
+                const double colW = (grid->getWidth() - 90) / 16.0 + 6.0;
+                return juce::Point<int> ((int) ((i % 16) * colW + colW / 2 - 3), (i / 16) * (16 + 3 + 182 + 8) + 8);
+            };
+            grid->mouseDown (mouseEvent (*grid, ledPos (4), ledPos (4)));
+            grid->mouseDrag (mouseEvent (*grid, ledPos (7), ledPos (4), true));
+            grid->mouseUp (mouseEvent (*grid, ledPos (7), ledPos (4), true));
+            check (ctx.ui.selFirst == 4 && ctx.ui.selLast == 7, "drag on the LEDs selects steps 05-08");
+
+            click (*grid, ledPos (9));
+            check (ctx.ui.selFirst == 9 && ctx.ui.selLast == 9, "a single click on an LED selects one step");
+            grid->mouseDown (mouseEvent (*grid, ledPos (4), ledPos (4)));
+            grid->mouseDrag (mouseEvent (*grid, ledPos (7), ledPos (4), true));
+            grid->mouseUp (mouseEvent (*grid, ledPos (7), ledPos (4), true));
+
+            std::vector<Step> original;
+            for (int i = 4; i <= 7; ++i) original.push_back (stepOf (2, i));
+
+            if (auto* copy = findPill (ed, "COPY")) click (*copy);
+            check (ctx.ui.clip.size() == 4, "COPY takes the 4 selected steps");
+
+            ctx.ui.track = 4;   // as the track dropdown does
+            ctx.ui.selFirst = ctx.ui.selLast = -1;
+            ed.refreshAll();
+            auto before = stepOf (4, 10);
+            if (auto* paste = findPill (ed, "PASTE 4")) click (*paste);
+            check (ctx.ui.pasteArmed, "PASTE arms paste mode");
+            click (*grid, ledPos (10));
+            bool same = true;
+            for (int k = 0; k < 4; ++k) same = same && stepOf (4, 10 + k) == original[(size_t) k];
+            check (same && ! ctx.ui.pasteArmed, "clicking LED 11 on track 5 pastes the steps there");
+            check (ctx.ui.selFirst == 10 && ctx.ui.selLast == 13, "the pasted range becomes the selection");
+
+            if (auto* undo = findPill (ed, "UNDO")) click (*undo);
+            check (stepOf (4, 10) == before, "UNDO restores the paste");
+
+            // step on/off and knobs in the first cell
+            auto* cell = findChild<StepCell> (ed, 0);
+            if (cell != nullptr)
+            {
+                const bool wasOn = stepOf (4, 0).on;
+                auto* toggle = findChild<Pill> (*cell);
+                if (toggle) click (*toggle);
+                check (stepOf (4, 0).on != wasOn, "the step number button toggles the step");
+
+                auto* pitchKnob = findChild<Knob> (*cell, 0);
+                const int pcBefore = stepOf (4, 0).pitchClass;
+                proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[4].steps[0].pitchClass = 0; });
+                if (pitchKnob) dragY (*pitchKnob, -16);
+                check (stepOf (4, 0).pitchClass == 3, "dragging the pitch knob up 2 notes in C minor: C -> D#");
+                juce::ignoreUnused (pcBefore);
+
+                auto* slider = findChild<LaneSlider> (*cell);
+                proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[4].steps[0].velocity = 100; });
+                if (slider) dragY (*slider, 30);
+                check (stepOf (4, 0).velocity == 80, "dragging the velocity slider down lowers velocity (100 -> 80)");
+                if (slider) dragY (*slider, 1000);
+                check (stepOf (4, 0).velocity == 1, "velocity stops at 1, never 0");
+                if (slider) slider->mouseDown (mouseEvent (*slider, { 5, 5 }, { 5, 5 }, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
+                check (stepOf (4, 0).velocity == 100, "right-click resets velocity to 100");
+            }
+
+            // randomize respects the selection (scope rule)
+            ctx.ui.track = 3;
+            ctx.ui.selFirst = 0; ctx.ui.selLast = 1;
+            ed.refreshAll();
+            const auto keep = stepOf (3, 5);
+            if (auto* rnd = findPill (ed, "RANDOMIZE")) { click (*rnd); click (*rnd); }
+            check (stepOf (3, 5) == keep, "RANDOMIZE leaves steps outside the selection alone");
+
+            // SHIFT ALL on velocity over the whole track
+            ctx.ui.selFirst = ctx.ui.selLast = -1;
+            ctx.ui.shiftLane = Lane::velocity;
+            ed.refreshAll();
+            proc->edit (-1, [] (Project& p) { for (auto& s : p.patterns[(size_t) p.currentPattern].tracks[3].steps) s.velocity = 120; });
+            proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[3].steps[0].velocity = 60; });
+            if (auto* shift = findChild<ShiftKnob> (ed)) dragY (*shift, -90);   // +10
+            check (stepOf (3, 0).velocity == 70 && stepOf (3, 1).velocity == 127, "SHIFT ALL +10: 60 -> 70, 120 capped at 127");
+
+            // CC mode hides note controls
+            if (auto* ccBtn = findPill (ed, "CC")) click (*ccBtn);
+            check (ctx.ui.ccMode && findPill (ed, "NOTE OUT") == nullptr, "CC mode shows the CC part only");
+            if (auto* notes = findPill (ed, "NOTES")) click (*notes);
+            check (! ctx.ui.ccMode, "back to note mode");
+        }
+
+        // pattern quick picker arrows queue the next pattern
+        if (auto* next = findChild<Pill> (ed, 0); next != nullptr)
+        {
+            juce::ignoreUnused (next);
+        }
+        ctx.proc.queuePattern (1);
+        check (ctx.proc.engine.queuedPattern.load() == 1, "picking a pattern queues it");
+
+        // settings: theme switch
+        ctx.openSettings();
+        if (auto* light = findPill (ed, "LIGHT")) click (*light);
+        check (ctx.globalsCopy().lightTheme && Theme::isLight(), "LIGHT in Settings switches the theme");
+        if (auto* dark = findPill (ed, "DARK")) click (*dark);
+        check (! ctx.globalsCopy().lightTheme, "DARK switches back");
+        base.reset();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+    }
 
     section ("Editor screenshots");
     {
