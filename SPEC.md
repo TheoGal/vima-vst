@@ -300,6 +300,28 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - The full state (all patterns, track settings and global settings) is saved with the DAW project.
 - Preset save/load to files is planned. Details are open.
 
+### 13.1 Host automation parameters
+
+98 parameters are exposed to the host:
+
+| Parameter | ID | Range |
+|---|---|---|
+| Pattern | `pattern` | 1-192 (switches follow the quantize setting) |
+| Chain On | `chainOn` | off / on |
+| Tnn Notes Out | `tnn_noteOut` | off / on |
+| Tnn CC Out | `tnn_ccOut` | off / on |
+| Tnn Length | `tnn_length` | 4-32 |
+| Tnn Division | `tnn_division` | the 11 divisions |
+| Tnn Direction | `tnn_direction` | Forward / Backward / Ping-pong |
+| Tnn Swing | `tnn_swing` | 0-100 |
+
+`nn` is the track number 01-16. Parameters are grouped per track in hosts that show groups.
+
+- Scale and root are not exposed (by decision).
+- Length, Division, Direction and Swing belong to the current pattern: they show and change the current pattern's values, and follow pattern changes.
+- Two-way: a host change is written into the project on the next audio block. A change made in the plugin (UI, pattern switch, chain, loaded state) is sent to the host as a short gesture, so hosts can record it.
+- Host changes are not added to undo.
+
 ## 14. Build and repository
 
 - Repository on GitHub under the user's account (TheoGal). Repo name follows the final plugin name.
@@ -338,4 +360,5 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-21: Host automation: Pattern and Chain On, plus Notes Out, CC Out, Length, Division, Direction and Swing per track (13.1). Scale and root left out.
 - 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.

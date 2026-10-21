@@ -48,6 +48,7 @@ set(VIMA_SOURCES
     Source/Model.cpp
     Source/Engine.cpp
     Source/Operations.cpp
+    Source/HostParams.cpp
     Source/Theme.cpp
     Source/Widgets.cpp
     Source/Popovers.cpp

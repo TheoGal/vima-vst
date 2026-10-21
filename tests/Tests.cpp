@@ -604,6 +604,70 @@ void fillDemo (Project& p)
 }
 } // namespace
 
+
+void testAutomation()
+{
+    section ("Host automation");
+    auto proc = std::make_unique<VimaProcessor>();
+    proc->prepareToPlay (48000.0, 256);
+    juce::AudioBuffer<float> audio (2, 256);
+    juce::MidiBuffer midi;
+    auto block = [&] { midi.clear(); proc->processBlock (audio, midi); };
+    auto param = [&] (const char* id) { return proc->hostParams.find (id); };
+
+    check (proc->getParameters().size() == 2 + 16 * 6, "98 parameters: 2 global + 6 for each of 16 tracks, got " + juce::String (proc->getParameters().size()));
+    check (param ("t01_scale") == nullptr && param ("t01_root") == nullptr, "scale and root are not exposed");
+
+    // host -> project
+    auto* len = param ("t03_length");
+    auto* div = param ("t03_division");
+    auto* dir = param ("t03_direction");
+    auto* swing = param ("t03_swing");
+    auto* notes = param ("t03_noteOut");
+    auto* cc = param ("t03_ccOut");
+    auto* chain = param ("chainOn");
+    check (len && div && dir && swing && notes && cc && chain && param ("pattern"), "parameters found by ID");
+    if (! (len && div && dir && swing && notes && cc && chain))
+        return;
+    len->setValueNotifyingHost (len->convertTo0to1 (7.0f));
+    div->setValueNotifyingHost (div->convertTo0to1 (2.0f));
+    dir->setValueNotifyingHost (dir->convertTo0to1 (2.0f));
+    swing->setValueNotifyingHost (swing->convertTo0to1 (35.0f));
+    notes->setValueNotifyingHost (0.0f);
+    cc->setValueNotifyingHost (1.0f);
+    chain->setValueNotifyingHost (1.0f);
+    block();
+    const auto tp = proc->read ([] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[2]; });
+    const auto rt = proc->read ([] (const Project& p) { return p.routing[2]; });
+    check (tp.length == 7 && tp.division == 2 && tp.direction == Direction::pingPong && tp.swing == 35,
+           "automating length, division, direction and swing changes track 3 of the current pattern");
+    check (! rt.noteOut && rt.ccOut, "automating Notes Out / CC Out changes the track outputs");
+    check (proc->read ([] (const Project& p) { return p.globals.chainOn; }), "automating Chain On turns the chain on");
+    chain->setValueNotifyingHost (0.0f);
+
+    auto* pat = param ("pattern");
+    proc->edit (-1, [] (Project& p) { p.globals.quantize = Quantize::off; });
+    pat->setValueNotifyingHost (pat->convertTo0to1 (5.0f));
+    block();
+    check (proc->engine.queuedPattern.load() == 4 || proc->read ([] (const Project& p) { return p.currentPattern; }) == 4,
+           "automating Pattern to 5 queues pattern B01 05");
+
+    // project -> host
+    proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[2].length = 12; p.globals.chainOn = true; });
+    proc->syncParamsToHost();
+    check (juce::roundToInt (len->convertFrom0to1 (len->getValue())) == 12, "a length change in the UI reaches the host parameter");
+    check (chain->getValue() > 0.5f, "Chain On in the UI reaches the host parameter");
+    block();
+    check (proc->read ([] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[2].length; }) == 12,
+           "a pushed value does not bounce back as a host change");
+
+    // switching pattern shows that pattern's values
+    proc->edit (-1, [] (Project& p) { p.patterns[9].tracks[2].length = 20; p.currentPattern = 9; });
+    proc->syncParamsToHost();
+    check (juce::roundToInt (len->convertFrom0to1 (len->getValue())) == 20 && juce::roundToInt (pat->convertFrom0to1 (pat->getValue())) == 10,
+           "after a pattern change the parameters show the new pattern");
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -615,6 +679,7 @@ int main (int argc, char** argv)
     testOutputs();
     testPatterns();
     testOperations();
+    testAutomation();
 
     section ("Editor interactions (simulated mouse)");
     {

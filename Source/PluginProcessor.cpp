@@ -5,6 +5,17 @@ VimaProcessor::VimaProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
     outBuffer.ensureSize (8192);
+    paramValues.reserve ((size_t) hostParams.size());
+    startTimerHz (20);
+}
+
+void VimaProcessor::syncParamsToHost()
+{
+    {
+        const Lock sl (lock);
+        hostParams.capture (project, paramValues);
+    }
+    hostParams.pushToHost (paramValues);
 }
 
 bool VimaProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -47,6 +58,8 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
     outBuffer.clear();
     {
         const Lock sl (lock);
+        if (hostParams.applyFromHost (project, engine))
+            ++revision;
         engine.process (project, host, buffer.getNumSamples(), midi, outBuffer);
     }
     midi.swapWith (outBuffer);   // incoming MIDI is consumed, not passed through
