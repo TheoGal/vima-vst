@@ -292,7 +292,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### 12.5 Mockups
 
-- The interactive mockups live in the "Step Sequencer Mockups" design canvas: boards C (main window, note and CC mode), D (patterns view and chain) and E (settings dialog). The old exploration boards A and B were deleted.
+- The interactive mockups live in the "Step Sequencer Mockups" design canvas: boards C (main window, note and CC mode), D (patterns view and chain), E (settings dialog), F (light theme) and G (macros). The old exploration boards A and B were deleted.
 - The plugin name is still a placeholder ("[NAME]") in the mockups.
 
 ## 13. State and presets
@@ -300,27 +300,34 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - The full state (all patterns, track settings and global settings) is saved with the DAW project.
 - Preset save/load to files is planned. Details are open.
 
-### 13.1 Host automation parameters
+### 13.1 Macros (host automation)
 
-50 parameters are exposed to the host:
+The host sees 128 parameters, "Macro 1" to "Macro 128", grouped in 4 banks of 32. They are the only automatable parameters. Each macro is mapped to one target in the plugin, so only what is needed is exposed. Mapping a DAW knob or controller to a macro is done in the DAW; VIMA has no MIDI learn of its own.
 
-| Parameter | ID | Range |
-|---|---|---|
-| Pattern | `pattern` | 1-64 (switches follow the quantize setting) |
-| Chain On | `chainOn` | off / on |
-| Tnn Notes Out | `tnn_noteOut` | off / on |
-| Tnn CC Out | `tnn_ccOut` | off / on |
-| Tnn Length | `tnn_length` | 4-32 |
-| Tnn Division | `tnn_division` | the 11 divisions |
-| Tnn Direction | `tnn_direction` | Forward / Backward / Ping-pong |
-| Tnn Swing | `tnn_swing` | 0-100 |
+Targets:
 
-`nn` is the track number 01-08. Parameters are grouped per track in hosts that show groups.
+| Type | Targets | Track | Pattern | Step |
+|---|---|---|---|---|
+| GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
+| TRACK | Notes Out, CC Out | SHOWN or 1-8 | - | - |
+| TRACK | Length, Division, Direction, Swing, Scale On | SHOWN or 1-8 | CURRENT or a fixed pattern | - |
+| STEP | On/Off, Note, Octave, Velocity, Gate, Probability, CC value | SHOWN or 1-8 | CURRENT or a fixed pattern | 1-32 |
 
-- Scale and root are not exposed (by decision).
-- Length, Division, Direction and Swing belong to the current pattern: they show and change the current pattern's values, and follow pattern changes.
-- Two-way: a host change is written into the project on the next audio block. A change made in the plugin (UI, pattern switch, chain, loaded state) is sent to the host as a short gesture, so hosts can record it.
-- Host changes are not added to undo.
+- **SHOWN** = the track shown in the main window (saved with the project), for use with controllers: the same macros always control the track on screen. **CURRENT** = the playing pattern.
+- **Range**: each mapping has MIN and MAX (default: the full range). The whole macro travel covers MIN to MAX. MIN above MAX inverts the direction.
+- **Note** covers C to B (the stored note). When the track's scale is on, the note that sounds is shown. **Octave** covers the octave range from Settings.
+- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing, pattern switch, chain, SHOWN track switch, remapping), the macro moves to match, as a short gesture so hosts can record it. A target value outside MIN / MAX is shown at the nearest end and is not overwritten by that.
+- The host shows the target value as the macro's value text ("96", "1/16", "B01 · 05"); unmapped macros show "-".
+- Host changes are not added to undo. Mappings are saved with the project.
+
+### 13.2 Macros page
+
+Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS goes back. Mockup: board G.
+
+- **Left**: bank buttons (1-32, 33-64, 65-96, 97-128), "N OF 32 MAPPED", LEARN. A grid of 32 macro cells: number, color dot, a knob with the target's value (drag or wheel to move the macro), target name and where it points ("SHOWN · CUR", "T04 · B01·06", "GLOBAL").
+- **Right**: the mapping editor for the selected macro: TARGET (NONE / GLOBAL / TRACK / STEP), PARAMETER, TRACK (SHOWN, 1-8), PATTERN (CURRENT / FIXED with a pattern knob), STEP (1-32), RANGE (MIN / MAX), CLEAR MAPPING and the current value.
+- **LEARN**: with LEARN on, go back to STEPS (or the patterns view) and click a control: the selected macro is mapped to it (SHOWN track, CURRENT pattern, that step) and the next macro is selected, so a row of steps can be mapped quickly. While learning, clicks map instead of editing, an amber frame marks the view, the control under the mouse is highlighted, and the header button reads "LEARN M005". Learnable: step on/off, note, octave, the slider (its current lane), CC value, LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN on/off.
+- Colors follow the lanes: step on, note, octave and velocity green, gate purple, probability amber, CC cyan, track and global targets neutral.
 
 ## 14. Build and repository
 
@@ -360,6 +367,6 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
-- 2026-10-21: Host automation: Pattern and Chain On, plus Notes Out, CC Out, Length, Division, Direction and Swing per track (13.1). Scale and root left out.
+- 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.
 - 2026-10-21: Reduced to 8 tracks and 64 patterns (4 banks of 16). Pattern change by CC now reaches every pattern.
 - 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.

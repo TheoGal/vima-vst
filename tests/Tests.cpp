@@ -605,67 +605,94 @@ void fillDemo (Project& p)
 } // namespace
 
 
-void testAutomation()
+void testMacros()
 {
-    section ("Host automation");
+    section ("Macros (host automation)");
     auto proc = std::make_unique<VimaProcessor>();
     proc->prepareToPlay (48000.0, 256);
     juce::AudioBuffer<float> audio (2, 256);
     juce::MidiBuffer midi;
     auto block = [&] { midi.clear(); proc->processBlock (audio, midi); };
-    auto param = [&] (const char* id) { return proc->hostParams.find (id); };
+    auto macro = [&] (int i) { return proc->macros.param (i); };
+    auto plainOf = [&] (int i, const MacroMap& m) { return macroPlain (m, macro (i)->getValue()); };
 
-    check (proc->getParameters().size() == 2 + numTracks * 6, "2 global parameters + 6 for each track, got " + juce::String (proc->getParameters().size()));
-    check (param ("t01_scale") == nullptr && param ("t01_root") == nullptr, "scale and root are not exposed");
+    check (proc->getParameters().size() == numMacros, "the 128 macros are the only host parameters, got " + juce::String (proc->getParameters().size()));
+    check (macro (0)->getName (32) == "Macro 1" && macro (127)->getName (32) == "Macro 128", "macros are named Macro 1 to Macro 128");
+    check (macro (4)->getCurrentValueAsText() == "-", "an unmapped macro shows -");
+
+    // map: M1 = velocity of step 5 on the shown track; M2 = length of track 3 in pattern B01 · 10;
+    // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2
+    proc->edit (-1, [] (Project& p)
+    {
+        p.macros[0] = defaultMacroMap (MacroTarget::velocity, -1, 4, p.globals);
+        p.macros[1] = defaultMacroMap (MacroTarget::length, 2, 0, p.globals);
+        p.macros[1].pattern = 9;
+        p.macros[2] = defaultMacroMap (MacroTarget::pattern, -1, 0, p.globals);
+        p.macros[3] = defaultMacroMap (MacroTarget::chainOn, -1, 0, p.globals);
+        p.macros[4] = defaultMacroMap (MacroTarget::note, 1, 0, p.globals);
+        p.macros[5] = defaultMacroMap (MacroTarget::probability, -1, 0, p.globals);
+        p.macros[5].min = 20; p.macros[5].max = 60;
+        p.globals.quantize = Quantize::off;
+    });
+    proc->shownTrack = 3;
+    auto m = [&] (int i) { return proc->read ([i] (const Project& p) { return p.macros[(size_t) i]; }); };
 
     // host -> project
-    auto* len = param ("t03_length");
-    auto* div = param ("t03_division");
-    auto* dir = param ("t03_direction");
-    auto* swing = param ("t03_swing");
-    auto* notes = param ("t03_noteOut");
-    auto* cc = param ("t03_ccOut");
-    auto* chain = param ("chainOn");
-    check (len && div && dir && swing && notes && cc && chain && param ("pattern"), "parameters found by ID");
-    if (! (len && div && dir && swing && notes && cc && chain))
-        return;
-    len->setValueNotifyingHost (len->convertTo0to1 (7.0f));
-    div->setValueNotifyingHost (div->convertTo0to1 (2.0f));
-    dir->setValueNotifyingHost (dir->convertTo0to1 (2.0f));
-    swing->setValueNotifyingHost (swing->convertTo0to1 (35.0f));
-    notes->setValueNotifyingHost (0.0f);
-    cc->setValueNotifyingHost (1.0f);
-    chain->setValueNotifyingHost (1.0f);
+    macro (0)->setValueNotifyingHost (macroNormalized (m (0), 33));
+    macro (1)->setValueNotifyingHost (macroNormalized (m (1), 12));
+    macro (3)->setValueNotifyingHost (1.0f);
+    macro (4)->setValueNotifyingHost (macroNormalized (m (4), 7));
+    macro (5)->setValueNotifyingHost (0.5f);
     block();
-    const auto tp = proc->read ([] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[2]; });
-    const auto rt = proc->read ([] (const Project& p) { return p.routing[2]; });
-    check (tp.length == 7 && tp.division == 2 && tp.direction == Direction::pingPong && tp.swing == 35,
-           "automating length, division, direction and swing changes track 3 of the current pattern");
-    check (! rt.noteOut && rt.ccOut, "automating Notes Out / CC Out changes the track outputs");
-    check (proc->read ([] (const Project& p) { return p.globals.chainOn; }), "automating Chain On turns the chain on");
-    chain->setValueNotifyingHost (0.0f);
+    check (proc->read ([] (const Project& p) { return p.patterns[0].tracks[3].steps[4].velocity; }) == 33,
+           "macro on SHOWN track: velocity of step 5 on the shown track (4) is set");
+    check (proc->read ([] (const Project& p) { return p.patterns[9].tracks[2].length; }) == 12
+               && proc->read ([] (const Project& p) { return p.patterns[0].tracks[2].length; }) == 16,
+           "macro with a FIXED pattern changes that pattern only");
+    check (proc->read ([] (const Project& p) { return p.globals.chainOn; }), "macro on Chain On");
+    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[1].steps[0].pitchClass; }) == 7, "macro on a step note");
+    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 40,
+           "MIN / MAX range: 50% of 20-60 gives 40");
+    proc->syncParamsToHost();
+    check (macro (0)->getCurrentValueAsText() == "33" && macro (4)->getCurrentValueAsText() == "G", "host shows the target value as text");
 
-    auto* pat = param ("pattern");
-    proc->edit (-1, [] (Project& p) { p.globals.quantize = Quantize::off; });
-    pat->setValueNotifyingHost (pat->convertTo0to1 (5.0f));
+    macro (2)->setValueNotifyingHost (macroNormalized (m (2), 6));
     block();
-    check (proc->engine.queuedPattern.load() == 4 || proc->read ([] (const Project& p) { return p.currentPattern; }) == 4,
-           "automating Pattern to 5 queues pattern B01 05");
+    check (proc->engine.queuedPattern.load() == 6 || proc->read ([] (const Project& p) { return p.currentPattern; }) == 6,
+           "macro on Pattern queues the pattern");
+    proc->edit (-1, [] (Project& p) { p.currentPattern = 0; });
+    proc->engine.queuedPattern = -1;
 
     // project -> host
-    proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[2].length = 12; p.globals.chainOn = true; });
+    proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[3].steps[4].velocity = 90; });
     proc->syncParamsToHost();
-    check (juce::roundToInt (len->convertFrom0to1 (len->getValue())) == 12, "a length change in the UI reaches the host parameter");
-    check (chain->getValue() > 0.5f, "Chain On in the UI reaches the host parameter");
+    check (plainOf (0, m (0)) == 90, "a change in the plugin moves the macro");
     block();
-    check (proc->read ([] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[2].length; }) == 12,
-           "a pushed value does not bounce back as a host change");
+    check (proc->read ([] (const Project& p) { return p.patterns[0].tracks[3].steps[4].velocity; }) == 90,
+           "the macro's new value does not bounce back");
 
-    // switching pattern shows that pattern's values
-    proc->edit (-1, [] (Project& p) { p.patterns[9].tracks[2].length = 20; p.currentPattern = 9; });
+    // values outside the range are not overwritten by the clamped macro
+    proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[3].steps[0].probability = 90; });
     proc->syncParamsToHost();
-    check (juce::roundToInt (len->convertFrom0to1 (len->getValue())) == 20 && juce::roundToInt (pat->convertFrom0to1 (pat->getValue())) == 10,
-           "after a pattern change the parameters show the new pattern");
+    block();
+    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 90,
+           "a value outside MIN / MAX is left alone when the macro follows it");
+
+    // shown track follows the editor
+    proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[6].steps[4].velocity = 11; });
+    proc->shownTrack = 6;
+    proc->syncParamsToHost();
+    check (plainOf (0, m (0)) == 11, "switching the shown track moves SHOWN macros to that track's values");
+    proc->shownTrack = 3;
+
+    // state
+    juce::MemoryBlock state;
+    proc->getStateInformation (state);
+    auto other = std::make_unique<VimaProcessor>();
+    other->setStateInformation (state.getData(), (int) state.getSize());
+    check (other->read ([] (const Project& p) { return p.macros[1]; }) == m (1) && other->read ([] (const Project& p) { return p.macros[5]; }) == m (5),
+           "macro mappings are saved with the project");
+    check (other->shownTrack.load() == 3, "the shown track is saved with the project");
 }
 
 int main (int argc, char** argv)
@@ -679,7 +706,7 @@ int main (int argc, char** argv)
     testOutputs();
     testPatterns();
     testOperations();
-    testAutomation();
+    testMacros();
 
     section ("Editor interactions (simulated mouse)");
     {
@@ -837,6 +864,62 @@ int main (int argc, char** argv)
         check (ctx.globalsCopy().lightTheme && Theme::isLight(), "LIGHT in Settings switches the theme");
         if (auto* dark = findPill (ed, "DARK")) click (*dark);
         check (! ctx.globalsCopy().lightTheme, "DARK switches back");
+        if (auto* done = findPill (ed, "DONE")) click (*done);
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+
+        // Macros page: bank, select, map by clicking
+        if (auto* mb = findPill (ed, "MACROS")) click (*mb);
+        auto* mv = findChild<MacrosView> (ed);
+        check (mv != nullptr && mv->isVisible() && ctx.ui.macrosView, "MACROS opens the macros page");
+        if (mv != nullptr)
+        {
+            if (auto* b = findPill (*mv, "33-64")) click (*b);
+            check (ctx.ui.macroBank == 1, "the 33-64 button shows the second bank");
+            if (auto* cell = findChild<MacroCell> (*mv, 2)) click (*cell);
+            check (ctx.ui.selectedMacro == 34, "clicking a macro selects it (M035)");
+            if (auto* k = findPill (*mv, "TRACK")) click (*k);
+            check (ctx.macroCopy (34).target == MacroTarget::noteOut, "TARGET TRACK maps the first track parameter");
+            if (auto* sw = findPill (*mv, "SWING")) click (*sw);
+            if (auto* t5 = findPill (*mv, "5")) click (*t5);
+            if (auto* fx = findPill (*mv, "FIXED")) click (*fx);
+            const auto mm = ctx.macroCopy (34);
+            check (mm.target == MacroTarget::swing && mm.track == 4 && mm.pattern == ctx.currentPattern() && mm.min == 0 && mm.max == 100,
+                   "SWING, track 5, FIXED pattern: the mapping follows the clicks");
+            if (auto* clr = findPill (*mv, "CLEAR MAPPING")) click (*clr);
+            check (! ctx.macroCopy (34).mapped(), "CLEAR MAPPING unmaps the macro");
+
+            // LEARN: click controls in the step view
+            ctx.ui.selectedMacro = 40;
+            ctx.ui.macroBank = 1;
+            ed.refreshAll();
+            if (auto* l = findPill (*mv, "LEARN")) click (*l);
+            check (ctx.ui.macroLearn, "LEARN turns on");
+            if (auto* st = findPill (ed, "STEPS")) click (*st);
+            check (! ctx.ui.macrosView, "STEPS goes back to the step view");
+            auto* overlay = findChild<LearnOverlay> (ed);
+            check (overlay != nullptr && overlay->isVisible(), "while learning, the step view is covered by the learn layer");
+            auto* cell3 = findChild<StepCell> (ed, 2);
+            auto* sl = cell3 != nullptr ? findChild<LaneSlider> (*cell3) : nullptr;
+            if (overlay != nullptr && sl != nullptr)
+            {
+                ctx.ui.slider = SliderLane::gate;
+                const auto before = stepOf (ctx.ui.track, 2);
+                click (*overlay, overlay->getLocalPoint (sl, sl->getLocalBounds().getCentre()));
+                const auto lm = ctx.macroCopy (40);
+                check (lm.target == MacroTarget::gate && lm.track == -1 && lm.pattern == -1 && lm.step == 2,
+                       "LEARN on the step 3 slider (GATE lane): shown track, current pattern, step 3 gate");
+                check (stepOf (ctx.ui.track, 2) == before, "learning does not change the control");
+                check (ctx.ui.selectedMacro == 41, "LEARN moves on to the next macro");
+                if (auto* lenTile = findChild<KnobTile> (ed, 0))
+                    click (*overlay, overlay->getLocalPoint (lenTile, lenTile->getLocalBounds().getCentre()));
+                check (ctx.macroCopy (41).target == MacroTarget::length, "LEARN on LENGTH");
+                ctx.ui.slider = SliderLane::velocity;
+            }
+            ctx.ui.macroLearn = false;
+            ed.refreshAll();
+            check (overlay == nullptr || ! overlay->isVisible(), "the learn layer goes away when LEARN is off");
+        }
+
         base.reset();
         juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
     }
@@ -898,6 +981,34 @@ int main (int argc, char** argv)
         ctx.showPatterns (true);
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
         ctx.showPatterns (false);
+
+        proc->edit (-1, [] (Project& p)
+        {
+            for (int i = 0; i < 16; ++i) p.macros[(size_t) i] = defaultMacroMap (MacroTarget::velocity, -1, i, p.globals);
+            p.macros[16] = defaultMacroMap (MacroTarget::length, 1, 0, p.globals);
+            p.macros[17] = defaultMacroMap (MacroTarget::swing, 2, 0, p.globals);
+            p.macros[17].max = 60;
+            p.macros[18] = defaultMacroMap (MacroTarget::division, 3, 0, p.globals);
+            p.macros[18].pattern = 5;
+            p.macros[19] = defaultMacroMap (MacroTarget::gate, 4, 0, p.globals);
+            p.macros[20] = defaultMacroMap (MacroTarget::probability, -1, 3, p.globals);
+            p.macros[21] = defaultMacroMap (MacroTarget::cc, 6, 0, p.globals);
+            p.macros[22] = defaultMacroMap (MacroTarget::pattern, -1, 0, p.globals);
+            p.macros[23] = defaultMacroMap (MacroTarget::chainOn, -1, 0, p.globals);
+            p.macros[24] = defaultMacroMap (MacroTarget::note, -1, 0, p.globals);
+            p.macros[25] = defaultMacroMap (MacroTarget::octave, -1, 0, p.globals);
+        });
+        ctx.ui.selectedMacro = 16;
+        ctx.showMacros (true);
+        snapshot (ed, outDir.getChildFile ("macros.png"));
+        ctx.ui.selectedMacro = 3;
+        ctx.ui.macroLearn = true;
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("macros-learn.png"));
+        ctx.showMacros (false);
+        snapshot (ed, outDir.getChildFile ("main-learning.png"));
+        ctx.ui.macroLearn = false;
+        ed.refreshAll();
 
         ctx.openSettings();
         snapshot (ed, outDir.getChildFile ("settings.png"));

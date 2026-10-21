@@ -9,6 +9,7 @@
 #include "OpsPanel.h"
 #include "PatternsView.h"
 #include "SettingsDialog.h"
+#include "MacrosView.h"
 
 namespace vima
 {
@@ -18,6 +19,26 @@ public:
     void updateColours();
     juce::Font getPopupMenuFont() override { return Fonts::monoSemi (13.0f); }
     void drawPopupMenuBackground (juce::Graphics&, int width, int height) override;
+};
+
+// While LEARN is on, covers the step and patterns views: a click on a control maps the
+// selected macro to it instead of changing the control (SPEC.md 13.1).
+class LearnOverlay : public juce::Component
+{
+public:
+    LearnOverlay (Context& c, juce::Component& contentRoot) : ctx (c), content (contentRoot) {}
+    void paint (juce::Graphics&) override;
+    void mouseMove (const juce::MouseEvent&) override;
+    void mouseExit (const juce::MouseEvent&) override;
+    void mouseDown (const juce::MouseEvent&) override;
+
+    struct Hit { juce::Component* component = nullptr; MacroTarget target = MacroTarget::none; int step = 0; };
+    Hit hitAt (juce::Point<int> localPoint);
+
+private:
+    Context& ctx;
+    juce::Component& content;
+    juce::Rectangle<int> hover;
 };
 }
 
@@ -38,6 +59,7 @@ public:
 private:
     void timerCallback() override;
     void setPatternsView (bool);
+    void setMacrosView (bool);
     void openSettings();
     void closeSettings();
 
@@ -60,6 +82,8 @@ private:
     vima::StepGrid grid;
     vima::OpsPanel ops;
     vima::PatternsView patterns;
+    vima::MacrosView macrosView;
+    vima::LearnOverlay learnOverlay;
     std::unique_ptr<vima::SettingsDialog> settings;
 
     int lastRevision = -1, lastPattern = -1, lastPlayStep = -2, blinkCounter = 0, lastChainPos = -2;

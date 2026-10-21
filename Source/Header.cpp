@@ -107,7 +107,11 @@ Header::Header (Context& c) : ctx (c)
     stepsBtn.textInset = 28;
     stepsBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.12f); };
     stepsBtn.radius = 6.0f;
-    stepsBtn.onClick = [this] { if (ctx.showPatterns) ctx.showPatterns (false); };
+    stepsBtn.onClick = [this]
+    {
+        if (ctx.ui.macrosView && ctx.showMacros) ctx.showMacros (false);
+        else if (ctx.showPatterns) ctx.showPatterns (false);
+    };
     addChildComponent (stepsBtn);
 
     // Pattern quick picker
@@ -159,6 +163,19 @@ Header::Header (Context& c) : ctx (c)
     undoBtn.onClick = [this] { if (ctx.proc.performUndo()) ctx.changed(); };
     addAndMakeVisible (undoBtn);
 
+    // MACROS page; shows LEARN and the macro being learned while LEARN is on
+    macrosBtn.look = [this]
+    {
+        const auto& t = Theme::current();
+        if (ctx.ui.macroLearn) return Pill::Look { t.amber.withAlpha (0.14f), t.amber, t.amber, 1.5f, false };
+        return Pill::outline (ctx.ui.macrosView ? t.neutral : t.border, t.text2);
+    };
+    macrosBtn.text = [this] { return ctx.ui.macroLearn ? "LEARN " + macroId (ctx.ui.selectedMacro) : juce::String ("MACROS"); };
+    macrosBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.12f); };
+    macrosBtn.radius = 6.0f;
+    macrosBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (ctx.showMacros) ctx.showMacros (true); };
+    addAndMakeVisible (macrosBtn);
+
     settingsBtn.look = plainOutline;
     settingsBtn.text = [] { return juce::String ("SETTINGS"); };
     settingsBtn.justification = juce::Justification::centredLeft;
@@ -171,7 +188,7 @@ Header::Header (Context& c) : ctx (c)
 
 void Header::resized()
 {
-    const bool pv = ctx.ui.patternsView;
+    const bool pv = ctx.ui.patternsView || ctx.ui.macrosView;
     auto r = getLocalBounds().withTrimmedBottom (1).reduced (20, 0);
     const int cy = r.getCentreY();
 
@@ -200,11 +217,13 @@ void Header::resized()
 
     auto right = r;
     settingsBtn.setBounds (right.removeFromRight (112).withSizeKeepingCentre (112, 32));
-    right.removeFromRight (14);
+    right.removeFromRight (10);
+    macrosBtn.setBounds (right.removeFromRight (112).withSizeKeepingCentre (112, 32));
+    right.removeFromRight (10);
     undoBtn.setBounds (right.removeFromRight (84).withSizeKeepingCentre (84, 32));
-    right.removeFromRight (14);
+    right.removeFromRight (10);
     hostArea = right.removeFromRight (178).withSizeKeepingCentre (178, 32);
-    right.removeFromRight (14);
+    right.removeFromRight (10);
     patternArea = right.removeFromRight (204).withSizeKeepingCentre (204, 32);
     auto pa = patternArea.reduced (3);
     prevBtn.setBounds (pa.removeFromLeft (24));
@@ -244,7 +263,7 @@ void Header::paint (juce::Graphics& g)
     g.setColour (t.border);
     g.fillRect (nameArea.getRight() + 14, getHeight() / 2 - 11, 1, 22);
 
-    if (! ctx.ui.patternsView)
+    if (! ctx.ui.patternsView && ! ctx.ui.macrosView)
     {
         // TRACK dropdown content
         auto tb = trackBox.getBounds();
@@ -262,6 +281,12 @@ void Header::paint (juce::Graphics& g)
     else
     {
         chevron (g, stepsBtn.getBounds().toFloat().withWidth (28.0f), t.text2, true);
+        if (ctx.ui.macrosView)
+        {
+            g.setColour (t.text);
+            g.setFont (Fonts::sansSemi (13.0f).withExtraKerningFactor (0.14f));
+            g.drawText ("MACROS", stepsBtn.getBounds().withX (stepsBtn.getRight() + 14).withWidth (120), juce::Justification::centredLeft);
+        }
     }
 
     // pattern box

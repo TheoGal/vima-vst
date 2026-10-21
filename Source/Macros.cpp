@@ -1,0 +1,247 @@
+#include "Macros.h"
+#include "Operations.h"
+
+namespace vima
+{
+static const MacroTargetInfo infos[numMacroTargets] = {
+    { MacroTarget::none,        MacroKind::none,   "-",          "-",           false, 0, 1 },
+    { MacroTarget::pattern,     MacroKind::global, "PATTERN",    "Pattern",     false, 0, numPatterns - 1 },
+    { MacroTarget::chainOn,     MacroKind::global, "CHAIN ON",   "Chain On",    false, 0, 1 },
+    { MacroTarget::noteOut,     MacroKind::track,  "NOTES OUT",  "Notes Out",   false, 0, 1 },
+    { MacroTarget::ccOut,       MacroKind::track,  "CC OUT",     "CC Out",      false, 0, 1 },
+    { MacroTarget::length,      MacroKind::track,  "LENGTH",     "Length",      true,  minLength, maxSteps },
+    { MacroTarget::division,    MacroKind::track,  "DIVISION",   "Division",    true,  0, numDivisions - 1 },
+    { MacroTarget::direction,   MacroKind::track,  "DIRECTION",  "Direction",   true,  0, 2 },
+    { MacroTarget::swing,       MacroKind::track,  "SWING",      "Swing",       true,  0, 100 },
+    { MacroTarget::scaleOn,     MacroKind::track,  "SCALE ON",   "Scale On",    true,  0, 1 },
+    { MacroTarget::stepOn,      MacroKind::step,   "ON / OFF",   "On",          true,  0, 1 },
+    { MacroTarget::note,        MacroKind::step,   "NOTE",       "Note",        true,  0, 11 },
+    { MacroTarget::octave,      MacroKind::step,   "OCTAVE",     "Octave",      true,  minOctave, maxOctave },
+    { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
+    { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, 100 },
+    { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  0, 100 },
+    { MacroTarget::cc,          MacroKind::step,   "CC VALUE",   "CC Value",    true,  0, 127 },
+};
+
+const MacroTargetInfo& macroTargetInfo (MacroTarget t)
+{
+    return infos[juce::jlimit (0, numMacroTargets - 1, (int) t)];
+}
+
+MacroKind macroKind (MacroTarget t) { return macroTargetInfo (t).kind; }
+
+void macroLimits (MacroTarget t, const Globals& g, int& lo, int& hi)
+{
+    const auto& i = macroTargetInfo (t);
+    lo = i.min;
+    hi = i.max;
+    if (t == MacroTarget::octave) { lo = g.octaveLow; hi = g.octaveHigh; }
+}
+
+MacroMap defaultMacroMap (MacroTarget t, int track, int step, const Globals& g)
+{
+    MacroMap m;
+    m.target = t;
+    m.track = (std::int8_t) juce::jlimit (-1, numTracks - 1, track);
+    m.pattern = -1;
+    m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, step);
+    int lo = 0, hi = 1;
+    macroLimits (t, g, lo, hi);
+    m.min = (std::int16_t) lo;
+    m.max = (std::int16_t) hi;
+    return m;
+}
+
+int macroTrack (const MacroMap& m, int shownTrack)
+{
+    return juce::jlimit (0, numTracks - 1, m.track < 0 ? shownTrack : (int) m.track);
+}
+
+int macroPattern (const Project& p, const MacroMap& m)
+{
+    return juce::jlimit (0, numPatterns - 1, m.pattern < 0 ? p.currentPattern : (int) m.pattern);
+}
+
+std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int shownTrack)
+{
+    if (! m.mapped())
+        return std::nullopt;
+    const int t = macroTrack (m, shownTrack);
+    const auto& tp = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) t];
+    const auto& s = tp.steps[(size_t) juce::jlimit (0, maxSteps - 1, (int) m.step)];
+    const auto& r = p.routing[(size_t) t];
+    switch (m.target)
+    {
+        case MacroTarget::none:        break;
+        case MacroTarget::pattern:     return p.currentPattern;
+        case MacroTarget::chainOn:     return p.globals.chainOn ? 1 : 0;
+        case MacroTarget::noteOut:     return r.noteOut ? 1 : 0;
+        case MacroTarget::ccOut:       return r.ccOut ? 1 : 0;
+        case MacroTarget::length:      return (int) tp.length;
+        case MacroTarget::division:    return (int) tp.division;
+        case MacroTarget::direction:   return (int) tp.direction;
+        case MacroTarget::swing:       return (int) tp.swing;
+        case MacroTarget::scaleOn:     return tp.scaleOn ? 1 : 0;
+        case MacroTarget::stepOn:      return s.on ? 1 : 0;
+        case MacroTarget::note:        return (int) s.pitchClass;
+        case MacroTarget::octave:      return (int) s.octave;
+        case MacroTarget::velocity:    return (int) s.velocity;
+        case MacroTarget::gate:        return (int) s.gate;
+        case MacroTarget::probability: return (int) s.probability;
+        case MacroTarget::cc:          return (int) s.cc;
+    }
+    return std::nullopt;
+}
+
+bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMap& m, int shownTrack, int v)
+{
+    const auto current = macroTargetValue (p, m, shownTrack);
+    if (! current.has_value())
+        return false;
+    int lo = 0, hi = 1;
+    macroLimits (m.target, p.globals, lo, hi);
+    v = juce::jlimit (lo, hi, v);
+    if (v == *current)
+        return false;
+
+    const int t = macroTrack (m, shownTrack);
+    auto& tp = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) t];
+    auto& s = tp.steps[(size_t) juce::jlimit (0, maxSteps - 1, (int) m.step)];
+    auto& r = p.routing[(size_t) t];
+    switch (m.target)
+    {
+        case MacroTarget::none:        return false;
+        case MacroTarget::pattern:     queuedPattern = v; return false;   // switches when quantize allows
+        case MacroTarget::chainOn:     p.globals.chainOn = v != 0; break;
+        case MacroTarget::noteOut:     r.noteOut = v != 0; break;
+        case MacroTarget::ccOut:       r.ccOut = v != 0; break;
+        case MacroTarget::length:      tp.length = (std::uint8_t) v; break;
+        case MacroTarget::division:    tp.division = (std::uint8_t) v; break;
+        case MacroTarget::direction:   tp.direction = (Direction) v; break;
+        case MacroTarget::swing:       tp.swing = (std::uint8_t) v; break;
+        case MacroTarget::scaleOn:     tp.scaleOn = v != 0; break;
+        case MacroTarget::stepOn:      s.on = v != 0; break;
+        case MacroTarget::note:        s.pitchClass = (std::int8_t) v; break;
+        case MacroTarget::octave:      s.octave = (std::int8_t) v; break;
+        case MacroTarget::velocity:    s.velocity = (std::uint8_t) v; break;
+        case MacroTarget::gate:        s.gate = (std::uint8_t) v; break;
+        case MacroTarget::probability: s.probability = (std::uint8_t) v; break;
+        case MacroTarget::cc:          s.cc = (std::uint8_t) v; break;
+    }
+    return true;
+}
+
+int macroPlain (const MacroMap& m, float normalized)
+{
+    const float f = juce::jlimit (0.0f, 1.0f, normalized);
+    return juce::roundToInt ((float) m.min + (float) (m.max - m.min) * f);
+}
+
+float macroNormalized (const MacroMap& m, int plain)
+{
+    if (m.max == m.min)
+        return 0.0f;
+    return juce::jlimit (0.0f, 1.0f, (float) (plain - m.min) / (float) (m.max - m.min));
+}
+
+static juce::String plainText (const MacroMap& m, int v, bool middleCIsC4)
+{
+    switch (m.target)
+    {
+        case MacroTarget::none:        return {};
+        case MacroTarget::pattern:     return patternLabel (juce::jlimit (0, numPatterns - 1, v));
+        case MacroTarget::chainOn:
+        case MacroTarget::noteOut:
+        case MacroTarget::ccOut:
+        case MacroTarget::scaleOn:
+        case MacroTarget::stepOn:      return v != 0 ? "ON" : "OFF";
+        case MacroTarget::division:    return divisionInfo (v).name;
+        case MacroTarget::direction:   return v == 0 ? "FWD" : v == 1 ? "BWD" : "PING";
+        case MacroTarget::swing:
+        case MacroTarget::gate:
+        case MacroTarget::probability: return juce::String (v) + "%";
+        case MacroTarget::octave:      return juce::String (v + (middleCIsC4 ? 1 : 0));
+        case MacroTarget::note:        return pitchClassName (((v % 12) + 12) % 12);
+        case MacroTarget::length:
+        case MacroTarget::velocity:
+        case MacroTarget::cc:          return juce::String (v);
+    }
+    return juce::String (v);
+}
+
+juce::String macroValueText (const Globals& g, const MacroMap& m, int v)
+{
+    return plainText (m, v, g.middleCIsC4);
+}
+
+juce::String macroValueText (const Project& p, const MacroMap& m, int shownTrack, int v)
+{
+    if (m.target == MacroTarget::note)
+    {
+        // show the note that sounds: the scale applies when the track's scale is on
+        const auto& tp = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) macroTrack (m, shownTrack)];
+        int pc = ((v % 12) + 12) % 12;
+        if (tp.scaleOn)
+            pc = ((quantizeToScale (p.globals.scaleMask(), p.globals.root, 60 + pc) % 12) + 12) % 12;
+        return pitchClassName (pc);
+    }
+    return plainText (m, v, p.globals.middleCIsC4);
+}
+
+static const char* shortName (MacroTarget t)
+{
+    switch (t)
+    {
+        case MacroTarget::stepOn:      return "ON";
+        case MacroTarget::note:        return "NOTE";
+        case MacroTarget::octave:      return "OCT";
+        case MacroTarget::velocity:    return "VEL";
+        case MacroTarget::gate:        return "GATE";
+        case MacroTarget::probability: return "PROB";
+        case MacroTarget::cc:          return "CC";
+        case MacroTarget::none:
+        case MacroTarget::pattern:
+        case MacroTarget::chainOn:
+        case MacroTarget::noteOut:
+        case MacroTarget::ccOut:
+        case MacroTarget::length:
+        case MacroTarget::division:
+        case MacroTarget::direction:
+        case MacroTarget::swing:
+        case MacroTarget::scaleOn:     break;
+    }
+    return macroTargetInfo (t).name;
+}
+
+juce::String macroTargetName (const MacroMap& m, bool compact)
+{
+    if (! m.mapped())
+        return "-";
+    const auto& i = macroTargetInfo (m.target);
+    if (i.kind == MacroKind::step)
+        return "STEP " + juce::String ((int) m.step + 1).paddedLeft ('0', 2) + " " + (compact ? shortName (m.target) : i.name);
+    return i.name;
+}
+
+juce::String macroWhereText (const MacroMap& m, bool compact)
+{
+    if (! m.mapped())
+        return "NOT MAPPED";
+    const auto& i = macroTargetInfo (m.target);
+    if (i.kind == MacroKind::global)
+        return "GLOBAL";
+    const juce::String dot (juce::CharPointer_UTF8 (" \xc2\xb7 "));
+    const juce::String track = m.track < 0 ? juce::String (compact ? "SHOWN" : "SHOWN TRK") : "T" + juce::String ((int) m.track + 1).paddedLeft ('0', 2);
+    if (! i.perPattern)
+        return track;
+    juce::String pattern = m.pattern < 0 ? juce::String (compact ? "CUR" : "CURRENT") : patternLabel (m.pattern);
+    if (compact && m.pattern >= 0)
+        pattern = pattern.removeCharacters (" ");
+    return track + dot + pattern;
+}
+
+juce::String macroId (int index)
+{
+    return "M" + juce::String (index + 1).paddedLeft ('0', 3);
+}
+} // namespace vima

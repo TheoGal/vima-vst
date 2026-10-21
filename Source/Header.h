@@ -1,7 +1,7 @@
 #pragma once
 
 // Top bar: name, track dropdown, NOTES/CC switch with output LEDs, pattern quick picker,
-// host status, UNDO, SETTINGS (SPEC.md 12, layout item 1; 7.4).
+// host status, UNDO, MACROS, SETTINGS (SPEC.md 12, layout item 1; 7.4).
 
 #include "Context.h"
 #include "Widgets.h"
@@ -19,7 +19,7 @@ public:
 private:
     void showTrackMenu();
     Context& ctx;
-    Pill trackBox, notesBtn, ccBtn, stepsBtn, prevBtn, nextBtn, patternBtn, undoBtn, settingsBtn;
+    Pill trackBox, notesBtn, ccBtn, stepsBtn, prevBtn, nextBtn, patternBtn, undoBtn, macrosBtn, settingsBtn;
     juce::Rectangle<int> modeArea, patternArea, hostArea, nameArea;
 };
 } // namespace vima

@@ -195,13 +195,44 @@ const char* pitchClassName (int pc);
 juce::String noteDisplayName (int pitchClass, int octave, bool middleCIsC4);
 
 // ---------------------------------------------------------------------------------------
+// Macros (SPEC.md 13.1): 128 host-automatable knobs, each mapped to one target
+constexpr int numMacros = 128;
+constexpr int macrosPerBank = 32;
+
+enum class MacroTarget : std::uint8_t
+{
+    none,
+    pattern, chainOn,                                                      // global
+    noteOut, ccOut, length, division, direction, swing, scaleOn,           // track
+    stepOn, note, octave, velocity, gate, probability, cc                  // step
+};
+constexpr int numMacroTargets = 17;
+
+struct MacroMap
+{
+    MacroTarget target = MacroTarget::none;
+    std::int8_t track = -1;      // -1 = the track shown in the editor
+    std::int8_t pattern = -1;    // -1 = the current pattern
+    std::uint8_t step = 0;       // 0..31 (step targets)
+    std::int16_t min = 0, max = 1;
+
+    bool mapped() const { return target != MacroTarget::none; }
+    bool operator== (const MacroMap& o) const
+    {
+        return target == o.target && track == o.track && pattern == o.pattern && step == o.step && min == o.min && max == o.max;
+    }
+    bool operator!= (const MacroMap& o) const { return ! (*this == o); }
+};
+
+// ---------------------------------------------------------------------------------------
 // The whole persistent state
 struct Project
 {
+    std::array<MacroMap, numMacros> macros {};
     std::array<Pattern, numPatterns> patterns {};
     std::array<TrackRouting, numTracks> routing {};
     Globals globals;
-    int currentPattern = 0;   // pattern shown and played (0..191)
+    int currentPattern = 0;   // pattern shown and played (0..63)
 
     Project();
     void resetToDefaults();

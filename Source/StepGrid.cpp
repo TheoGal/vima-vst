@@ -161,6 +161,14 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     cc.pixelsPerStep = 3.0f;
     addAndMakeVisible (cc);
 
+    // LEARN targets (SPEC.md 13.1)
+    getProperties().set ("learnStep", index);
+    setLearnTarget (toggle, MacroTarget::stepOn);
+    setLearnTarget (pitch, MacroTarget::note);
+    setLearnTarget (octave, MacroTarget::octave);
+    setLearnTarget (slider, -1);
+    setLearnTarget (cc, MacroTarget::cc);
+
     refreshState();
 }
 

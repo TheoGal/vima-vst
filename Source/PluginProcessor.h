@@ -4,7 +4,7 @@
 #include "Model.h"
 #include "Engine.h"
 #include "Operations.h"
-#include "HostParams.h"
+#include "MacroParams.h"
 
 // VIMA: instrument plugin that outputs MIDI (notes and CC) from a 16-track step sequencer.
 //
@@ -85,12 +85,12 @@ public:
     std::atomic<double> hostBpm { 120.0 };
     std::atomic<float> uiScale { 1.0f };   // editor size (1.0 = 1200 x 720), saved with the project
 
-    vima::HostParams hostParams { *this };   // automation (SPEC 13.1)
+    vima::MacroParams macros { *this };      // the 128 automatable macros (SPEC 13.1)
     void syncParamsToHost();                 // message thread; also run by the timer
+    std::atomic<int> shownTrack { 0 };       // track shown in the editor (macro targets "SHOWN")
 
 private:
     void timerCallback() override { syncParamsToHost(); }
-    std::vector<int> paramValues;
     double sampleRate = 44100.0;
     juce::MidiBuffer outBuffer;
 

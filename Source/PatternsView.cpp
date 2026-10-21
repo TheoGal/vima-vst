@@ -17,6 +17,7 @@ namespace
 // ---------------------------------------------------------------------------------------
 PatternSlot::PatternSlot (Context& c, int s) : ctx (c), slot (s)
 {
+    setLearnTarget (*this, MacroTarget::pattern);
     setMouseCursor (juce::MouseCursor::PointingHandCursor);
 }
 
@@ -330,6 +331,7 @@ PatternsView::PatternsView (Context& c) : ctx (c)
         const auto& t = Theme::current();
         return on ? Pill::Look { t.neutral, t.neutral, t.onNeutral, 1.5f, false } : Pill::Look { juce::Colours::transparentBlack, t.dim, t.muted, 1.5f, false };
     };
+    setLearnTarget (chainOnBtn, MacroTarget::chainOn);
     chainOnBtn.radius = loopBtn.radius = 4.0f;
     chainOnBtn.font = loopBtn.font = [] { return Fonts::monoSemi (10.0f); };
     chainOnBtn.look = [this, toggleLook] { return toggleLook (ctx.globalsCopy().chainOn); };

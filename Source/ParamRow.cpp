@@ -240,6 +240,15 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     }
     addAndMakeVisible (sliderTile);
 
+    // LEARN targets (SPEC.md 13.1)
+    setLearnTarget (lengthTile, MacroTarget::length);
+    setLearnTarget (swingTile, MacroTarget::swing);
+    setLearnTarget (divisionTile, MacroTarget::division);
+    setLearnTarget (directionTile, MacroTarget::direction);
+    setLearnTarget (scaleTile, MacroTarget::scaleOn);
+    setLearnTarget (noteOutTile, MacroTarget::noteOut);
+    setLearnTarget (ccOutTile, MacroTarget::ccOut);
+
     updateVisibility();
 }
 

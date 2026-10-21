@@ -155,6 +155,7 @@ void Project::resetToDefaults()
     }
     globals = Globals();
     currentPattern = 0;
+    for (auto& m : macros) m = MacroMap();
 }
 
 static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
@@ -256,6 +257,21 @@ juce::ValueTree Project::toValueTree() const
         root.appendChild (rt, nullptr);
     }
 
+    for (int i = 0; i < numMacros; ++i)
+    {
+        const auto& m = macros[(size_t) i];
+        if (! m.mapped()) continue;
+        juce::ValueTree mt ("Macro");
+        mt.setProperty ("index", i, nullptr);
+        mt.setProperty ("target", (int) m.target, nullptr);
+        mt.setProperty ("track", (int) m.track, nullptr);
+        mt.setProperty ("pattern", (int) m.pattern, nullptr);
+        mt.setProperty ("step", (int) m.step, nullptr);
+        mt.setProperty ("min", (int) m.min, nullptr);
+        mt.setProperty ("max", (int) m.max, nullptr);
+        root.appendChild (mt, nullptr);
+    }
+
     for (int p = 0; p < numPatterns; ++p)
     {
         const auto& pat = patterns[(size_t) p];
@@ -343,6 +359,19 @@ void Project::fromValueTree (const juce::ValueTree& root)
             r.noteOut = (bool) rt.getProperty ("noteOut", true);
             r.ccOut = (bool) rt.getProperty ("ccOut", false);
             r.ccNumber = (std::uint8_t) juce::jlimit (0, 127, (int) rt.getProperty ("ccNumber", 74));
+        }
+        else if (rt.hasType ("Macro"))
+        {
+            const int i = (int) rt.getProperty ("index", -1);
+            const int target = (int) rt.getProperty ("target", 0);
+            if (i < 0 || i >= numMacros || target <= 0 || target >= numMacroTargets) continue;
+            auto& m = macros[(size_t) i];
+            m.target = (MacroTarget) target;
+            m.track = (std::int8_t) juce::jlimit (-1, numTracks - 1, (int) rt.getProperty ("track", -1));
+            m.pattern = (std::int8_t) juce::jlimit (-1, numPatterns - 1, (int) rt.getProperty ("pattern", -1));
+            m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, (int) rt.getProperty ("step", 0));
+            m.min = (std::int16_t) (int) rt.getProperty ("min", 0);
+            m.max = (std::int16_t) (int) rt.getProperty ("max", 1);
         }
         else if (rt.hasType ("Pattern"))
         {

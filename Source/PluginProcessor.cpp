@@ -5,7 +5,6 @@ VimaProcessor::VimaProcessor()
     : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
     outBuffer.ensureSize (8192);
-    paramValues.reserve ((size_t) hostParams.size());
     startTimerHz (20);
 }
 
@@ -13,9 +12,9 @@ void VimaProcessor::syncParamsToHost()
 {
     {
         const Lock sl (lock);
-        hostParams.capture (project, paramValues);
+        macros.capture (project, shownTrack.load());
     }
-    hostParams.pushToHost (paramValues);
+    macros.pushToHost();
 }
 
 bool VimaProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
@@ -58,7 +57,7 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
     outBuffer.clear();
     {
         const Lock sl (lock);
-        if (hostParams.applyFromHost (project, engine))
+        if (macros.applyFromHost (project, engine, shownTrack.load()))
             ++revision;
         engine.process (project, host, buffer.getNumSamples(), midi, outBuffer);
     }
@@ -93,6 +92,7 @@ void VimaProcessor::getStateInformation (juce::MemoryBlock& destData)
         state = project.toValueTree();
     }
     state.setProperty ("uiScale", uiScale.load(), nullptr);
+    state.setProperty ("shownTrack", shownTrack.load(), nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
 }
@@ -106,6 +106,7 @@ void VimaProcessor::setStateInformation (const void* data, int sizeInBytes)
     if (! state.hasType ("VIMA"))
         return;
     uiScale = juce::jlimit (0.75f, 2.0f, (float) (double) state.getProperty ("uiScale", 1.0));
+    shownTrack = juce::jlimit (0, vima::numTracks - 1, (int) state.getProperty ("shownTrack", 0));
     auto loaded = std::make_unique<vima::Project>();
     loaded->fromValueTree (state);
     {

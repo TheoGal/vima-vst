@@ -19,7 +19,7 @@ The full design is in [SPEC.md](SPEC.md).
   chain with repeats and drag-to-reorder, quantized pattern changes, pattern change by incoming CC
 - CC smoothing between steps, undo, dark and light themes, resizable window (75% to 200%)
 - Follows the host transport
-- Host automation: Pattern, Chain On, and per track Notes Out, CC Out, Length, Division, Direction, Swing
+- 128 macros for host automation: map any of them to pattern, chain, track settings or step values (fixed, or the track on screen for controllers), with MIN / MAX and LEARN
 
 ## Download
 
