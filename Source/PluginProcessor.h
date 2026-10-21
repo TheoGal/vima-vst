@@ -1,29 +1,18 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
-#include <array>
-#include <atomic>
-#include <vector>
+#include "Model.h"
+#include "Engine.h"
+#include "Operations.h"
 
-// Milestone 1: MIDI routing test.
-// VIMA loads as an instrument and, while the host plays, sends a fixed test
-// pattern on MIDI channels 1-4 (notes plus a CC 74 sweep). This lets the
-// routing in the DAW (for example Ableton Live) be checked before the full
-// sequencer is built. See SPEC.md, section 2 and 14.
+// VIMA: instrument plugin that outputs MIDI (notes and CC) from a 16-track step sequencer.
+//
+// Threading: the Project is shared between the message thread (editing) and the audio
+// thread (playback), guarded by a SpinLock that is only ever held briefly. All edits go
+// through edit(), which also records undo.
 class VimaProcessor : public juce::AudioProcessor
 {
 public:
-    static constexpr int numTestChannels = 4;
-
-    struct TestChannel
-    {
-        int midiChannel;      // 1-16
-        int note;             // MIDI note number
-        const char* rhythm;   // human readable description
-    };
-
-    static const std::array<TestChannel, numTestChannels>& testChannels();
-
     VimaProcessor();
     ~VimaProcessor() override = default;
 
@@ -51,30 +40,40 @@ public:
     void getStateInformation (juce::MemoryBlock& destData) override;
     void setStateInformation (const void* data, int sizeInBytes) override;
 
-    // Shared with the editor (message thread reads / toggles, audio thread uses)
-    std::array<std::atomic<bool>, numTestChannels> notesEnabled;
-    std::array<std::atomic<bool>, numTestChannels> ccEnabled;
-    std::array<std::atomic<int>, numTestChannels> noteCounter;   // increments on every note-on
-    std::array<std::atomic<int>, numTestChannels> ccValue;       // last CC value sent
+    // ---- shared state ---------------------------------------------------------------
+    using Lock = juce::SpinLock::ScopedLockType;
+    juce::SpinLock lock;
+    vima::Project project;      // access only while holding `lock`
+    vima::Engine engine;
+    vima::UndoHistory undo;     // message thread only
 
+    // Read a value from the project under the lock
+    template <typename Fn> auto read (Fn&& fn)
+    {
+        const Lock sl (lock);
+        return fn (static_cast<const vima::Project&> (project));
+    }
+
+    // Change the project; if undoPattern >= 0, that pattern is saved for undo first
+    template <typename Fn> void edit (int undoPattern, Fn&& fn)
+    {
+        const Lock sl (lock);
+        if (undoPattern >= 0)
+            undo.push (project, undoPattern);
+        fn (project);
+        ++revision;
+    }
+
+    bool performUndo();
+    void queuePattern (int index);   // follows the quantize setting
+
+    std::atomic<int> revision { 0 };   // bumped on every edit, for UI refresh
     std::atomic<bool> hostPlaying { false };
     std::atomic<double> hostBpm { 120.0 };
-    std::atomic<double> hostPpq { 0.0 };
 
 private:
-    struct PendingOff
-    {
-        double ppq;
-        int channel;
-        int note;
-    };
-
-    void flushNotes (juce::MidiBuffer& midi, int samplePos);
-
     double sampleRate = 44100.0;
-    bool wasPlaying = false;
-    double lastPpqEnd = -1.0;
-    std::vector<PendingOff> pending;
+    juce::MidiBuffer outBuffer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VimaProcessor)
 };

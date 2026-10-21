@@ -1,0 +1,173 @@
+#pragma once
+
+// VIMA data model: steps, tracks, patterns, global settings, scales.
+// Plain data, no JUCE GUI dependency, so the engine and tests can use it directly.
+// See SPEC.md sections 4-7 and 11.
+
+#include <juce_core/juce_core.h>
+#include <juce_data_structures/juce_data_structures.h>
+#include <array>
+#include <cstdint>
+
+namespace vima
+{
+constexpr int numTracks = 16;
+constexpr int maxSteps = 32;
+constexpr int minLength = 4;
+constexpr int numBanks = 12;
+constexpr int patternsPerBank = 16;
+constexpr int numPatterns = numBanks * patternsPerBank;   // 192
+constexpr int maxChainEntries = 64;
+
+// Internal octave numbering: MIDI note = 12 * (octave + 2) + pitchClass, so C3 = 60
+// (the "middle C is C3" convention). The C4 convention only changes the displayed number.
+constexpr int minOctave = -2;
+constexpr int maxOctave = 8;
+
+inline int midiNote (int octave, int pitchClass) { return 12 * (octave + 2) + pitchClass; }
+
+// ---------------------------------------------------------------------------------------
+struct Step
+{
+    bool on = false;
+    std::int8_t pitchClass = 0;   // 0-11 (C to B)
+    std::int8_t octave = 3;       // minOctave..maxOctave
+    std::uint8_t velocity = 100;  // 1-127 (never 0: velocity 0 is a note-off in MIDI)
+    std::uint8_t gate = 50;       // 1-100 % of one step
+    std::uint8_t probability = 100; // 0-100 %
+    std::uint8_t cc = 64;         // 0-127
+
+    bool operator== (const Step& o) const
+    {
+        return on == o.on && pitchClass == o.pitchClass && octave == o.octave && velocity == o.velocity
+            && gate == o.gate && probability == o.probability && cc == o.cc;
+    }
+    bool operator!= (const Step& o) const { return ! (*this == o); }
+};
+
+// ---------------------------------------------------------------------------------------
+enum class Direction : std::uint8_t { forward, backward, pingPong };
+
+// Divisions: straight 1/1 .. 1/32, then triplets 1/2T .. 1/32T
+struct DivisionInfo
+{
+    const char* name;
+    double stepPpq;   // length of one step in quarter notes
+};
+
+constexpr int numDivisions = 11;
+const DivisionInfo& divisionInfo (int index);
+int defaultDivision();   // 1/16
+
+// Per track, per pattern: musical settings (stored in each pattern)
+struct TrackPattern
+{
+    std::uint8_t length = 16;          // 4-32
+    std::uint8_t division = 4;         // index into divisions (4 = 1/16)
+    Direction direction = Direction::forward;
+    std::uint8_t swing = 0;            // 0-100 %
+    bool scaleOn = true;
+    std::array<Step, maxSteps> steps {};
+
+    bool hasOnSteps() const;
+    int onStepCount() const;
+};
+
+struct Pattern
+{
+    std::array<TrackPattern, numTracks> tracks {};
+    bool isEmpty() const;
+    double lengthPpq() const;   // one play of the pattern = its longest track (length x division)
+};
+
+// Per track, global (not per pattern): routing settings
+struct TrackRouting
+{
+    std::uint8_t midiChannel = 1;   // 1-16
+    bool noteOut = true;
+    bool ccOut = false;
+    std::uint8_t ccNumber = 74;     // 0-127
+};
+
+// ---------------------------------------------------------------------------------------
+// Scales: 14 built-in + USER. Each is a 12-bit mask of pitch classes relative to the root.
+constexpr int numScales = 15;
+constexpr int userScaleIndex = 14;
+struct ScaleInfo
+{
+    const char* shortName;   // shown in the SCALE tile, e.g. "MIN"
+    const char* longName;    // shown in the popover, e.g. "MINOR"
+    std::uint16_t mask;      // bit n = semitone n above root is in the scale
+};
+const ScaleInfo& scaleInfo (int index);
+
+enum class Quantize : std::uint8_t { off, beat, bar, patternEnd };
+
+struct ChainEntry
+{
+    std::uint8_t pattern = 0;   // 0..191
+    std::uint8_t repeats = 1;   // 1..99
+};
+
+// Randomize lane ranges (global, shared by all tracks)
+struct LaneRange { int min, max; };
+
+struct Globals
+{
+    int scale = 1;                 // MINOR
+    int root = 0;                  // C
+    std::uint16_t userScale = 0b010110101101;   // natural minor shape by default, root always on
+    int octaveLow = 0, octaveHigh = 6;          // octave range for knobs and randomize
+    bool middleCIsC4 = false;      // display convention only
+    bool lightTheme = false;
+
+    bool ccSmoothing = true;
+    int ccSmoothingTime = 100;     // 1-100 % of the time between two active steps
+
+    bool patternCC = false;
+    int patternCCChannel = 16;
+    int patternCCNumber = 20;
+    Quantize quantize = Quantize::bar;
+
+    bool chainOn = false;
+    bool chainLoop = true;
+    juce::Array<ChainEntry> chain;
+
+    // Randomize / smooth lane selection and ranges
+    bool laneOn = true, laneNote = true, laneOct = false, laneVel = true, laneGate = true, laneProb = false, laneCC = true;
+    LaneRange rangeNote { 0, 11 }, rangeOct { 1, 4 }, rangeVel { 60, 110 }, rangeGate { 25, 90 },
+              rangeProb { 40, 100 }, rangeCC { 20, 110 };
+
+    std::uint16_t scaleMask() const;   // current scale mask (relative to root)
+};
+
+// ---------------------------------------------------------------------------------------
+// Scale helpers (all pitch classes absolute, 0 = C)
+bool inScale (std::uint16_t mask, int root, int pitchClass);
+int quantizeToScale (std::uint16_t mask, int root, int midiNoteNumber);   // nearest in-scale note, ties go down
+int scaleSize (std::uint16_t mask);
+// Degree index (0-based, counted from the root) of an absolute pitch: floor-based, continuous across octaves
+int pitchToDegree (std::uint16_t mask, int root, int midiNoteNumber);
+int degreeToPitch (std::uint16_t mask, int root, int degree);
+
+const char* pitchClassName (int pc);
+juce::String noteDisplayName (int pitchClass, int octave, bool middleCIsC4);
+
+// ---------------------------------------------------------------------------------------
+// The whole persistent state
+struct Project
+{
+    std::array<Pattern, numPatterns> patterns {};
+    std::array<TrackRouting, numTracks> routing {};
+    Globals globals;
+    int currentPattern = 0;   // pattern shown and played (0..191)
+
+    Project();
+    void resetToDefaults();
+
+    juce::ValueTree toValueTree() const;
+    void fromValueTree (const juce::ValueTree&);
+};
+
+juce::String patternLabel (int patternIndex);   // "B01 · 01"
+} // namespace vima

@@ -45,6 +45,9 @@ juce_add_binary_data(VimaData SOURCES
     Resources/fonts/IBMPlexMono-SemiBold.ttf)
 
 set(VIMA_SOURCES
+    Source/Model.cpp
+    Source/Engine.cpp
+    Source/Operations.cpp
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp)
 

@@ -1,0 +1,366 @@
+#include "Model.h"
+
+namespace vima
+{
+// ---------------------------------------------------------------------------------------
+static const DivisionInfo divisions[numDivisions] = {
+    { "1/1", 4.0 },  { "1/2", 2.0 },        { "1/4", 1.0 },        { "1/8", 0.5 },          { "1/16", 0.25 }, { "1/32", 0.125 },
+    { "1/2T", 4.0 / 3.0 }, { "1/4T", 2.0 / 3.0 }, { "1/8T", 1.0 / 3.0 }, { "1/16T", 1.0 / 6.0 }, { "1/32T", 1.0 / 12.0 },
+};
+
+const DivisionInfo& divisionInfo (int index) { return divisions[juce::jlimit (0, numDivisions - 1, index)]; }
+int defaultDivision() { return 4; }
+
+static const ScaleInfo scales[numScales] = {
+    { "MAJ",   "MAJOR",      0xAB5 },
+    { "MIN",   "MINOR",      0x5AD },
+    { "HMIN",  "HARM MIN",   0x9AD },
+    { "MMIN",  "MEL MIN",    0xAAD },
+    { "DOR",   "DORIAN",     0x6AD },
+    { "PHR",   "PHRYGIAN",   0x5AB },
+    { "LYD",   "LYDIAN",     0xAD5 },
+    { "MIX",   "MIXOLYD",    0x6B5 },
+    { "LOC",   "LOCRIAN",    0x56B },
+    { "PMAJ",  "PENTA MAJ",  0x295 },
+    { "PMIN",  "PENTA MIN",  0x4A9 },
+    { "BLUES", "BLUES",      0x4E9 },
+    { "WHOLE", "WHOLE TONE", 0x555 },
+    { "CHROM", "CHROMATIC",  0xFFF },
+    { "USER",  "USER",       0x000 },   // the mask comes from Globals::userScale
+};
+
+const ScaleInfo& scaleInfo (int index) { return scales[juce::jlimit (0, numScales - 1, index)]; }
+
+std::uint16_t Globals::scaleMask() const
+{
+    auto m = scale == userScaleIndex ? userScale : scaleInfo (scale).mask;
+    return (std::uint16_t) ((m | 1) & 0xFFF);   // the root is always in the scale
+}
+
+// ---------------------------------------------------------------------------------------
+static int mod12 (int v) { return ((v % 12) + 12) % 12; }
+static int floorDiv (int a, int b) { return (a >= 0) ? a / b : -((-a + b - 1) / b); }
+static int popcount12 (std::uint16_t m)
+{
+    int n = 0;
+    for (int i = 0; i < 12; ++i) n += (m >> i) & 1;
+    return n;
+}
+
+bool inScale (std::uint16_t mask, int root, int pitchClass)
+{
+    return ((mask >> mod12 (pitchClass - root)) & 1) != 0;
+}
+
+int quantizeToScale (std::uint16_t mask, int root, int m)
+{
+    if (inScale (mask, root, m)) return m;
+    for (int d = 1; d < 12; ++d)
+    {
+        if (inScale (mask, root, m - d)) return m - d;
+        if (inScale (mask, root, m + d)) return m + d;
+    }
+    return m;
+}
+
+int scaleSize (std::uint16_t mask) { return juce::jmax (1, popcount12 ((std::uint16_t) (mask | 1))); }
+
+int pitchToDegree (std::uint16_t mask, int root, int m)
+{
+    mask = (std::uint16_t) (mask | 1);
+    const int rel = m - root;
+    const int oct = floorDiv (rel, 12);
+    const int pcRel = rel - oct * 12;
+    int idx = popcount12 ((std::uint16_t) (mask & ((1u << pcRel) - 1u)));
+    if (((mask >> pcRel) & 1) == 0) idx -= 1;   // not in scale: floor to the degree below
+    return oct * scaleSize (mask) + idx;
+}
+
+int degreeToPitch (std::uint16_t mask, int root, int degree)
+{
+    mask = (std::uint16_t) (mask | 1);
+    const int size = scaleSize (mask);
+    const int oct = floorDiv (degree, size);
+    int idx = degree - oct * size;
+    int semis = 0;
+    for (int s = 0; s < 12; ++s)
+        if ((mask >> s) & 1)
+        {
+            if (idx == 0) { semis = s; break; }
+            --idx;
+        }
+    return root + oct * 12 + semis;
+}
+
+const char* pitchClassName (int pc)
+{
+    static const char* names[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
+    return names[mod12 (pc)];
+}
+
+juce::String noteDisplayName (int pitchClass, int octave, bool middleCIsC4)
+{
+    return juce::String (pitchClassName (pitchClass)) + juce::String (octave + (middleCIsC4 ? 1 : 0));
+}
+
+juce::String patternLabel (int patternIndex)
+{
+    const int bank = patternIndex / patternsPerBank + 1;
+    const int slot = patternIndex % patternsPerBank + 1;
+    return "B" + juce::String (bank).paddedLeft ('0', 2) + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 "))
+         + juce::String (slot).paddedLeft ('0', 2);
+}
+
+// ---------------------------------------------------------------------------------------
+bool TrackPattern::hasOnSteps() const
+{
+    for (int i = 0; i < length; ++i)
+        if (steps[(size_t) i].on) return true;
+    return false;
+}
+
+int TrackPattern::onStepCount() const
+{
+    int n = 0;
+    for (int i = 0; i < length; ++i)
+        if (steps[(size_t) i].on) ++n;
+    return n;
+}
+
+bool Pattern::isEmpty() const
+{
+    for (const auto& t : tracks)
+        if (t.hasOnSteps()) return false;
+    return true;
+}
+
+double Pattern::lengthPpq() const
+{
+    double longest = 0.0;
+    for (const auto& t : tracks)
+        longest = juce::jmax (longest, t.length * divisionInfo (t.division).stepPpq);
+    return longest;
+}
+
+// ---------------------------------------------------------------------------------------
+Project::Project() { resetToDefaults(); }
+
+void Project::resetToDefaults()
+{
+    for (auto& p : patterns) p = Pattern();
+    for (int t = 0; t < numTracks; ++t)
+    {
+        routing[(size_t) t] = TrackRouting();
+        routing[(size_t) t].midiChannel = (std::uint8_t) (t + 1);
+    }
+    globals = Globals();
+    currentPattern = 0;
+}
+
+static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
+{
+    juce::MemoryBlock mb;
+    for (const auto& s : steps)
+    {
+        const std::uint8_t bytes[7] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
+                                        (std::uint8_t) (s.octave - minOctave), s.velocity, s.gate, s.probability, s.cc };
+        mb.append (bytes, sizeof (bytes));
+    }
+    return mb.toBase64Encoding();
+}
+
+static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& steps)
+{
+    juce::MemoryBlock mb;
+    if (! mb.fromBase64Encoding (text) || mb.getSize() < (size_t) maxSteps * 7)
+        return;
+    const auto* d = static_cast<const std::uint8_t*> (mb.getData());
+    for (int i = 0; i < maxSteps; ++i)
+    {
+        const auto* b = d + i * 7;
+        Step s;
+        s.on = b[0] != 0;
+        s.pitchClass = (std::int8_t) juce::jlimit (0, 11, (int) b[1]);
+        s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, (int) b[2] + minOctave);
+        s.velocity = (std::uint8_t) juce::jlimit (1, 127, (int) b[3]);
+        s.gate = (std::uint8_t) juce::jlimit (1, 100, (int) b[4]);
+        s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[5]);
+        s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[6]);
+        steps[(size_t) i] = s;
+    }
+}
+
+static const Pattern& emptyPattern()
+{
+    static const Pattern p;
+    return p;
+}
+
+static bool patternEquals (const Pattern& a, const Pattern& b)
+{
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto& x = a.tracks[(size_t) t];
+        const auto& y = b.tracks[(size_t) t];
+        if (x.length != y.length || x.division != y.division || x.direction != y.direction || x.swing != y.swing
+            || x.scaleOn != y.scaleOn || x.steps != y.steps)
+            return false;
+    }
+    return true;
+}
+
+juce::ValueTree Project::toValueTree() const
+{
+    juce::ValueTree root ("VIMA");
+    root.setProperty ("version", 1, nullptr);
+    root.setProperty ("currentPattern", currentPattern, nullptr);
+
+    const auto& g = globals;
+    juce::ValueTree gt ("Globals");
+    gt.setProperty ("scale", g.scale, nullptr);
+    gt.setProperty ("root", g.root, nullptr);
+    gt.setProperty ("userScale", (int) g.userScale, nullptr);
+    gt.setProperty ("octaveLow", g.octaveLow, nullptr);
+    gt.setProperty ("octaveHigh", g.octaveHigh, nullptr);
+    gt.setProperty ("middleCIsC4", g.middleCIsC4, nullptr);
+    gt.setProperty ("lightTheme", g.lightTheme, nullptr);
+    gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
+    gt.setProperty ("ccSmoothingTime", g.ccSmoothingTime, nullptr);
+    gt.setProperty ("patternCC", g.patternCC, nullptr);
+    gt.setProperty ("patternCCChannel", g.patternCCChannel, nullptr);
+    gt.setProperty ("patternCCNumber", g.patternCCNumber, nullptr);
+    gt.setProperty ("quantize", (int) g.quantize, nullptr);
+    gt.setProperty ("chainOn", g.chainOn, nullptr);
+    gt.setProperty ("chainLoop", g.chainLoop, nullptr);
+    juce::StringArray chainText;
+    for (const auto& e : g.chain) chainText.add (juce::String (e.pattern) + ":" + juce::String (e.repeats));
+    gt.setProperty ("chain", chainText.joinIntoString (","), nullptr);
+    juce::String lanes;
+    for (bool b : { g.laneOn, g.laneNote, g.laneOct, g.laneVel, g.laneGate, g.laneProb, g.laneCC }) lanes << (b ? "1" : "0");
+    gt.setProperty ("lanes", lanes, nullptr);
+    juce::StringArray ranges;
+    for (const auto* r : { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
+        ranges.add (juce::String (r->min) + ":" + juce::String (r->max));
+    gt.setProperty ("ranges", ranges.joinIntoString (","), nullptr);
+    root.appendChild (gt, nullptr);
+
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto& r = routing[(size_t) t];
+        juce::ValueTree rt ("Routing");
+        rt.setProperty ("track", t, nullptr);
+        rt.setProperty ("channel", (int) r.midiChannel, nullptr);
+        rt.setProperty ("noteOut", r.noteOut, nullptr);
+        rt.setProperty ("ccOut", r.ccOut, nullptr);
+        rt.setProperty ("ccNumber", (int) r.ccNumber, nullptr);
+        root.appendChild (rt, nullptr);
+    }
+
+    for (int p = 0; p < numPatterns; ++p)
+    {
+        const auto& pat = patterns[(size_t) p];
+        if (patternEquals (pat, emptyPattern()))
+            continue;
+        juce::ValueTree pt ("Pattern");
+        pt.setProperty ("index", p, nullptr);
+        for (int t = 0; t < numTracks; ++t)
+        {
+            const auto& tr = pat.tracks[(size_t) t];
+            juce::ValueTree tt ("Track");
+            tt.setProperty ("index", t, nullptr);
+            tt.setProperty ("length", (int) tr.length, nullptr);
+            tt.setProperty ("division", (int) tr.division, nullptr);
+            tt.setProperty ("direction", (int) tr.direction, nullptr);
+            tt.setProperty ("swing", (int) tr.swing, nullptr);
+            tt.setProperty ("scaleOn", tr.scaleOn, nullptr);
+            tt.setProperty ("steps", encodeSteps (tr.steps), nullptr);
+            pt.appendChild (tt, nullptr);
+        }
+        root.appendChild (pt, nullptr);
+    }
+    return root;
+}
+
+void Project::fromValueTree (const juce::ValueTree& root)
+{
+    if (! root.hasType ("VIMA"))
+        return;
+    resetToDefaults();
+    currentPattern = juce::jlimit (0, numPatterns - 1, (int) root.getProperty ("currentPattern", 0));
+
+    auto gt = root.getChildWithName ("Globals");
+    if (gt.isValid())
+    {
+        auto& g = globals;
+        g.scale = juce::jlimit (0, numScales - 1, (int) gt.getProperty ("scale", g.scale));
+        g.root = juce::jlimit (0, 11, (int) gt.getProperty ("root", g.root));
+        g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
+        g.octaveLow = juce::jlimit (minOctave, maxOctave - 1, (int) gt.getProperty ("octaveLow", g.octaveLow));
+        g.octaveHigh = juce::jlimit (g.octaveLow + 1, maxOctave, (int) gt.getProperty ("octaveHigh", g.octaveHigh));
+        g.middleCIsC4 = (bool) gt.getProperty ("middleCIsC4", g.middleCIsC4);
+        g.lightTheme = (bool) gt.getProperty ("lightTheme", g.lightTheme);
+        g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
+        g.ccSmoothingTime = juce::jlimit (1, 100, (int) gt.getProperty ("ccSmoothingTime", g.ccSmoothingTime));
+        g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);
+        g.patternCCChannel = juce::jlimit (1, 16, (int) gt.getProperty ("patternCCChannel", g.patternCCChannel));
+        g.patternCCNumber = juce::jlimit (0, 127, (int) gt.getProperty ("patternCCNumber", g.patternCCNumber));
+        g.quantize = (Quantize) juce::jlimit (0, 3, (int) gt.getProperty ("quantize", (int) g.quantize));
+        g.chainOn = (bool) gt.getProperty ("chainOn", g.chainOn);
+        g.chainLoop = (bool) gt.getProperty ("chainLoop", g.chainLoop);
+        g.chain.clear();
+        for (const auto& item : juce::StringArray::fromTokens (gt.getProperty ("chain").toString(), ",", ""))
+        {
+            if (g.chain.size() >= maxChainEntries) break;
+            auto parts = juce::StringArray::fromTokens (item, ":", "");
+            if (parts.size() == 2)
+                g.chain.add ({ (std::uint8_t) juce::jlimit (0, numPatterns - 1, parts[0].getIntValue()),
+                               (std::uint8_t) juce::jlimit (1, 99, parts[1].getIntValue()) });
+        }
+        const auto lanes = gt.getProperty ("lanes").toString();
+        if (lanes.length() == 7)
+        {
+            bool* flags[] = { &g.laneOn, &g.laneNote, &g.laneOct, &g.laneVel, &g.laneGate, &g.laneProb, &g.laneCC };
+            for (int i = 0; i < 7; ++i) *flags[i] = lanes[i] == '1';
+        }
+        auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
+        LaneRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
+        if (rangeParts.size() == 6)
+            for (int i = 0; i < 6; ++i)
+            {
+                auto mm = juce::StringArray::fromTokens (rangeParts[i], ":", "");
+                if (mm.size() == 2) { rs[i]->min = mm[0].getIntValue(); rs[i]->max = mm[1].getIntValue(); }
+            }
+    }
+
+    for (auto rt : root)
+    {
+        if (rt.hasType ("Routing"))
+        {
+            const int t = (int) rt.getProperty ("track", -1);
+            if (t < 0 || t >= numTracks) continue;
+            auto& r = routing[(size_t) t];
+            r.midiChannel = (std::uint8_t) juce::jlimit (1, 16, (int) rt.getProperty ("channel", t + 1));
+            r.noteOut = (bool) rt.getProperty ("noteOut", true);
+            r.ccOut = (bool) rt.getProperty ("ccOut", false);
+            r.ccNumber = (std::uint8_t) juce::jlimit (0, 127, (int) rt.getProperty ("ccNumber", 74));
+        }
+        else if (rt.hasType ("Pattern"))
+        {
+            const int p = (int) rt.getProperty ("index", -1);
+            if (p < 0 || p >= numPatterns) continue;
+            for (auto tt : rt)
+            {
+                const int t = (int) tt.getProperty ("index", -1);
+                if (t < 0 || t >= numTracks) continue;
+                auto& tr = patterns[(size_t) p].tracks[(size_t) t];
+                tr.length = (std::uint8_t) juce::jlimit (minLength, maxSteps, (int) tt.getProperty ("length", 16));
+                tr.division = (std::uint8_t) juce::jlimit (0, numDivisions - 1, (int) tt.getProperty ("division", defaultDivision()));
+                tr.direction = (Direction) juce::jlimit (0, 2, (int) tt.getProperty ("direction", 0));
+                tr.swing = (std::uint8_t) juce::jlimit (0, 100, (int) tt.getProperty ("swing", 0));
+                tr.scaleOn = (bool) tt.getProperty ("scaleOn", true);
+                decodeSteps (tt.getProperty ("steps").toString(), tr.steps);
+            }
+        }
+    }
+}
+} // namespace vima
