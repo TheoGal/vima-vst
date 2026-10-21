@@ -141,11 +141,40 @@ ChainRow::ChainRow (Context& c, int i) : ctx (c), index (i)
     remove.font = [] { return Fonts::mono (14.0f); };
     remove.onClick = [this]
     {
-        ctx.edit (false, [this] (Project& p) { if (index < p.globals.chain.size()) p.globals.chain.remove (index); });
+        ctx.edit (false, [this] (Project& p)
+        {
+            if (index < p.globals.chain.size())
+            {
+                p.globals.chain.remove (index);
+                ctx.proc.engine.chainEntryRemoved (index);
+            }
+        });
     };
     addAndMakeVisible (minus);
     addAndMakeVisible (plus);
     addAndMakeVisible (remove);
+    setMouseCursor (juce::MouseCursor::DraggingHandCursor);
+    setTitle ("Chain entry " + juce::String (i + 1) + ", drag to reorder");
+}
+
+void ChainRow::mouseDown (const juce::MouseEvent&)
+{
+    dragging = false;
+}
+
+void ChainRow::mouseDrag (const juce::MouseEvent& e)
+{
+    if (! dragging && e.getDistanceFromDragStart() < 4) return;
+    dragging = true;
+    setMouseCursor (juce::MouseCursor::DraggingHandCursor);
+    if (onDrag) onDrag (index, e.getEventRelativeTo (getParentComponent()).y);
+}
+
+void ChainRow::mouseUp (const juce::MouseEvent&)
+{
+    if (dragging && onDragEnd) onDragEnd();
+    dragging = false;
+    setMouseCursor (juce::MouseCursor::DraggingHandCursor);
 }
 
 void ChainRow::resized()
@@ -165,9 +194,15 @@ void ChainRow::paint (juce::Graphics& g)
     if (index >= gl.chain.size()) return;
     const auto e = gl.chain[index];
     const bool cur = gl.chainOn && ctx.proc.engine.isPlaying && ctx.proc.engine.chainPosition.load() == index;
-    draw::tile (g, getLocalBounds().toFloat(), cur ? t.selected : t.tile, cur ? t.neutral : t.border, 6.0f);
+    draw::tile (g, getLocalBounds().toFloat(), cur || dragging ? t.selected : t.tile, cur ? t.neutral : (dragging ? t.dim2 : t.border), 6.0f);
 
     auto r = getLocalBounds().reduced (4, 0);
+    // grip: shows the entry can be dragged
+    g.setColour (t.dim);
+    for (int gy = 0; gy < 3; ++gy)
+        for (int gx = 0; gx < 2; ++gx)
+            g.fillEllipse ((float) r.getX() + 3.0f + gx * 4.0f, (float) r.getCentreY() - 5.0f + gy * 4.0f, 2.0f, 2.0f);
+    r.removeFromLeft (12);
     draw::led (g, { (float) r.getX() + 9.0f, (float) r.getCentreY() }, 7.0f, cur ? t.neutral : t.ledOff, cur);
     r.removeFromLeft (18 + 6);
     g.setColour (t.muted);
@@ -347,7 +382,33 @@ void PatternsView::refreshState()
         lastChainSize = n;
         chainRows.clear();
         for (int i = 0; i < n; ++i)
-            addAndMakeVisible (chainRows.add (new ChainRow (ctx, i)));
+        {
+            auto* row = chainRows.add (new ChainRow (ctx, i));
+            row->onDrag = [this] (int idx, int y)
+            {
+                dragIndex = idx;
+                dropIndex = dropIndexAt (y);
+                repaint();
+            };
+            row->onDragEnd = [this]
+            {
+                const int from = dragIndex;
+                int to = dropIndex;
+                dragIndex = dropIndex = -1;
+                if (from >= 0 && to >= 0)
+                {
+                    if (to > from) --to;   // the drop line is between entries
+                    if (to != from)
+                        ctx.edit (false, [this, from, to] (Project& p)
+                        {
+                            p.globals.chain.move (from, to);
+                            ctx.proc.engine.chainEntryMoved (from, to);
+                        });
+                }
+                repaint();
+            };
+            addAndMakeVisible (row);
+        }
         resized();
     }
     repaint();
@@ -415,6 +476,22 @@ void PatternsView::resized()
     }
 }
 
+int PatternsView::dropIndexAt (int y) const
+{
+    const int n = chainRows.size();
+    const int pitch = 36 + 4;
+    return juce::jlimit (0, n, (int) std::floor ((y - chainList.getY() + pitch / 2) / (double) pitch));
+}
+
+void PatternsView::paintOverChildren (juce::Graphics& g)
+{
+    if (dragIndex < 0 || dropIndex < 0) return;
+    if (dropIndex == dragIndex || dropIndex == dragIndex + 1) return;   // would not move
+    const int y = chainList.getY() + dropIndex * 40 - 2;
+    g.setColour (Theme::current().neutral);
+    g.fillRoundedRectangle ((float) chainList.getX(), (float) y - 1.0f, (float) chainList.getWidth(), 3.0f, 1.5f);
+}
+
 void PatternsView::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
@@ -444,7 +521,7 @@ void PatternsView::paint (juce::Graphics& g)
         auto h = columnHeader.reduced (4, 0);
         g.setColour (t.muted);
         g.setFont (Fonts::label (9.0f));
-        h.removeFromLeft (24);
+        h.removeFromLeft (36);
         g.drawText ("#", h.removeFromLeft (32), juce::Justification::centredLeft);
         g.drawText ("PATTERN", h.removeFromLeft (76), juce::Justification::centredLeft);
         h.removeFromRight (24 + 6);

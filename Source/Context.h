@@ -16,9 +16,9 @@ struct UiState
     bool ccMode = false;         // NOTES / CC view
     SliderLane slider = SliderLane::velocity;
 
-    int selFirst = -1, selLast = -1;   // LED selection (-1 = none = all steps)
+    std::uint32_t selection = 0;     // selected steps (bit n = step n); 0 = none = all steps
 
-    std::vector<Step> clip;      // copied steps
+    std::vector<ClipStep> clip;  // copied steps (with their spacing)
     int clipFrom = -1;           // track the steps were copied from
     bool pasteArmed = false;
     int pasteHover = -1;
@@ -78,13 +78,14 @@ public:
 
     Scope scope()
     {
-        const int t = ui.track, a = ui.selFirst, b = ui.selLast;
-        return proc.read ([=] (const Project& p) { return makeScope (p, p.currentPattern, t, a, b); });
+        const int t = ui.track;
+        const auto sel = ui.selection;
+        return proc.read ([=] (const Project& p) { return makeScope (p, p.currentPattern, t, sel); });
     }
     bool hasSelection()
     {
         const auto len = trackCopy().length;
-        return ui.selFirst >= 0 && ui.selFirst < len;
+        return (ui.selection & rangeMask (0, len - 1)) != 0;
     }
 
     TrackPattern& liveTrack (Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[(size_t) ui.track]; }

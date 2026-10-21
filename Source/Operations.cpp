@@ -5,23 +5,48 @@ namespace vima
 static int mod12 (int v) { return ((v % 12) + 12) % 12; }
 static int floorDiv12 (int v) { return v >= 0 ? v / 12 : -((-v + 11) / 12); }
 
-Scope makeScope (const Project& p, int pattern, int track, int selFirst, int selLast)
+int Scope::count() const
+{
+    int n = 0;
+    for (int i = 0; i < maxSteps; ++i) n += contains (i) ? 1 : 0;
+    return n;
+}
+
+int Scope::first() const
+{
+    for (int i = 0; i < maxSteps; ++i)
+        if (contains (i)) return i;
+    return -1;
+}
+
+std::uint32_t rangeMask (int a, int b)
+{
+    if (a > b) std::swap (a, b);
+    a = juce::jlimit (0, maxSteps - 1, a);
+    b = juce::jlimit (0, maxSteps - 1, b);
+    std::uint32_t m = 0;
+    for (int i = a; i <= b; ++i) m |= (1u << i);
+    return m;
+}
+
+Scope makeScope (const Project& p, int pattern, int track, std::uint32_t selection)
 {
     Scope s;
     s.pattern = juce::jlimit (0, numPatterns - 1, pattern);
     s.track = juce::jlimit (0, numTracks - 1, track);
     const int len = p.patterns[(size_t) s.pattern].tracks[(size_t) s.track].length;
-    if (selFirst < 0 || selFirst >= len)
-    {
-        s.first = 0;
-        s.last = len - 1;
-    }
-    else
-    {
-        s.first = selFirst;
-        s.last = juce::jlimit (selFirst, len - 1, selLast < 0 ? selFirst : selLast);
-    }
+    const auto lenMask = rangeMask (0, len - 1);
+    s.mask = selection & lenMask;
+    if (s.mask == 0)
+        s.mask = lenMask;   // no selection = all steps
     return s;
+}
+
+Scope makeScope (const Project& p, int pattern, int track, int selFirst, int selLast)
+{
+    if (selFirst < 0)
+        return makeScope (p, pattern, track, (std::uint32_t) 0);
+    return makeScope (p, pattern, track, rangeMask (selFirst, selLast < 0 ? selFirst : selLast));
 }
 
 std::vector<Lane> activeLanes (const Globals& g, bool ccMode)
@@ -126,8 +151,9 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
     const int octLo = juce::jmax (g.octaveLow, juce::jmin (g.rangeOct.min, g.rangeOct.max));
     const int octHi = juce::jmin (g.octaveHigh, juce::jmax (g.rangeOct.min, g.rangeOct.max));
 
-    for (int i = sc.first; i <= sc.last; ++i)
+    for (int i = 0; i < maxSteps; ++i)
     {
+        if (! sc.contains (i)) continue;
         auto& s = tp.steps[(size_t) i];
         for (auto lane : lanes)
         {
@@ -232,15 +258,15 @@ void smooth (Project& p, const Scope& sc, bool ccMode)
             continue;   // on/off has no average
         long long sum = 0;
         int n = 0;
-        for (int i = sc.first; i <= sc.last; ++i)
-            if (tp.steps[(size_t) i].on) { sum += laneValue (p, tp, tp.steps[(size_t) i], lane); ++n; }
+        for (int i = 0; i < maxSteps; ++i)
+            if (sc.contains (i) && tp.steps[(size_t) i].on) { sum += laneValue (p, tp, tp.steps[(size_t) i], lane); ++n; }
         if (n == 0)
             continue;
         const int avg = (int) std::llround ((double) sum / n);
-        for (int i = sc.first; i <= sc.last; ++i)
+        for (int i = 0; i < maxSteps; ++i)
         {
             auto& s = tp.steps[(size_t) i];
-            if (! s.on) continue;   // off steps are not smoothed
+            if (! sc.contains (i) || ! s.on) continue;   // off steps are not smoothed
             const int v = laneValue (p, tp, s, lane);
             if (v != avg)
                 setLaneValue (p, tp, s, lane, v + (v < avg ? 1 : -1));
@@ -253,18 +279,17 @@ ShiftGesture beginShift (const Project& p, const Scope& sc, Lane lane)
     ShiftGesture gst;
     gst.scope = sc;
     gst.lane = lane;
-    const auto& tp = trackOf (p, sc.pattern, sc.track);
-    for (int i = sc.first; i <= sc.last; ++i)
-        gst.snapshot.push_back (tp.steps[(size_t) i]);
+    gst.snapshot = trackOf (p, sc.pattern, sc.track).steps;
     return gst;
 }
 
 void applyShift (Project& p, const ShiftGesture& gst, int amount)
 {
     auto& tp = trackOf (p, gst.scope.pattern, gst.scope.track);
-    for (int i = gst.scope.first; i <= gst.scope.last; ++i)
+    for (int i = 0; i < maxSteps; ++i)
     {
-        const auto& original = gst.snapshot[(size_t) (i - gst.scope.first)];
+        if (! gst.scope.contains (i)) continue;
+        const auto& original = gst.snapshot[(size_t) i];
         auto s = original;
         if (gst.lane != Lane::on)
             setLaneValue (p, tp, s, gst.lane, laneValue (p, tp, original, gst.lane) + amount);
@@ -272,24 +297,29 @@ void applyShift (Project& p, const ShiftGesture& gst, int amount)
     }
 }
 
-std::vector<Step> copySteps (const Project& p, const Scope& sc)
+std::vector<ClipStep> copySteps (const Project& p, const Scope& sc)
 {
     const auto& tp = trackOf (p, sc.pattern, sc.track);
-    return std::vector<Step> (tp.steps.begin() + sc.first, tp.steps.begin() + sc.last + 1);
+    std::vector<ClipStep> clip;
+    const int first = sc.first();
+    for (int i = 0; i < maxSteps; ++i)
+        if (sc.contains (i))
+            clip.push_back ({ i - first, tp.steps[(size_t) i] });
+    return clip;
 }
 
-int pasteSteps (Project& p, int pattern, int track, int start, const std::vector<Step>& clip)
+std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const std::vector<ClipStep>& clip)
 {
     auto& tp = trackOf (p, pattern, track);
-    int last = -1;
-    for (int k = 0; k < (int) clip.size(); ++k)
+    std::uint32_t written = 0;
+    for (const auto& c : clip)
     {
-        const int i = start + k;
-        if (i >= tp.length) break;   // cut off at the track length, never wrap
-        tp.steps[(size_t) i] = clip[(size_t) k];
-        last = i;
+        const int i = start + c.offset;
+        if (i < 0 || i >= tp.length) continue;   // cut off at the track length, never wrap
+        tp.steps[(size_t) i] = c.step;
+        written |= (1u << i);
     }
-    return last;
+    return written;
 }
 
 // ---------------------------------------------------------------------------------------

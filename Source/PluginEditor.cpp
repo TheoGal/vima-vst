@@ -31,7 +31,7 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     : AudioProcessorEditor (&p), proc (p), ctx (p),
       header (ctx), paramRow (ctx), grid (ctx), ops (ctx), patterns (ctx)
 {
-    ctx.root = this;
+    ctx.root = &content;
     ctx.refresh = [this] { refreshAll(); };
     ctx.showPatterns = [this] (bool b) { setPatternsView (b); };
     ctx.openSettings = [this] { openSettings(); };
@@ -42,13 +42,27 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     lnf.updateColours();
     setLookAndFeel (&lnf);
 
-    addAndMakeVisible (header);
-    addAndMakeVisible (paramRow);
-    addAndMakeVisible (grid);
-    addAndMakeVisible (ops);
-    addChildComponent (patterns);
+    // Everything is laid out at 1200 x 720 inside `content`, which is scaled as a whole
+    // when the window is resized (SPEC.md 12: resizing)
+    content.paintBackground = [] (juce::Graphics& g) { g.fillAll (Theme::current().bg); };
+    addAndMakeVisible (content);
+    content.addAndMakeVisible (header);
+    content.addAndMakeVisible (paramRow);
+    content.addAndMakeVisible (grid);
+    content.addAndMakeVisible (ops);
+    content.addChildComponent (patterns);
+    content.setBounds (0, 0, editorWidth, editorHeight);
+    layoutContent();
 
-    setSize (editorWidth, editorHeight);
+    // Read the saved size first: setting the limits can resize the window on the way
+    const float scale = juce::jlimit (minScale, maxScale, proc.uiScale.load());
+    setResizable (true, true);
+    setResizeLimits ((int) (editorWidth * minScale), (int) (editorHeight * minScale),
+                     (int) (editorWidth * maxScale), (int) (editorHeight * maxScale));
+    if (auto* c = getConstrainer())
+        c->setFixedAspectRatio ((double) editorWidth / (double) editorHeight);
+    setSize (juce::roundToInt (editorWidth * scale), juce::roundToInt (editorHeight * scale));
+    initialised = true;
     refreshAll();
     startTimerHz (30);
 }
@@ -56,10 +70,10 @@ VimaEditor::VimaEditor (VimaProcessor& p)
 VimaEditor::~VimaEditor()
 {
     stopTimer();
-    for (int i = getNumChildComponents(); --i >= 0;)
-        if (auto* c = getChildComponent (i); c->getComponentID() == "popover")
+    for (int i = content.getNumChildComponents(); --i >= 0;)
+        if (auto* c = content.getChildComponent (i); c->getComponentID() == "popover")
         {
-            removeChildComponent (c);
+            content.removeChildComponent (c);
             delete c;
         }
     settings.reset();
@@ -73,7 +87,15 @@ void VimaEditor::paint (juce::Graphics& g)
 
 void VimaEditor::resized()
 {
-    auto r = getLocalBounds();
+    const float scale = juce::jlimit (minScale, maxScale, (float) getWidth() / (float) editorWidth);
+    content.setTransform (juce::AffineTransform::scale (scale));
+    if (initialised)
+        proc.uiScale = scale;   // remembered with the project
+}
+
+void VimaEditor::layoutContent()
+{
+    auto r = content.getLocalBounds();
     header.setBounds (r.removeFromTop (headerHeight));
     patterns.setBounds (r);
     auto body = r.reduced (20, 12);
@@ -81,7 +103,7 @@ void VimaEditor::resized()
     body.removeFromTop (8);
     grid.setBounds (body.removeFromTop (2 * (StepGrid::ledHeight + StepGrid::ledGap + StepGrid::cellHeight) + StepGrid::rowGap));
     ops.setBounds (body.removeFromBottom (146));
-    if (settings) settings->setBounds (getLocalBounds());
+    if (settings) settings->setBounds (content.getLocalBounds());
 }
 
 void VimaEditor::refreshAll()
@@ -116,7 +138,7 @@ void VimaEditor::setPatternsView (bool show)
         ctx.ui.selectedPattern = ctx.currentPattern();
         ctx.ui.viewBank = ctx.ui.selectedPattern / patternsPerBank;
     }
-    Popover::closeAll (*this);
+    Popover::closeAll (content);
     refreshAll();
 }
 
@@ -124,8 +146,8 @@ void VimaEditor::openSettings()
 {
     settings = std::make_unique<SettingsDialog> (ctx);
     settings->onClose = [this] { closeSettings(); };
-    addAndMakeVisible (*settings);
-    settings->setBounds (getLocalBounds());
+    content.addAndMakeVisible (*settings);
+    settings->setBounds (content.getLocalBounds());
     settings->toFront (true);
 }
 
@@ -151,7 +173,7 @@ void VimaEditor::timerCallback()
     if (rev != lastRevision || pat != lastPattern)
     {
         if (pat != lastPattern && ! ctx.ui.patternsView)
-            ctx.ui.selFirst = ctx.ui.selLast = -1;
+            ctx.ui.selection = 0;
         refreshAll();
     }
 

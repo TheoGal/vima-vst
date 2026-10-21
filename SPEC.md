@@ -122,7 +122,7 @@ There is no step skip, no chords, no drum mode. Note mode only.
 - **CHAIN ON/OFF** turns chain playback on. **LOOP ON/OFF**: at the end of the chain, loop back to the first entry, or stay on the last one.
 - One play of a pattern lasts as long as its longest track (length x division).
 - A manually queued pattern (clicking a slot) takes priority over the chain for the next change.
-- Open: reordering entries (drag and drop).
+- **Reordering**: drag an entry up or down the list (a grip on its left shows it can be dragged). A line shows where it will land. Playback keeps following the entry that is playing, wherever it moves. Removing an entry also keeps playback on the right entry.
 
 ### 7.3 Pattern switching rules
 
@@ -146,7 +146,9 @@ There is no step skip, no chords, no drum mode. Note mode only.
 - Segments beyond the track length are dark and cannot be selected.
 - It is also the **selection tool**:
   - Click and drag across segments to select a range. Drag is the only way to select a range (there is no "click start, then click end").
-  - A single click on a segment selects that one step.
+  - A single click on a segment selects that one step (and replaces the selection).
+  - **Ctrl-click** (Cmd-click on Mac) adds a step to the selection, or removes it if it is already selected, so non-adjacent steps can be selected.
+  - **Ctrl-drag** adds a range to the existing selection. A plain drag replaces it.
 - Selection is shown **only on the LED bar** (white segments). The step cells themselves are not colored or highlighted.
 - A CLEAR button removes the selection. Switching tracks clears the selection.
 
@@ -154,7 +156,8 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 - Every operation on steps (shift, randomize, smooth, copy, paste, and any future step operation) on any lane, including probability, works on **the selected steps if there is a selection**, otherwise on **all steps of the current track's pattern** (within its length).
 - "No selection" is equivalent to "all steps".
-- The scope is visible from the Selection readout in the operations panel (for example "STEPS 05 - 12 · 8", or "NONE (ALL STEPS)"). No extra explanatory text is shown.
+- The scope is visible from the Selection readout in the operations panel (for example "STEPS 05 - 12 · 8" for a range, "STEPS 01 03 06 · 3" for separate steps (the first five numbers, then "…"), or "NONE (ALL STEPS)"). No extra explanatory text is shown.
+- Operations on a non-adjacent selection act on exactly those steps (Smooth averages only those steps).
 
 ## 9. Step operations
 
@@ -164,8 +167,9 @@ All destructive operations are undoable. Multi-level undo, at least 32 levels, c
 
 - Operations always act on the currently selected track. Copy/paste is the way to move steps between tracks.
 - COPY copies the steps in scope (the selection, or all steps if none) to a clipboard. The clipboard stays when switching tracks.
+- Copied steps **keep their spacing**: copying steps 1, 3 and 6 and pasting at 9 writes steps 9, 11 and 14. The steps in the gaps are left unchanged.
 - PASTE arms paste mode (the button lights up and shows the number of copied steps, for example "PASTE 8"). The user then clicks the LED of the start step, on the same or any other track, and the steps are pasted from there. While armed, hovering an LED previews where the steps will land. Pressing PASTE again cancels.
-- After pasting, the pasted range becomes the selection.
+- After pasting, the pasted steps become the selection.
 - Paste copies all lanes of each step (on/off, note, octave, velocity, gate, probability, CC).
 - A paste that runs past the destination track's length is **cut off** at the last step. It never wraps around to step 1.
 - Paste mode stays armed when switching tracks, so the user can copy on one track, switch, and paste.
@@ -242,6 +246,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - LIGHT theme palette (board F), built on a light grey, not white: background #D3D7DD, panels #DCE0E5, tiles #E3E6EA, alternate step groups #DADDE2, borders #C2C7CF / #B9BFC8 / #AEB5BF, text #11151A / #2C333D / #525B68, neutral (track-wide) #2A313B, selection LED #11151A. Accents are darkened for contrast on grey: note green #12864A, CC cyan #0874AE, gate purple #6539C2, probability amber #A86600.
 - Selection: white #EEF1F5 on the LED bar.
 - Base window size 1200 x 720.
+- **Resizable**: the window scales as a whole (everything grows or shrinks together, proportions fixed), from 75% (900 x 540) to 200% (2400 x 1440), by dragging the corner. The size is saved with the project and the editor reopens at that size.
 
 ### Layout (top to bottom)
 
@@ -305,12 +310,11 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 ## 15. Open questions
 
 1. Live: VST3 MIDI output and channel separation (section 2).
-2. Approve the proposed patterns view and chain design (7.1, 7.2). Chain entry reordering.
-4. Preset file details (13).
-5. Window resizing / UI scaling.
-6. Probability and CC: should a step that fails its probability roll also skip its CC, or does CC always send? (Current assumption: probability affects notes only.)
-7. Note randomize range: is the NOTE min/max a pitch-class range (for example C to A#) or a full note range across octaves (for example C2 to C4)?
-8. Approve the redesigned Settings dialog (11).
+2. Approve the proposed patterns view and chain design (7.1, 7.2).
+3. Preset file details (13).
+4. Probability and CC: should a step that fails its probability roll also skip its CC, or does CC always send? (Current assumption: probability affects notes only.)
+5. Note randomize range: is the NOTE min/max a pitch-class range (for example C to A#) or a full note range across octaves (for example C2 to C4)?
+6. Approve the redesigned Settings dialog (11).
 
 ## 16. Decision log
 
@@ -333,4 +337,5 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - 2026-10-21: Queued pattern change shown by blinking the current pattern number.
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
+- 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
 - 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.

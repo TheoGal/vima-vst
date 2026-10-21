@@ -304,17 +304,35 @@ void StepGrid::mouseDown (const juce::MouseEvent& e)
     {
         const int t = ctx.ui.track;
         const auto clip = ctx.ui.clip;
-        int last = -1;
-        ctx.edit (true, [&] (Project& p) { last = pasteSteps (p, p.currentPattern, t, i, clip); });
+        std::uint32_t written = 0;
+        ctx.edit (true, [&] (Project& p) { written = pasteSteps (p, p.currentPattern, t, i, clip); });
         ctx.ui.pasteArmed = false;
         ctx.ui.pasteHover = -1;
-        ctx.ui.selFirst = i;
-        ctx.ui.selLast = juce::jmax (i, last);
+        ctx.ui.selection = written;   // the pasted steps become the selection
         ctx.changed();
         return;
     }
+
     dragFrom = i;
-    ctx.ui.selFirst = ctx.ui.selLast = i;
+    if (e.mods.isCommandDown() || e.mods.isCtrlDown())
+    {
+        // Ctrl-click (Cmd-click on Mac): add or remove this step; Ctrl-drag adds a range
+        if ((ctx.ui.selection >> i) & 1u)
+        {
+            ctx.ui.selection &= ~(1u << i);   // already selected: remove it
+            dragFrom = -1;
+        }
+        else
+        {
+            dragBase = ctx.ui.selection;      // add it; a drag from here adds a range
+            ctx.ui.selection |= (1u << i);
+        }
+    }
+    else
+    {
+        dragBase = 0;
+        ctx.ui.selection = 1u << i;
+    }
     ctx.changed();
 }
 
@@ -323,8 +341,7 @@ void StepGrid::mouseDrag (const juce::MouseEvent& e)
     if (dragFrom < 0) return;
     const int len = ctx.trackCopy().length;
     const int i = juce::jlimit (0, len - 1, ledIndexAt (e.getPosition(), true));
-    ctx.ui.selFirst = juce::jmin (dragFrom, i);
-    ctx.ui.selLast = juce::jmax (dragFrom, i);
+    ctx.ui.selection = dragBase | rangeMask (dragFrom, i);
     repaintLeds();
     if (ctx.refresh) ctx.refresh();
 }
@@ -359,18 +376,21 @@ void StepGrid::paint (juce::Graphics& g)
     const auto accent = ctx.modeAccent();
     const bool playing = ctx.proc.engine.isPlaying;
     const int play = playing ? ctx.proc.engine.playStep[(size_t) ctx.ui.track].load() : -1;
-    const int clipN = (int) ctx.ui.clip.size();
-    const bool hasSel = ctx.ui.selFirst >= 0 && ctx.ui.selFirst < len;
+    const auto sel = ctx.ui.selection & rangeMask (0, len - 1);
+    std::uint32_t ghostMask = 0;
+    if (ctx.ui.pasteArmed && ctx.ui.pasteHover >= 0)
+        for (const auto& c : ctx.ui.clip)
+            if (ctx.ui.pasteHover + c.offset < len) ghostMask |= (1u << (ctx.ui.pasteHover + c.offset));
 
     for (int i = 0; i < maxSteps; ++i)
     {
         auto b = ledBounds (i).toFloat();
         auto bar = b.withSizeKeepingCentre (b.getWidth(), 6.0f);
         const bool beyond = i >= len;
-        const bool ghost = ctx.ui.pasteArmed && ctx.ui.pasteHover >= 0 && i >= ctx.ui.pasteHover && i < ctx.ui.pasteHover + clipN && ! beyond;
-        const bool sel = hasSel && i >= ctx.ui.selFirst && i <= ctx.ui.selLast && ! beyond;
+        const bool ghost = ((ghostMask >> i) & 1u) != 0;
+        const bool selected = ((sel >> i) & 1u) != 0;
         juce::Colour c = beyond ? t.beyond : t.border3;
-        if (sel) c = t.selection;
+        if (selected) c = t.selection;
         if (i == play && ! beyond) c = accent;
         if (ghost) c = accent.withAlpha (0.55f);
         if (i == play && ! beyond && ! ghost)

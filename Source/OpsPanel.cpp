@@ -63,6 +63,24 @@ namespace
         return t.text2;
     }
 
+    juce::String pad2 (int v) { return juce::String (v).paddedLeft ('0', 2); }
+
+    // "STEPS 05 - 12 · 8" for a contiguous selection, "STEPS 01 03 06 · 3" otherwise
+    juce::String selectionText (std::uint32_t sel)
+    {
+        juce::Array<int> steps;
+        for (int i = 0; i < maxSteps; ++i)
+            if ((sel >> i) & 1u) steps.add (i);
+        const juce::String dot (juce::CharPointer_UTF8 (" \xc2\xb7 "));
+        const bool contiguous = steps.getLast() - steps.getFirst() + 1 == steps.size();
+        if (contiguous)
+            return "STEPS " + pad2 (steps.getFirst() + 1) + " - " + pad2 (steps.getLast() + 1) + dot + juce::String (steps.size());
+        juce::String list;
+        for (int k = 0; k < juce::jmin (5, steps.size()); ++k) list << pad2 (steps[k] + 1) << " ";
+        if (steps.size() > 5) list << juce::String (juce::CharPointer_UTF8 ("\xe2\x80\xa6 "));
+        return "STEPS " + list.trimEnd() + dot + juce::String (steps.size());
+    }
+
     const std::vector<Lane>& noteLanes()
     {
         static const std::vector<Lane> l { Lane::on, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability };
@@ -288,7 +306,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     clearBtn.font = smallFont;
     clearBtn.look = plain;
     clearBtn.alpha = [this] { return ctx.hasSelection() ? 1.0f : 0.4f; };
-    clearBtn.onClick = [this] { ctx.ui.selFirst = ctx.ui.selLast = -1; ctx.changed(); };
+    clearBtn.onClick = [this] { ctx.ui.selection = 0; ctx.changed(); };
     addAndMakeVisible (clearBtn);
 
     // Lane chips (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
@@ -492,16 +510,13 @@ void OpsPanel::paint (juce::Graphics& g)
     draw::label (g, "SELECTION", selCol.withHeight (12), t.muted);
     {
         const int len = ctx.trackCopy().length;
-        const bool hasSel = ctx.ui.selFirst >= 0 && ctx.ui.selFirst < len;
+        const auto sel = ctx.ui.selection & rangeMask (0, len - 1);
+        const bool hasSel = sel != 0;
         juce::String text;
         if (ctx.ui.pasteArmed)
             text = "PASTE " + juce::String ((int) ctx.ui.clip.size()) + " FROM T" + juce::String (ctx.ui.clipFrom + 1).paddedLeft ('0', 2);
         else if (hasSel)
-        {
-            const int last = juce::jmin (ctx.ui.selLast, len - 1);
-            text = "STEPS " + juce::String (ctx.ui.selFirst + 1).paddedLeft ('0', 2) + " - " + juce::String (last + 1).paddedLeft ('0', 2)
-                 + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")) + juce::String (last - ctx.ui.selFirst + 1);
-        }
+            text = selectionText (sel);
         else
             text = "NONE (ALL STEPS)";
         g.setColour (hasSel || ctx.ui.pasteArmed ? t.text : t.muted);

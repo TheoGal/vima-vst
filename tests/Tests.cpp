@@ -11,6 +11,7 @@
 #include "../Source/Popovers.h"
 #include "../Source/StepGrid.h"
 #include "../Source/OpsPanel.h"
+#include "../Source/PatternsView.h"
 
 #include <map>
 #include <memory>
@@ -396,9 +397,13 @@ void testOperations()
 
     {
         auto sc = makeScope (*p, 0, 0, -1, -1);
-        check (sc.first == 0 && sc.last == 15, "no selection = all steps within the length");
+        check (sc.mask == rangeMask (0, 15), "no selection = all steps within the length");
         sc = makeScope (*p, 0, 0, 4, 40);
-        check (sc.first == 4 && sc.last == 15, "selection is clipped to the length");
+        check (sc.mask == rangeMask (4, 15), "selection is clipped to the length");
+        sc = makeScope (*p, 0, 0, (1u << 1) | (1u << 5) | (1u << 20));
+        check (sc.mask == ((1u << 1) | (1u << 5)) && sc.count() == 2, "non-adjacent selection; steps beyond the length dropped");
+        sc = makeScope (*p, 0, 0, (std::uint32_t) (1u << 20));
+        check (sc.mask == rangeMask (0, 15), "a selection entirely beyond the length = all steps");
     }
     {
         p->globals.laneOn = false;
@@ -466,9 +471,28 @@ void testOperations()
         auto clip = copySteps (*p, makeScope (*p, 0, 0, 0, 3));
         auto& other = p->patterns[0].tracks[5];
         other.length = 8;
-        const int last = pasteSteps (*p, 0, 5, 6, clip);
-        check (last == 7 && other.steps[6].cc == 10 && other.steps[7].cc == 11 && other.steps[8] == Step(),
+        const auto written = pasteSteps (*p, 0, 5, 6, clip);
+        check (written == rangeMask (6, 7) && other.steps[6].cc == 10 && other.steps[7].cc == 11 && other.steps[8] == Step(),
                "paste onto another track is cut off at its length");
+
+        // non-adjacent copy keeps the spacing: steps 1, 3, 6 pasted at 9 -> 9, 11, 14
+        for (auto& s : tp.steps) s = Step();
+        tp.length = 32;
+        for (int i : { 0, 2, 5 }) { tp.steps[(size_t) i].on = true; tp.steps[(size_t) i].cc = (std::uint8_t) (40 + i); }
+        tp.steps[1].cc = 99;   // not selected
+        auto gapClip = copySteps (*p, makeScope (*p, 0, 0, (std::uint32_t) ((1u << 0) | (1u << 2) | (1u << 5))));
+        check (gapClip.size() == 3 && gapClip[1].offset == 2 && gapClip[2].offset == 5, "copy remembers the spacing");
+        const auto w2 = pasteSteps (*p, 0, 0, 8, gapClip);
+        check (w2 == ((1u << 8) | (1u << 10) | (1u << 13)) && tp.steps[10].cc == 42 && tp.steps[13].cc == 45 && tp.steps[9] == Step(),
+               "paste keeps the spacing and leaves the gaps alone");
+
+        // smooth works on non-adjacent steps only
+        for (auto& s : tp.steps) s = Step();
+        for (int i : { 0, 1, 2 }) tp.steps[(size_t) i].on = true;
+        tp.steps[0].cc = 0; tp.steps[1].cc = 50; tp.steps[2].cc = 100;
+        smooth (*p, makeScope (*p, 0, 0, (std::uint32_t) ((1u << 0) | (1u << 2))), true);
+        check (tp.steps[0].cc == 1 && tp.steps[2].cc == 99 && tp.steps[1].cc == 50, "smooth on steps 1 and 3 only");
+        tp.length = 16;
     }
     {
         UndoHistory u;
@@ -616,10 +640,30 @@ int main (int argc, char** argv)
             grid->mouseDown (mouseEvent (*grid, ledPos (4), ledPos (4)));
             grid->mouseDrag (mouseEvent (*grid, ledPos (7), ledPos (4), true));
             grid->mouseUp (mouseEvent (*grid, ledPos (7), ledPos (4), true));
-            check (ctx.ui.selFirst == 4 && ctx.ui.selLast == 7, "drag on the LEDs selects steps 05-08");
+            check (ctx.ui.selection == rangeMask (4, 7), "drag on the LEDs selects steps 05-08");
 
             click (*grid, ledPos (9));
-            check (ctx.ui.selFirst == 9 && ctx.ui.selLast == 9, "a single click on an LED selects one step");
+            check (ctx.ui.selection == (1u << 9), "a single click on an LED selects one step");
+
+            // Ctrl-click adds and removes single steps, Ctrl-drag adds a range
+            const auto ctrl = juce::ModifierKeys (juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::ctrlModifier
+                                                  | juce::ModifierKeys::commandModifier);
+            auto ctrlClick = [&] (int i)
+            {
+                grid->mouseDown (mouseEvent (*grid, ledPos (i), ledPos (i), false, ctrl));
+                grid->mouseUp (mouseEvent (*grid, ledPos (i), ledPos (i), false, ctrl));
+            };
+            ctrlClick (2);
+            ctrlClick (14);
+            check (ctx.ui.selection == ((1u << 2) | (1u << 9) | (1u << 14)), "Ctrl-click adds non-adjacent steps");
+            ctrlClick (9);
+            check (ctx.ui.selection == ((1u << 2) | (1u << 14)), "Ctrl-click on a selected step removes it");
+            grid->mouseDown (mouseEvent (*grid, ledPos (5), ledPos (5), false, ctrl));
+            grid->mouseDrag (mouseEvent (*grid, ledPos (7), ledPos (5), true, ctrl));
+            grid->mouseUp (mouseEvent (*grid, ledPos (7), ledPos (5), true, ctrl));
+            check (ctx.ui.selection == ((1u << 2) | rangeMask (5, 7) | (1u << 14)), "Ctrl-drag adds a range to the selection");
+            click (*grid, ledPos (3));
+            check (ctx.ui.selection == (1u << 3), "a plain click starts a new selection");
             grid->mouseDown (mouseEvent (*grid, ledPos (4), ledPos (4)));
             grid->mouseDrag (mouseEvent (*grid, ledPos (7), ledPos (4), true));
             grid->mouseUp (mouseEvent (*grid, ledPos (7), ledPos (4), true));
@@ -631,7 +675,7 @@ int main (int argc, char** argv)
             check (ctx.ui.clip.size() == 4, "COPY takes the 4 selected steps");
 
             ctx.ui.track = 4;   // as the track dropdown does
-            ctx.ui.selFirst = ctx.ui.selLast = -1;
+            ctx.ui.selection = 0;
             ed.refreshAll();
             auto before = stepOf (4, 10);
             if (auto* paste = findPill (ed, "PASTE 4")) click (*paste);
@@ -640,7 +684,7 @@ int main (int argc, char** argv)
             bool same = true;
             for (int k = 0; k < 4; ++k) same = same && stepOf (4, 10 + k) == original[(size_t) k];
             check (same && ! ctx.ui.pasteArmed, "clicking LED 11 on track 5 pastes the steps there");
-            check (ctx.ui.selFirst == 10 && ctx.ui.selLast == 13, "the pasted range becomes the selection");
+            check (ctx.ui.selection == rangeMask (10, 13), "the pasted steps become the selection");
 
             if (auto* undo = findPill (ed, "UNDO")) click (*undo);
             check (stepOf (4, 10) == before, "UNDO restores the paste");
@@ -664,7 +708,7 @@ int main (int argc, char** argv)
                 auto* slider = findChild<LaneSlider> (*cell);
                 proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[4].steps[0].velocity = 100; });
                 if (slider) dragY (*slider, 30);
-                check (stepOf (4, 0).velocity == 80, "dragging the velocity slider down lowers velocity (100 -> 80)");
+                check (stepOf (4, 0).velocity == 80, "dragging the velocity slider down lowers velocity (100 -> 80), got " + juce::String ((int) stepOf (4, 0).velocity));
                 if (slider) dragY (*slider, 1000);
                 check (stepOf (4, 0).velocity == 1, "velocity stops at 1, never 0");
                 if (slider) slider->mouseDown (mouseEvent (*slider, { 5, 5 }, { 5, 5 }, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
@@ -673,20 +717,20 @@ int main (int argc, char** argv)
 
             // randomize respects the selection (scope rule)
             ctx.ui.track = 3;
-            ctx.ui.selFirst = 0; ctx.ui.selLast = 1;
+            ctx.ui.selection = rangeMask (0, 1);
             ed.refreshAll();
             const auto keep = stepOf (3, 5);
             if (auto* rnd = findPill (ed, "RANDOMIZE")) { click (*rnd); click (*rnd); }
             check (stepOf (3, 5) == keep, "RANDOMIZE leaves steps outside the selection alone");
 
             // SHIFT ALL on velocity over the whole track
-            ctx.ui.selFirst = ctx.ui.selLast = -1;
+            ctx.ui.selection = 0;
             ctx.ui.shiftLane = Lane::velocity;
             ed.refreshAll();
             proc->edit (-1, [] (Project& p) { for (auto& s : p.patterns[(size_t) p.currentPattern].tracks[3].steps) s.velocity = 120; });
             proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[3].steps[0].velocity = 60; });
             if (auto* shift = findChild<ShiftKnob> (ed)) dragY (*shift, -90);   // +10
-            check (stepOf (3, 0).velocity == 70 && stepOf (3, 1).velocity == 127, "SHIFT ALL +10: 60 -> 70, 120 capped at 127");
+            check (stepOf (3, 0).velocity == 70 && stepOf (3, 1).velocity == 127, "SHIFT ALL +10: 60 -> 70, 120 capped at 127, got " + juce::String ((int) stepOf (3, 0).velocity) + " " + juce::String ((int) stepOf (3, 1).velocity));
 
             // CC mode hides note controls
             if (auto* ccBtn = findPill (ed, "CC")) click (*ccBtn);
@@ -702,6 +746,25 @@ int main (int argc, char** argv)
         }
         ctx.proc.queuePattern (1);
         check (ctx.proc.engine.queuedPattern.load() == 1, "picking a pattern queues it");
+
+        // chain reordering by dragging (demo chain: B02·07 x2, B02·08 x1, B02·09 x4)
+        ctx.showPatterns (true);
+        if (auto* row = findChild<ChainRow> (ed, 0))
+        {
+            auto* view = row->getParentComponent();
+            const auto start = row->getLocalBounds().getCentre();
+            const auto target = view->getLocalPoint (row, start).translated (0, 3 * 40);   // below the last entry
+            row->mouseDown (mouseEvent (*row, start, start));
+            const auto inRow = row->getLocalPoint (view, target);
+            row->mouseDrag (mouseEvent (*row, inRow, start, true));
+            row->mouseUp (mouseEvent (*row, inRow, start, true));
+            const auto chain = ctx.globalsCopy().chain;
+            check (chain.size() == 3 && chain[0].pattern == 23 && chain[1].pattern == 24 && chain[2].pattern == 22 && chain[2].repeats == 2,
+                   "dragging the first chain entry to the end moves it there");
+        }
+        else
+            check (false, "chain rows exist");
+        ctx.showPatterns (false);
 
         // settings: theme switch
         ctx.openSettings();
@@ -721,8 +784,7 @@ int main (int argc, char** argv)
         auto& ed = *dynamic_cast<VimaEditor*> (base.get());
         auto& ctx = ed.context();
         ctx.ui.track = 2;
-        ctx.ui.selFirst = 4;
-        ctx.ui.selLast = 11;
+        ctx.ui.selection = rangeMask (4, 11);
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-dark-notes.png"));
 
@@ -738,15 +800,35 @@ int main (int argc, char** argv)
 
         // popovers
         ed.refreshAll();
-        Popover::show (ed, std::make_unique<DivisionPopover> (ctx), { 140, 118, DivisionPopover::size().x, DivisionPopover::size().y });
+        Popover::show (ed.contentComponent(), std::make_unique<DivisionPopover> (ctx), { 140, 118, DivisionPopover::size().x, DivisionPopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-division.png"));
-        Popover::show (ed, std::make_unique<ScalePopover> (ctx), { 616, 118, ScalePopover::size().x, ScalePopover::size().y });
+        Popover::show (ed.contentComponent(), std::make_unique<ScalePopover> (ctx), { 616, 118, ScalePopover::size().x, ScalePopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-scale.png"));
         ctx.ui.pickerBank = 1;
-        Popover::show (ed, std::make_unique<PatternPickerPopover> (ctx), { 600, 48, PatternPickerPopover::size().x, PatternPickerPopover::size().y });
+        Popover::show (ed.contentComponent(), std::make_unique<PatternPickerPopover> (ctx), { 600, 48, PatternPickerPopover::size().x, PatternPickerPopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-patterns.png"));
-        Popover::closeAll (ed);
+        Popover::closeAll (ed.contentComponent());
         juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+
+        // resizing: the whole window scales, 75% to 200%
+        check (ed.getWidth() == 1200 && ed.getHeight() == 720, "a new editor opens at 1200 x 720");
+        ed.setSize (900, 540);
+        check (std::abs (ed.contentComponent().getTransform().mat00 - 0.75f) < 0.001f && std::abs (proc->uiScale.load() - 0.75f) < 0.001f,
+               "resizing to 900 x 540 scales everything to 75%");
+        snapshot (ed, outDir.getChildFile ("main-dark-75.png"));
+        if (auto* c = ed.getConstrainer())
+            check (c->getMinimumWidth() == 900 && c->getMaximumWidth() == 2400 && std::abs (c->getFixedAspectRatio() - 1200.0 / 720.0) < 1.0e-6,
+                   "size limits 900 x 540 to 2400 x 1440, fixed proportions");
+        {
+            juce::MemoryBlock state;
+            proc->getStateInformation (state);
+            auto other = std::make_unique<VimaProcessor>();
+            other->setStateInformation (state.getData(), (int) state.getSize());
+            check (std::abs (other->uiScale.load() - 0.75f) < 0.001f, "the window size is saved with the project");
+            std::unique_ptr<juce::AudioProcessorEditor> reopened (other->createEditor());
+            check (reopened->getWidth() == 900 && reopened->getHeight() == 540, "the editor reopens at the saved size");
+        }
+        ed.setSize (1200, 720);
 
         ctx.showPatterns (true);
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
@@ -765,8 +847,7 @@ int main (int argc, char** argv)
         auto light = std::unique_ptr<juce::AudioProcessorEditor> (proc->createEditor());
         auto& led = *dynamic_cast<VimaEditor*> (light.get());
         led.context().ui.track = 2;
-        led.context().ui.selFirst = 4;
-        led.context().ui.selLast = 11;
+        led.context().ui.selection = rangeMask (4, 11);
         led.refreshAll();
         snapshot (led, outDir.getChildFile ("main-light-notes.png"));
         light.reset();

@@ -223,7 +223,7 @@ void Header::showTrackMenu()
                      {
                          if (result <= 0) return;
                          ctx.ui.track = result - 1;
-                         ctx.ui.selFirst = ctx.ui.selLast = -1;   // switching tracks clears the selection
+                         ctx.ui.selection = 0;   // switching tracks clears the selection
                          ctx.ui.pasteHover = -1;
                          ctx.changed();
                      });

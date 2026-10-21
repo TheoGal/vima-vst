@@ -81,6 +81,7 @@ public:
     std::atomic<int> revision { 0 };   // bumped on every edit, for UI refresh
     std::atomic<bool> hostPlaying { false };
     std::atomic<double> hostBpm { 120.0 };
+    std::atomic<float> uiScale { 1.0f };   // editor size (1.0 = 1200 x 720), saved with the project
 
 private:
     double sampleRate = 44100.0;

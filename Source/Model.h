@@ -117,6 +117,22 @@ public:
     bool isEmpty() const { return count == 0; }
     void clear() { count = 0; }
     void add (ChainEntry e) { if (count < maxChainEntries) entries[(size_t) count++] = e; }
+    void insert (int i, ChainEntry e)
+    {
+        if (count >= maxChainEntries) return;
+        i = juce::jlimit (0, count, i);
+        for (int k = count; k > i; --k) entries[(size_t) k] = entries[(size_t) k - 1];
+        entries[(size_t) i] = e;
+        ++count;
+    }
+    // Move entry `from` so that it ends up at index `to` (both in the current list)
+    void move (int from, int to)
+    {
+        if (from < 0 || from >= count || to < 0 || to >= count || from == to) return;
+        const auto e = entries[(size_t) from];
+        remove (from);
+        insert (to, e);
+    }
     void remove (int i)
     {
         if (i < 0 || i >= count) return;

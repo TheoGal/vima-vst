@@ -12,11 +12,12 @@ The full design is in [SPEC.md](SPEC.md).
 - Per track: length, division (with triplets), direction, swing, scale on/off
 - 14 scales plus a user scale, picked in the main window
 - LED bar per row: playhead and drag selection
-- Step operations on the selection (or all steps): copy / paste across tracks, randomize with
+- Selection by drag, plus Ctrl-click / Ctrl-drag for non-adjacent steps
+- Step operations on the selection (or all steps): copy / paste across tracks (keeps spacing), randomize with
   lane ranges, smooth, shift all (with capping)
 - 192 patterns in 12 banks, quick picker in the header, patterns view with thumbnails,
-  chain with repeats, quantized pattern changes, pattern change by incoming CC
-- CC smoothing between steps, undo, dark and light themes
+  chain with repeats and drag-to-reorder, quantized pattern changes, pattern change by incoming CC
+- CC smoothing between steps, undo, dark and light themes, resizable window (75% to 200%)
 - Follows the host transport
 
 ## Download

@@ -32,6 +32,7 @@ public:
 
     // For tests and screenshots
     vima::Context& context() { return ctx; }
+    juce::Component& contentComponent() { return content; }
     void refreshAll();
 
 private:
@@ -40,7 +41,18 @@ private:
     void openSettings();
     void closeSettings();
 
+    struct Content : public juce::Component
+    {
+        std::function<void (juce::Graphics&)> paintBackground;
+        void paint (juce::Graphics& g) override { if (paintBackground) paintBackground (g); }
+    };
+
+    void layoutContent();
+    static constexpr float minScale = 0.75f, maxScale = 2.0f;
+    bool initialised = false;
+
     VimaProcessor& proc;
+    Content content;
     vima::Context ctx;
     vima::LookAndFeel lnf;
     vima::Header header;

@@ -25,6 +25,14 @@ public:
     ChainRow (Context&, int index);
     void paint (juce::Graphics&) override;
     void resized() override;
+    void mouseDown (const juce::MouseEvent&) override;
+    void mouseDrag (const juce::MouseEvent&) override;
+    void mouseUp (const juce::MouseEvent&) override;
+
+    // Drag to reorder: the parent view tracks where the entry would land
+    std::function<void (int index, int yInParent)> onDrag;
+    std::function<void()> onDragEnd;
+    bool dragging = false;
 
 private:
     Context& ctx;
@@ -48,6 +56,9 @@ private:
     Pill copyBtn, pasteBtn, clearBtn, trackBox, copyTrackBtn;
     Pill chainOnBtn, loopBtn, addBtn, clearChainBtn;
     juce::OwnedArray<ChainRow> chainRows;
+    int dragIndex = -1, dropIndex = -1;   // chain reordering
+    void paintOverChildren (juce::Graphics&) override;
+    int dropIndexAt (int y) const;
     juce::Rectangle<int> left, aside, banksLabel, slotsLabel, slotsArea, selectedBar, chainHeader, columnHeader, chainList, footer;
     int lastChainSize = -1;
 };

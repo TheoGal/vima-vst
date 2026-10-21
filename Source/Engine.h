@@ -47,6 +47,20 @@ public:
     static int stepIndexFor (long long n, int length, Direction dir);
     static double swingOffset (long long n, double stepPpq, int swingPercent);
 
+    // Call with the project lock held after moving a chain entry, so playback keeps
+    // following the entry that is playing
+    void chainEntryMoved (int from, int to)
+    {
+        if (chainIndex == from) chainIndex = to;
+        else if (from < chainIndex && chainIndex <= to) --chainIndex;
+        else if (to <= chainIndex && chainIndex < from) ++chainIndex;
+    }
+
+    void chainEntryRemoved (int index)
+    {
+        if (index < chainIndex) --chainIndex;
+    }
+
     // Testing hook: deterministic probability rolls
     void setRandomSeed (juce::int64 seed) { random.setSeed (seed); }
 

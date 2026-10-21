@@ -79,6 +79,7 @@ void VimaProcessor::getStateInformation (juce::MemoryBlock& destData)
         const Lock sl (lock);
         state = project.toValueTree();
     }
+    state.setProperty ("uiScale", uiScale.load(), nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
 }
@@ -91,6 +92,7 @@ void VimaProcessor::setStateInformation (const void* data, int sizeInBytes)
     auto state = juce::ValueTree::fromXml (*xml);
     if (! state.hasType ("VIMA"))
         return;
+    uiScale = juce::jlimit (0.75f, 2.0f, (float) (double) state.getProperty ("uiScale", 1.0));
     auto loaded = std::make_unique<vima::Project>();
     loaded->fromValueTree (state);
     {

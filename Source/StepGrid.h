@@ -57,5 +57,6 @@ private:
     Context& ctx;
     juce::OwnedArray<StepCell> cells;
     int dragFrom = -1;
+    std::uint32_t dragBase = 0;   // selection kept while Ctrl-dragging (added to)
 };
 } // namespace vima

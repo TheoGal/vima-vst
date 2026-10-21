@@ -11,15 +11,23 @@ namespace vima
 {
 enum class Lane { on, note, octave, velocity, gate, probability, cc };
 
+// The steps an operation acts on: a set of steps (bit n = step n), always within the track length
 struct Scope
 {
     int pattern = 0;
     int track = 0;
-    int first = 0;   // inclusive
-    int last = 15;   // inclusive
+    std::uint32_t mask = 0;
+
+    bool contains (int i) const { return i >= 0 && i < maxSteps && ((mask >> i) & 1u) != 0; }
+    int count() const;
+    int first() const;   // lowest step in the scope (-1 if empty)
 };
 
-// Scope for a selection (first/last < 0 means "no selection": all steps within the track length)
+std::uint32_t rangeMask (int first, int last);   // steps first..last (inclusive, any order)
+
+// Scope for a selection set. An empty selection (or one entirely beyond the length) = all steps.
+Scope makeScope (const Project&, int pattern, int track, std::uint32_t selection);
+// Same, for a contiguous range (selFirst < 0 = no selection)
 Scope makeScope (const Project&, int pattern, int track, int selFirst, int selLast);
 
 // Lanes enabled in the LANES chips for a mode (note mode or CC mode)
@@ -42,14 +50,21 @@ struct ShiftGesture
 {
     Scope scope;
     Lane lane = Lane::note;
-    std::vector<Step> snapshot;   // steps first..last when the knob was grabbed
+    std::array<Step, maxSteps> snapshot {};   // the track's steps when the knob was grabbed
 };
 ShiftGesture beginShift (const Project&, const Scope&, Lane);
 void applyShift (Project&, const ShiftGesture&, int amount);   // computed from the snapshot, values capped
 
-std::vector<Step> copySteps (const Project&, const Scope&);
-// Paste starting at `start`; anything past the track length is cut off. Returns the last step written (or -1).
-int pasteSteps (Project&, int pattern, int track, int start, const std::vector<Step>&);
+// Copied steps keep their spacing: offset = distance from the first copied step
+struct ClipStep
+{
+    int offset = 0;
+    Step step;
+};
+std::vector<ClipStep> copySteps (const Project&, const Scope&);
+// Paste with the first copied step at `start`, keeping the spacing. Steps past the track length
+// are cut off. Returns the set of steps written.
+std::uint32_t pasteSteps (Project&, int pattern, int track, int start, const std::vector<ClipStep>&);
 
 // ---- undo ---------------------------------------------------------------------------
 class UndoHistory
