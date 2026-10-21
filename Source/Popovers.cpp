@@ -195,8 +195,8 @@ void PatternPickerPopover::resized()
     labels.clear();
     labels.add ({ "BANK", area.removeFromTop (12) });
     area.removeFromTop (8);
-    auto banks = area.removeFromTop (56);
-    for (int i = 0; i < numBanks; ++i) pills[i]->setBounds (cell (banks, 6, i, 26, 4));
+    auto banks = area.removeFromTop (26);
+    for (int i = 0; i < numBanks; ++i) pills[i]->setBounds (cell (banks, numBanks, i, 26, 4));
     area.removeFromTop (8);
     labels.add ({ "PATTERNS", area.removeFromTop (12) });
     area.removeFromTop (8);

@@ -1,7 +1,7 @@
 #pragma once
 
 // Parameters exposed to the host for automation (SPEC.md 13.1).
-// Global: Pattern, Chain On. Per track (x16): Notes Out, CC Out, Length, Division, Direction, Swing.
+// Global: Pattern, Chain On. Per track: Notes Out, CC Out, Length, Division, Direction, Swing.
 //
 // Two-way sync with the Project:
 //  - host -> project: on the audio thread (lock held), a parameter whose value changed since it

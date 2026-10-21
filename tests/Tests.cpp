@@ -615,7 +615,7 @@ void testAutomation()
     auto block = [&] { midi.clear(); proc->processBlock (audio, midi); };
     auto param = [&] (const char* id) { return proc->hostParams.find (id); };
 
-    check (proc->getParameters().size() == 2 + 16 * 6, "98 parameters: 2 global + 6 for each of 16 tracks, got " + juce::String (proc->getParameters().size()));
+    check (proc->getParameters().size() == 2 + numTracks * 6, "2 global parameters + 6 for each track, got " + juce::String (proc->getParameters().size()));
     check (param ("t01_scale") == nullptr && param ("t01_root") == nullptr, "scale and root are not exposed");
 
     // host -> project

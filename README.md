@@ -7,7 +7,7 @@ The full design is in [SPEC.md](SPEC.md).
 
 ## Features
 
-- 16 tracks, each on its own MIDI channel, with independent note and CC outputs
+- 8 tracks, each on its own MIDI channel, with independent note and CC outputs
 - Up to 32 steps per track: note, octave, velocity, gate, probability and a CC value per step
 - Per track: length, division (with triplets), direction, swing, scale on/off
 - 14 scales plus a user scale, picked in the main window
@@ -15,7 +15,7 @@ The full design is in [SPEC.md](SPEC.md).
 - Selection by drag, plus Ctrl-click / Ctrl-drag for non-adjacent steps
 - Step operations on the selection (or all steps): copy / paste across tracks (keeps spacing), randomize with
   lane ranges, smooth, shift all (with capping)
-- 192 patterns in 12 banks, quick picker in the header, patterns view with thumbnails,
+- 64 patterns in 4 banks, quick picker in the header, patterns view with thumbnails,
   chain with repeats and drag-to-reorder, quantized pattern changes, pattern change by incoming CC
 - CC smoothing between steps, undo, dark and light themes, resizable window (75% to 200%)
 - Follows the host transport

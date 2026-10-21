@@ -78,10 +78,10 @@ void PatternSlot::paint (juce::Graphics& g)
     if (playing)
         draw::led (g, { (float) top.getRight() - 7.0f, (float) top.getCentreY() }, 6.0f, t.neutral, true);
 
-    // Thumbnail: 16 bars, height = density, colour = output (7.1.1)
+    // Thumbnail: one bar per track, height = density, colour = output (7.1.1)
     auto thumb = inner.removeFromBottom (22).toFloat();
     const float gap = 2.0f;
-    const float w = (thumb.getWidth() - gap * 15.0f) / 16.0f;
+    const float w = (thumb.getWidth() - gap * (numTracks - 1)) / (float) numTracks;
     for (int k = 0; k < numTracks; ++k)
     {
         const auto& tp = pattern.tracks[(size_t) k];
@@ -425,7 +425,7 @@ void PatternsView::resized()
     banksLabel = l.removeFromTop (12);
     l.removeFromTop (6);
     auto banks = l.removeFromTop (30);
-    const int bw = (banks.getWidth() - 4 * 11) / 12;
+    const int bw = juce::jmin (120, (banks.getWidth() - 4 * (numBanks - 1)) / numBanks);
     for (int i = 0; i < numBanks; ++i) bankBtns[i]->setBounds (banks.getX() + i * (bw + 4), banks.getY(), bw, 30);
     l.removeFromTop (12);
     selectedBar = l.removeFromBottom (50);

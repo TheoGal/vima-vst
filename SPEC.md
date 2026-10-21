@@ -33,7 +33,7 @@ Last updated: 2026-10-21
 
 ## 4. Tracks
 
-- 16 tracks, shown as "01" to "16". No track names.
+- 8 tracks, shown as "01" to "08". No track names.
 - Selected with a **dropdown** in the header. No sidebar.
 - Every track always has both a note part and a CC part. The NOTES / CC switch in the header only changes which part is shown and edited. It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
 
@@ -89,8 +89,8 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 ## 7. Patterns
 
-- 192 patterns, organized as 12 banks of 16.
-- A pattern holds all 16 tracks.
+- 64 patterns, organized as 4 banks of 16. Every pattern can be reached by one incoming CC value.
+- A pattern holds all 8 tracks.
 - Copy a whole pattern, or a single track, to another slot.
 - Pattern chaining.
 
@@ -98,14 +98,14 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 - Opened with the "OPEN PATTERNS VIEW" button in the header's pattern popover (7.4). It replaces the step view; a "STEPS" button in the header goes back. While open, the PATTERN box is highlighted and shows the playing pattern, blinking while a change is queued.
 - Global screen, so it uses the neutral color. Green and cyan only appear in the pattern thumbnails (note content and CC content).
-- **Banks**: a row of 12 buttons. A small dot marks the bank holding the playing or queued pattern.
-- **Pattern grid**: 4 x 4 slots for the current bank. Each slot shows its number, a state (PLAYING with a lit LED, NEXT with a dashed outline, STORED, EMPTY), and a 16-bar thumbnail of the 16 tracks (see 7.1.1). A thin line at the bottom marks patterns used in the chain.
+- **Banks**: a row of 4 buttons. A small dot marks the bank holding the playing or queued pattern.
+- **Pattern grid**: 4 x 4 slots for the current bank. Each slot shows its number, a state (PLAYING with a lit LED, NEXT with a dashed outline, STORED, EMPTY), and an 8-bar thumbnail of the 8 tracks (see 7.1.1). A thin line at the bottom marks patterns used in the chain.
 - **Clicking a slot** selects it and queues it as the next pattern. The switch happens at the next quantize point (Settings: 1 beat, 1 bar or pattern end), or instantly when quantize is OFF.
 - **Selected bar**: COPY, PASTE and CLEAR for the selected pattern, plus a track dropdown with COPY TRACK to copy a single track. The clipboard content is shown at the right.
 
 #### 7.1.1 Pattern thumbnail
 
-- 16 bars, one per track, track 01 on the left to track 16 on the right.
+- 8 bars, one per track, track 01 on the left to track 08 on the right.
 - **Height = density**: the number of "on" steps divided by the track's length. A busy track is a tall bar, a sparse one a short bar.
 - **Color = what the track outputs**:
   - Notes output on only: green.
@@ -133,7 +133,7 @@ There is no step skip, no chords, no drum mode. Note mode only.
 ### 7.4 Quick pattern picker (main window header)
 
 - The PATTERN box in the main header has **‹ and › arrows** for the previous / next pattern (crossing into the next or previous bank, wrapping from the last pattern to the first).
-- Clicking the pattern name opens a **popover** (styled like the DIVISION and SCALE popovers): a 12-bank grid (a dot marks the bank with the playing or queued pattern), the 16 slots of the chosen bank (playing = lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button for the full patterns view (chain, copy, paste).
+- Clicking the pattern name opens a **popover** (styled like the DIVISION and SCALE popovers): a row of 4 banks (a dot marks the bank with the playing or queued pattern), the 16 slots of the chosen bank (playing = lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button for the full patterns view (chain, copy, paste).
 - Picking a slot queues or switches it (following the quantize rules) and closes the popover.
 - While a pattern is queued, the PATTERN box keeps showing the current pattern and makes it **blink** until the switch happens. It does not show the next pattern's number. The same applies to the PATTERN box in the patterns view.
 
@@ -302,11 +302,11 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### 13.1 Host automation parameters
 
-98 parameters are exposed to the host:
+50 parameters are exposed to the host:
 
 | Parameter | ID | Range |
 |---|---|---|
-| Pattern | `pattern` | 1-192 (switches follow the quantize setting) |
+| Pattern | `pattern` | 1-64 (switches follow the quantize setting) |
 | Chain On | `chainOn` | off / on |
 | Tnn Notes Out | `tnn_noteOut` | off / on |
 | Tnn CC Out | `tnn_ccOut` | off / on |
@@ -315,7 +315,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 | Tnn Direction | `tnn_direction` | Forward / Backward / Ping-pong |
 | Tnn Swing | `tnn_swing` | 0-100 |
 
-`nn` is the track number 01-16. Parameters are grouped per track in hosts that show groups.
+`nn` is the track number 01-08. Parameters are grouped per track in hosts that show groups.
 
 - Scale and root are not exposed (by decision).
 - Length, Division, Direction and Swing belong to the current pattern: they show and change the current pattern's values, and follow pattern changes.
@@ -361,4 +361,5 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
 - 2026-10-21: Host automation: Pattern and Chain On, plus Notes Out, CC Out, Length, Division, Direction and Swing per track (13.1). Scale and root left out.
+- 2026-10-21: Reduced to 8 tracks and 64 patterns (4 banks of 16). Pattern change by CC now reaches every pattern.
 - 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.

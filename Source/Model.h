@@ -11,12 +11,12 @@
 
 namespace vima
 {
-constexpr int numTracks = 16;
+constexpr int numTracks = 8;
 constexpr int maxSteps = 32;
 constexpr int minLength = 4;
-constexpr int numBanks = 12;
+constexpr int numBanks = 4;
 constexpr int patternsPerBank = 16;
-constexpr int numPatterns = numBanks * patternsPerBank;   // 192
+constexpr int numPatterns = numBanks * patternsPerBank;   // 64
 constexpr int maxChainEntries = 64;
 
 // Internal octave numbering: MIDI note = 12 * (octave + 2) + pitchClass, so C3 = 60

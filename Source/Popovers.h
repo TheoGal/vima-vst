@@ -47,7 +47,7 @@ class PatternPickerPopover : public PopoverPanel, private juce::Timer
 {
 public:
     explicit PatternPickerPopover (Context&);
-    static juce::Point<int> size() { return { 316, 336 }; }
+    static juce::Point<int> size() { return { 316, 306 }; }
     void resized() override;
     void paintOverChildren (juce::Graphics&) override;
 
