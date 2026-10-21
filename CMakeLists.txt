@@ -48,6 +48,15 @@ set(VIMA_SOURCES
     Source/Model.cpp
     Source/Engine.cpp
     Source/Operations.cpp
+    Source/Theme.cpp
+    Source/Widgets.cpp
+    Source/Popovers.cpp
+    Source/Header.cpp
+    Source/ParamRow.cpp
+    Source/StepGrid.cpp
+    Source/OpsPanel.cpp
+    Source/PatternsView.cpp
+    Source/SettingsDialog.cpp
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp)
 
@@ -74,6 +83,6 @@ if(VIMA_BUILD_TESTS)
     juce_add_console_app(VimaTests PRODUCT_NAME "VimaTests")
     target_sources(VimaTests PRIVATE tests/Tests.cpp ${VIMA_SOURCES})
     target_compile_definitions(VimaTests PRIVATE
-        JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="Vima" JUCE_STANDALONE_APPLICATION=1)
+        JUCE_WEB_BROWSER=0 JUCE_USE_CURL=0 JucePlugin_Name="Vima" JUCE_STANDALONE_APPLICATION=1 JUCE_MODAL_LOOPS_PERMITTED=1)
     target_link_libraries(VimaTests PRIVATE VimaData juce::juce_audio_utils juce::juce_recommended_config_flags)
 endif()

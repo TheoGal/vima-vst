@@ -8,6 +8,7 @@
 #include "../Source/Model.h"
 #include "../Source/Engine.h"
 #include "../Source/Operations.h"
+#include "../Source/Popovers.h"
 
 #include <map>
 #include <memory>
@@ -478,14 +479,50 @@ void testOperations()
     }
 }
 
-void renderEditor (VimaProcessor& proc, const juce::File& file)
+void savePng (const juce::Image& img, const juce::File& file)
 {
-    std::unique_ptr<juce::AudioProcessorEditor> ed (proc.createEditor());
-    auto img = ed->createComponentSnapshot (ed->getLocalBounds(), true, 1.0f);
     file.deleteFile();
     juce::FileOutputStream out (file);
     juce::PNGImageFormat().writeImageToStream (img, out);
-    std::cout << "  wrote " << file.getFullPathName() << std::endl;
+    std::cout << "  wrote " << file.getFileName() << std::endl;
+}
+
+void snapshot (juce::Component& c, const juce::File& file)
+{
+    savePng (c.createComponentSnapshot (c.getLocalBounds(), true, 1.0f), file);
+}
+
+// Demo content, similar to the mockups
+void fillDemo (Project& p)
+{
+    juce::Random r (7);
+    auto& pat = p.patterns[(size_t) p.currentPattern];
+    for (int t = 0; t < 8; ++t)
+    {
+        auto& tp = pat.tracks[(size_t) t];
+        tp.length = (std::uint8_t) std::array<int, 8> { 16, 16, 24, 12, 32, 8, 32, 16 }[(size_t) t];
+        for (int i = 0; i < maxSteps; ++i)
+        {
+            auto& s = tp.steps[(size_t) i];
+            s.on = r.nextFloat() < 0.8f;
+            s.pitchClass = (std::int8_t) std::array<int, 7> { 0, 2, 3, 5, 7, 8, 10 }[(size_t) r.nextInt (7)];
+            s.octave = (std::int8_t) (1 + r.nextInt (3));
+            s.velocity = (std::uint8_t) (50 + r.nextInt (77));
+            s.gate = (std::uint8_t) (15 + r.nextInt (80));
+            s.probability = (std::uint8_t) (r.nextFloat() < 0.55f ? 100 : 20 + r.nextInt (75));
+            s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) (64 + 50 * std::sin (i / (double) tp.length * 6.283 + t)) + r.nextInt (20) - 10);
+        }
+    }
+    pat.tracks[2].swing = 56;
+    p.routing[2].ccOut = true;
+    p.routing[4].ccOut = true;
+    p.routing[6].noteOut = false;
+    p.routing[6].ccOut = true;
+    for (int extra : { 1, 2, 4, 5, 6, 7, 8, 9, 11 })
+        p.patterns[(size_t) (16 + extra)] = pat;
+    p.globals.chain.add ({ 22, 2 });
+    p.globals.chain.add ({ 23, 1 });
+    p.globals.chain.add ({ 24, 4 });
 }
 } // namespace
 
@@ -504,7 +541,61 @@ int main (int argc, char** argv)
     section ("Editor screenshots");
     {
         auto proc = std::make_unique<VimaProcessor>();
-        renderEditor (*proc, outDir.getChildFile ("main-dark.png"));
+        proc->edit (-1, [] (Project& p) { p.currentPattern = 22; fillDemo (p); });
+        std::unique_ptr<juce::AudioProcessorEditor> base (proc->createEditor());
+        auto& ed = *dynamic_cast<VimaEditor*> (base.get());
+        auto& ctx = ed.context();
+        ctx.ui.track = 2;
+        ctx.ui.selFirst = 4;
+        ctx.ui.selLast = 11;
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("main-dark-notes.png"));
+
+        ctx.ui.slider = SliderLane::probability;
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("main-dark-prob.png"));
+        ctx.ui.slider = SliderLane::velocity;
+
+        ctx.ui.ccMode = true;
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("main-dark-cc.png"));
+        ctx.ui.ccMode = false;
+
+        // popovers
+        ed.refreshAll();
+        Popover::show (ed, std::make_unique<DivisionPopover> (ctx), { 140, 118, DivisionPopover::size().x, DivisionPopover::size().y });
+        snapshot (ed, outDir.getChildFile ("popover-division.png"));
+        Popover::show (ed, std::make_unique<ScalePopover> (ctx), { 616, 118, ScalePopover::size().x, ScalePopover::size().y });
+        snapshot (ed, outDir.getChildFile ("popover-scale.png"));
+        ctx.ui.pickerBank = 1;
+        Popover::show (ed, std::make_unique<PatternPickerPopover> (ctx), { 600, 48, PatternPickerPopover::size().x, PatternPickerPopover::size().y });
+        snapshot (ed, outDir.getChildFile ("popover-patterns.png"));
+        Popover::closeAll (ed);
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+
+        ctx.showPatterns (true);
+        snapshot (ed, outDir.getChildFile ("patterns-view.png"));
+        ctx.showPatterns (false);
+
+        ctx.openSettings();
+        snapshot (ed, outDir.getChildFile ("settings.png"));
+
+        proc->edit (-1, [] (Project& p) { p.globals.lightTheme = true; });
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("settings-light.png"));
+        ed.context().proc.editCurrent (false, [] (Project&) {});
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+        ed.refreshAll();
+        base.reset();
+        auto light = std::unique_ptr<juce::AudioProcessorEditor> (proc->createEditor());
+        auto& led = *dynamic_cast<VimaEditor*> (light.get());
+        led.context().ui.track = 2;
+        led.context().ui.selFirst = 4;
+        led.context().ui.selLast = 11;
+        led.refreshAll();
+        snapshot (led, outDir.getChildFile ("main-light-notes.png"));
+        light.reset();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
     }
 
     std::cout << checks << " checks, " << (failures == 0 ? juce::String ("ALL PASSED") : juce::String (failures) + " FAILED") << std::endl;

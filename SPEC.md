@@ -37,6 +37,11 @@ Last updated: 2026-10-21
 - Selected with a **dropdown** in the header. No sidebar.
 - Every track always has both a note part and a CC part. The NOTES / CC switch in the header only changes which part is shown and edited. It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
 
+Where track settings live (decided during the build):
+
+- **Per track, per pattern** (stored in each pattern, so patterns can differ): length, division, direction, swing, scale on/off, and all steps.
+- **Per track, global** (the same in every pattern, because they describe where the track is routed): MIDI channel, notes output on/off, CC output on/off, CC number.
+
 Per track parameters:
 
 | Parameter | Range / values | Notes |
@@ -327,3 +332,5 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - 2026-10-21: Pattern quantize has an OFF option: instant switch at the click, same playhead position. Patterns can be picked in the main header (arrows and popover).
 - 2026-10-21: Queued pattern change shown by blinking the current pattern number.
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
+- 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
+- 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.
