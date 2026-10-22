@@ -292,7 +292,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### 12.2 Track parameter row controls
 
-- **Layout**: the track-wide controls on the left, in this order: LENGTH, DIVISION, DIRECTION, SWING, MIDI CH. The mode-specific controls are aligned to the right edge, with the output ON/OFF always last: note mode SCALE, SLIDER, NOTE OUT; CC mode CC NUM, CC OUT. The free space between the two groups separates them.
+- **Layout**: the track-wide controls on the left: first **MIDI CH** (the same in every pattern), then a small extra gap, then the settings stored per pattern: LENGTH, DIVISION, DIRECTION, SWING. The mode-specific controls are aligned to the right edge, with the output ON/OFF always last: note mode SCALE, SLIDER, NOTE OUT; CC mode CC NUM, CC OUT. The free space between the two groups separates them.
 - **Numeric values** (LENGTH, SWING, MIDI CH, CC number): small arc knobs (40 px), styled like the octave knob, value shown inside. No extra unit text beside them except "steps" for LENGTH.
 - No explanatory or help text in the main window (no hints under Selection or Shift).
 - **DIVISION**: click opens a popover grid with the straight values on one row and triplets on a second row. Mouse wheel on the tile steps through values.
@@ -460,6 +460,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
 - 2026-10-22: No backwards compatibility with earlier test builds (14).
 - 2026-10-22: Macro mappings are always fixed (track, pattern, step). SHOWN / CURRENT removed everywhere; hardware-controller mapping that follows the screen is set aside for now. The shown track is no longer saved for macros.
+- 2026-10-22: MIDI CH moved first in the parameter row, slightly apart from the per-pattern settings.
 - 2026-10-22: Parameter row: track-wide controls on the left; mode-specific controls on the right with the output ON/OFF last; CC number in its own tile (CC NUM).
 - 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing; an independent CC lane is a second track on the same channel). In CC mode the step buttons, the ON lane button, randomize, copy/paste and the macro target "CC ON" use the CC on/off. Thumbnails show both parts side by side.
 - 2026-10-22: The STEPS button (back to the step view, in the patterns view and the Macros page) is filled green so it stands out.

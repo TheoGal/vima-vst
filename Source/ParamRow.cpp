@@ -272,11 +272,14 @@ void ParamRow::resized()
         c.setBounds (r.removeFromLeft (w));
         r.removeFromLeft (8);
     };
+    // MIDI CH is the same in every pattern, the others are stored per pattern: MIDI CH comes
+    // first, set slightly apart (SPEC.md 12.2)
+    place (channelTile, 106);
+    r.removeFromLeft (14);
     place (lengthTile, 106);
     place (divisionTile, 112);
     place (directionTile, 136);
     place (swingTile, 106);
-    place (channelTile, 106);
     // Mode-specific controls sit on the right, the output ON/OFF always last (SPEC.md 12.2)
     auto right = r;
     auto placeRight = [&right] (juce::Component& c, int w)
