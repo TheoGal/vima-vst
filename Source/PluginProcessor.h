@@ -106,7 +106,7 @@ public:
 
     vima::MacroParams macros { *this };      // the 128 automatable macros (SPEC 13.1)
     void syncParamsToHost();                 // message thread; also run by the timer
-    std::atomic<int> shownTrack { 0 };       // track shown in the editor (macro targets "SHOWN")
+    int uiTrack = 0;                         // track shown in the editor, remembered with the project (message thread)
 
 private:
     void timerCallback() override { syncParamsToHost(); }

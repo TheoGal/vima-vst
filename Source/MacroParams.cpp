@@ -45,7 +45,7 @@ juce::String MacroParams::textFor (int index, float normalised)
     return macroValueText (textGlobals, m, macroPlain (m, normalised, textNotes[(size_t) index]));
 }
 
-bool MacroParams::applyFromHost (Project& p, Engine& engine, int shownTrack)
+bool MacroParams::applyFromHost (Project& p, Engine& engine)
 {
     bool changed = false;
     for (int i = 0; i < numMacros; ++i)
@@ -59,20 +59,20 @@ bool MacroParams::applyFromHost (Project& p, Engine& engine, int shownTrack)
             continue;   // VIMA sent this value itself: the target already has it
         const auto& m = p.macros[(size_t) i];
         if (m.mapped())
-            changed = applyMacroValue (p, engine.queuedPattern, m, shownTrack, macroPlain (m, v, macroNotes (p, m, shownTrack))) || changed;
+            changed = applyMacroValue (p, engine.queuedPattern, m, macroPlain (m, v, macroNotes (p, m))) || changed;
     }
     return changed;
 }
 
-void MacroParams::capture (const Project& p, int shownTrack)
+void MacroParams::capture (const Project& p)
 {
     for (int i = 0; i < numMacros; ++i)
     {
         maps[(size_t) i] = p.macros[(size_t) i];
-        const auto v = macroTargetValue (p, maps[(size_t) i], shownTrack);
+        const auto v = macroTargetValue (p, maps[(size_t) i]);
         valid[(size_t) i] = v.has_value();
         values[(size_t) i] = v.value_or (0);
-        notes[(size_t) i] = macroNotes (p, maps[(size_t) i], shownTrack);
+        notes[(size_t) i] = macroNotes (p, maps[(size_t) i]);
     }
     const juce::SpinLock::ScopedLockType sl (textLock);
     textMaps = maps;

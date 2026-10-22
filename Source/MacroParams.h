@@ -5,8 +5,9 @@
 // Two-way sync with the Project:
 //  - host -> project (audio thread, project lock held): a macro whose value changed since it was
 //    last applied writes its mapped target. Values VIMA itself sent are not applied back.
-//  - project -> host (message thread): when a mapped target changes (UI, pattern switch, chain,
-//    shown track, remapping), the macro is moved to match, as a short gesture.
+//  - project -> host (message thread): when a mapped target changes (UI, undo, preset,
+//    remapping; pattern switches for the Pattern target), the macro is moved to match, as a
+//    short gesture.
 
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Model.h"
@@ -34,10 +35,10 @@ public:
     explicit MacroParams (juce::AudioProcessor&);
 
     // Audio thread, project lock held. Returns true if the project changed.
-    bool applyFromHost (Project&, Engine&, int shownTrack);
+    bool applyFromHost (Project&, Engine&);
 
     // Message thread, project lock held: take the mappings and target values.
-    void capture (const Project&, int shownTrack);
+    void capture (const Project&);
     // Message thread, lock NOT held: move macros whose targets changed.
     void pushToHost();
 

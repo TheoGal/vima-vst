@@ -38,12 +38,12 @@ void macroLimits (MacroTarget t, const Globals& g, int& lo, int& hi)
     juce::ignoreUnused (g);
 }
 
-MacroMap defaultMacroMap (MacroTarget t, int track, int step, const Globals& g)
+MacroMap defaultMacroMap (MacroTarget t, int track, int pattern, int step, const Globals& g)
 {
     MacroMap m;
     m.target = t;
-    m.track = (std::int8_t) juce::jlimit (-1, numTracks - 1, track);
-    m.pattern = -1;
+    m.track = (std::int8_t) juce::jlimit (0, numTracks - 1, track);
+    m.pattern = (std::int8_t) juce::jlimit (0, numPatterns - 1, pattern);
     m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, step);
     int lo = 0, hi = 1;
     macroLimits (t, g, lo, hi);
@@ -52,22 +52,29 @@ MacroMap defaultMacroMap (MacroTarget t, int track, int step, const Globals& g)
     return m;
 }
 
-int macroTrack (const MacroMap& m, int shownTrack)
+bool sameControl (const MacroMap& a, const MacroMap& b)
 {
-    return juce::jlimit (0, numTracks - 1, m.track < 0 ? shownTrack : (int) m.track);
+    if (! a.mapped() || a.target != b.target)
+        return false;
+    const auto& i = macroTargetInfo (a.target);
+    if (i.kind == MacroKind::global)
+        return true;
+    if (a.track != b.track)
+        return false;
+    if (i.perPattern && a.pattern != b.pattern)
+        return false;
+    return i.kind != MacroKind::step || a.step == b.step;
 }
 
-int macroPattern (const Project& p, const MacroMap& m)
-{
-    return juce::jlimit (0, numPatterns - 1, m.pattern < 0 ? p.currentPattern : (int) m.pattern);
-}
+static int macroTrack (const MacroMap& m) { return juce::jlimit (0, numTracks - 1, (int) m.track); }
+static int macroPattern (const MacroMap& m) { return juce::jlimit (0, numPatterns - 1, (int) m.pattern); }
 
-std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int shownTrack)
+std::optional<int> macroTargetValue (const Project& p, const MacroMap& m)
 {
     if (! m.mapped())
         return std::nullopt;
-    const int t = macroTrack (m, shownTrack);
-    const auto& tp = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) t];
+    const int t = macroTrack (m);
+    const auto& tp = p.patterns[(size_t) macroPattern (m)].tracks[(size_t) t];
     const auto& s = tp.steps[(size_t) juce::jlimit (0, maxSteps - 1, (int) m.step)];
     const auto& r = p.routing[(size_t) t];
     switch (m.target)
@@ -95,9 +102,9 @@ std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int sh
     return std::nullopt;
 }
 
-bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMap& m, int shownTrack, int v)
+bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMap& m, int v)
 {
-    const auto current = macroTargetValue (p, m, shownTrack);
+    const auto current = macroTargetValue (p, m);
     if (! current.has_value())
         return false;
     int lo = 0, hi = 1;
@@ -106,8 +113,8 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
     if (v == *current)
         return false;
 
-    const int t = macroTrack (m, shownTrack);
-    auto& tp = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) t];
+    const int t = macroTrack (m);
+    auto& tp = p.patterns[(size_t) macroPattern (m)].tracks[(size_t) t];
     auto& s = tp.steps[(size_t) juce::jlimit (0, maxSteps - 1, (int) m.step)];
     auto& r = p.routing[(size_t) t];
     switch (m.target)
@@ -138,12 +145,12 @@ bool MacroNotes::allows (int pc) const
     return ! scaleOn || inScale (mask, root, ((pc % 12) + 12) % 12);
 }
 
-MacroNotes macroNotes (const Project& p, const MacroMap& m, int shownTrack)
+MacroNotes macroNotes (const Project& p, const MacroMap& m)
 {
     MacroNotes n;
     if (m.target != MacroTarget::note)
         return n;
-    n.scaleOn = p.patterns[(size_t) macroPattern (p, m)].tracks[(size_t) macroTrack (m, shownTrack)].scaleOn;
+    n.scaleOn = p.patterns[(size_t) macroPattern (m)].tracks[(size_t) macroTrack (m)].scaleOn;
     n.mask = p.globals.scaleMask();
     n.root = p.globals.root;
     return n;
@@ -238,9 +245,9 @@ juce::String macroValueText (const Globals& g, const MacroMap& m, int v)
     return plainText (m, v, g.octaveOffset());
 }
 
-juce::String macroValueText (const Project& p, const MacroMap& m, int shownTrack, int v)
+juce::String macroValueText (const Project& p, const MacroMap& m, int v)
 {
-    juce::ignoreUnused (shownTrack);   // note values are already the sounding note
+    // note values are already the sounding note
     return plainText (m, v, p.globals.octaveOffset());
 }
 
@@ -287,11 +294,11 @@ juce::String macroWhereText (const MacroMap& m, bool compact)
     if (i.kind == MacroKind::global)
         return "GLOBAL";
     const juce::String dot (juce::CharPointer_UTF8 (" \xc2\xb7 "));
-    const juce::String track = m.track < 0 ? juce::String (compact ? "SHOWN" : "SHOWN TRK") : "T" + juce::String ((int) m.track + 1).paddedLeft ('0', 2);
+    const juce::String track = "T" + juce::String ((int) m.track + 1).paddedLeft ('0', 2);
     if (! i.perPattern)
         return track;
-    juce::String pattern = m.pattern < 0 ? juce::String (compact ? "CUR" : "CURRENT") : patternLabel (m.pattern);
-    if (compact && m.pattern >= 0)
+    auto pattern = patternLabel (m.pattern);
+    if (compact)
         pattern = pattern.removeCharacters (" ");
     return track + dot + pattern;
 }

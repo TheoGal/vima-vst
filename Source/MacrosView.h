@@ -45,7 +45,9 @@ private:
     void pickTarget (MacroTarget);
 
     Context& ctx;
-    juce::OwnedArray<Pill> bankBtns, kindBtns, targetBtns, trackBtns, patModeBtns;
+    juce::OwnedArray<Pill> bankBtns, kindBtns, targetBtns, trackBtns;
+    juce::String conflict;   // "ALREADY ON M003" after a refused change
+    int conflictMacro = -1;
     juce::OwnedArray<MacroCell> cells;
     std::vector<MacroTarget> shownTargets;
     Pill learnBtn, clearBtn, saveSetBtn, loadSetBtn;

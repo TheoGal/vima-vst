@@ -215,8 +215,8 @@ constexpr int numMacroTargets = 17;
 struct MacroMap
 {
     MacroTarget target = MacroTarget::none;
-    std::int8_t track = -1;      // -1 = the track shown in the editor
-    std::int8_t pattern = -1;    // -1 = the current pattern
+    std::int8_t track = 0;       // 0..7
+    std::int8_t pattern = 0;     // 0..63 (targets stored per pattern)
     std::uint8_t step = 0;       // 0..31 (step targets)
     std::int16_t min = 0, max = 1;
 

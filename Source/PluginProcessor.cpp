@@ -12,7 +12,7 @@ void VimaProcessor::syncParamsToHost()
 {
     {
         const Lock sl (lock);
-        macros.capture (project, shownTrack.load());
+        macros.capture (project);
     }
     macros.pushToHost();
 }
@@ -73,7 +73,7 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
     outBuffer.clear();
     {
         const Lock sl (lock);
-        if (macros.applyFromHost (project, engine, shownTrack.load()))
+        if (macros.applyFromHost (project, engine))
             ++revision;
         engine.process (project, host, buffer.getNumSamples(), midi, outBuffer);
     }
@@ -210,7 +210,7 @@ void VimaProcessor::getStateInformation (juce::MemoryBlock& destData)
         state = project.toValueTree();
     }
     state.setProperty ("uiScale", uiScale.load(), nullptr);
-    state.setProperty ("shownTrack", shownTrack.load(), nullptr);
+    state.setProperty ("uiTrack", uiTrack, nullptr);
     state.setProperty ("presetPath", presetFile.getFullPathName(), nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
@@ -225,7 +225,7 @@ void VimaProcessor::setStateInformation (const void* data, int sizeInBytes)
     if (! state.hasType ("VIMA"))
         return;
     uiScale = juce::jlimit (0.75f, 2.0f, (float) (double) state.getProperty ("uiScale", 1.0));
-    shownTrack = juce::jlimit (0, vima::numTracks - 1, (int) state.getProperty ("shownTrack", 0));
+    uiTrack = juce::jlimit (0, vima::numTracks - 1, (int) state.getProperty ("uiTrack", 0));
     {
         const auto path = state.getProperty ("presetPath").toString();
         presetFile = juce::File::isAbsolutePath (path) ? juce::File (path) : juce::File();

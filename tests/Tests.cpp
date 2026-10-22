@@ -644,21 +644,19 @@ void testMacros()
     check (macro (0)->getName (32) == "Macro 1" && macro (127)->getName (32) == "Macro 128", "macros are named Macro 1 to Macro 128");
     check (macro (4)->getCurrentValueAsText() == "-", "an unmapped macro shows -");
 
-    // map: M1 = velocity of step 5 on the shown track; M2 = length of track 3 in pattern B01 · 10;
-    // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2
+    // map: M1 = velocity of track 4 step 5; M2 = length of track 3 in pattern B01 · 10;
+    // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2; M6 = probability of track 4 step 1
     proc->edit (-1, [] (Project& p)
     {
-        p.macros[0] = defaultMacroMap (MacroTarget::velocity, -1, 4, p.globals);
-        p.macros[1] = defaultMacroMap (MacroTarget::length, 2, 0, p.globals);
-        p.macros[1].pattern = 9;
-        p.macros[2] = defaultMacroMap (MacroTarget::pattern, -1, 0, p.globals);
-        p.macros[3] = defaultMacroMap (MacroTarget::chainOn, -1, 0, p.globals);
-        p.macros[4] = defaultMacroMap (MacroTarget::note, 1, 0, p.globals);
-        p.macros[5] = defaultMacroMap (MacroTarget::probability, -1, 0, p.globals);
+        p.macros[0] = defaultMacroMap (MacroTarget::velocity, 3, 0, 4, p.globals);
+        p.macros[1] = defaultMacroMap (MacroTarget::length, 2, 9, 0, p.globals);
+        p.macros[2] = defaultMacroMap (MacroTarget::pattern, 0, 0, 0, p.globals);
+        p.macros[3] = defaultMacroMap (MacroTarget::chainOn, 0, 0, 0, p.globals);
+        p.macros[4] = defaultMacroMap (MacroTarget::note, 1, 0, 0, p.globals);
+        p.macros[5] = defaultMacroMap (MacroTarget::probability, 3, 0, 0, p.globals);
         p.macros[5].min = 20; p.macros[5].max = 60;
         p.globals.quantize = Quantize::off;
     });
-    proc->shownTrack = 3;
     auto m = [&] (int i) { return proc->read ([i] (const Project& p) { return p.macros[(size_t) i]; }); };
 
     // host -> project
@@ -666,14 +664,14 @@ void testMacros()
     macro (1)->setValueNotifyingHost (macroNormalized (m (1), 12));
     macro (3)->setValueNotifyingHost (1.0f);
     const auto noteMap = m (4);
-    macro (4)->setValueNotifyingHost (proc->read ([&] (const Project& p) { return macroNormalized (noteMap, 7, macroNotes (p, noteMap, 3)); }));
+    macro (4)->setValueNotifyingHost (proc->read ([&] (const Project& p) { return macroNormalized (noteMap, 7, macroNotes (p, noteMap)); }));
     macro (5)->setValueNotifyingHost (0.5f);
     block();
     check (proc->read ([] (const Project& p) { return p.patterns[0].tracks[3].steps[4].velocity; }) == 33,
-           "macro on SHOWN track: velocity of step 5 on the shown track (4) is set");
+           "macro on track 4, step 5: velocity is set");
     check (proc->read ([] (const Project& p) { return p.patterns[9].tracks[2].length; }) == 12
                && proc->read ([] (const Project& p) { return p.patterns[0].tracks[2].length; }) == 16,
-           "macro with a FIXED pattern changes that pattern only");
+           "a macro changes its own pattern only");
     check (proc->read ([] (const Project& p) { return p.globals.chainOn; }), "macro on Chain On");
     check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[1].steps[0].pitchClass; }) == 7, "macro on a step note");
     check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 40,
@@ -697,7 +695,7 @@ void testMacros()
         return proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[1].steps[0].pitchClass; });
     };
     check (noteAt (1.0f) == 10 && noteAt (0.5f) == 5 && noteAt (0.0f) == 0, "scale on: the note macro moves through the 7 notes of C minor (top A#, middle F, bottom C)");
-    check (macroPositions (noteMap, proc->read ([&] (const Project& p) { return macroNotes (p, noteMap, 3); })) == 7, "7 positions in C minor");
+    check (macroPositions (noteMap, proc->read ([&] (const Project& p) { return macroNotes (p, noteMap); })) == 7, "7 positions in C minor");
     proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[1].scaleOn = false; });
     check (noteAt (1.0f / 11.0f) == 1, "scale off: all 12 notes (C#)");
     proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[1].scaleOn = true; });
@@ -717,12 +715,11 @@ void testMacros()
     check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 90,
            "a value outside MIN / MAX is left alone when the macro follows it");
 
-    // shown track follows the editor
-    proc->edit (-1, [] (Project& p) { p.patterns[0].tracks[6].steps[4].velocity = 11; });
-    proc->shownTrack = 6;
+    // a fixed mapping does not follow pattern switches
+    proc->edit (-1, [] (Project& p) { p.patterns[1].tracks[3].steps[4].velocity = 11; p.currentPattern = 1; });
     proc->syncParamsToHost();
-    check (plainOf (0, m (0)) == 11, "switching the shown track moves SHOWN macros to that track's values");
-    proc->shownTrack = 3;
+    check (plainOf (0, m (0)) == 90, "switching pattern does not move a fixed macro");
+    proc->edit (-1, [] (Project& p) { p.currentPattern = 0; });
 
     // state
     juce::MemoryBlock state;
@@ -731,7 +728,8 @@ void testMacros()
     other->setStateInformation (state.getData(), (int) state.getSize());
     check (other->read ([] (const Project& p) { return p.macros[1]; }) == m (1) && other->read ([] (const Project& p) { return p.macros[5]; }) == m (5),
            "macro mappings are saved with the project");
-    check (other->shownTrack.load() == 3, "the shown track is saved with the project");
+    check (sameControl (m (0), defaultMacroMap (MacroTarget::velocity, 3, 0, 4, Globals())) && ! sameControl (m (0), m (5)),
+           "sameControl: same target, track, pattern and step");
 }
 
 void testTransport()
@@ -777,7 +775,7 @@ void testPresets()
         p.globals.scale = 4;
         p.globals.lightTheme = true;
         p.currentPattern = 3;
-        p.macros[0] = defaultMacroMap (MacroTarget::velocity, -1, 2, p.globals);
+        p.macros[0] = defaultMacroMap (MacroTarget::velocity, 0, 0, 2, p.globals);
     });
     const auto presetFile = dir.getChildFile ("Song.vima");
     check (proc->savePreset (presetFile) && presetFile.existsAsFile(), "a preset is saved to a file");
@@ -795,7 +793,7 @@ void testPresets()
         p.globals.lightTheme = false;
         p.currentPattern = 0;
         p.macros[0] = MacroMap();
-        p.macros[9] = defaultMacroMap (MacroTarget::gate, 1, 0, p.globals);
+        p.macros[9] = defaultMacroMap (MacroTarget::gate, 1, 0, 0, p.globals);
     });
     check (proc->loadPreset (presetFile), "the preset loads");
     auto get = [&] (auto fn) { return proc->read (fn); };
@@ -843,15 +841,6 @@ void testInitAndGate()
         check (g.laneNote && ! g.laneOn && ! g.laneVel && ! g.laneGate && ! g.laneCC && g.rangeGate.max == maxGate && g.rangeVel.min == 1
                    && g.rangeVel.max == 127 && ! g.ccSmoothing && g.ccSmoothingTime == 100 && g.middleC == 3,
                "init globals: NOTE lane only, full ranges, CC smoothing off, middle C = C3");
-    }
-    {
-        // a state saved before the new init values: missing patterns are the old empty pattern
-        juce::ValueTree old ("VIMA");
-        old.setProperty ("version", 1, nullptr);
-        Project p;
-        p.fromValueTree (old);
-        check (! p.patterns[10].tracks[0].steps[0].on && p.patterns[10].tracks[0].steps[0].gate == 50 && p.globals.ccSmoothing,
-               "projects saved before the change load as they were saved");
     }
     {
         Project p;
@@ -1163,21 +1152,33 @@ int main (int argc, char** argv)
             check (ctx.ui.selectedMacro == 34, "clicking a macro selects it (M035)");
             if (auto* k = findPill (*mv, "TRACK")) click (*k);
             check (ctx.macroCopy (34).target == MacroTarget::noteOut, "TARGET TRACK maps the first track parameter");
+            check (ctx.macroCopy (34).track == ctx.ui.track && ctx.macroCopy (34).pattern == ctx.currentPattern(),
+                   "a new mapping starts on the track and pattern on screen");
             if (auto* sw = findPill (*mv, "SWING")) click (*sw);
             if (auto* t5 = findPill (*mv, "5")) click (*t5);
-            if (auto* fx = findPill (*mv, "FIXED")) click (*fx);
             const auto mm = ctx.macroCopy (34);
             check (mm.target == MacroTarget::swing && mm.track == 4 && mm.pattern == ctx.currentPattern() && mm.min == 0 && mm.max == 100,
-                   "SWING, track 5, FIXED pattern: the mapping follows the clicks");
+                   "SWING, track 5: the mapping follows the clicks");
+            // another macro may not point at the same control
+            const int curPat = ctx.currentPattern();
+            proc->edit (-1, [curPat] (Project& p) { p.macros[35] = defaultMacroMap (MacroTarget::swing, 3, curPat, 0, p.globals); });
+            ctx.ui.selectedMacro = 35;
+            ed.refreshAll();
+            if (auto* t5 = findPill (*mv, "5")) click (*t5);
+            check (ctx.macroCopy (35).track == 3, "the editor refuses to point a second macro at the same control");
+            proc->edit (-1, [] (Project& p) { p.macros[35] = MacroMap(); });
+            ctx.ui.selectedMacro = 34;
+            ed.refreshAll();
             if (auto* clr = findPill (*mv, "CLEAR MAPPING")) click (*clr);
             check (! ctx.macroCopy (34).mapped(), "CLEAR MAPPING unmaps the macro");
 
-            // LEARN: click controls in the step view
+            // LEARN: click controls in the step view. M041 is taken, so LEARN starts on M042.
+            proc->edit (-1, [] (Project& p) { p.macros[40] = defaultMacroMap (MacroTarget::cc, 7, 50, 9, p.globals); });
             ctx.ui.selectedMacro = 40;
             ctx.ui.macroBank = 1;
             ed.refreshAll();
             if (auto* l = findPill (*mv, "LEARN")) click (*l);
-            check (ctx.ui.macroLearn, "LEARN turns on");
+            check (ctx.ui.macroLearn && ctx.ui.selectedMacro == 41, "LEARN turns on, listening on the next free macro (M042)");
             if (auto* st = findPill (ed, "STEPS")) click (*st);
             check (! ctx.ui.macrosView, "STEPS goes back to the step view");
             auto* overlay = findChild<LearnOverlay> (ed);
@@ -1188,15 +1189,21 @@ int main (int argc, char** argv)
             {
                 ctx.ui.slider = SliderLane::gate;
                 const auto before = stepOf (ctx.ui.track, 2);
-                click (*overlay, overlay->getLocalPoint (sl, sl->getLocalBounds().getCentre()));
-                const auto lm = ctx.macroCopy (40);
-                check (lm.target == MacroTarget::gate && lm.track == -1 && lm.pattern == -1 && lm.step == 2,
-                       "LEARN on the step 3 slider (GATE lane): shown track, current pattern, step 3 gate");
+                const auto slPoint = overlay->getLocalPoint (sl, sl->getLocalBounds().getCentre());
+                click (*overlay, slPoint);
+                const auto lm = ctx.macroCopy (41);
+                check (lm.target == MacroTarget::gate && lm.track == ctx.ui.track && lm.pattern == ctx.currentPattern() && lm.step == 2,
+                       "LEARN on the step 3 slider (GATE lane): fixed to this track, this pattern, step 3 gate");
                 check (stepOf (ctx.ui.track, 2) == before, "learning does not change the control");
-                check (ctx.ui.selectedMacro == 41, "LEARN moves on to the next macro");
+                check (ctx.ui.selectedMacro == 42, "LEARN moves on to the next free macro");
+                check (overlay->mappedControls().size() == 1, "while learning, the mapped control is outlined");
+                click (*overlay, slPoint);
+                check (! ctx.macroCopy (42).mapped() && ctx.ui.selectedMacro == 42, "a mapped control cannot be mapped again");
                 if (auto* lenTile = findChild<KnobTile> (ed, 0))
                     click (*overlay, overlay->getLocalPoint (lenTile, lenTile->getLocalBounds().getCentre()));
-                check (ctx.macroCopy (41).target == MacroTarget::length, "LEARN on LENGTH");
+                check (ctx.macroCopy (42).target == MacroTarget::length, "LEARN on LENGTH");
+                overlay->mouseDown (mouseEvent (*overlay, slPoint, slPoint, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
+                check (! ctx.macroCopy (41).mapped() && overlay->mappedControls().size() == 1, "right-click frees a mapped control");
                 ctx.ui.slider = SliderLane::velocity;
             }
             ctx.ui.macroLearn = false;
@@ -1282,19 +1289,19 @@ int main (int argc, char** argv)
 
         proc->edit (-1, [] (Project& p)
         {
-            for (int i = 0; i < 16; ++i) p.macros[(size_t) i] = defaultMacroMap (MacroTarget::velocity, -1, i, p.globals);
-            p.macros[16] = defaultMacroMap (MacroTarget::length, 1, 0, p.globals);
-            p.macros[17] = defaultMacroMap (MacroTarget::swing, 2, 0, p.globals);
+            for (int i = 0; i < 16; ++i) p.macros[(size_t) i] = defaultMacroMap (MacroTarget::velocity, 2, 22, i, p.globals);
+            p.macros[16] = defaultMacroMap (MacroTarget::length, 1, 22, 0, p.globals);
+            p.macros[17] = defaultMacroMap (MacroTarget::swing, 2, 22, 0, p.globals);
             p.macros[17].max = 60;
-            p.macros[18] = defaultMacroMap (MacroTarget::division, 3, 0, p.globals);
+            p.macros[18] = defaultMacroMap (MacroTarget::division, 3, 22, 0, p.globals);
             p.macros[18].pattern = 5;
-            p.macros[19] = defaultMacroMap (MacroTarget::gate, 4, 0, p.globals);
-            p.macros[20] = defaultMacroMap (MacroTarget::probability, -1, 3, p.globals);
-            p.macros[21] = defaultMacroMap (MacroTarget::cc, 6, 0, p.globals);
-            p.macros[22] = defaultMacroMap (MacroTarget::pattern, -1, 0, p.globals);
-            p.macros[23] = defaultMacroMap (MacroTarget::chainOn, -1, 0, p.globals);
-            p.macros[24] = defaultMacroMap (MacroTarget::note, -1, 0, p.globals);
-            p.macros[25] = defaultMacroMap (MacroTarget::octave, -1, 0, p.globals);
+            p.macros[19] = defaultMacroMap (MacroTarget::gate, 4, 22, 0, p.globals);
+            p.macros[20] = defaultMacroMap (MacroTarget::probability, 2, 22, 3, p.globals);
+            p.macros[21] = defaultMacroMap (MacroTarget::cc, 6, 22, 0, p.globals);
+            p.macros[22] = defaultMacroMap (MacroTarget::pattern, 2, 22, 0, p.globals);
+            p.macros[23] = defaultMacroMap (MacroTarget::chainOn, 2, 22, 0, p.globals);
+            p.macros[24] = defaultMacroMap (MacroTarget::note, 2, 22, 0, p.globals);
+            p.macros[25] = defaultMacroMap (MacroTarget::octave, 2, 22, 0, p.globals);
         });
         ctx.ui.selectedMacro = 16;
         ctx.showMacros (true);

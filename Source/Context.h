@@ -68,16 +68,73 @@ public:
     std::function<void()> openSettings;
     std::function<void (bool)> showMacros;
 
-    // LEARN: map the selected macro to a target (track = shown track, current pattern) and
-    // move on to the next macro. Returns false when not learning.
+    // The mapping a control on screen would get: the track and pattern on screen, fixed
+    MacroMap controlMap (MacroTarget target, int step)
+    {
+        const int t = ui.track;
+        return proc.read ([target, step, t] (const Project& p) { return defaultMacroMap (target, t, p.currentPattern, step, p.globals); });
+    }
+
+    // The macro mapped to a control on screen, or -1
+    int macroFor (MacroTarget target, int step)
+    {
+        const auto want = controlMap (target, step);
+        return proc.read ([&want] (const Project& p)
+        {
+            for (int i = 0; i < numMacros; ++i)
+                if (sameControl (p.macros[(size_t) i], want)) return i;
+            return -1;
+        });
+    }
+
+    // The next unmapped macro from `from` on (wrapping), or -1 when all 128 are mapped
+    int nextFreeMacro (int from)
+    {
+        return proc.read ([from] (const Project& p)
+        {
+            for (int k = 0; k < numMacros; ++k)
+            {
+                const int i = (from + k) % numMacros;
+                if (! p.macros[(size_t) i].mapped()) return i;
+            }
+            return -1;
+        });
+    }
+
+    void selectMacro (int i)
+    {
+        ui.selectedMacro = juce::jlimit (0, numMacros - 1, i);
+        ui.macroBank = ui.selectedMacro / macrosPerBank;
+    }
+
+    // LEARN (SPEC.md 13.2): map the listening macro to a control on screen, then move on to the
+    // next free macro. A control that is already mapped is left alone. LEARN switches off when
+    // no macro is free. Returns false when not learning.
     bool learn (MacroTarget target, int step)
     {
         if (! ui.macroLearn || target == MacroTarget::none)
             return false;
-        const int i = juce::jlimit (0, numMacros - 1, ui.selectedMacro);
-        proc.edit (-1, [i, target, step] (Project& p) { p.macros[(size_t) i] = defaultMacroMap (target, -1, step, p.globals); });
-        ui.selectedMacro = juce::jmin (numMacros - 1, i + 1);
-        ui.macroBank = ui.selectedMacro / macrosPerBank;
+        if (macroFor (target, step) >= 0)
+            return true;   // already mapped: no second mapping
+        int i = juce::jlimit (0, numMacros - 1, ui.selectedMacro);
+        if (macroCopy (i).mapped()) i = nextFreeMacro (i);
+        if (i < 0) { ui.macroLearn = false; changed(); return true; }
+        const auto m = controlMap (target, step);
+        proc.edit (-1, [i, m] (Project& p) { p.macros[(size_t) i] = m; });
+        const int next = nextFreeMacro (i);
+        if (next < 0) ui.macroLearn = false;
+        else selectMacro (next);
+        changed();
+        return true;
+    }
+
+    // LEARN: right-click on a mapped control frees it
+    bool unlearn (MacroTarget target, int step)
+    {
+        const int i = macroFor (target, step);
+        if (! ui.macroLearn || i < 0)
+            return false;
+        proc.edit (-1, [i] (Project& p) { p.macros[(size_t) i] = MacroMap(); });
         changed();
         return true;
     }

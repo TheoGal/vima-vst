@@ -23,12 +23,9 @@ void LookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int width, int hei
 }
 
 // ---------------------------------------------------------------------------------------
-LearnOverlay::Hit LearnOverlay::hitAt (juce::Point<int> local)
+LearnOverlay::Hit LearnOverlay::resolve (juce::Component* c)
 {
     Hit hit;
-    setInterceptsMouseClicks (false, false);
-    auto* c = content.getComponentAt (content.getLocalPoint (this, local));
-    setInterceptsMouseClicks (true, false);
     for (; c != nullptr && c != &content; c = c->getParentComponent())
     {
         const auto& props = c->getProperties();
@@ -50,17 +47,74 @@ LearnOverlay::Hit LearnOverlay::hitAt (juce::Point<int> local)
     return hit;
 }
 
+LearnOverlay::Hit LearnOverlay::hitAt (juce::Point<int> local)
+{
+    setInterceptsMouseClicks (false, false);
+    auto* c = content.getComponentAt (content.getLocalPoint (this, local));
+    setInterceptsMouseClicks (true, false);
+    return resolve (c);
+}
+
+void LearnOverlay::collect (juce::Component& parent, std::vector<Hit>& out)
+{
+    for (auto* c : parent.getChildren())
+    {
+        if (c == this || ! c->isVisible())
+            continue;
+        if (c->getProperties().contains ("learnTarget"))
+        {
+            const auto h = resolve (c);
+            if (h.component != nullptr) out.push_back (h);
+            continue;   // a learnable control's children belong to it
+        }
+        collect (*c, out);
+    }
+}
+
+std::vector<std::pair<LearnOverlay::Hit, int>> LearnOverlay::mappedControls()
+{
+    std::vector<Hit> all;
+    collect (content, all);
+    std::vector<std::pair<Hit, int>> mapped;
+    for (const auto& h : all)
+        if (const int i = ctx.macroFor (h.target, h.step); i >= 0)
+            mapped.push_back ({ h, i });
+    return mapped;
+}
+
 void LearnOverlay::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
     g.setColour (t.amber.withAlpha (0.6f));
     g.drawRect (getLocalBounds(), 2);
+
+    // every mapped control keeps its outline, with the macro's number
+    for (const auto& [hit, macro] : mappedControls())
+    {
+        const auto r = getLocalArea (hit.component->getParentComponent(), hit.component->getBounds()).toFloat().expanded (3.0f);
+        g.setColour (t.amber.withAlpha (0.10f));
+        g.fillRoundedRectangle (r, 6.0f);
+        g.setColour (t.amber);
+        g.drawRoundedRectangle (r, 6.0f, 1.5f);
+        const auto tagText = macroId (macro);
+        g.setFont (Fonts::monoSemi (9.0f));
+        const float w = (float) juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), tagText) + 8.0f;
+        const auto tag = juce::Rectangle<float> (w, 13.0f).withPosition (r.getRight() - w - 2.0f, r.getY() - 6.0f);
+        g.fillRoundedRectangle (tag, 3.0f);
+        g.setColour (t.onAccent);
+        g.drawText (tagText, tag, juce::Justification::centred);
+    }
     if (! hover.isEmpty())
     {
         g.setColour (t.amber.withAlpha (0.12f));
         g.fillRoundedRectangle (hover.toFloat().expanded (3.0f), 6.0f);
         g.setColour (t.amber);
         g.drawRoundedRectangle (hover.toFloat().expanded (3.0f), 6.0f, 1.5f);
+    }
+    if (! flash.isEmpty())   // a click on a mapped control: refused
+    {
+        g.setColour (t.amber.withAlpha (0.45f));
+        g.fillRoundedRectangle (flash.toFloat().expanded (3.0f), 6.0f);
     }
 }
 
@@ -81,8 +135,21 @@ void LearnOverlay::mouseExit (const juce::MouseEvent&)
 void LearnOverlay::mouseDown (const juce::MouseEvent& e)
 {
     const auto hit = hitAt (e.getPosition());
-    if (hit.component != nullptr)
-        ctx.learn (hit.target, hit.step);
+    if (hit.component == nullptr)
+        return;
+    if (e.mods.isPopupMenu())
+    {
+        ctx.unlearn (hit.target, hit.step);   // right-click frees a mapped control
+        return;
+    }
+    if (ctx.macroFor (hit.target, hit.step) >= 0)
+    {
+        flash = getLocalArea (hit.component->getParentComponent(), hit.component->getBounds());
+        repaint();
+        startTimer (250);
+        return;
+    }
+    ctx.learn (hit.target, hit.step);
 }
 }
 
@@ -99,7 +166,7 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     ctx.showPatterns = [this] (bool b) { setPatternsView (b); };
     ctx.openSettings = [this] { openSettings(); };
     ctx.showMacros = [this] (bool b) { setMacrosView (b); };
-    ctx.ui.track = juce::jlimit (0, numTracks - 1, proc.shownTrack.load());
+    ctx.ui.track = juce::jlimit (0, numTracks - 1, proc.uiTrack);
     ctx.ui.macroBank = 0;
     ctx.ui.selectedPattern = ctx.currentPattern();
     ctx.ui.viewBank = ctx.ui.selectedPattern / patternsPerBank;
@@ -193,7 +260,7 @@ void VimaEditor::refreshAll()
     macrosView.setVisible (mv);
     learnOverlay.setVisible (ctx.ui.macroLearn && ! mv);
     if (learnOverlay.isVisible()) learnOverlay.toFront (false);
-    proc.shownTrack = ctx.ui.track;
+    proc.uiTrack = ctx.ui.track;
     header.resized();
     paramRow.resized();
     grid.refreshCells();

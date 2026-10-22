@@ -23,7 +23,9 @@ public:
 
 // While LEARN is on, covers the step and patterns views: a click on a control maps the
 // selected macro to it instead of changing the control (SPEC.md 13.1).
-class LearnOverlay : public juce::Component
+// Mapped controls keep an outline and a macro tag while LEARN is on; a mapped control cannot be
+// mapped again (right-click frees it).
+class LearnOverlay : public juce::Component, private juce::Timer
 {
 public:
     LearnOverlay (Context& c, juce::Component& contentRoot) : ctx (c), content (contentRoot) {}
@@ -34,11 +36,15 @@ public:
 
     struct Hit { juce::Component* component = nullptr; MacroTarget target = MacroTarget::none; int step = 0; };
     Hit hitAt (juce::Point<int> localPoint);
+    Hit resolve (juce::Component*);   // the learnable control a component belongs to
+    std::vector<std::pair<Hit, int>> mappedControls();   // visible mapped controls and their macro
 
 private:
+    void timerCallback() override { stopTimer(); flash = {}; repaint(); }
+    void collect (juce::Component&, std::vector<Hit>&);
     Context& ctx;
     juce::Component& content;
-    juce::Rectangle<int> hover;
+    juce::Rectangle<int> hover, flash;
 };
 }
 

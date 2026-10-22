@@ -69,15 +69,14 @@ void MacroCell::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
     const int i = macroIndex();
-    const int shown = ctx.ui.track;
     struct Info { MacroMap map; std::optional<int> value; juce::String text; MacroNotes notes; };
-    const auto info = ctx.proc.read ([i, shown] (const Project& p)
+    const auto info = ctx.proc.read ([i] (const Project& p)
     {
         Info r;
         r.map = p.macros[(size_t) i];
-        r.value = macroTargetValue (p, r.map, shown);
-        r.notes = macroNotes (p, r.map, shown);
-        if (r.value) r.text = macroValueText (p, r.map, shown, *r.value);
+        r.value = macroTargetValue (p, r.map);
+        r.notes = macroNotes (p, r.map);
+        if (r.value) r.text = macroValueText (p, r.map, *r.value);
         if (r.value && r.map.target == MacroTarget::pattern)   // compact "02·07" inside the knob
             r.text = juce::String (*r.value / patternsPerBank + 1).paddedLeft ('0', 2) + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7"))
                      + juce::String (*r.value % patternsPerBank + 1).paddedLeft ('0', 2);
@@ -141,11 +140,10 @@ void MacroCell::mouseDown (const juce::MouseEvent& e)
     const auto m = ctx.macroCopy (i);
     if (! m.mapped() || e.mods.isPopupMenu())
         return;
-    const int shown = ctx.ui.track;
-    dragStart = ctx.proc.read ([&m, shown] (const Project& p)
+    dragStart = ctx.proc.read ([&m] (const Project& p)
     {
-        const auto v = macroTargetValue (p, m, shown);
-        return v ? macroNormalized (m, *v, macroNotes (p, m, shown)) : 0.0f;
+        const auto v = macroTargetValue (p, m);
+        return v ? macroNormalized (m, *v, macroNotes (p, m)) : 0.0f;
     });
     dragStartY = e.getScreenY();
     dragging = true;
@@ -171,13 +169,12 @@ void MacroCell::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const int i = macroIndex();
     const auto m = ctx.macroCopy (i);
     if (! m.mapped() || juce::exactlyEqual (w.deltaY, 0.0f)) return;
-    const int shown = ctx.ui.track;
     // one wheel step = the next value the macro can reach (the next in-scale note for notes)
-    const auto pos = ctx.proc.read ([&m, shown] (const Project& p) -> std::optional<std::pair<float, int>>
+    const auto pos = ctx.proc.read ([&m] (const Project& p) -> std::optional<std::pair<float, int>>
     {
-        const auto v = macroTargetValue (p, m, shown);
+        const auto v = macroTargetValue (p, m);
         if (! v) return std::nullopt;
-        const auto n = macroNotes (p, m, shown);
+        const auto n = macroNotes (p, m);
         return std::make_pair (macroNormalized (m, *v, n), macroPositions (m, n));
     });
     if (! pos || pos->second < 2) return;
@@ -217,7 +214,18 @@ MacrosView::MacrosView (Context& c) : ctx (c)
     };
     learnBtn.ledColour = [this] { return ctx.ui.macroLearn ? Theme::current().amber : Theme::current().dim2; };
     learnBtn.ledGlow = [this] { return ctx.ui.macroLearn; };
-    learnBtn.onClick = [this] { ctx.ui.macroLearn = ! ctx.ui.macroLearn; ctx.changed(); };
+    learnBtn.onClick = [this]
+    {
+        if (! ctx.ui.macroLearn)
+        {
+            // listen with the selected macro, or the next free one
+            const int i = ctx.macroCopy (ctx.ui.selectedMacro).mapped() ? ctx.nextFreeMacro (ctx.ui.selectedMacro) : ctx.ui.selectedMacro;
+            if (i < 0) return;   // all 128 macros are mapped
+            ctx.selectMacro (i);
+        }
+        ctx.ui.macroLearn = ! ctx.ui.macroLearn;
+        ctx.changed();
+    };
     addAndMakeVisible (learnBtn);
 
     // SAVE / LOAD all 128 mappings as a set (SPEC.md 13.3)
@@ -272,39 +280,24 @@ MacrosView::MacrosView (Context& c) : ctx (c)
         addChildComponent (p);
     }
 
-    // TRACK: SHOWN or 1..8
-    for (int k = -1; k < numTracks; ++k)
+    // TRACK: 1..8
+    for (int k = 0; k < numTracks; ++k)
     {
         auto* p = new Pill();
         p->radius = 5.0f;
         p->font = [] { return Fonts::monoSemi (10.0f); };
-        p->text = [k] { return k < 0 ? juce::String ("SHOWN") : juce::String (k + 1); };
+        p->text = [k] { return juce::String (k + 1); };
         p->look = [this, k] { return boxLook (ctx.macroCopy (ctx.ui.selectedMacro).track == k, Theme::current().neutral); };
         p->onClick = [this, k] { editMap ([k] (MacroMap& m, const Globals&) { m.track = (std::int8_t) k; }); };
         trackBtns.add (p);
         addChildComponent (p);
     }
 
-    // PATTERN: CURRENT or FIXED (+ knob)
-    for (int k = 0; k < 2; ++k)
-    {
-        auto* p = new Pill();
-        p->radius = 5.0f;
-        p->font = [] { return Fonts::monoSemi (11.0f); };
-        p->text = [k] { return juce::String (k == 0 ? "CURRENT" : "FIXED"); };
-        p->look = [this, k] { return segLook ((ctx.macroCopy (ctx.ui.selectedMacro).pattern >= 0) == (k == 1), Theme::current().neutral); };
-        p->onClick = [this, k]
-        {
-            const int cur = ctx.currentPattern();
-            editMap ([k, cur] (MacroMap& m, const Globals&) { m.pattern = (std::int8_t) (k == 0 ? -1 : (m.pattern >= 0 ? m.pattern : cur)); });
-        };
-        patModeBtns.add (p);
-        addChildComponent (p);
-    }
+    // PATTERN: a knob (targets stored per pattern)
     patternKnob.minValue = 0; patternKnob.maxValue = numPatterns - 1;
     patternKnob.colour = [] { return Theme::current().neutral; };
     patternKnob.format = [] (int) { return juce::String(); };
-    patternKnob.getValue = [this] { return juce::jmax (0, (int) ctx.macroCopy (ctx.ui.selectedMacro).pattern); };
+    patternKnob.getValue = [this] { return (int) ctx.macroCopy (ctx.ui.selectedMacro).pattern; };
     patternKnob.setValue = [this] (int v) { editMap ([v] (MacroMap& m, const Globals&) { m.pattern = (std::int8_t) v; }); };
     patternKnob.pixelsPerStep = 4.0f;
     addChildComponent (patternKnob);
@@ -371,8 +364,26 @@ void MacrosView::chooseSetFile (bool save)
 
 void MacrosView::editMap (std::function<void (MacroMap&, const Globals&)> fn)
 {
+    // No two macros may point at the same control: a change that would do that is refused
     const int i = ctx.ui.selectedMacro;
-    ctx.proc.edit (-1, [i, fn] (Project& p) { fn (p.macros[(size_t) i], p.globals); });
+    const auto result = ctx.proc.read ([i, &fn] (const Project& p)
+    {
+        auto m = p.macros[(size_t) i];
+        fn (m, p.globals);
+        int clash = -1;
+        for (int k = 0; k < numMacros && clash < 0; ++k)
+            if (k != i && sameControl (p.macros[(size_t) k], m)) clash = k;
+        return std::make_pair (m, clash);
+    });
+    if (result.second >= 0)
+    {
+        conflict = "ALREADY ON " + macroId (result.second);
+        repaint();
+        return;
+    }
+    conflict.clear();
+    const auto m = result.first;
+    ctx.proc.edit (-1, [i, m] (Project& p) { p.macros[(size_t) i] = m; });
     ctx.changed();
 }
 
@@ -384,6 +395,7 @@ void MacrosView::pickKind (MacroKind kind)
         editMap ([] (MacroMap& m, const Globals&) { m = MacroMap(); });
         return;
     }
+    conflict.clear();
     if (macroKind (cur.target) == kind)
         return;
     pickTarget (targetsOf (kind).front());
@@ -391,16 +403,19 @@ void MacrosView::pickKind (MacroKind kind)
 
 void MacrosView::pickTarget (MacroTarget target)
 {
-    editMap ([target] (MacroMap& m, const Globals& g)
+    // a new mapping starts on the track and pattern on screen; a changed one keeps its place
+    const int track = ctx.ui.track, pattern = ctx.currentPattern();
+    editMap ([target, track, pattern] (MacroMap& m, const Globals& g)
     {
         const auto keep = m;
-        m = defaultMacroMap (target, keep.mapped() ? keep.track : -1, keep.step, g);
-        if (keep.mapped()) m.pattern = keep.pattern;
+        m = defaultMacroMap (target, keep.mapped() ? keep.track : track, keep.mapped() ? keep.pattern : pattern, keep.step, g);
     });
 }
 
 void MacrosView::refreshState()
 {
+    if (conflictMacro != ctx.ui.selectedMacro) conflict.clear();
+    conflictMacro = ctx.ui.selectedMacro;
     const auto m = ctx.macroCopy (ctx.ui.selectedMacro);
     const auto kind = macroKind (m.target);
     shownTargets = targetsOf (kind);
@@ -410,8 +425,7 @@ void MacrosView::refreshState()
     const bool showTrack = kind == MacroKind::track || kind == MacroKind::step;
     for (auto* p : trackBtns) p->setVisible (showTrack);
     const bool showPattern = m.mapped() && info.perPattern;
-    for (auto* p : patModeBtns) p->setVisible (showPattern);
-    patternKnob.setVisible (showPattern && m.pattern >= 0);
+    patternKnob.setVisible (showPattern);
     stepKnob.setVisible (kind == MacroKind::step);
 
     int lo = 0, hi = 1;
@@ -497,19 +511,12 @@ void MacrosView::resized()
     if (trackBtns[0]->isVisible())
     {
         auto tr = section (trackLabel, 28);
-        trackBtns[0]->setBounds (tr.removeFromLeft (60));
-        tr.removeFromLeft (4);
         const int w = (tr.getWidth() - 7 * 4) / 8;
-        for (int k = 1; k < trackBtns.size(); ++k) { trackBtns[k]->setBounds (tr.removeFromLeft (w)); tr.removeFromLeft (4); }
+        for (auto* b : trackBtns) { b->setBounds (tr.removeFromLeft (w)); tr.removeFromLeft (4); }
     }
-    if (patModeBtns[0]->isVisible())
+    if (patternKnob.isVisible())
     {
         auto pr = section (patternLabel_, 40);
-        auto seg = pr.removeFromLeft (170).withSizeKeepingCentre (170, 30);
-        patModeBtns[0]->setBounds (seg.removeFromLeft (84));
-        seg.removeFromLeft (2);
-        patModeBtns[1]->setBounds (seg);
-        pr.removeFromLeft (14);
         patternKnob.setBounds (pr.removeFromLeft (40));
         pr.removeFromLeft (8);
         patternText = pr;
@@ -564,7 +571,7 @@ void MacrosView::paint (juce::Graphics& g)
         g.setFont (Fonts::monoSemi (12.0f));
         g.drawText (macroId (ctx.ui.selectedMacro), b.removeFromLeft (44), juce::Justification::centredLeft);
         g.setFont (Fonts::sans (12.0f));
-        g.drawText ("is listening. Go back to STEPS and click any control to map it. Press LEARN again to stop.", b,
+        g.drawText ("is listening. In STEPS, click a control to map it. Mapped controls are outlined; right-click one to free it.", b,
                     juce::Justification::centredLeft);
     }
 
@@ -594,7 +601,7 @@ void MacrosView::paint (juce::Graphics& g)
     draw::label (g, "RANGE", rangeLabel, t.muted);
     draw::label (g, "MIN", minLabel, t.muted);
     draw::label (g, "MAX", maxLabel, t.muted);
-    if (! patternText.isEmpty() && m.pattern >= 0)
+    if (! patternText.isEmpty() && m.mapped() && macroTargetInfo (m.target).perPattern)
     {
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (13.0f));
@@ -602,15 +609,21 @@ void MacrosView::paint (juce::Graphics& g)
     }
     if (m.mapped())
     {
-        const int shown = ctx.ui.track;
-        const auto now = ctx.proc.read ([&m, shown] (const Project& p)
+        const auto now = ctx.proc.read ([&m] (const Project& p)
         {
-            const auto v = macroTargetValue (p, m, shown);
-            return v ? macroValueText (p, m, shown, *v) : juce::String();
+            const auto v = macroTargetValue (p, m);
+            return v ? macroValueText (p, m, *v) : juce::String();
         });
         g.setColour (t.muted);
         g.setFont (Fonts::mono (11.0f));
-        g.drawText ("NOW " + now, footer, juce::Justification::centredRight);
+        if (conflict.isEmpty())
+            g.drawText ("NOW " + now, footer, juce::Justification::centredRight);
+    }
+    if (conflict.isNotEmpty())
+    {
+        g.setColour (t.amber);
+        g.setFont (Fonts::monoSemi (11.0f));
+        g.drawText (conflict, footer, juce::Justification::centredRight);
     }
 }
 } // namespace vima

@@ -160,8 +160,7 @@ void Project::resetToDefaults()
     for (auto& m : macros) m = MacroMap();
 }
 
-// Steps are stored as 8 bytes each (gate in two bytes, little endian). States saved before the
-// 400 % gate used 7 bytes per step with a one-byte gate; both are read.
+// Steps are stored as 8 bytes each (gate in two bytes, little endian).
 static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
 {
     juce::MemoryBlock mb;
@@ -180,7 +179,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
     juce::MemoryBlock mb;
     if (! mb.fromBase64Encoding (text))
         return;
-    const size_t stride = mb.getSize() >= (size_t) maxSteps * 8 ? 8 : 7;
+    constexpr size_t stride = 8;
     if (mb.getSize() < (size_t) maxSteps * stride)
         return;
     const auto* d = static_cast<const std::uint8_t*> (mb.getData());
@@ -192,26 +191,12 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
         s.pitchClass = (std::int8_t) juce::jlimit (0, 11, (int) b[1]);
         s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, (int) b[2] + minOctave);
         s.velocity = (std::uint8_t) juce::jlimit (1, 127, (int) b[3]);
-        const int gate = stride == 8 ? (int) b[4] | ((int) b[5] << 8) : (int) b[4];
+        const int gate = (int) b[4] | ((int) b[5] << 8);
         s.gate = (std::uint16_t) juce::jlimit (1, maxGate, gate);
-        s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[stride - 2]);
-        s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[stride - 1]);
+        s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[6]);
+        s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[7]);
         steps[(size_t) i] = s;
     }
-}
-
-// The empty pattern of states saved before the new init values (version 1): those states
-// left out patterns equal to it, so they must be read back as this.
-static const Pattern& legacyEmptyPattern()
-{
-    static const Pattern p = []
-    {
-        Pattern e;
-        for (auto& t : e.tracks)
-            for (auto& s : t.steps) { s.on = false; s.pitchClass = 0; s.gate = 50; }
-        return e;
-    }();
-    return p;
 }
 
 static const Pattern& emptyPattern()
@@ -258,8 +243,8 @@ static void readMacro (const juce::ValueTree& mt, std::array<MacroMap, numMacros
     if (i < 0 || i >= numMacros || target <= 0 || target >= numMacroTargets) return;
     auto& m = macros[(size_t) i];
     m.target = (MacroTarget) target;
-    m.track = (std::int8_t) juce::jlimit (-1, numTracks - 1, (int) mt.getProperty ("track", -1));
-    m.pattern = (std::int8_t) juce::jlimit (-1, numPatterns - 1, (int) mt.getProperty ("pattern", -1));
+    m.track = (std::int8_t) juce::jlimit (0, numTracks - 1, (int) mt.getProperty ("track", 0));
+    m.pattern = (std::int8_t) juce::jlimit (0, numPatterns - 1, (int) mt.getProperty ("pattern", 0));
     m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, (int) mt.getProperty ("step", 0));
     m.min = (std::int16_t) (int) mt.getProperty ("min", 0);
     m.max = (std::int16_t) (int) mt.getProperty ("max", 1);
@@ -391,13 +376,6 @@ void Project::fromValueTree (const juce::ValueTree& root)
     if (! root.hasType ("VIMA"))
         return;
     resetToDefaults();
-    if ((int) root.getProperty ("version", 1) < 2)
-    {
-        // saved before the init values changed: patterns not stored were the old empty pattern,
-        // and missing settings had the old defaults
-        for (auto& p : patterns) p = legacyEmptyPattern();
-        globals.ccSmoothing = true;
-    }
     currentPattern = juce::jlimit (0, numPatterns - 1, (int) root.getProperty ("currentPattern", 0));
 
     auto gt = root.getChildWithName ("Globals");
@@ -407,10 +385,7 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.scale = juce::jlimit (0, numScales - 1, (int) gt.getProperty ("scale", g.scale));
         g.root = juce::jlimit (0, 11, (int) gt.getProperty ("root", g.root));
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
-        if (gt.hasProperty ("middleC"))
-            g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC"));
-        else
-            g.middleC = (bool) gt.getProperty ("middleCIsC4", false) ? 4 : 3;
+        g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC", g.middleC));
         g.lightTheme = (bool) gt.getProperty ("lightTheme", g.lightTheme);
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.ccSmoothingTime = juce::jlimit (1, 100, (int) gt.getProperty ("ccSmoothingTime", g.ccSmoothingTime));
