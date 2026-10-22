@@ -15,6 +15,7 @@ public:
     void paint (juce::Graphics&) override;
     void resized() override;
     void mouseDown (const juce::MouseEvent&) override;
+    void paintOverChildren (juce::Graphics&) override;
 
 private:
     void showTrackMenu();

@@ -117,7 +117,8 @@ Header::Header (Context& c) : ctx (c)
     addAndMakeVisible (ccBtn);
 
     // Back to the step view (patterns view only)
-    stepsBtn.look = plainOutline;
+    // STEPS (back to the step view) stands out: filled with the note green
+    stepsBtn.look = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };
     stepsBtn.text = [] { return juce::String ("STEPS"); };
     stepsBtn.justification = juce::Justification::centredLeft;
     stepsBtn.textInset = 28;
@@ -343,6 +344,13 @@ void Header::chooseFile (bool save)
     });
 }
 
+void Header::paintOverChildren (juce::Graphics& g)
+{
+    // the STEPS chevron sits on the button's green fill
+    if (stepsBtn.isVisible())
+        chevron (g, stepsBtn.getBounds().toFloat().withWidth (28.0f), Theme::current().onAccent, true);
+}
+
 void Header::mouseDown (const juce::MouseEvent&) {}
 
 void Header::paint (juce::Graphics& g)
@@ -375,7 +383,6 @@ void Header::paint (juce::Graphics& g)
     }
     else
     {
-        chevron (g, stepsBtn.getBounds().toFloat().withWidth (28.0f), t.text2, true);
         if (ctx.ui.macrosView)
         {
             g.setColour (t.text);
