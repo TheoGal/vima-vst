@@ -329,6 +329,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - **Left**: bank buttons (1-32, 33-64, 65-96, 97-128), "N OF 32 MAPPED", LEARN. A grid of 32 macro cells: number, color dot, a knob with the target's value (drag or wheel to move the macro), target name and where it points ("SHOWN · CUR", "T04 · B01·06", "GLOBAL").
 - **Right**: the mapping editor for the selected macro: TARGET (NONE / GLOBAL / TRACK / STEP), PARAMETER, TRACK (SHOWN, 1-8), PATTERN (CURRENT / FIXED with a pattern knob), STEP (1-32), RANGE (MIN / MAX), CLEAR MAPPING and the current value.
 - **LEARN**: with LEARN on, go back to STEPS (or the patterns view) and click a control: the selected macro is mapped to it (SHOWN track, CURRENT pattern, that step) and the next macro is selected, so a row of steps can be mapped quickly. While learning, clicks map instead of editing, an amber frame marks the view, the control under the mouse is highlighted, and the header button reads "LEARN M005". Learnable: step on/off, note, octave, the slider (its current lane), CC value, LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN on/off.
+- Controls in the main window show **no indicator** when they are mapped to a macro; mappings are only visible on the Macros page.
 - Colors follow the lanes: step on, note, octave and velocity green, gate purple, probability amber, CC cyan, track and global targets neutral.
 
 ## 14. Build and repository
@@ -369,6 +370,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: No macro-mapped indicators on controls.
 - 2026-10-22: Start / stop button in the HOST box (stop while the host plays, or run on its own while the host is stopped). Playhead on the LEDs only. Off steps within the length have a grey filled on/off button.
 - 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".
 - 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
