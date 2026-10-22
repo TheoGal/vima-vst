@@ -379,14 +379,14 @@ Targets:
 | Type | Targets | Track | Pattern | Step |
 |---|---|---|---|---|
 | GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
-| TRACK | Notes Out, CC Out | SHOWN or 1-8 | - | - |
-| TRACK | Length, Division, Direction, Swing, Scale On | SHOWN or 1-8 | CURRENT or a fixed pattern | - |
-| STEP | On/Off, Note, Octave, Velocity, Gate, Probability, CC value | SHOWN or 1-8 | CURRENT or a fixed pattern | 1-32 |
+| TRACK | Notes Out, CC Out | 1-8 | - | - |
+| TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | B01 · 01 to B04 · 16 | - |
+| STEP | On/Off, Note, Octave, Velocity, Gate, Probability, CC value | 1-8 | B01 · 01 to B04 · 16 | 1-32 |
 
-- **SHOWN** = the track shown in the main window (saved with the project), for use with controllers: the same macros always control the track on screen. **CURRENT** = the playing pattern.
+- **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Range**: each mapping has MIN and MAX (default: the full range). The whole macro travel covers MIN to MAX. MIN above MAX inverts the direction.
 - **Note** follows the scale like the step's note knob: when the target track's scale is on, the macro moves only through in-scale notes between MIN and MAX (C minor over C-B = 7 positions spread over the whole travel); with the scale off, through all 12. MIN / MAX are set as note names. **Octave** covers the whole MIDI range.
-- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing, pattern switch, chain, SHOWN track switch, remapping), the macro moves to match, as a short gesture so hosts can record it. A target value outside MIN / MAX is shown at the nearest end and is not overwritten by that.
+- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping), the macro moves to match, as a short gesture so hosts can record it. A target value outside MIN / MAX is shown at the nearest end and is not overwritten by that.
 - The host shows the target value as the macro's value text ("96", "1/16", "B01 · 05"); unmapped macros show "-".
 - Host changes are not added to undo. Mappings are saved with the project.
 
@@ -394,9 +394,9 @@ Targets:
 
 Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS goes back. Mockup: board G.
 
-- **Left**: bank buttons (1-32, 33-64, 65-96, 97-128), "N OF 32 MAPPED", LEARN. A grid of 32 macro cells: number, color dot, a knob with the target's value (drag or wheel to move the macro), target name and where it points ("SHOWN · CUR", "T04 · B01·06", "GLOBAL").
-- **Right**: the mapping editor for the selected macro: TARGET (NONE / GLOBAL / TRACK / STEP), PARAMETER, TRACK (SHOWN, 1-8), PATTERN (CURRENT / FIXED with a pattern knob), STEP (1-32), RANGE (MIN / MAX), CLEAR MAPPING and the current value.
-- **LEARN**: with LEARN on, go back to STEPS (or the patterns view) and click a control: the selected macro is mapped to it (SHOWN track, CURRENT pattern, that step) and the next macro is selected, so a row of steps can be mapped quickly. While learning, clicks map instead of editing, an amber frame marks the view, the control under the mouse is highlighted, and the header button reads "LEARN M005". Learnable: step on/off, note, octave, the slider (its current lane), CC value, LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN on/off.
+- **Left**: bank buttons (1-32, 33-64, 65-96, 97-128), "N OF 32 MAPPED", LEARN. A grid of 32 macro cells: number, color dot, a knob with the target's value (drag or wheel to move the macro), target name and where it points ("T04 · B01·06", "T02" for routing targets, "GLOBAL").
+- **Right**: the mapping editor for the selected macro: TARGET (NONE / GLOBAL / TRACK / STEP), PARAMETER (a new mapping starts on the track and pattern on screen), TRACK (1-8), PATTERN (a pattern knob, B01 · 01 to B04 · 16), STEP (1-32), RANGE (MIN / MAX), CLEAR MAPPING and the current value.
+- **LEARN**: with LEARN on, go back to STEPS (or the patterns view) and click a control: the selected macro is mapped to it: the track and pattern on screen at that moment, and that step, all fixed and the next macro is selected, so a row of steps can be mapped quickly. While learning, clicks map instead of editing, an amber frame marks the view, the control under the mouse is highlighted, and the header button reads "LEARN M005". Learnable: step on/off, note, octave, the slider (its current lane), CC value, LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN on/off.
 - Controls in the main window show **no indicator** when they are mapped to a macro; mappings are only visible on the Macros page.
 - Colors follow the lanes: step on, note, octave and velocity green, gate purple, probability amber, CC cyan, track and global targets neutral.
 
@@ -420,7 +420,8 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ### 15.1 Decided, not built yet
 
-(nothing pending)
+1. **Macros always fixed** (13.1, 13.2): remove SHOWN track and CURRENT pattern from the model, the mapping editor, LEARN, cell texts and tests. A new mapping (manual or LEARN) takes the track and pattern on screen at that moment. Existing SHOWN / CURRENT mappings in saved projects or mapping sets are converted to fixed on load (track 1 / the current pattern of that project).
+2. More changes coming from the user: build together.
 
 ### 15.2 Open
 
@@ -451,6 +452,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Macro mappings are always fixed (track, pattern, step). SHOWN / CURRENT removed everywhere; hardware-controller mapping that follows the screen is set aside for now. The shown track is no longer saved for macros. *(Not built yet, see 15.1.)*
 - 2026-10-22: Octave range setting removed: octaves cover the whole MIDI range; Settings keeps only the middle C convention for pitch.
 - 2026-10-22: Built: init values (4.1), gate up to 400%, step slider click / draw, wheel on SHIFT ALL, middle C C3 / C4 / C5. Old projects keep their saved content.
 - 2026-10-22: Middle C setting gets C5 (FL Studio, Cakewalk, Renoise); each choice shows its lowest C in brackets.
