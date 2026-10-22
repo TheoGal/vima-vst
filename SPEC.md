@@ -296,8 +296,8 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 ### 12.1 Step cell
 
 - **Top**: one button with the step number inside, used as the on/off toggle. On: filled with the mode accent, number in a dark contrasting color. Off (within the length): filled grey. Beyond the length: outline only (and the whole cell dimmed).
-- **Note mode**: pitch knob, octave knob below it, then a vertical slider. A global "SLIDER" switch (top right of the parameter row) makes all sliders show velocity, gate or probability. The slider takes that lane's color.
-- **CC mode**: one tall cyan slider for the step's CC value (0-127), filling the cell below the step button, with the value under it. It works like the note-mode sliders: click to jump, click and drag across neighbouring steps to draw. Cells keep the same height in both modes so the layout does not jump.
+- **Note mode**: pitch knob, octave knob below it, then a vertical slider. A global "SLIDER" switch (top right of the parameter row) makes all sliders show velocity, gate or probability. The slider takes that lane's color, and so does the value shown under it (dimmed when the step is off).
+- **CC mode**: one tall cyan slider for the step's CC value (0-127), filling the cell below the step button, with the value under it in cyan (dimmed when the step's CC is off). It works like the note-mode sliders: click to jump, click and drag across neighbouring steps to draw. Cells keep the same height in both modes so the layout does not jump.
 - Off steps: controls dimmed.
 - The playhead is shown on the LED bar only; step cells do not change as it passes.
 - Knobs are flat arc rings (270 degrees) with the value as text in the middle.

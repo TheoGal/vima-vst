@@ -295,7 +295,9 @@ void StepCell::paint (juce::Graphics& g)
             case SliderLane::gate:        text = juce::String ((int) s.gate) + "%"; break;
             case SliderLane::probability: text = juce::String ((int) s.probability) + "%"; break;
         }
-        g.setColour (t.muted.withMultipliedAlpha ((ctx.ui.ccMode ? s.ccOn : s.on) ? 1.0f : 0.32f));
+        // the value in its lane's color (velocity green, gate purple, probability amber, CC cyan)
+        const auto colour = slider.barColour ? slider.barColour() : t.muted;
+        g.setColour (colour.withMultipliedAlpha ((ctx.ui.ccMode ? s.ccOn : s.on) ? 1.0f : 0.32f));
         g.setFont (Fonts::mono (10.0f));
         g.drawText (text, labelArea, juce::Justification::centred);
     }
