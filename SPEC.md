@@ -35,7 +35,7 @@ Last updated: 2026-10-21
 
 - 8 tracks, shown as "01" to "08". No track names.
 - Selected with a **dropdown** in the header. No sidebar.
-- Every track always has both a note part and a CC part, sharing the track's steps, length, division, direction and swing, but each with **its own on/off per step** (5). The NOTES / CC switch in the header only changes which part is shown and edited (including which on/off the step buttons and the ON lane chip use). It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
+- Every track always has both a note part and a CC part, sharing the track's steps, length, division, direction and swing, but each with **its own on/off per step** (5). The NOTES / CC switch in the header only changes which part is shown and edited (including which on/off the step buttons and the ON lane button use). It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
 
 Where track settings live (decided during the build):
 
@@ -192,7 +192,7 @@ All destructive operations are undoable. Multi-level undo, at least 32 levels, c
 ### 9.1 Copy / Paste
 
 - Operations always act on the currently selected track. Copy/paste is the way to move steps between tracks and patterns.
-- **COPY** copies the steps in scope (the selection, or all steps within the length if none), but **only the lanes armed in LANES** (the same chips as Randomize and Smooth; in CC mode that is ON and CC). The lanes are fixed at the moment of copying. With no lane armed, COPY does nothing.
+- **COPY** copies the steps in scope (the selection, or all steps within the length if none), but **only the lanes armed in LANES** (the same lane buttons as Randomize and Smooth; in CC mode that is ON and CC). The lanes are fixed at the moment of copying. With no lane armed, COPY does nothing.
 - After COPY the button lights up and reads **COPIED**, and the selection is gone: while COPIED is lit there is no selection at all. A click on an LED only picks the **landing step** (where the first copied step goes); dragging and Ctrl-click do not select.
 - Once a landing step is picked, a **ghost preview** on the LEDs shows where the steps will land. Copied steps **keep their spacing**: copying steps 1, 3 and 6 and landing at 9 writes steps 9, 11 and 14; the steps in the gaps are left unchanged.
 - **PASTE** (dimmed until a landing step is picked) writes the copied lanes there. COPIED stays lit, so the user can pick another landing step, switch track or pattern, and paste again.
@@ -202,7 +202,7 @@ All destructive operations are undoable. Multi-level undo, at least 32 levels, c
 
 ### 9.2 Randomize
 
-- Lane selection with toggle chips (the LANES group, shared with Smooth): ALL, ON, NOTE, OCT, VEL, GATE, PROB (note mode), or ALL, ON, CC (CC mode).
+- Lane selection with the **lane buttons** (the LANES group, shared with Smooth and Copy): ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or ALL, ON, CC in CC mode (ON = CC on/off). The LED bar chooses which steps; the lane buttons choose which values of those steps.
 - Each lane has a min/max range. Random values stay inside it.
 - NOTE randomization is scale-aware when the track's scale is on.
 - Applies to the steps in scope (see 8), including off steps.
@@ -210,7 +210,7 @@ All destructive operations are undoable. Multi-level undo, at least 32 levels, c
 ### 9.3 Smooth (replaces Mutate, which is removed)
 
 - A SMOOTH button pulls the values of the steps in scope one step closer to their average.
-- For each selected lane (same LANES chips as Randomize):
+- For each selected lane (same lane buttons as Randomize):
   1. Calculate the average of that lane's values over the steps in scope, **rounded to the nearest whole number**.
   2. Every value below the average goes up by 1, every value above it goes down by 1. Values equal to the average do not move.
 - Example: CC values 0, 64, 127 give an average of 63.67, rounded to 64. One press gives 1, 64, 126.
@@ -316,7 +316,7 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 - Defaults are the init values (4.1): LENGTH 16, SWING 0%, MIDI CH = the track number, CC number = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults (for MIN / MAX: the full range).
 - The NOTE knob moves through in-scale notes only when the track's scale is on; the OCTAVE knob covers the whole MIDI range (C-2 to G8 with middle C = C3; notes above MIDI 127 are not played).
 
-**Buttons** (all on/off and choice buttons, chips and tabs)
+**Buttons** (all on/off and choice buttons, lane buttons and tabs)
 - **Click**: act. The action happens when the mouse button is released over the button; releasing elsewhere cancels.
 - **Right-click**: does nothing.
 - **Mouse wheel** on the DIVISION value: next / previous division (wheel up = shorter steps). On the scale name in the SCALE tile: next / previous scale.
@@ -355,10 +355,10 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 ### 12.4 Operations panel (bottom, left to right)
 
 1. **Selection**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
-2. **Lanes**: toggle chips shared by Randomize and Smooth (see 9.2, 9.3).
+2. **Lanes**: lane buttons shared by Randomize, Smooth and Copy (see 9.1, 9.2, 9.3).
 3. **Ranges**: min/max bar per lane, in that lane's color. Ranges of lanes that are not selected are dimmed.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent).
-5. **SHIFT ALL**: endless knob plus lane chips (NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode).
+5. **SHIFT ALL**: endless knob plus lane buttons (NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode).
 
 ### 12.5 Mockups
 
@@ -459,7 +459,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
 - 2026-10-22: No backwards compatibility with earlier test builds (14).
 - 2026-10-22: Macro mappings are always fixed (track, pattern, step). SHOWN / CURRENT removed everywhere; hardware-controller mapping that follows the screen is set aside for now. The shown track is no longer saved for macros.
-- 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing; an independent CC lane is a second track on the same channel). In CC mode the step buttons, the ON lane chip, randomize, copy/paste and the macro target "CC ON" use the CC on/off. Thumbnails show both parts side by side.
+- 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing; an independent CC lane is a second track on the same channel). In CC mode the step buttons, the ON lane button, randomize, copy/paste and the macro target "CC ON" use the CC on/off. Thumbnails show both parts side by side.
 - 2026-10-22: The STEPS button (back to the step view, in the patterns view and the Macros page) is filled green so it stands out.
 - 2026-10-22: LEARN shows mapped controls (outline + macro number), refuses remapping, right-click frees, moves to the next free macro; the editor refuses duplicates. Built together with fixed-only mappings and the removal of the old-project code.
 - 2026-10-22: Octave range setting removed: octaves cover the whole MIDI range; Settings keeps only the middle C convention for pitch.
