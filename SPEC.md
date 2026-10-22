@@ -80,7 +80,6 @@ A new instance, NEW in the FILE menu, CLEAR in the patterns view and a right-cli
 | Macros | none mapped |
 | Theme | dark |
 
-Projects saved before these init values (state version 1) load exactly as they were saved.
 
 ## 5. Steps
 
@@ -411,6 +410,8 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ## 14. Build and repository
 
+- **No backwards compatibility while VIMA is in testing.** Projects, presets and mapping sets saved by earlier test builds may load wrongly or not at all; no conversion code is written for them.
+
 - Repository on GitHub under the user's account (TheoGal). Repo name follows the final plugin name.
 - GitHub Actions builds the plugin on every push: Windows VST3 (primary) and macOS VST3 (for testers). Build artifacts are attached to the workflow run, and to a GitHub Release when a version tag is pushed.
 - JUCE version pinned in CMake.
@@ -420,8 +421,9 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ### 15.1 Decided, not built yet
 
-1. **Macros always fixed** (13.1, 13.2): remove SHOWN track and CURRENT pattern from the model, the mapping editor, LEARN, cell texts and tests. A new mapping (manual or LEARN) takes the track and pattern on screen at that moment. Existing SHOWN / CURRENT mappings in saved projects or mapping sets are converted to fixed on load (track 1 / the current pattern of that project).
-2. More changes coming from the user: build together.
+1. **Macros always fixed** (13.1, 13.2): remove SHOWN track and CURRENT pattern from the model, the mapping editor, LEARN, cell texts and tests. A new mapping (manual or LEARN) takes the track and pattern on screen at that moment.
+2. **Remove the old-project compatibility code** (state version 1, the old empty pattern, 7-byte steps, the middleCIsC4 fallback). Rule: no backwards compatibility while VIMA is in testing (14).
+3. More changes coming from the user: build together.
 
 ### 15.2 Open
 
@@ -452,6 +454,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: No backwards compatibility with earlier test builds (14).
 - 2026-10-22: Macro mappings are always fixed (track, pattern, step). SHOWN / CURRENT removed everywhere; hardware-controller mapping that follows the screen is set aside for now. The shown track is no longer saved for macros. *(Not built yet, see 15.1.)*
 - 2026-10-22: Octave range setting removed: octaves cover the whole MIDI range; Settings keeps only the middle C convention for pitch.
 - 2026-10-22: Built: init values (4.1), gate up to 400%, step slider click / draw, wheel on SHIFT ALL, middle C C3 / C4 / C5. Old projects keep their saved content.
