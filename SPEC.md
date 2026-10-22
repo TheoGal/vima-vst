@@ -68,7 +68,7 @@ Per step values:
 | Note | pitch class | Separate control from octave. |
 | Octave | user-defined range (Settings) | |
 | Velocity | 1-127 | Minimum is 1, never 0: in MIDI a Note On with velocity 0 is treated as a Note Off. Every operation (knob, Randomize, Smooth, Shift, ranges) clamps velocity to 1-127. |
-| Gate | 1-100% | 100% = a note as long as one step at the track's division (for 1/16, a 1/16 note). |
+| Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step (a 1/32 note), up to 400% = four steps (legato and long notes). No click-in points. When a long note is still held and the same pitch plays again, the old note ends just before the new one. Long notes end cleanly on stop, pattern change and jumps. *(Above 100%: not built yet, see 15.1.)* |
 | Probability | 0-100% | Chance that an "on" step actually plays each time it is reached. 100% = always. Applies to the note output (see open question about CC). |
 | CC value | 0-127 | Used when the track's CC output is on. |
 
@@ -281,7 +281,8 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 This section lists every mouse action, control by control. On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click also counts as a right-click.
 
 **Knobs and step sliders** (track LENGTH, SWING, MIDI CH, CC number; per-step NOTE, OCTAVE, CC; the VEL / GATE / PROB step sliders; the knobs in Settings and in the macro mapping editor)
-- **Drag up / down**: change the value, relative to where the drag started (clicking a slider does not jump to the click position).
+- **Knobs, drag up / down**: change the value, relative to where the drag started.
+- **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps in one move (one undo step). *(Not built yet, see 15.1.)*
 - **Shift + drag**: fine control (3 times slower).
 - **Mouse wheel**: one step per notch.
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
@@ -303,7 +304,7 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 
 **Step on/off button** (step number): click toggles the step.
 
-**SHIFT ALL knob**: drag up / down to shift the chosen lane (Shift + drag = finer). The knob springs back to 0 on release; the whole drag is one undo step. No wheel, double-click or reset.
+**SHIFT ALL knob**: drag up / down to shift the chosen lane (Shift + drag = finer); **mouse wheel** shifts by one per notch *(wheel not built yet, see 15.1)*. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
 **RANGES bars** (operations panel): click or drag; the nearest handle (MIN or MAX) follows the mouse. The handles cannot cross. No wheel, double-click or reset.
 
@@ -391,6 +392,15 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ## 15. Open questions
 
+### 15.1 Decided, not built yet
+
+1. **Gate up to 400%** (table in 4 / 5): engine handles notes longer than a step (same-pitch retrigger, stop, pattern change, jumps); slider, typing, randomize range, smooth, shift and gate macros use 1-400%. Defaults and existing values stay as they are.
+2. **Step sliders**: click jumps to the value; click and drag across sliders draws (12.3).
+3. **Mouse wheel on the SHIFT ALL knob** (12.3). Rule: every knob supports the mouse wheel.
+4. **New init (default) values**: the user will send the full list. Build items 1-4 together.
+
+### 15.2 Open
+
 1. Approve the proposed patterns view and chain design (7.1, 7.2).
 2. Probability and CC: should a step that fails its probability roll also skip its CC, or does CC always send? (Current assumption: probability affects notes only.)
 3. Note randomize range: is the NOTE min/max a pitch-class range (for example C to A#) or a full note range across octaves (for example C2 to C4)?
@@ -418,6 +428,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Gate range 1-400% (percentage of a step, no click-in points). Step sliders: click jumps, drag draws. Every knob supports the mouse wheel. No INIT button: NEW in the FILE menu covers it. (To be built together with the new init values.)
 - 2026-10-22: Mouse interaction reference written (12.3), as the base for the manual.
 - 2026-10-22: Tested in Live 12 (Windows): Live strips the MIDI channel from a VST3's output, so in Live one VIMA instance per destination track is used. Accepted.
 - 2026-10-22: Presets (music only, .vima) from a FILE menu in the header with system file dialogs; macro mapping sets (.vimamacros) saved / loaded on the Macros page; files in Documents/VIMA. The word HOST was removed from the header.
