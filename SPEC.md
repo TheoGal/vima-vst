@@ -432,6 +432,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 3. **Remove the CHROMATIC scale** from the scale list: a track with its scale OFF already plays all 12 notes. 13 built-in scales plus USER remain.
 4. **Remove MIN / MAX from macros**: every macro always covers its target's full range (for notes: all in-scale notes, or all 12 with the scale off). The RANGE section goes away from the mapping editor, and from the spec (13.1, 13.2) when built.
 5. **Step macro names and order**: NOTE ON is renamed **NOTE STEP**, CC ON is renamed **CC STEP**. Order in the editor: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE.
+6. **Remove LOOP ON/OFF** from the patterns view: VIMA always loops, a single pattern or the whole chain (at the end of the chain it goes back to the first entry).
 
 ### 15.2 Open
 
