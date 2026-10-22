@@ -57,7 +57,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
             const Globals d;
             auto& g = p.globals;
             g.lightTheme = d.lightTheme; g.middleC = d.middleC;
-            g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing; g.ccSmoothingTime = d.ccSmoothingTime;
+            g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
         });
     };
@@ -131,14 +131,6 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     smoothBtn->look = [this, C] { return Pill::toggle (ctx.globalsCopy().ccSmoothing, C()); };
     smoothBtn->text = [this] { return juce::String (ctx.globalsCopy().ccSmoothing ? "ON" : "OFF"); };
     smoothBtn->onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.ccSmoothing = ! p.globals.ccSmoothing; }); };
-    timeKnob = &knob();
-    timeKnob->colour = C;
-    timeKnob->minValue = 1; timeKnob->maxValue = 100; timeKnob->defaultValue = 100;
-    timeKnob->fontSize = 9.0f;
-    timeKnob->format = [] (int v) { return juce::String (v) + "%"; };
-    timeKnob->parse = [] (const juce::String& s) { return s.retainCharacters ("0123456789").getIntValue(); };
-    timeKnob->getValue = [this] { return ctx.globalsCopy().ccSmoothingTime; };
-    timeKnob->setValue = [this] (int v) { ctx.edit (false, [v] (Project& p) { p.globals.ccSmoothingTime = v; }); };
 
     // Pattern change
     patternCCBtn = &pill();
@@ -248,12 +240,6 @@ void SettingsDialog::resized()
 
     section ("CC OUTPUT");
     smoothBtn->setBounds (rowArea ("Smooth between steps", 24).withWidth (60));
-    {
-        auto r = rowArea ("Smoothing time", 40);
-        timeKnob->setBounds (r.removeFromLeft (40));
-        r.removeFromLeft (8);
-        rows.add ({ "OF A STEP", r.removeFromLeft (80), 1.0f, true });
-    }
     divider();
 
     section ("PATTERN CHANGE");
@@ -298,7 +284,6 @@ void SettingsDialog::paint (juce::Graphics& g)
     for (const auto& r : rows)
     {
         float a = 1.0f;
-        if (r.text == "Smoothing time" || r.text == "OF A STEP") a = gl.ccSmoothing ? 1.0f : 0.4f;
         if (r.text == "MIDI CH" || r.text == "CC") a = gl.patternCC ? 1.0f : 0.4f;
         if (r.section) draw::label (g, r.text, r.area, t.muted.withMultipliedAlpha (a));
         else
@@ -326,7 +311,6 @@ void SettingsDialog::paint (juce::Graphics& g)
             g.drawText (juce::String (count) + " OF 12 NOTES", r.area.withX (panel.getX() + 20).withWidth (panel.getWidth() - 40),
                         juce::Justification::centredRight);
 
-    timeKnob->setAlpha (gl.ccSmoothing ? 1.0f : 0.4f);
     pcChannel->setAlpha (gl.patternCC ? 1.0f : 0.4f);
     pcNumber->setAlpha (gl.patternCC ? 1.0f : 0.4f);
 }

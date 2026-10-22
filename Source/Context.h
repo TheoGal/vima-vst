@@ -27,12 +27,13 @@ struct UiState
     int pasteStart = -1;         // landing step of the paste (-1 = not picked yet)
 
     bool patternsView = false;
-    int viewBank = 0;            // bank shown in the patterns view
+    int viewPage = 0;            // page shown in the patterns view
     int selectedPattern = 0;     // selected slot in the patterns view
-    int pickerBank = 0;          // bank shown in the header quick picker
+    int pickerPage = 0;          // page shown in the header quick picker
     int patternClipKind = 0;     // 0 none, 1 pattern, 2 track
     int patternClipSource = -1;  // pattern index copied from
     int patternClipTrack = -1;
+    int patternPasteDest = -1;   // destination pattern picked while COPIED / TRACK COPIED
     Pattern patternClip;
     TrackPattern trackClip;
     int patternsViewTrack = 0;   // track for COPY TRACK
@@ -41,7 +42,7 @@ struct UiState
     int shiftAmount = 0;           // running offset while the shift knob is dragged
 
     bool macrosView = false;
-    int macroBank = 0;             // bank shown on the Macros page (32 macros each)
+    int macroPage = 0;             // page shown on the Macros page (32 macros each)
     int selectedMacro = 0;
     bool macroLearn = false;       // LEARN: the next touched control is mapped to selectedMacro
 
@@ -104,7 +105,7 @@ public:
     void selectMacro (int i)
     {
         ui.selectedMacro = juce::jlimit (0, numMacros - 1, i);
-        ui.macroBank = ui.selectedMacro / macrosPerBank;
+        ui.macroPage = ui.selectedMacro / macrosPerPage;
     }
 
     // LEARN (SPEC.md 13.2): map the listening macro to a control on screen, then move on to the

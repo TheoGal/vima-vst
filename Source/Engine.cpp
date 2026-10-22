@@ -238,11 +238,10 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
                 return v0;
             const int v1 = stepAt (n1).cc;
             const double t0 = timeOf (n0), t1 = timeOf (n1);
-            const double glide = (t1 - t0) * juce::jlimit (1, 100, g.ccSmoothingTime) / 100.0;
-            const double glideStart = t1 - glide;
-            if (x <= glideStart || glide <= 0.0)
+            const double glide = t1 - t0;   // the whole gap
+            if (x <= t0 || glide <= 0.0)
                 return v0;
-            const double f = (x - glideStart) / glide;
+            const double f = (x - t0) / glide;
             return juce::jlimit (0, 127, (int) std::lround (v0 + (v1 - v0) * f));
         };
 

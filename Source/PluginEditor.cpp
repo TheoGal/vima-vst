@@ -167,9 +167,9 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     ctx.openSettings = [this] { openSettings(); };
     ctx.showMacros = [this] (bool b) { setMacrosView (b); };
     ctx.ui.track = juce::jlimit (0, numTracks - 1, proc.uiTrack);
-    ctx.ui.macroBank = 0;
+    ctx.ui.macroPage = 0;
     ctx.ui.selectedPattern = ctx.currentPattern();
-    ctx.ui.viewBank = ctx.ui.selectedPattern / patternsPerBank;
+    ctx.ui.viewPage = ctx.ui.selectedPattern / patternsPerPage;
 
     Theme::setLight (ctx.globalsCopy().lightTheme);
     lnf.updateColours();
@@ -281,7 +281,7 @@ void VimaEditor::setPatternsView (bool show)
     if (show)
     {
         ctx.ui.selectedPattern = ctx.currentPattern();
-        ctx.ui.viewBank = ctx.ui.selectedPattern / patternsPerBank;
+        ctx.ui.viewPage = ctx.ui.selectedPattern / patternsPerPage;
     }
     Popover::closeAll (content);
     refreshAll();
@@ -293,7 +293,7 @@ void VimaEditor::setMacrosView (bool show)
     if (show)
     {
         ctx.ui.patternsView = false;
-        ctx.ui.macroBank = ctx.ui.selectedMacro / macrosPerBank;
+        ctx.ui.macroPage = ctx.ui.selectedMacro / macrosPerPage;
     }
     Popover::closeAll (content);
     refreshAll();

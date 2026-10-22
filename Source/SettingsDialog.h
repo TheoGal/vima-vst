@@ -31,7 +31,6 @@ private:
     juce::Array<Pill*> themeBtns, midCBtns, rootBtns, userBtns, quantBtns;
     Pill* smoothBtn = nullptr;
     Pill* patternCCBtn = nullptr;
-    Knob* timeKnob = nullptr;
     Knob* pcChannel = nullptr;
     Knob* pcNumber = nullptr;
 

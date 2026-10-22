@@ -95,7 +95,21 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     pitch.fontSize = 12.0f;
     pitch.colour = [this] { return ctx.modeAccent(); };
     pitch.getValue = [this] { return ((soundingPitch (ctx, index) % 12) + 12) % 12; };
-    pitch.fraction = [this] { return (float) (((soundingPitch (ctx, index) % 12) + 12) % 12) / 11.0f; };
+    pitch.fraction = [this]
+    {
+        // With the track's scale on, the in-scale notes are spread over the whole arc
+        const int pc = ((soundingPitch (ctx, index) % 12) + 12) % 12;
+        const auto g = ctx.globalsCopy();
+        if (! ctx.trackCopy().scaleOn)
+            return (float) pc / 11.0f;
+        const auto mask = g.scaleMask();
+        int count = 0, pos = -1;
+        for (int n = 0; n < 12; ++n)
+            if (inScale (mask, g.root, n)) { if (n == pc) pos = count; ++count; }
+        if (pos < 0 || count < 2)
+            return count < 2 ? 0.0f : (float) pc / 11.0f;
+        return (float) pos / (float) (count - 1);
+    };
     pitch.format = [] (int pc) { return juce::String (pitchClassName (pc)); };
     pitch.nudge = [this] (int d)
     {

@@ -10,16 +10,16 @@ The full design is in [SPEC.md](SPEC.md).
 - 8 tracks, each on its own MIDI channel, with independent note and CC outputs
 - Up to 32 steps per track: note, octave, velocity, gate, probability and a CC value per step
 - Per track: length, division (with triplets), direction, swing, scale on/off
-- 14 scales plus a user scale, picked in the main window
+- 13 scales plus a user scale, picked in the main window
 - LED bar per row: playhead and drag selection
 - Selection by drag, plus Ctrl-click / Ctrl-drag for non-adjacent steps
 - Step operations on the selection (or all steps): copy / paste across tracks (keeps spacing), randomize with
   lane ranges, smooth, shift all (with capping)
-- 64 patterns in 4 banks, quick picker in the header, patterns view with thumbnails,
-  chain with repeats and drag-to-reorder, quantized pattern changes, pattern change by incoming CC
+- 64 patterns (pages of 16), quick picker in the header, patterns view with thumbnails,
+  copy / paste of patterns and tracks, chain with repeats and drag-to-reorder, quantized pattern changes, pattern change by incoming CC
 - CC smoothing between steps, undo, dark and light themes, resizable window (75% to 200%)
 - Follows the host transport
-- 128 macros for host automation: map any of them to pattern, chain, track settings or step values (fixed, or the track on screen for controllers), with MIN / MAX and LEARN
+- 128 macros for host automation: map any of them to pattern, chain, track settings or step values (each mapping fixed to its track, pattern and step), with LEARN
 
 ## Download
 

@@ -12,11 +12,15 @@ class PatternSlot : public juce::Component
 public:
     PatternSlot (Context&, int slot);
     void paint (juce::Graphics&) override;
+    void mouseMove (const juce::MouseEvent&) override;
+    void mouseExit (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
+    juce::Rectangle<int> playArea() const;   // the play button at the top center
 
 private:
     Context& ctx;
     const int slot;
+    bool hoverPlay = false;
 };
 
 class ChainRow : public juce::Component
@@ -51,7 +55,7 @@ public:
 private:
     void showTrackMenu();
     Context& ctx;
-    juce::OwnedArray<Pill> bankBtns;
+    juce::OwnedArray<Pill> pageBtns;
     juce::OwnedArray<PatternSlot> slots;
     Pill copyBtn, pasteBtn, clearBtn, trackBox, copyTrackBtn;
     Pill chainOnBtn, loopBtn, addBtn, clearChainBtn;
@@ -59,7 +63,7 @@ private:
     int dragIndex = -1, dropIndex = -1;   // chain reordering
     void paintOverChildren (juce::Graphics&) override;
     int dropIndexAt (int y) const;
-    juce::Rectangle<int> left, aside, banksLabel, slotsLabel, slotsArea, selectedBar, chainHeader, columnHeader, chainList, footer;
+    juce::Rectangle<int> left, aside, pagesLabel, slotsLabel, slotsArea, selectedBar, chainHeader, columnHeader, chainList, footer;
     int lastChainSize = -1;
 };
 } // namespace vima

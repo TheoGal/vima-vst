@@ -1,6 +1,6 @@
 #pragma once
 
-// Macros page (SPEC.md 13.1, 13.2): 4 banks of 32 macro knobs, the mapping editor for the
+// Macros page (SPEC.md 13.1, 13.2): 4 pages of 32 macro knobs, the mapping editor for the
 // selected macro, LEARN, and SAVE / LOAD of mapping sets (13.3).
 
 #include "Context.h"
@@ -45,7 +45,7 @@ private:
     void pickTarget (MacroTarget);
 
     Context& ctx;
-    juce::OwnedArray<Pill> bankBtns, kindBtns, targetBtns, trackBtns;
+    juce::OwnedArray<Pill> pageBtns, kindBtns, targetBtns, trackBtns;
     juce::String conflict;   // "ALREADY ON M003" after a refused change
     int conflictMacro = -1;
     juce::OwnedArray<MacroCell> cells;
@@ -53,8 +53,8 @@ private:
     Pill learnBtn, clearBtn, saveSetBtn, loadSetBtn;
     std::unique_ptr<juce::FileChooser> chooser;
     void chooseSetFile (bool save);
-    Knob patternKnob, stepKnob, minKnob, maxKnob;
-    juce::Rectangle<int> left, aside, banksLabel, gridArea, learnBanner, asideHead, kindLabel, targetLabel, trackLabel,
-                         patternLabel_, stepLabel, rangeLabel, minLabel, maxLabel, footer, emptyText, patternText;
+    Knob patternKnob, stepKnob;
+    juce::Rectangle<int> left, aside, pagesLabel, gridArea, learnBanner, asideHead, kindLabel, targetLabel, trackLabel,
+                         patternLabel_, stepLabel, footer, emptyText, patternText;
 };
 } // namespace vima

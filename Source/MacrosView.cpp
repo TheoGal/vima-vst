@@ -23,7 +23,7 @@ namespace
         static const std::vector<MacroTarget> track { MacroTarget::noteOut, MacroTarget::ccOut, MacroTarget::length, MacroTarget::division,
                                                        MacroTarget::direction, MacroTarget::swing, MacroTarget::scaleOn };
         static const std::vector<MacroTarget> step { MacroTarget::stepOn, MacroTarget::note, MacroTarget::octave, MacroTarget::velocity,
-                                                      MacroTarget::gate, MacroTarget::probability, MacroTarget::cc, MacroTarget::ccStepOn };
+                                                      MacroTarget::gate, MacroTarget::probability, MacroTarget::ccStepOn, MacroTarget::cc };
         static const std::vector<MacroTarget> none;
         return k == MacroKind::global ? global : k == MacroKind::track ? track : k == MacroKind::step ? step : none;
     }
@@ -64,7 +64,7 @@ MacroCell::MacroCell (Context& c, int s) : ctx (c), slot (s)
     setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
 }
 
-int MacroCell::macroIndex() const { return ctx.ui.macroBank * macrosPerBank + slot; }
+int MacroCell::macroIndex() const { return ctx.ui.macroPage * macrosPerPage + slot; }
 
 void MacroCell::paint (juce::Graphics& g)
 {
@@ -78,9 +78,6 @@ void MacroCell::paint (juce::Graphics& g)
         r.value = macroTargetValue (p, r.map);
         r.notes = macroNotes (p, r.map);
         if (r.value) r.text = macroValueText (p, r.map, *r.value);
-        if (r.value && r.map.target == MacroTarget::pattern)   // compact "02·07" inside the knob
-            r.text = juce::String (*r.value / patternsPerBank + 1).paddedLeft ('0', 2) + juce::String (juce::CharPointer_UTF8 ("\xc2\xb7"))
-                     + juce::String (*r.value % patternsPerBank + 1).paddedLeft ('0', 2);
         return r;
     });
     const bool sel = i == ctx.ui.selectedMacro;
@@ -187,20 +184,20 @@ void MacroCell::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
 // ---------------------------------------------------------------------------------------
 MacrosView::MacrosView (Context& c) : ctx (c)
 {
-    for (int b = 0; b < numMacros / macrosPerBank; ++b)
+    for (int b = 0; b < numMacros / macrosPerPage; ++b)
     {
         auto* p = new Pill();
         p->radius = 5.0f;
         p->font = [] { return Fonts::monoSemi (11.0f); };
-        p->text = [b] { return juce::String (b * macrosPerBank + 1) + "-" + juce::String (b * macrosPerBank + macrosPerBank); };
-        p->look = [this, b] { return segLook (ctx.ui.macroBank == b, Theme::current().neutral); };
+        p->text = [b] { return juce::String (b * macrosPerPage + 1) + " - " + juce::String (b * macrosPerPage + macrosPerPage); };
+        p->look = [this, b] { return segLook (ctx.ui.macroPage == b, Theme::current().neutral); };
         p->onClick = [this, b]
         {
-            ctx.ui.macroBank = b;
-            ctx.ui.selectedMacro = b * macrosPerBank + ctx.ui.selectedMacro % macrosPerBank;
+            ctx.ui.macroPage = b;
+            ctx.ui.selectedMacro = b * macrosPerPage + ctx.ui.selectedMacro % macrosPerPage;
             ctx.changed();
         };
-        bankBtns.add (p);
+        pageBtns.add (p);
         addAndMakeVisible (p);
     }
 
@@ -242,7 +239,7 @@ MacrosView::MacrosView (Context& c) : ctx (c)
     saveSetBtn.onClick = [this] { chooseSetFile (true); };
     loadSetBtn.onClick = [this] { chooseSetFile (false); };
 
-    for (int k = 0; k < macrosPerBank; ++k)
+    for (int k = 0; k < macrosPerPage; ++k)
     {
         auto* cell = new MacroCell (ctx, k);
         cells.add (cell);
@@ -250,8 +247,8 @@ MacrosView::MacrosView (Context& c) : ctx (c)
     }
 
     // TARGET kind
-    const std::array<std::pair<MacroKind, const char*>, 4> kinds { { { MacroKind::none, "NONE" }, { MacroKind::global, "GLOBAL" },
-                                                                    { MacroKind::track, "TRACK" }, { MacroKind::step, "STEP" } } };
+    const std::array<std::pair<MacroKind, const char*>, 3> kinds { { { MacroKind::global, "GLOBAL" }, { MacroKind::track, "TRACK" },
+                                                                    { MacroKind::step, "STEP" } } };
     for (const auto& [kind, name] : kinds)
     {
         auto* p = new Pill();
@@ -311,28 +308,11 @@ MacrosView::MacrosView (Context& c) : ctx (c)
     stepKnob.pixelsPerStep = 6.0f;
     addChildComponent (stepKnob);
 
-    // RANGE
-    auto rangeKnob = [this] (Knob& k, bool isMin)
-    {
-        k.fontSize = 10.0f;
-        k.colour = [this] { return targetColour (ctx.macroCopy (ctx.ui.selectedMacro).target); };
-        k.getValue = [this, isMin] { const auto m = ctx.macroCopy (ctx.ui.selectedMacro); return (int) (isMin ? m.min : m.max); };
-        k.setValue = [this, isMin] (int v) { editMap ([isMin, v] (MacroMap& m, const Globals&) { (isMin ? m.min : m.max) = (std::int16_t) v; }); };
-        k.format = [this] (int v)
-        {
-            const auto m = ctx.macroCopy (ctx.ui.selectedMacro);
-            return macroValueText (ctx.globalsCopy(), m, v);
-        };
-        addChildComponent (k);
-    };
-    rangeKnob (minKnob, true);
-    rangeKnob (maxKnob, false);
-
     clearBtn.radius = 6.0f;
     clearBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f); };
     clearBtn.text = [] { return juce::String ("CLEAR MAPPING"); };
     clearBtn.look = [] { const auto& t = Theme::current(); return Pill::outline (t.border3, t.text2); };
-    clearBtn.onClick = [this] { pickKind (MacroKind::none); };
+    clearBtn.onClick = [this] { editMap ([] (MacroMap& m, const Globals&) { m = MacroMap(); }); };
     addAndMakeVisible (clearBtn);
 
     refreshState();
@@ -391,11 +371,6 @@ void MacrosView::editMap (std::function<void (MacroMap&, const Globals&)> fn)
 void MacrosView::pickKind (MacroKind kind)
 {
     const auto cur = ctx.macroCopy (ctx.ui.selectedMacro);
-    if (kind == MacroKind::none)
-    {
-        editMap ([] (MacroMap& m, const Globals&) { m = MacroMap(); });
-        return;
-    }
     conflict.clear();
     if (macroKind (cur.target) == kind)
         return;
@@ -428,19 +403,6 @@ void MacrosView::refreshState()
     const bool showPattern = m.mapped() && info.perPattern;
     patternKnob.setVisible (showPattern);
     stepKnob.setVisible (kind == MacroKind::step);
-
-    int lo = 0, hi = 1;
-    macroLimits (m.target, ctx.globalsCopy(), lo, hi);
-    const bool showRange = m.mapped() && hi - lo > 1;
-    for (auto* k : { &minKnob, &maxKnob })
-    {
-        k->minValue = lo;
-        k->maxValue = hi;
-        k->setVisible (showRange);
-    }
-    minKnob.defaultValue = lo;
-    maxKnob.defaultValue = hi;
-    minKnob.pixelsPerStep = maxKnob.pixelsPerStep = juce::jlimit (1.5f, 10.0f, 300.0f / (float) juce::jmax (1, hi - lo));
     clearBtn.setVisible (m.mapped());
     resized();
     repaint();
@@ -454,10 +416,10 @@ void MacrosView::resized()
     r.removeFromRight (16);
     left = r;
 
-    // bank row and LEARN
+    // page row and LEARN
     auto row = left.removeFromTop (32);
-    banksLabel = row.removeFromLeft (44);
-    for (auto* p : bankBtns) { p->setBounds (row.removeFromLeft (76).reduced (0, 1)); row.removeFromLeft (4); }
+    pagesLabel = row.withWidth (0);
+    for (auto* p : pageBtns) { p->setBounds (row.removeFromLeft (84).reduced (0, 1)); row.removeFromLeft (4); }
     learnBtn.setBounds (row.removeFromRight (104).reduced (0, 1));
     row.removeFromRight (16);
     loadSetBtn.setBounds (row.removeFromRight (72).reduced (0, 1));
@@ -493,10 +455,10 @@ void MacrosView::resized()
     clearBtn.setBounds (footer.withWidth (124));
 
     auto kindsRow = section (kindLabel, 30);
-    const int kw = (kindsRow.getWidth() - 3 * 3) / 4;
+    const int kw = (kindsRow.getWidth() - 2 * 3) / 3;
     for (int k = 0; k < kindBtns.size(); ++k) kindBtns[k]->setBounds (kindsRow.getX() + k * (kw + 3), kindsRow.getY(), kw, 30);
 
-    targetLabel = trackLabel = patternLabel_ = stepLabel = rangeLabel = minLabel = maxLabel = emptyText = patternText = {};
+    targetLabel = trackLabel = patternLabel_ = stepLabel = emptyText = patternText = {};
     if (shownTargets.empty())
     {
         emptyText = a.removeFromTop (20);
@@ -527,34 +489,22 @@ void MacrosView::resized()
         auto sr = section (stepLabel, 40);
         stepKnob.setBounds (sr.removeFromLeft (40));
     }
-    if (minKnob.isVisible())
-    {
-        auto rr = section (rangeLabel, 40);
-        minKnob.setBounds (rr.removeFromLeft (40));
-        rr.removeFromLeft (8);
-        minLabel = rr.removeFromLeft (50);
-        rr.removeFromLeft (14);
-        maxKnob.setBounds (rr.removeFromLeft (40));
-        rr.removeFromLeft (8);
-        maxLabel = rr.removeFromLeft (50);
-    }
 }
 
 void MacrosView::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
     g.fillAll (t.bg);
-    draw::label (g, "BANK", banksLabel, t.muted);
 
     int mapped = 0;
-    const int bank = ctx.ui.macroBank;
+    const int bank = ctx.ui.macroPage;
     ctx.proc.read ([&mapped, bank] (const Project& p)
     {
-        for (int k = 0; k < macrosPerBank; ++k) mapped += p.macros[(size_t) (bank * macrosPerBank + k)].mapped() ? 1 : 0;
+        for (int k = 0; k < macrosPerPage; ++k) mapped += p.macros[(size_t) (bank * macrosPerPage + k)].mapped() ? 1 : 0;
         return 0;
     });
     {
-        auto b = banksLabel.withX (bankBtns.getLast()->getRight() + 16).withWidth (160);
+        auto b = pagesLabel.withX (pageBtns.getLast()->getRight() + 16).withWidth (160);
         g.setColour (t.muted);
         g.setFont (Fonts::mono (10.0f));
         g.drawText (juce::String (mapped) + " OF 32 MAPPED", b, juce::Justification::centredLeft);
@@ -599,9 +549,6 @@ void MacrosView::paint (juce::Graphics& g)
     draw::label (g, "TRACK", trackLabel, t.muted);
     draw::label (g, "PATTERN", patternLabel_, t.muted);
     draw::label (g, "STEP", stepLabel, t.muted);
-    draw::label (g, "RANGE", rangeLabel, t.muted);
-    draw::label (g, "MIN", minLabel, t.muted);
-    draw::label (g, "MAX", maxLabel, t.muted);
     if (! patternText.isEmpty() && m.mapped() && macroTargetInfo (m.target).perPattern)
     {
         g.setColour (t.text);

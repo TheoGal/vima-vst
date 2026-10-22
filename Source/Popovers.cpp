@@ -121,31 +121,31 @@ void ScalePopover::paintOverChildren (juce::Graphics& g)
 PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
 {
     setComponentID ("patternPicker");
-    for (int b = 0; b < numBanks; ++b)
+    for (int b = 0; b < numPages; ++b)
     {
         auto& p = addPill();
         p.radius = 4.0f;
-        p.text = [b] { return juce::String (b + 1).paddedLeft ('0', 2); };
-        p.look = [this, b] { return choiceLook (ctx.ui.pickerBank == b, Theme::current().neutral); };
-        p.onClick = [this, b] { ctx.ui.pickerBank = b; repaint(); };
+        p.text = [b] { return pageRangeText (b); };
+        p.look = [this, b] { return choiceLook (ctx.ui.pickerPage == b, Theme::current().neutral); };
+        p.onClick = [this, b] { ctx.ui.pickerPage = b; repaint(); };
         p.cornerDot = [this, b]
         {
             const int q = ctx.proc.engine.queuedPattern.load();
-            return ctx.currentPattern() / patternsPerBank == b || (q >= 0 && q / patternsPerBank == b);
+            return ctx.currentPattern() / patternsPerPage == b || (q >= 0 && q / patternsPerPage == b);
         };
     }
-    for (int s = 0; s < patternsPerBank; ++s)
+    for (int s = 0; s < patternsPerPage; ++s)
     {
         auto& p = addPill();
         p.radius = 5.0f;
         p.justification = juce::Justification::centredLeft;
         p.textInset = 9;
         p.font = [] { return Fonts::monoSemi (12.0f); };
-        p.text = [s] { return juce::String (s + 1).paddedLeft ('0', 2); };
+        p.text = [this, s] { return patternLabel (ctx.ui.pickerPage * patternsPerPage + s); };
         p.look = [this, s]
         {
             const auto& t = Theme::current();
-            const int idx = ctx.ui.pickerBank * patternsPerBank + s;
+            const int idx = ctx.ui.pickerPage * patternsPerPage + s;
             const int cur = ctx.currentPattern();
             const int q = ctx.proc.engine.queuedPattern.load();
             const bool used = ! ctx.proc.read ([idx] (const Project& pr) { return pr.patterns[(size_t) idx].isEmpty(); });
@@ -157,13 +157,13 @@ PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
         p.ledOnRight = true;
         p.ledColour = [this, s]
         {
-            const int idx = ctx.ui.pickerBank * patternsPerBank + s;
+            const int idx = ctx.ui.pickerPage * patternsPerPage + s;
             return idx == ctx.currentPattern() ? Theme::current().neutral : juce::Colours::transparentBlack;
         };
         p.ledGlow = [] { return true; };
         p.onClick = [this, s]
         {
-            const int idx = ctx.ui.pickerBank * patternsPerBank + s;
+            const int idx = ctx.ui.pickerPage * patternsPerPage + s;
             if (idx != ctx.currentPattern())
                 ctx.proc.queuePattern (idx);
             Popover::closeAll (*ctx.root);
@@ -184,8 +184,7 @@ PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
 
 void PatternPickerPopover::paintOverChildren (juce::Graphics& g)
 {
-    labels.getReference (1).text = juce::String (juce::CharPointer_UTF8 ("PATTERNS \xc2\xb7 BANK "))
-                                   + juce::String (ctx.ui.pickerBank + 1).paddedLeft ('0', 2);
+    labels.getReference (1).text = "PATTERNS " + pageRangeText (ctx.ui.pickerPage);
     PopoverPanel::paintOverChildren (g);
 }
 
@@ -193,16 +192,16 @@ void PatternPickerPopover::resized()
 {
     auto area = getLocalBounds().reduced (10);
     labels.clear();
-    labels.add ({ "BANK", area.removeFromTop (12) });
+    labels.add ({ "PAGE", area.removeFromTop (12) });
     area.removeFromTop (8);
     auto banks = area.removeFromTop (26);
-    for (int i = 0; i < numBanks; ++i) pills[i]->setBounds (cell (banks, numBanks, i, 26, 4));
+    for (int i = 0; i < numPages; ++i) pills[i]->setBounds (cell (banks, numPages, i, 26, 4));
     area.removeFromTop (8);
     labels.add ({ "PATTERNS", area.removeFromTop (12) });
     area.removeFromTop (8);
     auto slots = area.removeFromTop (172);
-    for (int i = 0; i < patternsPerBank; ++i) pills[numBanks + i]->setBounds (cell (slots, 4, i, 40, 4));
+    for (int i = 0; i < patternsPerPage; ++i) pills[numPages + i]->setBounds (cell (slots, 4, i, 40, 4));
     area.removeFromTop (10);
-    pills[numBanks + patternsPerBank]->setBounds (area.removeFromTop (30));
+    pills[numPages + patternsPerPage]->setBounds (area.removeFromTop (30));
 }
 } // namespace vima

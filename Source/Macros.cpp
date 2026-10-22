@@ -14,14 +14,14 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::direction,   MacroKind::track,  "DIRECTION",  "Direction",   true,  0, 2 },
     { MacroTarget::swing,       MacroKind::track,  "SWING",      "Swing",       true,  0, 100 },
     { MacroTarget::scaleOn,     MacroKind::track,  "SCALE ON",   "Scale On",    true,  0, 1 },
-    { MacroTarget::stepOn,      MacroKind::step,   "NOTE ON",    "Note On",     true,  0, 1 },
+    { MacroTarget::stepOn,      MacroKind::step,   "NOTE STEP",  "Note Step",   true,  0, 1 },
     { MacroTarget::note,        MacroKind::step,   "NOTE",       "Note",        true,  0, 11 },
     { MacroTarget::octave,      MacroKind::step,   "OCTAVE",     "Octave",      true,  minOctave, maxOctave },
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
     { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
     { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  0, 100 },
     { MacroTarget::cc,          MacroKind::step,   "CC VALUE",   "CC Value",    true,  0, 127 },
-    { MacroTarget::ccStepOn,    MacroKind::step,   "CC ON",      "CC On",       true,  0, 1 },
+    { MacroTarget::ccStepOn,    MacroKind::step,   "CC STEP",    "CC Step",     true,  0, 1 },
 };
 
 const MacroTargetInfo& macroTargetInfo (MacroTarget t)
@@ -39,17 +39,13 @@ void macroLimits (MacroTarget t, const Globals& g, int& lo, int& hi)
     juce::ignoreUnused (g);
 }
 
-MacroMap defaultMacroMap (MacroTarget t, int track, int pattern, int step, const Globals& g)
+MacroMap defaultMacroMap (MacroTarget t, int track, int pattern, int step, const Globals&)
 {
     MacroMap m;
     m.target = t;
     m.track = (std::int8_t) juce::jlimit (0, numTracks - 1, track);
     m.pattern = (std::int8_t) juce::jlimit (0, numPatterns - 1, pattern);
     m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, step);
-    int lo = 0, hi = 1;
-    macroLimits (t, g, lo, hi);
-    m.min = (std::int16_t) lo;
-    m.max = (std::int16_t) hi;
     return m;
 }
 
@@ -161,20 +157,22 @@ MacroNotes macroNotes (const Project& p, const MacroMap& m)
 
 namespace
 {
-    // Allowed notes from MIN to MAX (in that direction), at most 12
-    int noteList (const MacroMap& m, const MacroNotes& n, std::array<int, 12>& out)
+    // The allowed notes from C to B: all 12, or the in-scale notes
+    int noteList (const MacroNotes& n, std::array<int, 12>& out)
     {
-        const int lo = juce::jlimit (0, 11, (int) m.min), hi = juce::jlimit (0, 11, (int) m.max);
-        const int dir = hi >= lo ? 1 : -1;
         int count = 0;
-        for (int pc = lo;; pc += dir)
-        {
+        for (int pc = 0; pc < 12; ++pc)
             if (n.allows (pc)) out[(size_t) count++] = pc;
-            if (pc == hi) break;
-        }
-        if (count == 0)   // no allowed note in the range: the nearest in-scale note to MIN
-            out[(size_t) count++] = ((quantizeToScale (n.mask, n.root, 60 + lo) % 12) + 12) % 12;
+        if (count == 0)
+            out[(size_t) count++] = n.root;
         return count;
+    }
+
+    void limits (const MacroMap& m, int& lo, int& hi)
+    {
+        const auto& i = macroTargetInfo (m.target);
+        lo = i.min;
+        hi = i.max;
     }
 }
 
@@ -183,9 +181,11 @@ int macroPositions (const MacroMap& m, const MacroNotes& n)
     if (m.target == MacroTarget::note)
     {
         std::array<int, 12> list {};
-        return noteList (m, n, list);
+        return noteList (n, list);
     }
-    return std::abs (m.max - m.min) + 1;
+    int lo = 0, hi = 1;
+    limits (m, lo, hi);
+    return hi - lo + 1;
 }
 
 int macroPlain (const MacroMap& m, float normalized, const MacroNotes& n)
@@ -194,10 +194,12 @@ int macroPlain (const MacroMap& m, float normalized, const MacroNotes& n)
     if (m.target == MacroTarget::note)
     {
         std::array<int, 12> list {};
-        const int count = noteList (m, n, list);
+        const int count = noteList (n, list);
         return list[(size_t) juce::jlimit (0, count - 1, juce::roundToInt (f * (float) (count - 1)))];
     }
-    return juce::roundToInt ((float) m.min + (float) (m.max - m.min) * f);
+    int lo = 0, hi = 1;
+    limits (m, lo, hi);
+    return juce::roundToInt ((float) lo + (float) (hi - lo) * f);
 }
 
 float macroNormalized (const MacroMap& m, int plain, const MacroNotes& n)
@@ -205,7 +207,7 @@ float macroNormalized (const MacroMap& m, int plain, const MacroNotes& n)
     if (m.target == MacroTarget::note)
     {
         std::array<int, 12> list {};
-        const int count = noteList (m, n, list);
+        const int count = noteList (n, list);
         if (count < 2)
             return 0.0f;
         int best = 0;
@@ -213,9 +215,11 @@ float macroNormalized (const MacroMap& m, int plain, const MacroNotes& n)
             if (std::abs (list[(size_t) k] - plain) < std::abs (list[(size_t) best] - plain)) best = k;
         return (float) best / (float) (count - 1);
     }
-    if (m.max == m.min)
+    int lo = 0, hi = 1;
+    limits (m, lo, hi);
+    if (hi == lo)
         return 0.0f;
-    return juce::jlimit (0.0f, 1.0f, (float) (plain - m.min) / (float) (m.max - m.min));
+    return juce::jlimit (0.0f, 1.0f, (float) (plain - lo) / (float) (hi - lo));
 }
 
 static juce::String plainText (const MacroMap& m, int v, int octaveOffset)
@@ -259,8 +263,8 @@ static const char* shortName (MacroTarget t)
 {
     switch (t)
     {
-        case MacroTarget::stepOn:      return "ON";
-        case MacroTarget::ccStepOn:    return "CC ON";
+        case MacroTarget::stepOn:      return "NOTE STEP";
+        case MacroTarget::ccStepOn:    return "CC STEP";
         case MacroTarget::note:        return "NOTE";
         case MacroTarget::octave:      return "OCT";
         case MacroTarget::velocity:    return "VEL";

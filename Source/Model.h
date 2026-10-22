@@ -14,9 +14,9 @@ namespace vima
 constexpr int numTracks = 8;
 constexpr int maxSteps = 32;
 constexpr int minLength = 4;
-constexpr int numBanks = 4;
-constexpr int patternsPerBank = 16;
-constexpr int numPatterns = numBanks * patternsPerBank;   // 64
+constexpr int numPages = 4;
+constexpr int patternsPerPage = 16;
+constexpr int numPatterns = numPages * patternsPerPage;   // 64
 constexpr int maxChainEntries = 64;
 
 // Internal octave numbering: MIDI note = 12 * (octave + 2) + pitchClass, so C3 = 60
@@ -97,8 +97,8 @@ struct TrackRouting
 
 // ---------------------------------------------------------------------------------------
 // Scales: 14 built-in + USER. Each is a 12-bit mask of pitch classes relative to the root.
-constexpr int numScales = 15;
-constexpr int userScaleIndex = 14;
+constexpr int numScales = 14;
+constexpr int userScaleIndex = 13;
 struct ScaleInfo
 {
     const char* shortName;   // shown in the SCALE tile, e.g. "MIN"
@@ -168,8 +168,7 @@ struct Globals
     int octaveOffset() const { return middleC - 3; }
     bool lightTheme = false;
 
-    bool ccSmoothing = false;
-    int ccSmoothingTime = 100;     // 1-100 % of the time between two active steps
+    bool ccSmoothing = false;      // glide over the whole gap between two CC-on steps
 
     bool patternCC = false;
     int patternCCChannel = 16;
@@ -204,7 +203,7 @@ juce::String noteDisplayName (int pitchClass, int octave, int octaveOffset);
 // ---------------------------------------------------------------------------------------
 // Macros (SPEC.md 13.1): 128 host-automatable knobs, each mapped to one target
 constexpr int numMacros = 128;
-constexpr int macrosPerBank = 32;
+constexpr int macrosPerPage = 32;
 
 enum class MacroTarget : std::uint8_t
 {
@@ -222,12 +221,11 @@ struct MacroMap
     std::int8_t track = 0;       // 0..7
     std::int8_t pattern = 0;     // 0..63 (targets stored per pattern)
     std::uint8_t step = 0;       // 0..31 (step targets)
-    std::int16_t min = 0, max = 1;
 
     bool mapped() const { return target != MacroTarget::none; }
     bool operator== (const MacroMap& o) const
     {
-        return target == o.target && track == o.track && pattern == o.pattern && step == o.step && min == o.min && max == o.max;
+        return target == o.target && track == o.track && pattern == o.pattern && step == o.step;
     }
     bool operator!= (const MacroMap& o) const { return ! (*this == o); }
 };
@@ -259,5 +257,6 @@ struct Project
     bool loadMacros (const juce::ValueTree&);   // false if the tree is not a mapping set
 };
 
-juce::String patternLabel (int patternIndex);   // "B01 · 01"
+juce::String patternLabel (int patternIndex);   // "05": patterns are numbered 1-64
+juce::String pageRangeText (int page);          // "17 - 32"
 } // namespace vima

@@ -155,7 +155,7 @@ Header::Header (Context& c) : ctx (c)
     patternBtn.onClick = [this]
     {
         if (Popover::isOpen (*ctx.root, "patternPicker")) { Popover::closeAll (*ctx.root); return; }
-        ctx.ui.pickerBank = ctx.currentPattern() / patternsPerBank;
+        ctx.ui.pickerPage = ctx.currentPattern() / patternsPerPage;
         const auto sz = PatternPickerPopover::size();
         auto area = patternArea.translated (getX(), getY());
         Popover::show (*ctx.root, std::make_unique<PatternPickerPopover> (ctx),

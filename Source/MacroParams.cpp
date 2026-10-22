@@ -19,14 +19,14 @@ juce::String MacroParameter::getText (float normalised, int maximumLength) const
 // ---------------------------------------------------------------------------------------
 MacroParams::MacroParams (juce::AudioProcessor& processor)
 {
-    for (int b = 0; b < numMacros / macrosPerBank; ++b)
+    for (int b = 0; b < numMacros / macrosPerPage; ++b)
     {
-        const int first = b * macrosPerBank + 1;
+        const int first = b * macrosPerPage + 1;
         auto group = std::make_unique<juce::AudioProcessorParameterGroup> (
-            "macros" + juce::String (b + 1), "Macros " + juce::String (first) + "-" + juce::String (first + macrosPerBank - 1), "|");
-        for (int k = 0; k < macrosPerBank; ++k)
+            "macros" + juce::String (b + 1), "Macros " + juce::String (first) + "-" + juce::String (first + macrosPerPage - 1), "|");
+        for (int k = 0; k < macrosPerPage; ++k)
         {
-            const int i = b * macrosPerBank + k;
+            const int i = b * macrosPerPage + k;
             auto p = std::make_unique<MacroParameter> (i, [this] (int idx, float v) { return textFor (idx, v); });
             entries[(size_t) i].param = p.get();
             entries[(size_t) i].lastApplied = static_cast<juce::AudioProcessorParameter*> (p.get())->getValue();

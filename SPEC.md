@@ -68,7 +68,7 @@ A new instance, NEW in the FILE menu, CLEAR in the patterns view and a right-cli
 | CC number | 102 + track index: tracks 1-8 = CC 102-109 (undefined CCs in the MIDI spec) |
 | Length / division / direction / swing / scale | 16 / 1/16 / forward / 0% / on |
 | Steps | all 32 on (note on and CC on), note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
-| Current pattern | B01 · 01 |
+| Current pattern | 01 |
 | Global scale | C minor |
 | Middle C | C3 |
 | CC smoothing | off, time 100% |
@@ -101,13 +101,13 @@ Per step values:
 Pitch display and scale behavior:
 
 - Every step always displays the note that will actually sound (for example "D#3").
-- When the track's scale is on, the note knob can only land on notes in the scale.
+- When the track's scale is on, the note knob can only land on notes in the scale, and its arc follows the scale: the in-scale notes are spread evenly over the whole arc, whatever their number (7 in C minor, 3 in a 3-note user scale). The lowest in-scale note (from C up) is fully left, the highest fully right (A# in C minor). With the scale off, the arc covers all 12 notes, C to B.
 
 There is no step skip, no chords, no drum mode. Note mode only.
 
 ## 6. Global settings
 
-- Scale: 14 built-in scales plus 1 user scale, with a root note. Proposed list (editable): Major, Natural minor, Harmonic minor, Melodic minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Major pentatonic, Minor pentatonic, Blues, Whole tone, Chromatic.
+- Scale: 13 built-in scales plus 1 user scale, with a root note: Major, Natural minor, Harmonic minor, Melodic minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Major pentatonic, Minor pentatonic, Blues, Whole tone. There is no Chromatic scale: a track with its scale OFF plays all 12 notes.
 - The scale is **selected in the main window** (SCALE tile popover, see 12.2), never in the Settings dialog. The root can be set in the SCALE popover and also in the Settings user scale editor (same global value).
 - User scale: 12 note toggles. It is **edited only in the Settings dialog**, and can only be **selected** (as "USER") from the main window.
 - Pattern change from incoming CC: MIDI channel and CC number configurable.
@@ -115,7 +115,7 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 ## 7. Patterns
 
-- 64 patterns, organized as 4 banks of 16. Every pattern can be reached by one incoming CC value.
+- 64 patterns, numbered 1-64 everywhere and shown as two digits ("05", "21"). The screens show them in 4 pages of 16 (1 - 16, 17 - 32, 33 - 48, 49 - 64). Every pattern can be reached by one incoming CC value.
 - A pattern holds all 8 tracks.
 - Copy a whole pattern, or a single track, to another slot.
 - Pattern chaining.
@@ -124,10 +124,22 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 - Opened with the "OPEN PATTERNS VIEW" button in the header's pattern popover (7.4). It replaces the step view; a "STEPS" button in the header goes back. While open, the PATTERN box is highlighted and shows the playing pattern, blinking while a change is queued.
 - Global screen, so it uses the neutral color. Green and cyan only appear in the pattern thumbnails (note content and CC content).
-- **Banks**: a row of 4 buttons. A small dot marks the bank holding the playing or queued pattern.
-- **Pattern grid**: 4 x 4 slots for the current bank. Each slot shows its number, a state (PLAYING with a lit LED, NEXT with a dashed outline, STORED, EMPTY), and an 8-bar thumbnail of the 8 tracks (see 7.1.1). A thin line at the bottom marks patterns used in the chain.
-- **Clicking a slot** selects it (to be changed: see 15.1 item 6, select vs play). Today it also queues it as the next pattern. The switch happens at the next quantize point (Settings: 1 beat, 1 bar or pattern end), or instantly when quantize is OFF.
-- **Selected bar**: COPY, PASTE and CLEAR for the selected pattern, plus a track dropdown with COPY TRACK to copy a single track. The clipboard content is shown at the right.
+- **Pages**: a row of 4 buttons, 1 - 16, 17 - 32, 33 - 48, 49 - 64. A small dot marks the page holding the playing or queued pattern.
+- **Pattern grid**: 4 x 4 slots for the current page. Each slot shows the pattern's own number (page 17 - 32 shows 17 to 32), a small **play button at the top center**, a state (PLAYING with a lit LED, NEXT with a dashed outline, STORED, EMPTY), and an 8-bar thumbnail of the 8 tracks (see 7.1.1). A thin line at the bottom marks patterns used in the chain.
+- **Clicking a slot** anywhere except its play button only **selects** it (for COPY and COPY TRACK). It does not play it.
+- **The play button** selects the slot **and** queues it as the next pattern. The switch happens at the next quantize point (Settings: 1 beat, 1 bar or pattern end), or instantly when quantize is OFF. The header picker and arrows also play patterns directly (7.4).
+- **Selected bar** (bottom): SELECTED and the selected pattern's number, COPY, the TRACK dropdown, COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
+
+#### 7.1.2 Copy / paste of patterns and tracks
+
+Works like step copy / paste (9.1):
+
+- **COPY** copies the whole selected pattern; **COPY TRACK** copies the selected pattern's track chosen in the TRACK dropdown. Either button lights up and reads **COPIED** or **TRACK COPIED**. There is one clipboard: copying again replaces it.
+- A copy takes **everything**: all steps (note and CC parts) and all settings stored in the pattern. Armed lanes do not apply here.
+- While a copy button is lit, a click on a slot only picks the **destination pattern**, shown with a dashed outline (the ghost preview). The selection does not change. The slot play buttons still play.
+- For a track copy, the **destination track** is the one in the TRACK dropdown when PASTE is pressed, so track 1 can be pasted into track 2 of the same or another pattern.
+- **PASTE** is dimmed until a destination is picked. It writes there (one undo step), and the button stays lit for more pastes.
+- Clicking the lit button, or **CLEAR**, cancels: the clipboard is emptied and the ghost preview removed. **CLEAR never erases a pattern.**
 
 #### 7.1.1 Pattern thumbnail
 
@@ -143,11 +155,11 @@ There is no step skip, no chords, no drum mode. Note mode only.
 ### 7.2 Chain (proposed)
 
 - An ordered list (song list) of up to 64 entries, shown on the right of the patterns view.
-- Each entry: playing LED, position number, pattern (for example "B02 · 07"), length in bars (one play of the pattern times its repeats) with a progress bar while playing, a repeat count (-/+, 1 to 99) and a remove button.
+- Each entry: playing LED, position number, pattern (for example "23"), length in bars (one play of the pattern times its repeats) with a progress bar while playing, a repeat count (-/+, 1 to 99) and a remove button.
 - **+ ADD** appends the selected pattern. CLEAR empties the chain. Entries can repeat the same pattern.
 - **CHAIN ON/OFF** turns chain playback on. **LOOP ON/OFF**: at the end of the chain, LOOP ON goes back to the first entry; LOOP OFF plays the chain once, then keeps playing (repeating) its last pattern until the transport stops or another pattern is picked.
 - One play of a pattern lasts as long as its longest track (length x division).
-- A manually queued pattern (clicking a slot) takes priority over the chain for the next change.
+- A manually queued pattern (a slot's play button) takes priority over the chain for the next change.
 - **Reordering**: drag an entry up or down the list (a grip on its left shows it can be dragged). A line shows where it will land. Playback keeps following the entry that is playing, wherever it moves. Removing an entry also keeps playback on the right entry.
 
 ### 7.3 Pattern switching rules
@@ -158,8 +170,8 @@ There is no step skip, no chords, no drum mode. Note mode only.
 
 ### 7.4 Quick pattern picker (main window header)
 
-- The PATTERN box in the main header has **‹ and › arrows** for the previous / next pattern (crossing into the next or previous bank, wrapping from the last pattern to the first).
-- Clicking the pattern name opens a **popover** (styled like the DIVISION and SCALE popovers): a row of 4 banks (a dot marks the bank with the playing or queued pattern), the 16 slots of the chosen bank (playing = lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button for the full patterns view (chain, copy, paste).
+- The PATTERN box in the main header has **‹ and › arrows** for the previous / next pattern (crossing pages, wrapping from the last pattern to the first).
+- Clicking the pattern name opens a **popover** (styled like the DIVISION and SCALE popovers): a row of 4 page buttons, 1 - 16 to 49 - 64 (a dot marks the page with the playing or queued pattern), the 16 slots of the chosen page, numbered with the patterns' own numbers (playing = lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button for the full patterns view (chain, copy, paste).
 - Picking a slot queues or switches it (following the quantize rules) and closes the popover.
 - While a pattern is queued, the PATTERN box keeps showing the current pattern and makes it **blink** until the switch happens. It does not show the next pattern's number. The same applies to the PATTERN box in the patterns view.
 
@@ -242,7 +254,7 @@ A relative shift of all steps in scope.
 
 - One CC per track (number set per track), on the track's MIDI channel.
 - Off steps send no CC.
-- Smoothing on/off (Settings). When on, the CC glides from one active step's value to the next instead of jumping. The glide passes over off steps. Smoothing time is configurable.
+- Smoothing on/off (Settings). When on, the CC glides from one CC-on step's value to the next instead of jumping, over the whole time between them. The glide passes over off steps. There is no smoothing time setting.
 
 ## 11. Settings dialog (board E)
 
@@ -251,7 +263,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - **Appearance**: Theme, DARK / LIGHT (neutral).
 - **Pitch** (green): there is no octave range setting; octaves always cover the whole MIDI range (MIDI notes 0-127). Middle C is (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (lowest C-2)**, **C4 (lowest C-1)** or **C5 (lowest C0)**, shown with the lowest C in brackets, in capitals like the rest of Settings: "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)". C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3.
 - **User scale** (green): 12 note toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root). The root is always included. A ROOT row above the toggles sets the root right here, so the user does not need to go back and forth with the main window. It is the same global root as in the SCALE menu: changing it in either place changes both. The toggle labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
-- **CC output** (cyan): Smooth between steps ON/OFF, and Smoothing time as a knob in percent of a step (1-100%). The time is dimmed when smoothing is off.
+- **CC output** (cyan): Smooth between steps ON/OFF (10).
 - **Pattern change** (neutral): From incoming CC ON/OFF, with MIDI CH and CC number knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END. OFF means no quantize: the pattern changes the instant it is picked (see 7.3).
 - Footer: RESET DEFAULTS and DONE.
 
@@ -297,7 +309,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - No explanatory or help text in the main window (no hints under Selection or Shift).
 - **DIVISION**: click opens a popover grid with the straight values on one row and triplets on a second row. Mouse wheel on the tile steps through values.
 - **DIRECTION**: three inline icon buttons (forward, backward, ping-pong). No menu.
-- **SCALE**: two parts. A scale-name button (for example "C MIN") and a separate ON/OFF toggle for the current track. Clicking the name opens a popover, styled like the DIVISION popover, with a "GLOBAL" tag (the choice applies to every track that has SCALE on), a ROOT row (C to B) and a grid of the 14 scales plus USER. Picking a scale closes the popover. The mouse wheel over the name steps through the scales. Only one popover is open at a time.
+- **SCALE**: two parts. A scale-name button (for example "C MIN") and a separate ON/OFF toggle for the current track. Clicking the name opens a popover, styled like the DIVISION popover, with a "GLOBAL" tag (the choice applies to every track that has SCALE on), a ROOT row (C to B) and a grid of the 13 scales plus USER. Picking a scale closes the popover. The mouse wheel over the name steps through the scales. Only one popover is open at a time.
 - **NOTE OUT** and **CC OUT**: on/off toggles, the last tile of the row. The CC number has its own tile, **CC NUM**, left of CC OUT.
 - To avoid accidents, part-specific controls are only shown in their own mode: SCALE and NOTE OUT only in note mode, CC NUM and CC OUT only in CC mode. Track-wide controls are shown in both.
 - The NOTES and CC mode buttons in the header each carry an LED showing whether that output is on for the selected track (lit in green / cyan when on, dark grey when off). The LEDs are visible in both modes, so the hidden output's state is always known. The selected mode button is shown with a tinted background and accent outline, so the LED stays readable.
@@ -314,8 +326,8 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 - **Mouse wheel**: one step per notch.
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
 - **Right-click or Alt + click**: reset to the default.
-- Defaults are the init values (4.1): LENGTH 16, SWING 0%, MIDI CH = the track number, CC number = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults (for MIN / MAX: the full range).
-- The NOTE knob moves through in-scale notes only when the track's scale is on; the OCTAVE knob covers the whole MIDI range (C-2 to G8 with middle C = C3; notes above MIDI 127 are not played).
+- Defaults are the init values (4.1): LENGTH 16, SWING 0%, MIDI CH = the track number, CC number = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
+- The NOTE knob moves through in-scale notes only when the track's scale is on, and its arc then spreads those notes over the whole travel (5); the OCTAVE knob covers the whole MIDI range (C-2 to G8 with middle C = C3; notes above MIDI 127 are not played).
 
 **Buttons** (all on/off and choice buttons, lane buttons and tabs)
 - **Click**: act. The action happens when the mouse button is released over the button; releasing elsewhere cancels.
@@ -342,7 +354,7 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 - FILE (folder icon): presets menu (13.3). UNDO: one step back. MACROS: Macros page; reads "LEARN M005" while learning. SETTINGS: settings dialog.
 
 **Patterns view**
-- Pattern slot: click to select it and queue it.
+- Pattern slot: click to select it (or, while COPIED / TRACK COPIED is lit, to pick the paste destination). The play button at the top center selects it and queues it.
 - Chain row: drag the row (grip on the left) to reorder; - / + change the repeats; x removes the entry.
 
 **Macros page**
@@ -373,7 +385,7 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 
 ### 13.1 Macros (host automation)
 
-The host sees 128 parameters, "Macro 1" to "Macro 128", grouped in 4 banks of 32. They are the only automatable parameters. Each macro is mapped to one target in the plugin, so only what is needed is exposed. Mapping a DAW knob or controller to a macro is done in the DAW; VIMA has no MIDI learn of its own.
+The host sees 128 parameters, "Macro 1" to "Macro 128", grouped in 4 groups of 32 (Macros 1-32 ... 97-128). They are the only automatable parameters. Each macro is mapped to one target in the plugin, so only what is needed is exposed. Mapping a DAW knob or controller to a macro is done in the DAW; VIMA has no MIDI learn of its own.
 
 Targets:
 
@@ -381,22 +393,23 @@ Targets:
 |---|---|---|---|---|
 | GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
 | TRACK | Notes Out, CC Out | 1-8 | - | - |
-| TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | B01 · 01 to B04 · 16 | - |
-| STEP | Note On, Note, Octave, Velocity, Gate, Probability, CC On, CC value | 1-8 | B01 · 01 to B04 · 16 | 1-32 |
+| TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | 01 to 64 | - |
+| STEP | Note Step, Note, Octave, Velocity, Gate, Probability, CC Step, CC Value | 1-8 | 01 to 64 | 1-32 |
 
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
-- **Range**: each mapping has MIN and MAX (default: the full range). The whole macro travel covers MIN to MAX. MIN above MAX inverts the direction.
-- **Note** follows the scale like the step's note knob: when the target track's scale is on, the macro moves only through in-scale notes between MIN and MAX (C minor over C-B = 7 positions spread over the whole travel); with the scale off, through all 12. MIN / MAX are set as note names. **Octave** covers the whole MIDI range.
-- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it. A target value outside MIN / MAX is shown at the nearest end and is not overwritten by that.
-- The host shows the target value as the macro's value text ("96", "1/16", "B01 · 05"); unmapped macros show "-".
+- **Full range**: every macro always covers its target's whole range over its whole travel. There is no MIN / MAX.
+- **Note Step** and **CC Step** switch the step's note part and CC part on or off (5).
+- **Note** follows the scale like the step's note knob: when the target track's scale is on, the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
+- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
+- The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
 - Host changes are not added to undo. Mappings are saved with the project.
 
 ### 13.2 Macros page
 
 Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS goes back. Mockup: board G.
 
-- **Left**: bank buttons (1-32, 33-64, 65-96, 97-128), "N OF 32 MAPPED", LEARN. A grid of 32 macro cells: number, color dot, a knob with the target's value (drag or wheel to move the macro), target name and where it points ("T04 · B01·06", "T02" for routing targets, "GLOBAL").
-- **Right**: the mapping editor for the selected macro: TARGET (NONE / GLOBAL / TRACK / STEP), PARAMETER (a new mapping starts on the track and pattern on screen), TRACK (1-8), PATTERN (a pattern knob, B01 · 01 to B04 · 16), STEP (1-32), RANGE (MIN / MAX), CLEAR MAPPING and the current value.
+- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128), "N OF 32 MAPPED", LEARN. A grid of 32 macro cells: number, color dot, a knob with the target's value (drag or wheel to move the macro), target name and where it points ("T04 · 06", "T02" for routing targets, "GLOBAL").
+- **Right**: the mapping editor for the selected macro: TARGET (GLOBAL / TRACK / STEP; none lit for an unmapped macro), PARAMETER (a new mapping starts on the track and pattern on screen; step parameters in this order: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE), TRACK (1-8), PATTERN (a pattern knob, 01 to 64), STEP (1-32), CLEAR MAPPING (unmaps the macro) and the current value.
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005".
 - While learning: clicks map instead of editing; an amber frame marks the view; the control under the mouse is highlighted; **every mapped control keeps an amber outline with its macro number** (for example "M005"), following the track and pattern on screen.
 - **A mapped control cannot be mapped again**: clicking it does nothing (the outline flashes). **Right-click** a mapped control to free it (unmap its macro).
@@ -427,15 +440,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ### 15.1 Decided, not built yet
 
-1. **Remove the Smoothing time setting** (Settings, CC OUTPUT). CC smoothing is just ON or OFF; when on, it always glides over the whole gap between two CC-on steps (what 100% did).
-2. **Note knob arc follows the scale**: with the track's scale on, the arc shows the note's position among the scale's notes, spread evenly over the whole arc whatever the number of notes (7 in C minor, 3 in a 3-note user scale): the lowest in-scale note is fully left, the highest fully right (A# in C minor). With the scale off, all 12 notes as now. The same for the NOTE range bar and note macros if they show an arc.
-3. **Remove the CHROMATIC scale** from the scale list: a track with its scale OFF already plays all 12 notes. 13 built-in scales plus USER remain.
-4. **Remove MIN / MAX from macros**: every macro always covers its target's full range (for notes: all in-scale notes, or all 12 with the scale off). The RANGE section goes away from the mapping editor, and from the spec (13.1, 13.2) when built.
-5. **Step macro names and order**: NOTE ON is renamed **NOTE STEP**, CC ON is renamed **CC STEP**. Order in the editor: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE.
-6. **Pattern slots: select vs play.** Each slot in the patterns view gets a small **play button at the top center**. Clicking anywhere else in the slot only **selects** it (for COPY / PASTE / CLEAR / COPY TRACK), without playing it. Clicking the play button selects it **and** queues it to play (quantize applies). The header picker and arrows still play patterns directly.
-7. **Patterns view copy / paste follows the step logic (9.1)**: COPY (whole selected pattern) or COPY TRACK (the track in the TRACK dropdown) lights up as COPIED / TRACK COPIED (one clipboard at a time). While lit, a slot click only picks the destination pattern (dashed outline = ghost preview); for a track, the destination track is the one in the TRACK dropdown, so track 1 can be pasted into track 2. PASTE is dimmed until a destination is picked, writes there and the button stays lit for more pastes. Clicking the lit button, or **CLEAR**, cancels and empties the clipboard. **CLEAR never erases a pattern** (it used to reset the selected pattern; that is removed). A copy takes everything (all steps and settings), not only the armed lanes. The info text on the right of that bar shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track; nothing when the clipboard is empty.
-8. **No more banks: pages with number ranges.** Patterns are numbered 1-64 everywhere (header, picker, patterns view, chain, macros, host text), shown as two digits ("05", "21"). The page buttons read 1 - 16, 17 - 32, 33 - 48, 49 - 64, and the slots show the pattern's own number (page 2 shows 17-32). The macro page buttons keep 1 - 32 ... 97 - 128. The word BANK is removed from the UI and the spec.
-9. **Macro editor: remove the NONE button** from TARGET (it did the same as CLEAR MAPPING). TARGET offers GLOBAL / TRACK / STEP, none of them lit for an unmapped macro; CLEAR MAPPING unmaps.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -483,7 +488,8 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-22: No macro-mapped indicators on controls. Output LEDs on the NOTES / CC buttons are plain dots, no glow ring.
 - 2026-10-22: Start / stop button in the HOST box (stop while the host plays, or run on its own while the host is stopped). Playhead on the LEDs only. Off steps within the length have a grey filled on/off button.
 - 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".
+- 2026-10-22: Built: no CC smoothing time (smoothing glides over the whole gap); the note knob arc spreads the in-scale notes over the whole arc; no CHROMATIC scale (13 + USER); macros always cover the full range (no MIN / MAX); step macros NOTE STEP and CC STEP; pattern slots select on click and play from their play button; patterns view copy / paste works like step copy / paste, CLEAR never erases; patterns numbered 1-64 in pages (no banks); no NONE button in the macro editor.
 - 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
 - 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.
-- 2026-10-21: Reduced to 8 tracks and 64 patterns (4 banks of 16). Pattern change by CC now reaches every pattern.
+- 2026-10-21: Reduced to 8 tracks and 64 patterns. Pattern change by CC now reaches every pattern.
 - 2026-10-21: Build decision: musical track settings are stored per pattern; routing (channel, outputs, CC number) is global per track. Undo covers step and pattern edits, not routing changes.

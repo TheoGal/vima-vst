@@ -159,7 +159,10 @@ void testModel()
     g.userScale = 0b000010010000;   // root missing on purpose
     check ((g.scaleMask() & 1) == 1, "the root is always in the user scale");
     check (noteDisplayName (1, 3, false) == "C#3" && noteDisplayName (1, 3, true) == "C#4", "note names follow the middle C setting");
-    check (patternLabel (0) == juce::String (juce::CharPointer_UTF8 ("B01 \xc2\xb7 01")) && patternLabel (17).startsWith ("B02"), "pattern labels");
+    check (patternLabel (0) == "01" && patternLabel (17) == "18" && patternLabel (63) == "64", "patterns are numbered 01-64");
+    check (pageRangeText (0) == "1 - 16" && pageRangeText (3) == "49 - 64", "pattern pages read 1 - 16 ... 49 - 64");
+    check (numScales == 14 && juce::String (scaleInfo (userScaleIndex).longName) == "USER" && juce::String (scaleInfo (userScaleIndex - 1).longName) != "CHROMATIC",
+           "13 built-in scales plus USER, no CHROMATIC");
 
     check (Engine::stepIndexFor (0, 4, Direction::forward) == 0 && Engine::stepIndexFor (5, 4, Direction::forward) == 1, "forward positions");
     check (Engine::stepIndexFor (0, 4, Direction::backward) == 3 && Engine::stepIndexFor (3, 4, Direction::backward) == 0, "backward positions");
@@ -317,7 +320,6 @@ void testOutputs()
         r.project->routing[0].noteOut = false;
         r.project->routing[0].ccOut = true;
         r.project->globals.ccSmoothing = true;
-        r.project->globals.ccSmoothingTime = 100;
         r.run (2.0);
         auto cc = r.ccs (1);
         bool reachesTop = false, hasMiddle = false, startsAtZero = ! cc.empty() && cc[0].msg.getControllerValue() == 0;
@@ -329,15 +331,10 @@ void testOutputs()
         }
         check (startsAtZero && reachesTop && hasMiddle, "CC smoothing glides from 0 to 100 and arrives on the step");
 
-        Runner r2;
-        r2.project->patterns[0] = r.project->patterns[0];
-        r2.project->routing[0] = r.project->routing[0];
-        r2.project->globals.ccSmoothingTime = 25;
-        r2.run (2.0);
-        bool holdsFirst = true;
-        for (auto& e : r2.ccs (1))
-            if (e.ppq > 0.01 && e.ppq < 0.37) holdsFirst = holdsFirst && e.msg.getControllerValue() == 0;
-        check (holdsFirst, "CC smoothing 25%: holds the value, then glides only in the last quarter");
+        bool nearHalf = false;
+        for (auto& e : cc)
+            if (near (e.ppq, 0.25, 0.03) && std::abs (e.msg.getControllerValue() - 50) <= 6) nearHalf = true;
+        check (nearHalf, "CC smoothing glides over the whole gap (halfway = 50)");
     }
     {
         Runner r;
@@ -645,8 +642,10 @@ void testMacros()
     check (proc->getParameters().size() == numMacros, "the 128 macros are the only host parameters, got " + juce::String (proc->getParameters().size()));
     check (macro (0)->getName (32) == "Macro 1" && macro (127)->getName (32) == "Macro 128", "macros are named Macro 1 to Macro 128");
     check (macro (4)->getCurrentValueAsText() == "-", "an unmapped macro shows -");
+    check (juce::String (macroTargetInfo (MacroTarget::stepOn).name) == "NOTE STEP" && juce::String (macroTargetInfo (MacroTarget::ccStepOn).name) == "CC STEP",
+           "step macros are named NOTE STEP and CC STEP");
 
-    // map: M1 = velocity of track 4 step 5; M2 = length of track 3 in pattern B01 · 10;
+    // map: M1 = velocity of track 4 step 5; M2 = length of track 3 in pattern 10;
     // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2; M6 = probability of track 4 step 1
     proc->edit (-1, [] (Project& p)
     {
@@ -656,7 +655,6 @@ void testMacros()
         p.macros[3] = defaultMacroMap (MacroTarget::chainOn, 0, 0, 0, p.globals);
         p.macros[4] = defaultMacroMap (MacroTarget::note, 1, 0, 0, p.globals);
         p.macros[5] = defaultMacroMap (MacroTarget::probability, 3, 0, 0, p.globals);
-        p.macros[5].min = 20; p.macros[5].max = 60;
         p.globals.quantize = Quantize::off;
     });
     auto m = [&] (int i) { return proc->read ([i] (const Project& p) { return p.macros[(size_t) i]; }); };
@@ -676,8 +674,8 @@ void testMacros()
            "a macro changes its own pattern only");
     check (proc->read ([] (const Project& p) { return p.globals.chainOn; }), "macro on Chain On");
     check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[1].steps[0].pitchClass; }) == 7, "macro on a step note");
-    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 40,
-           "MIN / MAX range: 50% of 20-60 gives 40");
+    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 50,
+           "a macro covers the full range: 50% probability gives 50");
     proc->syncParamsToHost();
     check (macro (0)->getCurrentValueAsText() == "33" && macro (4)->getCurrentValueAsText() == "G", "host shows the target value as text");
 
@@ -841,7 +839,7 @@ void testInitAndGate()
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
         check (g.laneNote && ! g.laneOn && ! g.laneVel && ! g.laneGate && ! g.laneCC && g.rangeGate.max == maxGate && g.rangeVel.min == 1
-                   && g.rangeVel.max == 127 && ! g.ccSmoothing && g.ccSmoothingTime == 100 && g.middleC == 3,
+                   && g.rangeVel.max == 127 && ! g.ccSmoothing && g.middleC == 3,
                "init globals: NOTE lane only, full ranges, CC smoothing off, middle C = C3");
     }
     {
@@ -1074,6 +1072,24 @@ int main (int argc, char** argv)
                 if (pitchKnob) dragY (*pitchKnob, -16);
                 check (stepOf (4, 0).pitchClass == 3, "dragging the pitch knob up 2 notes in C minor: C -> D#");
                 juce::ignoreUnused (pcBefore);
+                if (pitchKnob && pitchKnob->fraction)
+                {
+                    auto setPc = [&] (int pc, bool scaleOn)
+                    {
+                        proc->edit (-1, [pc, scaleOn] (Project& p)
+                        {
+                            auto& tp = p.patterns[(size_t) p.currentPattern].tracks[4];
+                            tp.steps[0].pitchClass = (std::int8_t) pc;
+                            tp.scaleOn = scaleOn;
+                        });
+                        return pitchKnob->fraction();
+                    };
+                    check (std::abs (setPc (10, true) - 1.0f) < 0.001f && std::abs (setPc (0, true)) < 0.001f
+                               && std::abs (setPc (5, true) - 0.5f) < 0.001f,
+                           "scale on: the 7 notes of C minor fill the arc (C left, F middle, A# fully right)");
+                    check (std::abs (setPc (10, false) - 10.0f / 11.0f) < 0.001f, "scale off: the arc stays chromatic");
+                    setPc (3, true);
+                }
 
                 auto* slider = findChild<LaneSlider> (*cell);
                 if (slider)
@@ -1191,8 +1207,8 @@ int main (int argc, char** argv)
         check (mv != nullptr && mv->isVisible() && ctx.ui.macrosView, "MACROS opens the macros page");
         if (mv != nullptr)
         {
-            if (auto* b = findPill (*mv, "33-64")) click (*b);
-            check (ctx.ui.macroBank == 1, "the 33-64 button shows the second bank");
+            if (auto* b = findPill (*mv, "33 - 64")) click (*b);
+            check (ctx.ui.macroPage == 1, "the 33 - 64 button shows the second page");
             if (auto* cell = findChild<MacroCell> (*mv, 2)) click (*cell);
             check (ctx.ui.selectedMacro == 34, "clicking a macro selects it (M035)");
             if (auto* k = findPill (*mv, "TRACK")) click (*k);
@@ -1201,8 +1217,9 @@ int main (int argc, char** argv)
                    "a new mapping starts on the track and pattern on screen");
             if (auto* sw = findPill (*mv, "SWING")) click (*sw);
             if (auto* t5 = findPill (*mv, "5")) click (*t5);
+            check (findPill (*mv, "NONE") == nullptr && findPill (*mv, "GLOBAL") != nullptr, "TARGET offers GLOBAL / TRACK / STEP, no NONE");
             const auto mm = ctx.macroCopy (34);
-            check (mm.target == MacroTarget::swing && mm.track == 4 && mm.pattern == ctx.currentPattern() && mm.min == 0 && mm.max == 100,
+            check (mm.target == MacroTarget::swing && mm.track == 4 && mm.pattern == ctx.currentPattern(),
                    "SWING, track 5: the mapping follows the clicks");
             // another macro may not point at the same control
             const int curPat = ctx.currentPattern();
@@ -1220,7 +1237,7 @@ int main (int argc, char** argv)
             // LEARN: click controls in the step view. M041 is taken, so LEARN starts on M042.
             proc->edit (-1, [] (Project& p) { p.macros[40] = defaultMacroMap (MacroTarget::cc, 7, 50, 9, p.globals); });
             ctx.ui.selectedMacro = 40;
-            ctx.ui.macroBank = 1;
+            ctx.ui.macroPage = 1;
             ed.refreshAll();
             if (auto* l = findPill (*mv, "LEARN")) click (*l);
             check (ctx.ui.macroLearn && ctx.ui.selectedMacro == 41, "LEARN turns on, listening on the next free macro (M042)");
@@ -1302,7 +1319,7 @@ int main (int argc, char** argv)
         snapshot (ed, outDir.getChildFile ("popover-division.png"));
         Popover::show (ed.contentComponent(), std::make_unique<ScalePopover> (ctx), { 616, 118, ScalePopover::size().x, ScalePopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-scale.png"));
-        ctx.ui.pickerBank = 1;
+        ctx.ui.pickerPage = 1;
         Popover::show (ed.contentComponent(), std::make_unique<PatternPickerPopover> (ctx), { 600, 48, PatternPickerPopover::size().x, PatternPickerPopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-patterns.png"));
         Popover::closeAll (ed.contentComponent());
@@ -1329,6 +1346,58 @@ int main (int argc, char** argv)
         ed.setSize (1200, 720);
 
         ctx.showPatterns (true);
+        if (auto* pv = findChild<PatternsView> (ed))
+        {
+            proc->edit (-1, [] (Project& p) { p.globals.quantize = Quantize::bar; p.currentPattern = 0; });
+            proc->engine.queuedPattern = -1;
+            ctx.ui.viewPage = 1;
+            ctx.changed();
+            auto* s2 = findChild<PatternSlot> (*pv, 2);   // pattern 19 on page 17 - 32
+            auto* s3 = findChild<PatternSlot> (*pv, 3);   // pattern 20
+            auto* s0 = findChild<PatternSlot> (*pv, 0);   // pattern 17
+            auto queuedOrCurrent = [&] { const int q = proc->engine.queuedPattern.load(); return q >= 0 ? q : ctx.currentPattern(); };
+            if (s2 && s3 && s0)
+            {
+                check (findPill (*pv, "17 - 32") != nullptr && findPill (*pv, "1 - 16") != nullptr, "pattern page buttons read 1 - 16 ... 49 - 64");
+                const auto body = s2->getLocalBounds().getCentre().translated (0, 10);
+                click (*s2, body);
+                check (ctx.ui.selectedPattern == 18 && queuedOrCurrent() == 0, "clicking a slot selects it without playing it");
+                click (*s2, s2->playArea().getCentre());
+                check (ctx.ui.selectedPattern == 18 && queuedOrCurrent() == 18, "the slot's play button selects and queues the pattern");
+                proc->edit (-1, [] (Project& p) { p.currentPattern = 0; });
+                proc->engine.queuedPattern = -1;
+
+                proc->edit (-1, [] (Project& p) { p.patterns[18].tracks[0].steps[0].velocity = 77; p.patterns[18].tracks[0].swing = 33; });
+                ctx.ui.patternsViewTrack = 0;
+                if (auto* b = findPill (*pv, "COPY TRACK")) click (*b);
+                auto* paste = findPill (*pv, "PASTE");
+                check (findPill (*pv, "TRACK COPIED") != nullptr && paste != nullptr && paste->alpha && paste->alpha() < 1.0f,
+                       "COPY TRACK lights up as TRACK COPIED; PASTE is dimmed until a destination is picked");
+                ctx.ui.patternsViewTrack = 1;   // paste into track 2
+                click (*s3, body);
+                check (ctx.ui.patternPasteDest == 19 && ctx.ui.selectedPattern == 18, "while copied, a slot click only picks the destination");
+                if (paste) click (*paste);
+                check (proc->read ([] (const Project& p) { return p.patterns[19].tracks[1].steps[0].velocity == 77 && p.patterns[19].tracks[1].swing == 33
+                                                                     && p.patterns[19].tracks[0].steps[0].velocity == 100; }),
+                       "PASTE writes track 1 of pattern 19 into track 2 of pattern 20 (all settings)");
+                check (findPill (*pv, "TRACK COPIED") != nullptr, "the button stays lit for more pastes");
+                if (auto* c = findPill (*pv, "CLEAR")) click (*c);
+                check (ctx.ui.patternClipKind == 0 && ctx.ui.patternPasteDest < 0 && findPill (*pv, "COPY TRACK") != nullptr
+                           && proc->read ([] (const Project& p) { return p.patterns[18].tracks[0].steps[0].velocity == 77; }),
+                       "CLEAR cancels and empties the clipboard, and never erases a pattern");
+
+                if (auto* b = findPill (*pv, "COPY")) click (*b);
+                check (findPill (*pv, "COPIED") != nullptr, "COPY lights up as COPIED");
+                click (*s0, body);
+                if (paste) click (*paste);
+                check (proc->read ([] (const Project& p) { return p.patterns[16].tracks[0].steps[0].velocity == 77; }), "PASTE writes the whole pattern");
+                snapshot (ed, outDir.getChildFile ("patterns-view-copied.png"));
+                if (auto* b = findPill (*pv, "COPIED")) click (*b);
+                check (ctx.ui.patternClipKind == 0, "clicking COPIED empties the clipboard");
+            }
+            ctx.ui.viewPage = 0;
+            ctx.changed();
+        }
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
         ctx.showPatterns (false);
 
@@ -1337,7 +1406,6 @@ int main (int argc, char** argv)
             for (int i = 0; i < 16; ++i) p.macros[(size_t) i] = defaultMacroMap (MacroTarget::velocity, 2, 22, i, p.globals);
             p.macros[16] = defaultMacroMap (MacroTarget::length, 1, 22, 0, p.globals);
             p.macros[17] = defaultMacroMap (MacroTarget::swing, 2, 22, 0, p.globals);
-            p.macros[17].max = 60;
             p.macros[18] = defaultMacroMap (MacroTarget::division, 3, 22, 0, p.globals);
             p.macros[18].pattern = 5;
             p.macros[19] = defaultMacroMap (MacroTarget::gate, 4, 22, 0, p.globals);

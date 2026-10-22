@@ -52,8 +52,8 @@ struct MacroNotes
 };
 MacroNotes macroNotes (const Project&, const MacroMap&);
 
-// Macro value (0..1) <-> target value, through the mapping's MIN / MAX. A Note macro moves
-// through the allowed notes between MIN and MAX, evenly spread over the macro's travel.
+// Macro value (0..1) <-> target value, over the target's full range. A Note macro moves
+// through the allowed notes (all 12, or the in-scale ones), evenly spread over its travel.
 int macroPlain (const MacroMap&, float normalized, const MacroNotes& = {});
 float macroNormalized (const MacroMap&, int plain, const MacroNotes& = {});
 int macroPositions (const MacroMap&, const MacroNotes& = {});   // distinct values over the travel
@@ -62,6 +62,6 @@ juce::String macroValueText (const Project&, const MacroMap&, int plain);
 // Same without the project (no scale applied to notes): for host display
 juce::String macroValueText (const Globals&, const MacroMap&, int plain);
 juce::String macroTargetName (const MacroMap&, bool compact = false);   // "STEP 05 VELOCITY" ("STEP 05 VEL"), "LENGTH", "-"
-juce::String macroWhereText (const MacroMap&, bool compact = false);    // "T03 · B01 · 05" ("T03 · B01·05"), "T03", "GLOBAL"
+juce::String macroWhereText (const MacroMap&, bool compact = false);    // "T03 · 05", "T03", "GLOBAL"
 juce::String macroId (int index);                  // "M001"
 } // namespace vima

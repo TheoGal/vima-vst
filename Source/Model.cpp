@@ -25,7 +25,6 @@ static const ScaleInfo scales[numScales] = {
     { "PMIN",  "PENTA MIN",  0x4A9 },
     { "BLUES", "BLUES",      0x4E9 },
     { "WHOLE", "WHOLE TONE", 0x555 },
-    { "CHROM", "CHROMATIC",  0xFFF },
     { "USER",  "USER",       0x000 },   // the mask comes from Globals::userScale
 };
 
@@ -105,10 +104,12 @@ juce::String noteDisplayName (int pitchClass, int octave, int octaveOffset)
 
 juce::String patternLabel (int patternIndex)
 {
-    const int bank = patternIndex / patternsPerBank + 1;
-    const int slot = patternIndex % patternsPerBank + 1;
-    return "B" + juce::String (bank).paddedLeft ('0', 2) + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 "))
-         + juce::String (slot).paddedLeft ('0', 2);
+    return juce::String (patternIndex + 1).paddedLeft ('0', 2);   // "05", "21"
+}
+
+juce::String pageRangeText (int page)
+{
+    return juce::String (page * patternsPerPage + 1) + " - " + juce::String (page * patternsPerPage + patternsPerPage);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -240,8 +241,6 @@ static void appendMacros (juce::ValueTree& root, const std::array<MacroMap, numM
         mt.setProperty ("track", (int) m.track, nullptr);
         mt.setProperty ("pattern", (int) m.pattern, nullptr);
         mt.setProperty ("step", (int) m.step, nullptr);
-        mt.setProperty ("min", (int) m.min, nullptr);
-        mt.setProperty ("max", (int) m.max, nullptr);
         root.appendChild (mt, nullptr);
     }
 }
@@ -256,8 +255,6 @@ static void readMacro (const juce::ValueTree& mt, std::array<MacroMap, numMacros
     m.track = (std::int8_t) juce::jlimit (0, numTracks - 1, (int) mt.getProperty ("track", 0));
     m.pattern = (std::int8_t) juce::jlimit (0, numPatterns - 1, (int) mt.getProperty ("pattern", 0));
     m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, (int) mt.getProperty ("step", 0));
-    m.min = (std::int16_t) (int) mt.getProperty ("min", 0);
-    m.max = (std::int16_t) (int) mt.getProperty ("max", 1);
 }
 
 juce::ValueTree Project::musicToValueTree() const
@@ -323,7 +320,6 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("middleC", g.middleC, nullptr);
     gt.setProperty ("lightTheme", g.lightTheme, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
-    gt.setProperty ("ccSmoothingTime", g.ccSmoothingTime, nullptr);
     gt.setProperty ("patternCC", g.patternCC, nullptr);
     gt.setProperty ("patternCCChannel", g.patternCCChannel, nullptr);
     gt.setProperty ("patternCCNumber", g.patternCCNumber, nullptr);
@@ -398,7 +394,6 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC", g.middleC));
         g.lightTheme = (bool) gt.getProperty ("lightTheme", g.lightTheme);
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
-        g.ccSmoothingTime = juce::jlimit (1, 100, (int) gt.getProperty ("ccSmoothingTime", g.ccSmoothingTime));
         g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);
         g.patternCCChannel = juce::jlimit (1, 16, (int) gt.getProperty ("patternCCChannel", g.patternCCChannel));
         g.patternCCNumber = juce::jlimit (0, 127, (int) gt.getProperty ("patternCCNumber", g.patternCCNumber));
