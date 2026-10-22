@@ -82,6 +82,13 @@ public:
 
     std::atomic<int> revision { 0 };   // bumped on every edit, for UI refresh
     std::atomic<bool> hostPlaying { false };
+
+    // Transport button (SPEC.md 3): stop VIMA while the host plays, or run it on its own
+    // (from step 1, at the host tempo) while the host is stopped.
+    void toggleTransport();
+    std::atomic<bool> userStopped { false };   // stopped by the button while the host plays
+    std::atomic<bool> freeRun { false };       // started by the button while the host is stopped
+    std::atomic<bool> freeRunRestart { false };
     std::atomic<double> hostBpm { 120.0 };
     std::atomic<float> uiScale { 1.0f };   // editor size (1.0 = 1200 x 720), saved with the project
 
@@ -92,6 +99,8 @@ public:
 private:
     void timerCallback() override { syncParamsToHost(); }
     double sampleRate = 44100.0;
+    double freePpq = 0.0;              // audio thread: position while running on its own
+    bool lastHostPlaying = false;      // audio thread
     juce::MidiBuffer outBuffer;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VimaProcessor)

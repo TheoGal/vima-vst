@@ -19,7 +19,7 @@ public:
 private:
     void showTrackMenu();
     Context& ctx;
-    Pill trackBox, notesBtn, ccBtn, stepsBtn, prevBtn, nextBtn, patternBtn, undoBtn, macrosBtn, settingsBtn;
+    Pill trackBox, notesBtn, ccBtn, stepsBtn, prevBtn, nextBtn, patternBtn, undoBtn, macrosBtn, settingsBtn, transportBtn;
     juce::Rectangle<int> modeArea, patternArea, hostArea, nameArea;
 };
 } // namespace vima

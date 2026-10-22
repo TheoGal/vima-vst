@@ -54,6 +54,22 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
     hostPlaying = host.playing;
     hostBpm = host.bpm;
 
+    // Transport button: the host starting always starts VIMA again
+    if (host.playing && ! lastHostPlaying) userStopped = false;
+    lastHostPlaying = host.playing;
+    if (host.playing)
+    {
+        freeRun = false;
+        if (userStopped) host.playing = false;
+    }
+    else if (freeRun)
+    {
+        if (freeRunRestart.exchange (false)) freePpq = 0.0;
+        host.playing = true;
+        host.ppq = freePpq;
+        freePpq += buffer.getNumSamples() * (host.bpm / 60.0) / sampleRate;
+    }
+
     outBuffer.clear();
     {
         const Lock sl (lock);
@@ -67,6 +83,22 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
 juce::AudioProcessorEditor* VimaProcessor::createEditor()
 {
     return new VimaEditor (*this);
+}
+
+void VimaProcessor::toggleTransport()
+{
+    if (engine.isPlaying.load())
+    {
+        if (hostPlaying.load()) userStopped = true;
+        freeRun = false;
+    }
+    else if (hostPlaying.load())
+        userStopped = false;
+    else
+    {
+        freeRunRestart = true;
+        freeRun = true;
+    }
 }
 
 bool VimaProcessor::performUndo()

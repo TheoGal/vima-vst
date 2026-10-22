@@ -147,6 +147,13 @@ Header::Header (Context& c) : ctx (c)
     };
     addAndMakeVisible (patternBtn);
 
+    // Transport: play / stop button inside the HOST box
+    transportBtn.look = [] { return Pill::Look { juce::Colours::transparentBlack, juce::Colours::transparentBlack, juce::Colours::transparentBlack, 0.0f, false }; };
+    transportBtn.radius = 4.0f;
+    transportBtn.setTitle ("Start / stop");
+    transportBtn.onClick = [this] { ctx.proc.toggleTransport(); repaint(); };
+    addAndMakeVisible (transportBtn);
+
     // UNDO and SETTINGS
     undoBtn.look = [this]
     {
@@ -223,6 +230,7 @@ void Header::resized()
     undoBtn.setBounds (right.removeFromRight (84).withSizeKeepingCentre (84, 32));
     right.removeFromRight (10);
     hostArea = right.removeFromRight (178).withSizeKeepingCentre (178, 32);
+    transportBtn.setBounds (hostArea.withWidth (30).reduced (4, 4).translated (1, 0));
     right.removeFromRight (10);
     patternArea = right.removeFromRight (204).withSizeKeepingCentre (204, 32);
     auto pa = patternArea.reduced (3);
@@ -306,15 +314,16 @@ void Header::paint (juce::Graphics& g)
     // host status (display only)
     {
         draw::tile (g, hostArea.toFloat(), juce::Colours::transparentBlack, t.border, 6.0f);
-        const auto c = juce::Point<float> ((float) hostArea.getX() + 16.0f, (float) hostArea.getCentreY());
-        if (ctx.proc.hostPlaying) drawPlay (g, c, ctx.modeAccent());
+        draw::tile (g, transportBtn.getBounds().toFloat(), t.tile, t.border2, 4.0f);
+        const auto c = transportBtn.getBounds().toFloat().getCentre();
+        if (ctx.proc.engine.isPlaying) drawPlay (g, c, ctx.modeAccent());
         else drawStop (g, c, t.muted);
         g.setFont (Fonts::mono (12.0f));
         g.setColour (t.text2);
-        g.drawText ("HOST", hostArea.withTrimmedLeft (28).withWidth (40), juce::Justification::centredLeft);
+        g.drawText ("HOST", hostArea.withTrimmedLeft (34).withWidth (40), juce::Justification::centredLeft);
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (12.0f));
-        g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (68), juce::Justification::centredLeft);
+        g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (72), juce::Justification::centredLeft);
     }
 
     undoIcon (g, undoBtn.getBounds().toFloat(), ctx.proc.canUndo() ? t.text2 : t.dim);

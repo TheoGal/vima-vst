@@ -37,11 +37,14 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     toggle.look = [this]
     {
         const auto& t = Theme::current();
+        // on = accent fill; off (within the length) = grey fill; beyond the length = outline only.
+        // The playhead is shown on the LEDs only.
         const bool on = stepCopy().on;
-        const bool isPlay = ctx.proc.engine.isPlaying && ctx.proc.engine.playStep[(size_t) ctx.ui.track].load() == index;
+        const bool beyond = index >= ctx.trackCopy().length;
         const auto accent = ctx.modeAccent();
-        if (on) return Pill::Look { accent, accent, t.onAccent, 1.5f, false };
-        return Pill::Look { juce::Colours::transparentBlack, isPlay ? accent : t.dim, isPlay ? accent : t.muted, 1.5f, false };
+        if (on && ! beyond) return Pill::Look { accent, accent, t.onAccent, 1.5f, false };
+        if (! beyond) return Pill::Look { t.ledOff, t.ledOff, t.text2, 1.5f, false };
+        return Pill::Look { juce::Colours::transparentBlack, on ? accent : t.dim, on ? accent : t.muted, 1.5f, false };
     };
     toggle.onClick = [this]
     {

@@ -28,8 +28,9 @@ Last updated: 2026-10-21
 
 ## 3. Transport and clock
 
-- Follows the host only: plays when the host plays, stops when the host stops, follows host tempo and song position.
-- No internal free-running clock.
+- Follows the host: plays when the host plays, stops when the host stops, follows host tempo and song position.
+- **Start / stop button** (the play / stop icon in the HOST box of the header): while VIMA plays, it stops VIMA (also while the host keeps playing). While VIMA is stopped and the host plays, it starts VIMA again in sync. While the host is stopped, it starts VIMA on its own from step 1 at the host's tempo; pressing it again, or the host starting, ends that. The host starting always starts VIMA, even after it was stopped with the button.
+- The icon shows whether VIMA is playing.
 
 ## 4. Tracks
 
@@ -250,17 +251,18 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### Layout (top to bottom)
 
-1. **Header**: plugin name, TRACK dropdown, NOTES / CC mode switch, PATTERN quick picker (arrows and popover, see 7.4; the popover links to the full patterns view, 7.1), host transport status (play state and BPM, display only, since the host controls transport), UNDO, SETTINGS button (labeled, not an icon-only button).
+1. **Header**: plugin name, TRACK dropdown, NOTES / CC mode switch, PATTERN quick picker (arrows and popover, see 7.4; the popover links to the full patterns view, 7.1), HOST box (start / stop button with the play state, and the host BPM, see 3), UNDO, SETTINGS button (labeled, not an icon-only button).
 2. **Track parameter row** (see 12.2).
 3. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it.
 4. **Operations panel**: Selection (with COPY, PASTE, CLEAR), Lanes, Ranges, RANDOMIZE and SMOOTH buttons, Shift.
 
 ### 12.1 Step cell
 
-- **Top**: one button with the step number inside, used as the on/off toggle. On: filled with the mode accent, number in a dark contrasting color. Off: outline only.
+- **Top**: one button with the step number inside, used as the on/off toggle. On: filled with the mode accent, number in a dark contrasting color. Off (within the length): filled grey. Beyond the length: outline only (and the whole cell dimmed).
 - **Note mode**: pitch knob, octave knob below it, then a vertical slider. A global "SLIDER" switch (top right of the parameter row) makes all sliders show velocity, gate or probability. The slider takes that lane's color.
 - **CC mode**: one larger knob showing the step's CC value. Cells keep the same height in both modes so the layout does not jump.
 - Off steps: controls dimmed.
+- The playhead is shown on the LED bar only; step cells do not change as it passes.
 - Knobs are flat arc rings (270 degrees) with the value as text in the middle.
 
 ### 12.2 Track parameter row controls
@@ -367,6 +369,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Start / stop button in the HOST box (stop while the host plays, or run on its own while the host is stopped). Playhead on the LEDs only. Off steps within the length have a grey filled on/off button.
 - 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".
 - 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
 - 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.

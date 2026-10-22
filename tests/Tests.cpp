@@ -710,6 +710,35 @@ void testMacros()
     check (other->shownTrack.load() == 3, "the shown track is saved with the project");
 }
 
+void testTransport()
+{
+    section ("Transport button");
+    auto proc = std::make_unique<VimaProcessor>();
+    proc->prepareToPlay (48000.0, 250);
+    proc->edit (-1, [] (Project& p) { fillOn (p.patterns[0].tracks[0], 0, 3); });
+    juce::AudioBuffer<float> audio (2, 250);
+    juce::MidiBuffer midi;
+    int notes = 0;
+    auto run = [&] (int blocks)
+    {
+        notes = 0;
+        for (int b = 0; b < blocks; ++b)
+        {
+            midi.clear();
+            proc->processBlock (audio, midi);
+            for (const auto m : midi) notes += m.getMessage().isNoteOn() ? 1 : 0;
+        }
+    };
+    run (10);
+    check (! proc->engine.isPlaying.load() && notes == 0, "host stopped: VIMA is stopped");
+    proc->toggleTransport();
+    run (96);   // 0.5 s at 120 BPM = 4 sixteenths
+    check (proc->engine.isPlaying.load() && notes >= 4, "the button starts VIMA on its own while the host is stopped, got " + juce::String (notes) + " notes");
+    proc->toggleTransport();
+    run (10);
+    check (! proc->engine.isPlaying.load() && notes == 0, "pressing it again stops VIMA");
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -722,6 +751,7 @@ int main (int argc, char** argv)
     testPatterns();
     testOperations();
     testMacros();
+    testTransport();
 
     section ("Editor interactions (simulated mouse)");
     {
