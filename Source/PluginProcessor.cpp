@@ -101,6 +101,92 @@ void VimaProcessor::toggleTransport()
     }
 }
 
+// ---------------------------------------------------------------------------------------
+static juce::File vimaFolder (const char* sub)
+{
+    auto f = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("VIMA").getChildFile (sub);
+    f.createDirectory();
+    return f;
+}
+juce::File VimaProcessor::presetFolder() { return vimaFolder ("Presets"); }
+juce::File VimaProcessor::macroFolder() { return vimaFolder ("Macros"); }
+
+static bool writeTree (const juce::ValueTree& tree, const juce::File& file)
+{
+    auto xml = tree.createXml();
+    return xml != nullptr && file.getParentDirectory().createDirectory() && xml->writeTo (file);
+}
+
+static juce::ValueTree readTree (const juce::File& file)
+{
+    if (auto xml = juce::XmlDocument::parse (file))
+        return juce::ValueTree::fromXml (*xml);
+    return {};
+}
+
+bool VimaProcessor::savePreset (const juce::File& file)
+{
+    const auto tree = read ([] (const vima::Project& p) { return p.musicToValueTree(); });
+    if (! writeTree (tree, file))
+        return false;
+    presetFile = file;
+    return true;
+}
+
+bool VimaProcessor::loadPreset (const juce::File& file)
+{
+    const auto tree = readTree (file);
+    if (! tree.hasType ("VIMA"))
+        return false;
+    auto loaded = std::make_unique<vima::Project>();
+    {
+        const Lock sl (lock);
+        *loaded = project;
+    }
+    loaded->loadMusic (tree);
+    {
+        const Lock sl (lock);
+        project = *loaded;
+        undo.clear();
+    }
+    engine.queuedPattern = -1;
+    presetFile = file;
+    ++revision;
+    return true;
+}
+
+void VimaProcessor::newPreset()
+{
+    auto fresh = std::make_unique<vima::Project>();
+    {
+        const Lock sl (lock);
+        *fresh = project;
+    }
+    fresh->resetMusic();
+    {
+        const Lock sl (lock);
+        project = *fresh;
+        undo.clear();
+    }
+    engine.queuedPattern = -1;
+    presetFile = juce::File();
+    ++revision;
+}
+
+bool VimaProcessor::saveMacros (const juce::File& file)
+{
+    return writeTree (read ([] (const vima::Project& p) { return p.macrosToValueTree(); }), file);
+}
+
+bool VimaProcessor::loadMacros (const juce::File& file)
+{
+    const auto tree = readTree (file);
+    if (! tree.hasType ("VIMAMACROS"))
+        return false;
+    edit (-1, [&tree] (vima::Project& p) { p.loadMacros (tree); });
+    return true;
+}
+
 bool VimaProcessor::performUndo()
 {
     const Lock sl (lock);
@@ -125,6 +211,7 @@ void VimaProcessor::getStateInformation (juce::MemoryBlock& destData)
     }
     state.setProperty ("uiScale", uiScale.load(), nullptr);
     state.setProperty ("shownTrack", shownTrack.load(), nullptr);
+    state.setProperty ("presetPath", presetFile.getFullPathName(), nullptr);
     if (auto xml = state.createXml())
         copyXmlToBinary (*xml, destData);
 }
@@ -139,6 +226,10 @@ void VimaProcessor::setStateInformation (const void* data, int sizeInBytes)
         return;
     uiScale = juce::jlimit (0.75f, 2.0f, (float) (double) state.getProperty ("uiScale", 1.0));
     shownTrack = juce::jlimit (0, vima::numTracks - 1, (int) state.getProperty ("shownTrack", 0));
+    {
+        const auto path = state.getProperty ("presetPath").toString();
+        presetFile = juce::File::isAbsolutePath (path) ? juce::File (path) : juce::File();
+    }
     auto loaded = std::make_unique<vima::Project>();
     loaded->fromValueTree (state);
     {

@@ -21,15 +21,14 @@ Last updated: 2026-10-21
 - It produces no audio. It outputs MIDI only (notes and CC). A silent stereo output bus exists only so hosts accept it as an instrument.
 - In the DAW, other tracks receive the plugin's MIDI output (for example in Ableton Live: "MIDI From" = the plugin's track, the plugin as input channel, monitor "In").
 
-### Open: Ableton Live MIDI routing (pending tests by the user)
+### Ableton Live MIDI routing (tested)
 
-- Confirm Live accepts MIDI output from a VST3 instrument.
-- Confirm whether Live keeps MIDI channels separate when routing plugin output to other tracks, or merges them. Ableton documents merging for track-to-track routing. If channels are merged, a workaround is needed (options discussed: per-instance track filter, a virtual MIDI port output, or accepting single-destination use in Live).
+- Live accepts MIDI output from VIMA, but strips the channel: all tracks of one instance arrive together on the destination track. In Live, use one VIMA instance per destination track (each instance still has 8 tracks). Other hosts that keep channels can route one instance to several destinations.
 
 ## 3. Transport and clock
 
 - Follows the host: plays when the host plays, stops when the host stops, follows host tempo and song position.
-- **Start / stop button** (the play / stop icon in the HOST box of the header): while VIMA plays, it stops VIMA (also while the host keeps playing). While VIMA is stopped and the host plays, it starts VIMA again in sync. While the host is stopped, it starts VIMA on its own from step 1 at the host's tempo; pressing it again, or the host starting, ends that. The host starting always starts VIMA, even after it was stopped with the button.
+- **Start / stop button** (the play / stop icon in the HOST box of the header, next to the BPM): while VIMA plays, it stops VIMA (also while the host keeps playing). While VIMA is stopped and the host plays, it starts VIMA again in sync. While the host is stopped, it starts VIMA on its own from step 1 at the host's tempo; pressing it again, or the host starting, ends that. The host starting always starts VIMA, even after it was stopped with the button.
 - The icon shows whether VIMA is playing.
 
 ## 4. Tracks
@@ -251,7 +250,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### Layout (top to bottom)
 
-1. **Header**: plugin name, TRACK dropdown, NOTES / CC mode switch, PATTERN quick picker (arrows and popover, see 7.4; the popover links to the full patterns view, 7.1), HOST box (start / stop button with the play state, and the host BPM, see 3), UNDO, SETTINGS button (labeled, not an icon-only button).
+1. **Header**: plugin name, TRACK dropdown, NOTES / CC mode switch, PATTERN quick picker (arrows and popover, see 7.4; the popover links to the full patterns view, 7.1), HOST box (start / stop button with the play state, and the host BPM, see 3; no "HOST" word), FILE menu (13.3), UNDO, SETTINGS button (labeled, not an icon-only button).
 2. **Track parameter row** (see 12.2).
 3. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it.
 4. **Operations panel**: Selection (with COPY, PASTE, CLEAR), Lanes, Ranges, RANDOMIZE and SMOOTH buttons, Shift.
@@ -300,7 +299,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 ## 13. State and presets
 
 - The full state (all patterns, track settings and global settings) is saved with the DAW project.
-- Preset save/load to files is planned. Details are open.
+- Presets and macro mapping sets are saved to files (13.3).
 
 ### 13.1 Macros (host automation)
 
@@ -332,6 +331,15 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - Controls in the main window show **no indicator** when they are mapped to a macro; mappings are only visible on the Macros page.
 - Colors follow the lanes: step on, note, octave and velocity green, gate purple, probability amber, CC cyan, track and global targets neutral.
 
+### 13.3 Presets and macro mapping sets
+
+- **Presets** hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, octave range, middle C, CC smoothing, pattern change by CC, quantize, lanes and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
+- **FILE** button (folder icon) in the header, between the HOST box and UNDO, opens a menu: the current preset's name (or UNSAVED), NEW (asks first; clears the music, keeps mappings), LOAD..., SAVE (overwrites the current preset file), SAVE AS...
+- LOAD and SAVE AS use the system's file dialogs, starting in **Documents/VIMA/Presets**. Files can be saved anywhere. Extension **.vima** (XML).
+- Loading a preset clears undo. The current preset file is remembered with the DAW project.
+- **Macro mapping sets** hold all 128 mappings. SAVE and LOAD buttons on the Macros page (next to LEARN), with file dialogs starting in **Documents/VIMA/Macros**. Extension **.vimamacros**. Loading a set replaces all mappings and leaves the music alone.
+- DAW preset formats (Live .adv, .vstpreset) still work and store the whole state, mappings included.
+
 ## 14. Build and repository
 
 - Repository on GitHub under the user's account (TheoGal). Repo name follows the final plugin name.
@@ -341,12 +349,10 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ## 15. Open questions
 
-1. Live: VST3 MIDI output and channel separation (section 2).
-2. Approve the proposed patterns view and chain design (7.1, 7.2).
-3. Preset file details (13).
-4. Probability and CC: should a step that fails its probability roll also skip its CC, or does CC always send? (Current assumption: probability affects notes only.)
-5. Note randomize range: is the NOTE min/max a pitch-class range (for example C to A#) or a full note range across octaves (for example C2 to C4)?
-6. Approve the redesigned Settings dialog (11).
+1. Approve the proposed patterns view and chain design (7.1, 7.2).
+2. Probability and CC: should a step that fails its probability roll also skip its CC, or does CC always send? (Current assumption: probability affects notes only.)
+3. Note randomize range: is the NOTE min/max a pitch-class range (for example C to A#) or a full note range across octaves (for example C2 to C4)?
+4. Approve the redesigned Settings dialog (11).
 
 ## 16. Decision log
 
@@ -370,6 +376,8 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Tested in Live 12 (Windows): Live strips the MIDI channel from a VST3's output, so in Live one VIMA instance per destination track is used. Accepted.
+- 2026-10-22: Presets (music only, .vima) from a FILE menu in the header with system file dialogs; macro mapping sets (.vimamacros) saved / loaded on the Macros page; files in Documents/VIMA. The word HOST was removed from the header.
 - 2026-10-22: No macro-mapped indicators on controls. Output LEDs on the NOTES / CC buttons are plain dots, no glow ring.
 - 2026-10-22: Start / stop button in the HOST box (stop while the host plays, or run on its own while the host is stopped). Playhead on the LEDs only. Off steps within the length have a grey filled on/off button.
 - 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".

@@ -220,6 +220,19 @@ MacrosView::MacrosView (Context& c) : ctx (c)
     learnBtn.onClick = [this] { ctx.ui.macroLearn = ! ctx.ui.macroLearn; ctx.changed(); };
     addAndMakeVisible (learnBtn);
 
+    // SAVE / LOAD all 128 mappings as a set (SPEC.md 13.3)
+    for (auto* b : { &saveSetBtn, &loadSetBtn })
+    {
+        b->radius = 6.0f;
+        b->font = [] { return Fonts::monoSemi (11.0f).withExtraKerningFactor (0.08f); };
+        b->look = [] { const auto& t = Theme::current(); return Pill::outline (t.border3, t.text2); };
+        addAndMakeVisible (*b);
+    }
+    saveSetBtn.text = [] { return juce::String ("SAVE"); };
+    loadSetBtn.text = [] { return juce::String ("LOAD"); };
+    saveSetBtn.onClick = [this] { chooseSetFile (true); };
+    loadSetBtn.onClick = [this] { chooseSetFile (false); };
+
     for (int k = 0; k < macrosPerBank; ++k)
     {
         auto* cell = new MacroCell (ctx, k);
@@ -331,6 +344,31 @@ MacrosView::MacrosView (Context& c) : ctx (c)
     refreshState();
 }
 
+void MacrosView::chooseSetFile (bool save)
+{
+    const auto start = VimaProcessor::macroFolder().getChildFile (juce::String ("Mappings") + VimaProcessor::macroExtension);
+    chooser = std::make_unique<juce::FileChooser> (save ? "Save macro mappings" : "Load macro mappings", start,
+                                                   juce::String ("*") + VimaProcessor::macroExtension);
+    const int flags = juce::FileBrowserComponent::canSelectFiles
+                      | (save ? juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::warnAboutOverwriting
+                              : juce::FileBrowserComponent::openMode);
+    juce::Component::SafePointer<MacrosView> safe (this);
+    chooser->launchAsync (flags, [safe, save] (const juce::FileChooser& fc)
+    {
+        if (safe == nullptr) return;
+        auto file = fc.getResult();
+        if (file == juce::File()) return;
+        if (save)
+        {
+            if (! file.hasFileExtension (VimaProcessor::macroExtension))
+                file = file.withFileExtension (VimaProcessor::macroExtension);
+            safe->ctx.proc.saveMacros (file);
+        }
+        else if (safe->ctx.proc.loadMacros (file))
+            safe->ctx.changed();
+    });
+}
+
 void MacrosView::editMap (std::function<void (MacroMap&, const Globals&)> fn)
 {
     const int i = ctx.ui.selectedMacro;
@@ -406,6 +444,10 @@ void MacrosView::resized()
     banksLabel = row.removeFromLeft (44);
     for (auto* p : bankBtns) { p->setBounds (row.removeFromLeft (76).reduced (0, 1)); row.removeFromLeft (4); }
     learnBtn.setBounds (row.removeFromRight (104).reduced (0, 1));
+    row.removeFromRight (16);
+    loadSetBtn.setBounds (row.removeFromRight (72).reduced (0, 1));
+    row.removeFromRight (6);
+    saveSetBtn.setBounds (row.removeFromRight (72).reduced (0, 1));
     left.removeFromTop (10);
     learnBanner = {};
     if (ctx.ui.macroLearn)

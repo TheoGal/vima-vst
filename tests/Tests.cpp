@@ -739,6 +739,67 @@ void testTransport()
     check (! proc->engine.isPlaying.load() && notes == 0, "pressing it again stops VIMA");
 }
 
+void testPresets()
+{
+    section ("Presets and macro mapping sets");
+    const auto dir = juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("vima-preset-test");
+    dir.deleteRecursively();
+    dir.createDirectory();
+    auto proc = std::make_unique<VimaProcessor>();
+    proc->edit (-1, [] (Project& p)
+    {
+        p.patterns[3].tracks[2].steps[5].velocity = 77;
+        p.patterns[3].tracks[2].length = 12;
+        p.globals.scale = 4;
+        p.globals.lightTheme = true;
+        p.currentPattern = 3;
+        p.macros[0] = defaultMacroMap (MacroTarget::velocity, -1, 2, p.globals);
+    });
+    const auto presetFile = dir.getChildFile ("Song.vima");
+    check (proc->savePreset (presetFile) && presetFile.existsAsFile(), "a preset is saved to a file");
+    check (proc->presetFile == presetFile, "the saved file becomes the current preset");
+    {
+        auto xml = juce::XmlDocument::parse (presetFile);
+        check (xml != nullptr && xml->getChildByName ("Macro") == nullptr, "a preset holds no macro mappings");
+    }
+
+    // change everything, then load the preset back
+    proc->edit (-1, [] (Project& p)
+    {
+        p.patterns[3].tracks[2].steps[5].velocity = 5;
+        p.globals.scale = 0;
+        p.globals.lightTheme = false;
+        p.currentPattern = 0;
+        p.macros[0] = MacroMap();
+        p.macros[9] = defaultMacroMap (MacroTarget::gate, 1, 0, p.globals);
+    });
+    check (proc->loadPreset (presetFile), "the preset loads");
+    auto get = [&] (auto fn) { return proc->read (fn); };
+    check (get ([] (const Project& p) { return (int) p.patterns[3].tracks[2].steps[5].velocity; }) == 77
+               && get ([] (const Project& p) { return (int) p.patterns[3].tracks[2].length; }) == 12
+               && get ([] (const Project& p) { return p.globals.scale; }) == 4
+               && get ([] (const Project& p) { return p.currentPattern; }) == 3,
+           "loading a preset restores patterns, settings and the current pattern");
+    check (get ([] (const Project& p) { return p.macros[9].target; }) == MacroTarget::gate && ! get ([] (const Project& p) { return p.macros[0].mapped(); })
+               && ! get ([] (const Project& p) { return p.globals.lightTheme; }),
+           "loading a preset keeps the macro mappings and the theme");
+
+    // mapping sets
+    const auto setFile = dir.getChildFile ("Live.vimamacros");
+    check (proc->saveMacros (setFile), "a mapping set is saved");
+    proc->edit (-1, [] (Project& p) { for (auto& m : p.macros) m = MacroMap(); p.patterns[3].tracks[2].steps[5].velocity = 50; });
+    check (proc->loadMacros (setFile) && get ([] (const Project& p) { return p.macros[9].target; }) == MacroTarget::gate,
+           "loading a mapping set restores all mappings");
+    check (get ([] (const Project& p) { return (int) p.patterns[3].tracks[2].steps[5].velocity; }) == 50, "loading mappings leaves the music alone");
+    check (! proc->loadMacros (presetFile) && ! proc->loadPreset (setFile), "a preset is not loaded as mappings, nor the other way");
+
+    proc->newPreset();
+    check (get ([] (const Project& p) { return p.patterns[3].isEmpty(); }) && get ([] (const Project& p) { return p.macros[9].mapped(); })
+               && proc->presetFile == juce::File(),
+           "NEW clears the music, keeps the mappings and forgets the preset file");
+    dir.deleteRecursively();
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -752,6 +813,7 @@ int main (int argc, char** argv)
     testOperations();
     testMacros();
     testTransport();
+    testPresets();
 
     section ("Editor interactions (simulated mouse)");
     {

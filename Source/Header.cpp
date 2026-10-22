@@ -53,6 +53,23 @@ static void settingsIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Col
     }
 }
 
+static void fileIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+{
+    // a folder outline
+    const auto ctr = b.getCentre();
+    juce::Path p;
+    const float w = 15.0f, h = 11.0f, x = ctr.x - w / 2, y = ctr.y - h / 2 + 0.5f;
+    p.startNewSubPath (x, y + h);
+    p.lineTo (x, y);
+    p.lineTo (x + 5.0f, y);
+    p.lineTo (x + 6.5f, y + 2.0f);
+    p.lineTo (x + w, y + 2.0f);
+    p.lineTo (x + w, y + h);
+    p.closeSubPath();
+    g.setColour (c);
+    g.strokePath (p, juce::PathStrokeType (1.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+}
+
 static void chevron (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c, bool left)
 {
     const auto ctr = b.getCentre();
@@ -153,6 +170,13 @@ Header::Header (Context& c) : ctx (c)
     transportBtn.onClick = [this] { ctx.proc.toggleTransport(); repaint(); };
     addAndMakeVisible (transportBtn);
 
+    // FILE menu: presets (SPEC.md 13.3)
+    fileBtn.look = plainOutline;
+    fileBtn.radius = 6.0f;
+    fileBtn.setTitle ("Presets");
+    fileBtn.onClick = [this] { Popover::closeAll (*ctx.root); showFileMenu(); };
+    addAndMakeVisible (fileBtn);
+
     // UNDO and SETTINGS
     undoBtn.look = [this]
     {
@@ -228,7 +252,9 @@ void Header::resized()
     right.removeFromRight (10);
     undoBtn.setBounds (right.removeFromRight (84).withSizeKeepingCentre (84, 32));
     right.removeFromRight (10);
-    hostArea = right.removeFromRight (178).withSizeKeepingCentre (178, 32);
+    fileBtn.setBounds (right.removeFromRight (40).withSizeKeepingCentre (40, 32));
+    right.removeFromRight (10);
+    hostArea = right.removeFromRight (120).withSizeKeepingCentre (120, 32);
     transportBtn.setBounds (hostArea.withWidth (30).reduced (4, 4).translated (1, 0));
     right.removeFromRight (10);
     patternArea = right.removeFromRight (204).withSizeKeepingCentre (204, 32);
@@ -252,6 +278,69 @@ void Header::showTrackMenu()
                          ctx.ui.selection = 0;   // switching tracks clears the selection
                          ctx.changed();
                      });
+}
+
+void Header::showFileMenu()
+{
+    const auto current = ctx.proc.presetFile;
+    juce::PopupMenu m;
+    m.addSectionHeader (current == juce::File() ? juce::String ("PRESET: UNSAVED") : "PRESET: " + current.getFileNameWithoutExtension().toUpperCase());
+    m.addItem (1, "NEW");
+    m.addItem (2, "LOAD...");
+    m.addItem (3, "SAVE", current != juce::File());
+    m.addItem (4, "SAVE AS...");
+    juce::Component::SafePointer<Header> safe (this);
+    m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&fileBtn).withMinimumWidth (200),
+                     [safe] (int result)
+                     {
+                         if (safe == nullptr) return;
+                         auto& self = *safe;
+                         if (result == 1)
+                         {
+                             juce::NativeMessageBox::showOkCancelBox (
+                                 juce::MessageBoxIconType::QuestionIcon, "New preset",
+                                 "Clear all patterns, the chain and the settings? Macro mappings are kept.", &self,
+                                 juce::ModalCallbackFunction::create ([safe] (int ok)
+                                 {
+                                     if (ok != 0 && safe != nullptr) { safe->ctx.proc.newPreset(); safe->ctx.ui.selection = 0; safe->ctx.changed(); }
+                                 }));
+                         }
+                         else if (result == 2) self.chooseFile (false);
+                         else if (result == 3)
+                         {
+                             self.ctx.proc.savePreset (self.ctx.proc.presetFile);
+                         }
+                         else if (result == 4) self.chooseFile (true);
+                     });
+}
+
+void Header::chooseFile (bool save)
+{
+    const auto current = ctx.proc.presetFile;
+    const auto start = current != juce::File() ? current : VimaProcessor::presetFolder().getChildFile (juce::String ("Untitled") + VimaProcessor::presetExtension);
+    chooser = std::make_unique<juce::FileChooser> (save ? "Save VIMA preset" : "Load VIMA preset", start,
+                                                   juce::String ("*") + VimaProcessor::presetExtension);
+    const int flags = juce::FileBrowserComponent::canSelectFiles
+                      | (save ? juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::warnAboutOverwriting
+                              : juce::FileBrowserComponent::openMode);
+    juce::Component::SafePointer<Header> safe (this);
+    chooser->launchAsync (flags, [safe, save] (const juce::FileChooser& fc)
+    {
+        if (safe == nullptr) return;
+        auto file = fc.getResult();
+        if (file == juce::File()) return;
+        if (save)
+        {
+            if (! file.hasFileExtension (VimaProcessor::presetExtension))
+                file = file.withFileExtension (VimaProcessor::presetExtension);
+            safe->ctx.proc.savePreset (file);
+        }
+        else if (safe->ctx.proc.loadPreset (file))
+        {
+            safe->ctx.ui.selection = 0;
+            safe->ctx.changed();
+        }
+    });
 }
 
 void Header::mouseDown (const juce::MouseEvent&) {}
@@ -317,15 +406,13 @@ void Header::paint (juce::Graphics& g)
         const auto c = transportBtn.getBounds().toFloat().getCentre();
         if (ctx.proc.engine.isPlaying) drawPlay (g, c, ctx.modeAccent());
         else drawStop (g, c, t.muted);
-        g.setFont (Fonts::mono (12.0f));
-        g.setColour (t.text2);
-        g.drawText ("HOST", hostArea.withTrimmedLeft (34).withWidth (40), juce::Justification::centredLeft);
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (12.0f));
-        g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (72), juce::Justification::centredLeft);
+        g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
     }
 
     undoIcon (g, undoBtn.getBounds().toFloat(), ctx.proc.canUndo() ? t.text2 : t.dim);
+    fileIcon (g, fileBtn.getBounds().toFloat(), t.text2);
     settingsIcon (g, settingsBtn.getBounds().toFloat(), t.text2);
 }
 } // namespace vima

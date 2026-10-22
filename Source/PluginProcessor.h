@@ -76,6 +76,18 @@ public:
         ++revision;
     }
 
+    // Presets and macro mapping sets (SPEC.md 13.3). Message thread.
+    static juce::File presetFolder();   // Documents/VIMA/Presets
+    static juce::File macroFolder();    // Documents/VIMA/Macros
+    static constexpr const char* presetExtension = ".vima";
+    static constexpr const char* macroExtension = ".vimamacros";
+    bool savePreset (const juce::File&);
+    bool loadPreset (const juce::File&);
+    void newPreset();
+    bool saveMacros (const juce::File&);
+    bool loadMacros (const juce::File&);
+    juce::File presetFile;              // last saved / loaded preset (saved with the project)
+
     bool performUndo();
     bool canUndo() { const Lock sl (lock); return undo.canUndo(); }
     void queuePattern (int index);   // follows the quantize setting

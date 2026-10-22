@@ -210,6 +210,87 @@ static bool patternEquals (const Pattern& a, const Pattern& b)
     return true;
 }
 
+static void appendMacros (juce::ValueTree& root, const std::array<MacroMap, numMacros>& macros)
+{
+    for (int i = 0; i < numMacros; ++i)
+    {
+        const auto& m = macros[(size_t) i];
+        if (! m.mapped()) continue;
+        juce::ValueTree mt ("Macro");
+        mt.setProperty ("index", i, nullptr);
+        mt.setProperty ("target", (int) m.target, nullptr);
+        mt.setProperty ("track", (int) m.track, nullptr);
+        mt.setProperty ("pattern", (int) m.pattern, nullptr);
+        mt.setProperty ("step", (int) m.step, nullptr);
+        mt.setProperty ("min", (int) m.min, nullptr);
+        mt.setProperty ("max", (int) m.max, nullptr);
+        root.appendChild (mt, nullptr);
+    }
+}
+
+static void readMacro (const juce::ValueTree& mt, std::array<MacroMap, numMacros>& macros)
+{
+    const int i = (int) mt.getProperty ("index", -1);
+    const int target = (int) mt.getProperty ("target", 0);
+    if (i < 0 || i >= numMacros || target <= 0 || target >= numMacroTargets) return;
+    auto& m = macros[(size_t) i];
+    m.target = (MacroTarget) target;
+    m.track = (std::int8_t) juce::jlimit (-1, numTracks - 1, (int) mt.getProperty ("track", -1));
+    m.pattern = (std::int8_t) juce::jlimit (-1, numPatterns - 1, (int) mt.getProperty ("pattern", -1));
+    m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, (int) mt.getProperty ("step", 0));
+    m.min = (std::int16_t) (int) mt.getProperty ("min", 0);
+    m.max = (std::int16_t) (int) mt.getProperty ("max", 1);
+}
+
+juce::ValueTree Project::musicToValueTree() const
+{
+    auto root = toValueTree();
+    root.setProperty ("content", "preset", nullptr);
+    for (int i = root.getNumChildren(); --i >= 0;)
+        if (root.getChild (i).hasType ("Macro"))
+            root.removeChild (i, nullptr);
+    auto g = root.getChildWithName ("Globals");
+    if (g.isValid()) g.removeProperty ("lightTheme", nullptr);
+    return root;
+}
+
+void Project::loadMusic (const juce::ValueTree& tree)
+{
+    const auto keepMacros = macros;
+    const bool keepTheme = globals.lightTheme;
+    fromValueTree (tree);
+    macros = keepMacros;
+    globals.lightTheme = keepTheme;
+}
+
+void Project::resetMusic()
+{
+    const auto keepMacros = macros;
+    const bool keepTheme = globals.lightTheme;
+    resetToDefaults();
+    macros = keepMacros;
+    globals.lightTheme = keepTheme;
+}
+
+juce::ValueTree Project::macrosToValueTree() const
+{
+    juce::ValueTree root ("VIMAMACROS");
+    root.setProperty ("version", 1, nullptr);
+    appendMacros (root, macros);
+    return root;
+}
+
+bool Project::loadMacros (const juce::ValueTree& root)
+{
+    if (! root.hasType ("VIMAMACROS"))
+        return false;
+    for (auto& m : macros) m = MacroMap();
+    for (auto mt : root)
+        if (mt.hasType ("Macro"))
+            readMacro (mt, macros);
+    return true;
+}
+
 juce::ValueTree Project::toValueTree() const
 {
     juce::ValueTree root ("VIMA");
@@ -257,20 +338,7 @@ juce::ValueTree Project::toValueTree() const
         root.appendChild (rt, nullptr);
     }
 
-    for (int i = 0; i < numMacros; ++i)
-    {
-        const auto& m = macros[(size_t) i];
-        if (! m.mapped()) continue;
-        juce::ValueTree mt ("Macro");
-        mt.setProperty ("index", i, nullptr);
-        mt.setProperty ("target", (int) m.target, nullptr);
-        mt.setProperty ("track", (int) m.track, nullptr);
-        mt.setProperty ("pattern", (int) m.pattern, nullptr);
-        mt.setProperty ("step", (int) m.step, nullptr);
-        mt.setProperty ("min", (int) m.min, nullptr);
-        mt.setProperty ("max", (int) m.max, nullptr);
-        root.appendChild (mt, nullptr);
-    }
+    appendMacros (root, macros);
 
     for (int p = 0; p < numPatterns; ++p)
     {
@@ -362,16 +430,7 @@ void Project::fromValueTree (const juce::ValueTree& root)
         }
         else if (rt.hasType ("Macro"))
         {
-            const int i = (int) rt.getProperty ("index", -1);
-            const int target = (int) rt.getProperty ("target", 0);
-            if (i < 0 || i >= numMacros || target <= 0 || target >= numMacroTargets) continue;
-            auto& m = macros[(size_t) i];
-            m.target = (MacroTarget) target;
-            m.track = (std::int8_t) juce::jlimit (-1, numTracks - 1, (int) rt.getProperty ("track", -1));
-            m.pattern = (std::int8_t) juce::jlimit (-1, numPatterns - 1, (int) rt.getProperty ("pattern", -1));
-            m.step = (std::uint8_t) juce::jlimit (0, maxSteps - 1, (int) rt.getProperty ("step", 0));
-            m.min = (std::int16_t) (int) rt.getProperty ("min", 0);
-            m.max = (std::int16_t) (int) rt.getProperty ("max", 1);
+            readMacro (rt, macros);
         }
         else if (rt.hasType ("Pattern"))
         {

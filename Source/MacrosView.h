@@ -1,7 +1,7 @@
 #pragma once
 
-// Macros page (SPEC.md 12.6, 13.1): 4 banks of 32 macro knobs, the mapping editor for the
-// selected macro, and LEARN.
+// Macros page (SPEC.md 13.1, 13.2): 4 banks of 32 macro knobs, the mapping editor for the
+// selected macro, LEARN, and SAVE / LOAD of mapping sets (13.3).
 
 #include "Context.h"
 #include "Widgets.h"
@@ -48,7 +48,9 @@ private:
     juce::OwnedArray<Pill> bankBtns, kindBtns, targetBtns, trackBtns, patModeBtns;
     juce::OwnedArray<MacroCell> cells;
     std::vector<MacroTarget> shownTargets;
-    Pill learnBtn, clearBtn;
+    Pill learnBtn, clearBtn, saveSetBtn, loadSetBtn;
+    std::unique_ptr<juce::FileChooser> chooser;
+    void chooseSetFile (bool save);
     Knob patternKnob, stepKnob, minKnob, maxKnob;
     juce::Rectangle<int> left, aside, banksLabel, gridArea, learnBanner, asideHead, kindLabel, targetLabel, trackLabel,
                          patternLabel_, stepLabel, rangeLabel, minLabel, maxLabel, footer, emptyText, patternText;

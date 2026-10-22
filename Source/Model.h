@@ -239,6 +239,16 @@ struct Project
 
     juce::ValueTree toValueTree() const;
     void fromValueTree (const juce::ValueTree&);
+
+    // Presets (SPEC.md 13.3): the music only. Macro mappings and the theme are not part of a
+    // preset and are kept when one is loaded.
+    juce::ValueTree musicToValueTree() const;
+    void loadMusic (const juce::ValueTree&);
+    void resetMusic();
+
+    // Macro mapping sets (SPEC.md 13.3): all 128 mappings
+    juce::ValueTree macrosToValueTree() const;
+    bool loadMacros (const juce::ValueTree&);   // false if the tree is not a mapping set
 };
 
 juce::String patternLabel (int patternIndex);   // "B01 · 01"
