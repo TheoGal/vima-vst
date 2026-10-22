@@ -109,7 +109,7 @@ void RangeBar::axis (int& lo, int& hi) const
             lo = g.octaveLow; hi = g.octaveHigh; return;
         }
         case Lane::velocity:    lo = 1; hi = 127; return;
-        case Lane::gate:        lo = 1; hi = 100; return;
+        case Lane::gate:        lo = 1; hi = maxGate; return;
         case Lane::probability: lo = 0; hi = 100; return;
         case Lane::cc:          lo = 0; hi = 127; return;
         case Lane::on:          lo = 0; hi = 1; return;
@@ -121,7 +121,7 @@ juce::String RangeBar::valueText (int v) const
     switch (lane)
     {
         case Lane::note:   return pitchClassName (v);
-        case Lane::octave: return juce::String (v + (ctx.globalsCopy().middleCIsC4 ? 1 : 0));
+        case Lane::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
         case Lane::gate: case Lane::probability: return juce::String (v) + "%";
         case Lane::on: case Lane::velocity: case Lane::cc: break;
     }
@@ -228,6 +228,19 @@ void ShiftKnob::mouseUp (const juce::MouseEvent&)
     active = false;
     ctx.ui.shiftAmount = 0;
     ctx.changed();
+}
+
+void ShiftKnob::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails& w)
+{
+    // one notch = shift by one (each notch is its own undo step)
+    const float d = std::abs (w.deltaY) > std::abs (w.deltaX) ? w.deltaY : -w.deltaX;
+    if (juce::exactlyEqual (d, 0.0f) || active) return;
+    const int k = (d > 0.0f) != w.isReversed ? 1 : -1;
+    const auto lane = ctx.ui.ccMode ? Lane::cc : ctx.ui.shiftLane;
+    const auto sc = ctx.scope();
+    ctx.beginGesture();
+    const auto g = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, lane); });
+    ctx.edit (false, [&g, k] (Project& p) { applyShift (p, g, k); });
 }
 
 void ShiftKnob::paint (juce::Graphics& g)

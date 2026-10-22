@@ -21,6 +21,36 @@ void LaneSlider::paint (juce::Graphics& g)
     g.restoreState();
 }
 
+void LaneSlider::mouseDown (const juce::MouseEvent& e)
+{
+    if (e.mods.isPopupMenu() || e.mods.isAltDown())
+    {
+        Knob::mouseDown (e);   // reset to default
+        return;
+    }
+    drawing = true;
+    if (onGestureStart) onGestureStart();   // the whole draw is one undo step
+    if (onDraw) onDraw (e.getScreenPosition(), true);
+}
+
+void LaneSlider::mouseDrag (const juce::MouseEvent& e)
+{
+    if (drawing && onDraw) onDraw (e.getScreenPosition(), false);
+}
+
+void LaneSlider::mouseUp (const juce::MouseEvent&)
+{
+    if (drawing && onGestureEnd) onGestureEnd();
+    drawing = false;
+}
+
+int LaneSlider::valueAtScreenY (int screenY) const
+{
+    const auto b = getScreenBounds();
+    const float f = 1.0f - (float) (screenY - b.getY()) / (float) juce::jmax (1, b.getHeight());
+    return juce::jlimit (minValue, maxValue, juce::roundToInt ((float) minValue + juce::jlimit (0.0f, 1.0f, f) * (float) (maxValue - minValue)));
+}
+
 // ---------------------------------------------------------------------------------------
 static int soundingPitch (Context& ctx, int index)
 {
@@ -74,7 +104,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
                 return pc;
         return 0;
     };
-    pitch.minValue = 0; pitch.maxValue = 11; pitch.defaultValue = 0;
+    pitch.minValue = 0; pitch.maxValue = 11; pitch.defaultValue = 5;   // F, the middle of the knob (init value)
     pitch.setValue = [this] (int pc)
     {
         const int t = ctx.ui.track;
@@ -92,7 +122,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     octave.getValue = [this]
     {
         const auto g = ctx.globalsCopy();
-        return (int) std::floor (soundingPitch (ctx, index) / 12.0) - 2 + (g.middleCIsC4 ? 1 : 0);
+        return (int) std::floor (soundingPitch (ctx, index) / 12.0) - 2 + g.octaveOffset();
     };
     octave.fraction = [this]
     {
@@ -105,13 +135,13 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         const int t = ctx.ui.track;
         ctx.edit (false, [t, d, this] (Project& p) { nudgeOctave (p, p.currentPattern, t, index, d); });
     };
-    octave.minValue = minOctave; octave.maxValue = maxOctave + 1; octave.defaultValue = 3;
+    octave.minValue = minOctave; octave.maxValue = maxOctave + 2; octave.defaultValue = 3;
     octave.setValue = [this] (int shown)
     {
         const int t = ctx.ui.track;
         ctx.edit (false, [t, shown, this] (Project& p)
         {
-            const int o = shown - (p.globals.middleCIsC4 ? 1 : 0);
+            const int o = shown - p.globals.octaveOffset();
             p.patterns[(size_t) p.currentPattern].tracks[(size_t) t].steps[(size_t) index].octave
                 = (std::int8_t) juce::jlimit (p.globals.octaveLow, p.globals.octaveHigh, o);
         });
@@ -139,7 +169,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         {
             auto& s = ctx.liveTrack (p).steps[(size_t) index];
             if (lane == SliderLane::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
-            else if (lane == SliderLane::gate) s.gate = (std::uint8_t) juce::jlimit (1, 100, v);
+            else if (lane == SliderLane::gate) s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v);
             else s.probability = (std::uint8_t) juce::jlimit (0, 100, v);
         });
     };
@@ -149,6 +179,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         return ctx.ui.slider == SliderLane::velocity ? t.green : ctx.ui.slider == SliderLane::gate ? t.purple : t.amber;
     };
     slider.onGestureStart = gestureStart;
+    slider.onDraw = [this] (juce::Point<int> p, bool start) { if (auto* grid = dynamic_cast<StepGrid*> (getParentComponent())) grid->drawSliders (p, start, index / 16); };
     slider.pixelsPerStep = 1.5f;
     slider.format = [] (int v) { return juce::String (v); };
     addAndMakeVisible (slider);
@@ -175,6 +206,13 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     refreshState();
 }
 
+void StepCell::drawAt (juce::Point<int> screenPos)
+{
+    if (index >= ctx.trackCopy().length || ! slider.setValue)
+        return;
+    slider.setValue (slider.valueAtScreenY (screenPos.y));
+}
+
 Step StepCell::stepCopy() const
 {
     const int t = ctx.ui.track;
@@ -191,8 +229,9 @@ void StepCell::refreshState()
 
     const auto lane = ctx.ui.slider;
     slider.minValue = lane == SliderLane::probability ? 0 : 1;
-    slider.maxValue = lane == SliderLane::velocity ? 127 : 100;
-    slider.defaultValue = lane == SliderLane::velocity ? 100 : lane == SliderLane::gate ? 50 : 100;
+    slider.maxValue = lane == SliderLane::velocity ? 127 : lane == SliderLane::gate ? maxGate : 100;
+    slider.defaultValue = 100;   // init values: velocity 100, gate 100 %, probability 100 %
+    octave.defaultValue = 3 + ctx.globalsCopy().octaveOffset();   // the octave of middle C, as shown
     octave.textColour = Theme::current().text2;
 
     const auto tp = ctx.trackCopy();
@@ -281,6 +320,37 @@ void StepGrid::refreshCells()
 {
     for (auto* c : cells) c->refreshState();
     repaint();
+}
+
+void StepGrid::drawSliders (juce::Point<int> screenPos, bool start, int row)
+{
+    // follow the whole mouse path, so a fast drag does not skip steps
+    if (start)
+        drawRow = row;
+    else
+    {
+        const auto from = lastDraw.toFloat(), to = screenPos.toFloat();
+        const int n = juce::jmax (1, (int) (from.getDistanceFrom (to) / 4.0f));
+        for (int k = 1; k < n; ++k)
+            drawOne ((from + (to - from) * ((float) k / (float) n)).roundToInt());
+    }
+    drawOne (screenPos);
+    lastDraw = screenPos;
+}
+
+void StepGrid::drawOne (juce::Point<int> screenPos)
+{
+    const auto p = getLocalPoint (nullptr, screenPos);
+    const int row = drawRow;
+    for (int col = 0; col < 16; ++col)
+    {
+        const auto b = cellBounds (row * 16 + col);
+        if (p.x >= b.getX() - 3 && p.x < b.getRight() + 3)
+        {
+            cells[row * 16 + col]->drawAt (screenPos);
+            return;
+        }
+    }
 }
 
 void StepGrid::repaintLeds()

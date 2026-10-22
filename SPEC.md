@@ -46,7 +46,7 @@ Per track parameters:
 
 | Parameter | Range / values | Notes |
 |---|---|---|
-| MIDI channel | 1-16 | Freely assignable per track. Track N is NOT tied to channel N (default may be N). |
+| MIDI channel | 1-16 | Freely assignable per track. Track N is NOT tied to channel N. |
 | Notes output | on / off | Independent of CC output. |
 | CC output | on / off | Independent of notes output. Sends on the same MIDI channel as the notes. |
 | CC number | 0-127 | User-defined, one CC per track. |
@@ -55,6 +55,32 @@ Per track parameters:
 | Direction | Forward, Backward, Ping-pong | |
 | Swing | 0-100% | Per track. 0% = straight. Delays every second step; the exact curve is tuned during the build. |
 | Scale | on / off | Per-track switch to use or bypass the global scale. |
+
+### 4.1 Init values (= defaults everywhere)
+
+A new instance, NEW in the FILE menu, CLEAR in the patterns view and a right-click / Alt + click on any control all use these values. All 64 patterns start like this.
+
+| Setting | Init value |
+|---|---|
+| Notes output | on for track 1, off for tracks 2-8 |
+| CC output | off on all tracks |
+| MIDI channel | track number (1-8) |
+| CC number | 102 + track index: tracks 1-8 = CC 102-109 (undefined CCs in the MIDI spec) |
+| Length / division / direction / swing / scale | 16 / 1/16 / forward / 0% / on |
+| Steps | all 32 on, note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
+| Current pattern | B01 · 01 |
+| Global scale | C minor |
+| Octave range / middle C | 0-6 / C3 |
+| CC smoothing | off, time 100% |
+| Pattern change by CC | off, channel 16, CC 20; quantize 1 BAR |
+| Chain | off, loop on, empty |
+| LANES | NOTE only |
+| RANGES | full range of every lane (NOTE C-B, OCT = the octave range, VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
+| SHIFT ALL lane / SLIDER lane / view | NOTE / VEL / NOTES |
+| Macros | none mapped |
+| Theme | dark |
+
+Projects saved before these init values (state version 1) load exactly as they were saved.
 
 ## 5. Steps
 
@@ -68,7 +94,7 @@ Per step values:
 | Note | pitch class | Separate control from octave. |
 | Octave | user-defined range (Settings) | |
 | Velocity | 1-127 | Minimum is 1, never 0: in MIDI a Note On with velocity 0 is treated as a Note Off. Every operation (knob, Randomize, Smooth, Shift, ranges) clamps velocity to 1-127. |
-| Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step (a 1/32 note), up to 400% = four steps (legato and long notes). No click-in points. When a long note is still held and the same pitch plays again, the old note ends just before the new one. Long notes end cleanly on stop, pattern change and jumps. *(Above 100%: not built yet, see 15.1.)* |
+| Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step (a 1/32 note), up to 400% = four steps (legato and long notes). No click-in points. When a long note is still held and the same pitch plays again, the old note ends just before the new one. Long notes end cleanly on stop, pattern change and jumps. |
 | Probability | 0-100% | Chance that an "on" step actually plays each time it is reached. 100% = always. Applies to the note output (see open question about CC). |
 | CC value | 0-127 | Used when the track's CC output is on. |
 
@@ -223,7 +249,7 @@ A relative shift of all steps in scope.
 Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window. Sections, top to bottom:
 
 - **Appearance**: Theme, DARK / LIGHT (neutral).
-- **Pitch** (green): Octave range as two knobs, LOWEST and HIGHEST (the highest is always above the lowest). Middle C is (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (lowest C-2)**, **C4 (lowest C-1)** or **C5 (lowest C0)**, shown with the lowest C in brackets, in capitals like the rest of Settings: "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)". C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. *(C5 and the bracket labels: not built yet, see 15.1.)*
+- **Pitch** (green): Octave range as two knobs, LOWEST and HIGHEST (the highest is always above the lowest). Middle C is (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (lowest C-2)**, **C4 (lowest C-1)** or **C5 (lowest C0)**, shown with the lowest C in brackets, in capitals like the rest of Settings: "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)". C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3.
 - **User scale** (green): 12 note toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root). The root is always included. A ROOT row above the toggles sets the root right here, so the user does not need to go back and forth with the main window. It is the same global root as in the SCALE menu: changing it in either place changes both. The toggle labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC output** (cyan): Smooth between steps ON/OFF, and Smoothing time as a knob in percent of a step (1-100%). The time is dimmed when smoothing is off.
 - **Pattern change** (neutral): From incoming CC ON/OFF, with MIDI CH and CC number knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END. OFF means no quantize: the pattern changes the instant it is picked (see 7.3).
@@ -282,12 +308,12 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 
 **Knobs and step sliders** (track LENGTH, SWING, MIDI CH, CC number; per-step NOTE, OCTAVE, CC; the VEL / GATE / PROB step sliders; the knobs in Settings and in the macro mapping editor)
 - **Knobs, drag up / down**: change the value, relative to where the drag started.
-- **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps in one move (one undo step). *(Not built yet, see 15.1.)*
+- **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps in one move (one undo step).
 - **Shift + drag**: fine control (3 times slower).
 - **Mouse wheel**: one step per notch.
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
 - **Right-click or Alt + click**: reset to the default.
-- Defaults: LENGTH 16, SWING 0%, MIDI CH = the track number, CC number 74, NOTE C, OCTAVE 3, VELOCITY 100, GATE 50%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults (for MIN / MAX: the full range).
+- Defaults are the init values (4.1): LENGTH 16, SWING 0%, MIDI CH = the track number, CC number = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults (for MIN / MAX: the full range).
 - The NOTE knob moves through in-scale notes only when the track's scale is on; the OCTAVE knob stays within the octave range from Settings.
 
 **Buttons** (all on/off and choice buttons, chips and tabs)
@@ -304,7 +330,7 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 
 **Step on/off button** (step number): click toggles the step.
 
-**SHIFT ALL knob**: drag up / down to shift the chosen lane (Shift + drag = finer); **mouse wheel** shifts by one per notch *(wheel not built yet, see 15.1)*. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
+**SHIFT ALL knob**: drag up / down to shift the chosen lane (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
 **RANGES bars** (operations panel): click or drag; the nearest handle (MIN or MAX) follows the mouse. The handles cannot cross. No wheel, double-click or reset.
 
@@ -394,11 +420,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ### 15.1 Decided, not built yet
 
-1. **Gate up to 400%** (table in 4 / 5): engine handles notes longer than a step (same-pitch retrigger, stop, pattern change, jumps); slider, typing, randomize range, smooth, shift and gate macros use 1-400%. Defaults and existing values stay as they are.
-2. **Step sliders**: click jumps to the value; click and drag across sliders draws (12.3).
-3. **Mouse wheel on the SHIFT ALL knob** (12.3). Rule: every knob supports the mouse wheel.
-4. **Middle C setting with three choices**: C3 (lowest C-2), C4 (lowest C-1), C5 (lowest C0) (section 11). No automatic choice per host.
-5. **New init (default) values**: the user will send the full list. Build items 1-5 together.
+(nothing pending)
 
 ### 15.2 Open
 
@@ -429,6 +451,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Built: init values (4.1), gate up to 400%, step slider click / draw, wheel on SHIFT ALL, middle C C3 / C4 / C5. Old projects keep their saved content.
 - 2026-10-22: Middle C setting gets C5 (FL Studio, Cakewalk, Renoise); each choice shows its lowest C in brackets.
 - 2026-10-22: Gate range 1-400% (percentage of a step, no click-in points). Step sliders: click jumps, drag draws. Every knob supports the mouse wheel. No INIT button: NEW in the FILE menu covers it. (To be built together with the new init values.)
 - 2026-10-22: Mouse interaction reference written (12.3), as the base for the manual.

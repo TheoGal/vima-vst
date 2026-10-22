@@ -206,7 +206,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
         ctx.edit (false, [t] (Project& p) { p.routing[(size_t) t].ccOut = ! p.routing[(size_t) t].ccOut; });
     };
     ccOutTile.addAndMakeVisible (ccOutBtn);
-    ccNumberKnob.minValue = 0; ccNumberKnob.maxValue = 127; ccNumberKnob.defaultValue = 74;
+    ccNumberKnob.minValue = 0; ccNumberKnob.maxValue = 127; ccNumberKnob.defaultValue = 102;
     ccNumberKnob.fontSize = 10.0f;
     ccNumberKnob.colour = [] { return Theme::current().cyan; };
     ccNumberKnob.getValue = [this] { return (int) ctx.routingCopy().ccNumber; };
@@ -215,6 +215,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
         const int t = ctx.ui.track;
         ctx.edit (false, [t, v] (Project& p) { p.routing[(size_t) t].ccNumber = (std::uint8_t) v; });
     };
+    ccNumberKnob.onGestureStart = [this] { ccNumberKnob.defaultValue = 102 + ctx.ui.track; };   // init: 102-109
     ccOutTile.addAndMakeVisible (ccNumberKnob);
     addAndMakeVisible (ccOutTile);
 

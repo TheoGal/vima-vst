@@ -42,6 +42,27 @@ struct Event
     juce::MidiMessage msg;
 };
 
+// The engine and operation tests were written against an empty project (all steps off, notes
+// out on every track, CC smoothing on). These recreate that starting point on top of the
+// init values (SPEC.md 5).
+Step blankStep()
+{
+    Step s;
+    s.on = false;
+    s.pitchClass = 0;
+    s.gate = 50;
+    return s;
+}
+
+void legacyBlank (Project& p)
+{
+    for (auto& pat : p.patterns)
+        for (auto& t : pat.tracks)
+            for (auto& s : t.steps) s = blankStep();
+    for (auto& r : p.routing) r.noteOut = true;
+    p.globals.ccSmoothing = true;
+}
+
 // Runs the engine over a span of song time and collects all MIDI with its ppq position
 struct Runner
 {
@@ -54,6 +75,7 @@ struct Runner
 
     Runner()
     {
+        legacyBlank (*project);
         engine.prepare (sampleRate);
         engine.setRandomSeed (1234);
         host.playing = true;
@@ -147,6 +169,7 @@ void testModel()
 
     // state round trip
     auto p = std::make_unique<Project>();
+    legacyBlank (*p);
     p->patterns[5].tracks[3].steps[7] = { true, 4, 5, 33, 77, 60, 99 };
     p->patterns[5].tracks[3].length = 24;
     p->patterns[5].tracks[3].division = 8;
@@ -392,6 +415,7 @@ void testOperations()
 {
     section ("Step operations");
     auto p = std::make_unique<Project>();
+    legacyBlank (*p);
     auto& tp = p->patterns[0].tracks[0];
     juce::Random rnd (42);
 
@@ -420,11 +444,11 @@ void testOperations()
         }
         check (ok, "randomize stays in the ranges and in the scale");
         bool untouched = true;
-        for (int i = 16; i < 32; ++i) untouched = untouched && tp.steps[(size_t) i] == Step();
+        for (int i = 16; i < 32; ++i) untouched = untouched && tp.steps[(size_t) i] == blankStep();
         check (untouched, "randomize does not touch steps beyond the length");
     }
     {
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].on = tp.steps[1].on = tp.steps[2].on = true;
         tp.steps[0].cc = 0; tp.steps[1].cc = 64; tp.steps[2].cc = 127;
         tp.steps[3].cc = 0;   // off step
@@ -434,7 +458,7 @@ void testOperations()
         check (tp.steps[3].cc == 0, "smooth leaves off steps alone");
     }
     {
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].velocity = 120; tp.steps[1].velocity = 60;
         auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 1), Lane::velocity);
         applyShift (*p, gst, 20);
@@ -446,7 +470,7 @@ void testOperations()
         check (tp.steps[0].velocity == 1 && tp.steps[1].velocity == 1, "velocity never goes below 1");
     }
     {
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].pitchClass = 10; tp.steps[0].octave = 3;   // A#3 in C minor
         auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Lane::note);
         applyShift (*p, gst, 1);
@@ -458,7 +482,7 @@ void testOperations()
         tp.scaleOn = true;
     }
     {
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].pitchClass = 0;
         nudgePitchClass (*p, 0, 0, 0, 1);
         check (tp.steps[0].pitchClass == 2, "pitch knob only lands on scale notes (C -> D in C minor)");
@@ -466,28 +490,28 @@ void testOperations()
         check (tp.steps[0].pitchClass == 3, "D -> D# in C minor");
     }
     {
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         for (int i = 0; i < 4; ++i) { tp.steps[(size_t) i].on = true; tp.steps[(size_t) i].cc = (std::uint8_t) (10 + i); }
         auto clip = copySteps (*p, makeScope (*p, 0, 0, 0, 3));
         auto& other = p->patterns[0].tracks[5];
         other.length = 8;
         const auto written = pasteSteps (*p, 0, 5, 6, clip);
-        check (written == rangeMask (6, 7) && other.steps[6].cc == 10 && other.steps[7].cc == 11 && other.steps[8] == Step(),
+        check (written == rangeMask (6, 7) && other.steps[6].cc == 10 && other.steps[7].cc == 11 && other.steps[8] == blankStep(),
                "paste onto another track is cut off at its length");
 
         // non-adjacent copy keeps the spacing: steps 1, 3, 6 pasted at 9 -> 9, 11, 14
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         tp.length = 32;
         for (int i : { 0, 2, 5 }) { tp.steps[(size_t) i].on = true; tp.steps[(size_t) i].cc = (std::uint8_t) (40 + i); }
         tp.steps[1].cc = 99;   // not selected
         auto gapClip = copySteps (*p, makeScope (*p, 0, 0, (std::uint32_t) ((1u << 0) | (1u << 2) | (1u << 5))));
         check (gapClip.size() == 3 && gapClip[1].offset == 2 && gapClip[2].offset == 5, "copy remembers the spacing");
         const auto w2 = pasteSteps (*p, 0, 0, 8, gapClip);
-        check (w2 == ((1u << 8) | (1u << 10) | (1u << 13)) && tp.steps[10].cc == 42 && tp.steps[13].cc == 45 && tp.steps[9] == Step(),
+        check (w2 == ((1u << 8) | (1u << 10) | (1u << 13)) && tp.steps[10].cc == 42 && tp.steps[13].cc == 45 && tp.steps[9] == blankStep(),
                "paste keeps the spacing and leaves the gaps alone");
 
         // smooth works on non-adjacent steps only
-        for (auto& s : tp.steps) s = Step();
+        for (auto& s : tp.steps) s = blankStep();
         for (int i : { 0, 1, 2 }) tp.steps[(size_t) i].on = true;
         tp.steps[0].cc = 0; tp.steps[1].cc = 50; tp.steps[2].cc = 100;
         smooth (*p, makeScope (*p, 0, 0, (std::uint32_t) ((1u << 0) | (1u << 2))), true);
@@ -794,10 +818,84 @@ void testPresets()
     check (! proc->loadMacros (presetFile) && ! proc->loadPreset (setFile), "a preset is not loaded as mappings, nor the other way");
 
     proc->newPreset();
-    check (get ([] (const Project& p) { return p.patterns[3].isEmpty(); }) && get ([] (const Project& p) { return p.macros[9].mapped(); })
+    check (get ([] (const Project& p) { return p.patterns[3].tracks[2].steps[5].velocity == 100 && p.patterns[3].tracks[2].length == 16; })
+               && get ([] (const Project& p) { return p.macros[9].mapped(); })
                && proc->presetFile == juce::File(),
-           "NEW clears the music, keeps the mappings and forgets the preset file");
+           "NEW resets the music, keeps the mappings and forgets the preset file");
     dir.deleteRecursively();
+}
+
+void testInitAndGate()
+{
+    section ("Init values, long gates, middle C");
+    {
+        Project p;
+        const auto& s = p.patterns[40].tracks[5].steps[31];
+        check (s.on && s.pitchClass == 5 && s.octave == 3 && s.velocity == 100 && s.gate == 100 && s.probability == 100 && s.cc == 64,
+               "init step: on, F in the middle C octave, velocity 100, gate 100 %, probability 100 %, CC 64");
+        check (p.patterns[0].tracks[7].length == 16 && p.patterns[0].tracks[7].division == 4 && p.currentPattern == 0, "init track: length 16, 1/16, pattern 1");
+        bool routing = true;
+        for (int t = 0; t < numTracks; ++t)
+            routing = routing && p.routing[(size_t) t].midiChannel == t + 1 && p.routing[(size_t) t].noteOut == (t == 0)
+                      && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
+        check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
+        const auto& g = p.globals;
+        check (g.laneNote && ! g.laneOn && ! g.laneVel && ! g.laneGate && ! g.laneCC && g.rangeGate.max == maxGate && g.rangeVel.min == 1
+                   && g.rangeVel.max == 127 && ! g.ccSmoothing && g.ccSmoothingTime == 100 && g.middleC == 3,
+               "init globals: NOTE lane only, full ranges, CC smoothing off, middle C = C3");
+    }
+    {
+        // a state saved before the new init values: missing patterns are the old empty pattern
+        juce::ValueTree old ("VIMA");
+        old.setProperty ("version", 1, nullptr);
+        Project p;
+        p.fromValueTree (old);
+        check (! p.patterns[10].tracks[0].steps[0].on && p.patterns[10].tracks[0].steps[0].gate == 50 && p.globals.ccSmoothing,
+               "projects saved before the change load as they were saved");
+    }
+    {
+        Project p;
+        p.patterns[2].tracks[1].steps[3].gate = 350;
+        auto q = std::make_unique<Project>();
+        q->fromValueTree (p.toValueTree());
+        check (q->patterns[2].tracks[1].steps[3].gate == 350, "gates above 255 % survive save / load");
+    }
+    {
+        Runner r;
+        auto& tp = r.track (0);
+        tp.length = 4;
+        tp.steps[0].on = true; tp.steps[0].gate = 300; tp.steps[0].pitchClass = 0;
+        tp.steps[2].on = true; tp.steps[2].gate = 50; tp.steps[2].pitchClass = 4;
+        r.run (1.0);
+        const auto ons = r.noteOns(), offs = r.noteOffs();
+        bool longNote = false;
+        for (auto& e : offs) longNote = longNote || (e.msg.getNoteNumber() == 60 && near (e.ppq, 0.75));
+        check (ons.size() == 2 && longNote, "gate 300 %: the note lasts three steps and overlaps the next note");
+    }
+    {
+        Runner r;
+        auto& tp = r.track (0);
+        tp.length = 4;
+        for (int i = 0; i < 4; ++i) { tp.steps[(size_t) i].on = true; tp.steps[(size_t) i].gate = 400; }
+        r.run (2.0);
+        bool ordered = true;
+        int held = 0, maxHeld = 0;
+        std::vector<Event> all;
+        for (auto& e : r.events) if (e.msg.isNoteOnOrOff()) all.push_back (e);
+        for (auto& e : all)
+        {
+            held += e.msg.isNoteOn() ? 1 : -1;
+            maxHeld = juce::jmax (maxHeld, held);
+            ordered = ordered && held >= 0;
+        }
+        check (ordered && maxHeld == 1, "gate 400 % on the same note: each note ends before it starts again (no stuck notes)");
+        r.stop();
+        int balance = 0;
+        for (auto& e : r.events) if (e.msg.isNoteOnOrOff()) balance += e.msg.isNoteOn() ? 1 : -1;
+        check (balance == 0, "stopping ends all long notes");
+    }
+    check (noteDisplayName (0, 3, 0) == "C3" && noteDisplayName (0, 3, 1) == "C4" && noteDisplayName (0, 3, 2) == "C5",
+           "middle C shown as C3, C4 or C5");
 }
 
 int main (int argc, char** argv)
@@ -814,6 +912,7 @@ int main (int argc, char** argv)
     testMacros();
     testTransport();
     testPresets();
+    testInitAndGate();
 
     section ("Editor interactions (simulated mouse)");
     {
@@ -950,11 +1049,36 @@ int main (int argc, char** argv)
                 juce::ignoreUnused (pcBefore);
 
                 auto* slider = findChild<LaneSlider> (*cell);
-                proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[4].steps[0].velocity = 100; });
-                if (slider) dragY (*slider, 30);
-                check (stepOf (4, 0).velocity == 80, "dragging the velocity slider down lowers velocity (100 -> 80), got " + juce::String ((int) stepOf (4, 0).velocity));
-                if (slider) dragY (*slider, 1000);
-                check (stepOf (4, 0).velocity == 1, "velocity stops at 1, never 0");
+                if (slider)
+                {
+                    click (*slider, { slider->getWidth() / 2, 0 });
+                    check (stepOf (4, 0).velocity == 127, "clicking the top of the velocity slider sets 127, got " + juce::String ((int) stepOf (4, 0).velocity));
+                    click (*slider, { slider->getWidth() / 2, slider->getHeight() / 2 });
+                    check (std::abs (stepOf (4, 0).velocity - 64) <= 1, "clicking the middle sets about 64, got " + juce::String ((int) stepOf (4, 0).velocity));
+                    click (*slider, { slider->getWidth() / 2, slider->getHeight() + 50 });
+                    check (stepOf (4, 0).velocity == 1, "velocity stops at 1, never 0");
+
+                    // draw: press on step 1 near the bottom, drag to step 6 near the top
+                    auto* cell6 = findChild<StepCell> (ed, 5);
+                    auto* slider6 = cell6 != nullptr ? findChild<LaneSlider> (*cell6) : nullptr;
+                    if (slider6 != nullptr)
+                    {
+                        const int before3 = stepOf (4, 3).velocity;
+                        const juce::Point<int> start { slider->getWidth() / 2, slider->getHeight() - 2 };
+                        const auto end = slider->getLocalPoint (slider6, juce::Point<int> { slider6->getWidth() / 2, 2 });
+                        slider->mouseDown (mouseEvent (*slider, start, start));
+                        slider->mouseDrag (mouseEvent (*slider, end, start, true));
+                        slider->mouseUp (mouseEvent (*slider, end, start, true));
+                        bool rising = true;
+                        for (int k = 1; k <= 5; ++k) rising = rising && stepOf (4, k).velocity >= stepOf (4, k - 1).velocity;
+                        juce::String vals;
+                        for (int k = 0; k <= 5; ++k) vals << (int) stepOf (4, k).velocity << " ";
+                        check (rising && stepOf (4, 5).velocity > 110 && stepOf (4, 0).velocity < 30,
+                               "dragging across the sliders draws a rising line over steps 1-6, got " + vals);
+                        if (auto* undo = findPill (ed, "UNDO")) click (*undo);
+                        check (stepOf (4, 3).velocity == before3, "one UNDO removes the whole drawn line");
+                    }
+                }
                 if (slider) slider->mouseDown (mouseEvent (*slider, { 5, 5 }, { 5, 5 }, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
                 check (stepOf (4, 0).velocity == 100, "right-click resets velocity to 100");
             }
@@ -975,6 +1099,14 @@ int main (int argc, char** argv)
             proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[3].steps[0].velocity = 60; });
             if (auto* shift = findChild<ShiftKnob> (ed)) dragY (*shift, -90);   // +10
             check (stepOf (3, 0).velocity == 70 && stepOf (3, 1).velocity == 127, "SHIFT ALL +10: 60 -> 70, 120 capped at 127, got " + juce::String ((int) stepOf (3, 0).velocity) + " " + juce::String ((int) stepOf (3, 1).velocity));
+
+            if (auto* shift = findChild<ShiftKnob> (ed))
+            {
+                juce::MouseWheelDetails w {};
+                w.deltaY = 1.0f;
+                shift->mouseWheelMove (mouseEvent (*shift, { 5, 5 }, { 5, 5 }), w);
+                check (stepOf (3, 0).velocity == 71, "SHIFT ALL: one wheel notch up shifts by +1");
+            }
 
             // CC mode hides note controls
             if (auto* ccBtn = findPill (ed, "CC")) click (*ccBtn);
@@ -1193,6 +1325,18 @@ int main (int argc, char** argv)
         led.refreshAll();
         snapshot (led, outDir.getChildFile ("main-light-notes.png"));
         light.reset();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
+    }
+
+    section ("Init screenshot");
+    {
+        auto proc = std::make_unique<VimaProcessor>();
+        std::unique_ptr<juce::AudioProcessorEditor> ed (proc->createEditor());
+        snapshot (*ed, outDir.getChildFile ("main-init.png"));
+        dynamic_cast<VimaEditor*> (ed.get())->context().ui.slider = SliderLane::gate;
+        dynamic_cast<VimaEditor*> (ed.get())->refreshAll();
+        snapshot (*ed, outDir.getChildFile ("main-init-gate.png"));
+        ed.reset();
         juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
     }
 

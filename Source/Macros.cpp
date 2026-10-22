@@ -18,7 +18,7 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::note,        MacroKind::step,   "NOTE",       "Note",        true,  0, 11 },
     { MacroTarget::octave,      MacroKind::step,   "OCTAVE",     "Octave",      true,  minOctave, maxOctave },
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
-    { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, 100 },
+    { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
     { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  0, 100 },
     { MacroTarget::cc,          MacroKind::step,   "CC VALUE",   "CC Value",    true,  0, 127 },
 };
@@ -126,7 +126,7 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
         case MacroTarget::note:        s.pitchClass = (std::int8_t) v; break;
         case MacroTarget::octave:      s.octave = (std::int8_t) v; break;
         case MacroTarget::velocity:    s.velocity = (std::uint8_t) v; break;
-        case MacroTarget::gate:        s.gate = (std::uint8_t) v; break;
+        case MacroTarget::gate:        s.gate = (std::uint16_t) v; break;
         case MacroTarget::probability: s.probability = (std::uint8_t) v; break;
         case MacroTarget::cc:          s.cc = (std::uint8_t) v; break;
     }
@@ -208,7 +208,7 @@ float macroNormalized (const MacroMap& m, int plain, const MacroNotes& n)
     return juce::jlimit (0.0f, 1.0f, (float) (plain - m.min) / (float) (m.max - m.min));
 }
 
-static juce::String plainText (const MacroMap& m, int v, bool middleCIsC4)
+static juce::String plainText (const MacroMap& m, int v, int octaveOffset)
 {
     switch (m.target)
     {
@@ -224,7 +224,7 @@ static juce::String plainText (const MacroMap& m, int v, bool middleCIsC4)
         case MacroTarget::swing:
         case MacroTarget::gate:
         case MacroTarget::probability: return juce::String (v) + "%";
-        case MacroTarget::octave:      return juce::String (v + (middleCIsC4 ? 1 : 0));
+        case MacroTarget::octave:      return juce::String (v + octaveOffset);
         case MacroTarget::note:        return pitchClassName (((v % 12) + 12) % 12);
         case MacroTarget::length:
         case MacroTarget::velocity:
@@ -235,13 +235,13 @@ static juce::String plainText (const MacroMap& m, int v, bool middleCIsC4)
 
 juce::String macroValueText (const Globals& g, const MacroMap& m, int v)
 {
-    return plainText (m, v, g.middleCIsC4);
+    return plainText (m, v, g.octaveOffset());
 }
 
 juce::String macroValueText (const Project& p, const MacroMap& m, int shownTrack, int v)
 {
     juce::ignoreUnused (shownTrack);   // note values are already the sounding note
-    return plainText (m, v, p.globals.middleCIsC4);
+    return plainText (m, v, p.globals.octaveOffset());
 }
 
 static const char* shortName (MacroTarget t)

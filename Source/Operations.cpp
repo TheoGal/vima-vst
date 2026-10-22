@@ -163,7 +163,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
                 case Lane::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
                 case Lane::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : g.octaveLow); break;
                 case Lane::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;
-                case Lane::gate:        s.gate = (std::uint8_t) juce::jlimit (1, 100, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
+                case Lane::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
                 case Lane::probability: s.probability = (std::uint8_t) juce::jlimit (0, 100, randomIn (r, g.rangeProb.min, g.rangeProb.max)); break;
                 case Lane::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, randomIn (r, g.rangeCC.min, g.rangeCC.max)); break;
             }
@@ -222,7 +222,7 @@ static void laneLimits (const Project& p, const TrackPattern& tp, Lane lane, int
         }
         case Lane::octave:      lo = g.octaveLow; hi = g.octaveHigh; return;
         case Lane::velocity:    lo = 1; hi = 127; return;
-        case Lane::gate:        lo = 1; hi = 100; return;
+        case Lane::gate:        lo = 1; hi = maxGate; return;
         case Lane::probability: lo = 0; hi = 100; return;
         case Lane::cc:          lo = 0; hi = 127; return;
         case Lane::on:          lo = 0; hi = 1; return;
@@ -242,7 +242,7 @@ static void setLaneValue (const Project& p, const TrackPattern& tp, Step& s, Lan
             break;
         case Lane::octave:      s.octave = (std::int8_t) v; break;
         case Lane::velocity:    s.velocity = (std::uint8_t) v; break;
-        case Lane::gate:        s.gate = (std::uint8_t) v; break;
+        case Lane::gate:        s.gate = (std::uint16_t) v; break;
         case Lane::probability: s.probability = (std::uint8_t) v; break;
         case Lane::cc:          s.cc = (std::uint8_t) v; break;
         case Lane::on:          s.on = v != 0; break;

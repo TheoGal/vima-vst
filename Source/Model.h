@@ -23,17 +23,20 @@ constexpr int maxChainEntries = 64;
 // (the "middle C is C3" convention). The C4 convention only changes the displayed number.
 constexpr int minOctave = -2;
 constexpr int maxOctave = 8;
+constexpr int maxGate = 400;   // gate: 1-400 % of one step
 
 inline int midiNote (int octave, int pitchClass) { return 12 * (octave + 2) + pitchClass; }
 
 // ---------------------------------------------------------------------------------------
+// Defaults = the init values (SPEC.md 5): every step on, F (the middle of the note knob)
+// in the octave of middle C, velocity 100, gate 100 %, probability 100 %, CC 64.
 struct Step
 {
-    bool on = false;
-    std::int8_t pitchClass = 0;   // 0-11 (C to B)
-    std::int8_t octave = 3;       // minOctave..maxOctave
+    bool on = true;
+    std::int8_t pitchClass = 5;   // 0-11 (C to B)
+    std::int8_t octave = 3;       // minOctave..maxOctave; 3 = the octave starting at middle C (MIDI 60)
     std::uint8_t velocity = 100;  // 1-127 (never 0: velocity 0 is a note-off in MIDI)
-    std::uint8_t gate = 50;       // 1-100 % of one step
+    std::uint16_t gate = 100;     // 1-400 % of one step
     std::uint8_t probability = 100; // 0-100 %
     std::uint8_t cc = 64;         // 0-127
 
@@ -83,10 +86,10 @@ struct Pattern
 // Per track, global (not per pattern): routing settings
 struct TrackRouting
 {
-    std::uint8_t midiChannel = 1;   // 1-16
-    bool noteOut = true;
+    std::uint8_t midiChannel = 1;   // 1-16 (init: the track number)
+    bool noteOut = false;           // init: on for track 1 only
     bool ccOut = false;
-    std::uint8_t ccNumber = 74;     // 0-127
+    std::uint8_t ccNumber = 102;    // 0-127 (init: 102 + track index, undefined CCs 102-109)
 };
 
 // ---------------------------------------------------------------------------------------
@@ -159,10 +162,11 @@ struct Globals
     int root = 0;                  // C
     std::uint16_t userScale = 0b010110101101;   // natural minor shape by default, root always on
     int octaveLow = 0, octaveHigh = 6;          // octave range for knobs and randomize
-    bool middleCIsC4 = false;      // display convention only
+    int middleC = 3;               // octave number shown for middle C: 3, 4 or 5 (display only)
+    int octaveOffset() const { return middleC - 3; }
     bool lightTheme = false;
 
-    bool ccSmoothing = true;
+    bool ccSmoothing = false;
     int ccSmoothingTime = 100;     // 1-100 % of the time between two active steps
 
     bool patternCC = false;
@@ -175,9 +179,9 @@ struct Globals
     Chain chain;
 
     // Randomize / smooth lane selection and ranges
-    bool laneOn = true, laneNote = true, laneOct = false, laneVel = true, laneGate = true, laneProb = false, laneCC = true;
-    LaneRange rangeNote { 0, 11 }, rangeOct { 1, 4 }, rangeVel { 60, 110 }, rangeGate { 25, 90 },
-              rangeProb { 40, 100 }, rangeCC { 20, 110 };
+    bool laneOn = false, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = false;
+    LaneRange rangeNote { 0, 11 }, rangeOct { 0, 6 }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
+              rangeProb { 0, 100 }, rangeCC { 0, 127 };
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)
 };
@@ -192,7 +196,7 @@ int pitchToDegree (std::uint16_t mask, int root, int midiNoteNumber);
 int degreeToPitch (std::uint16_t mask, int root, int degree);
 
 const char* pitchClassName (int pc);
-juce::String noteDisplayName (int pitchClass, int octave, bool middleCIsC4);
+juce::String noteDisplayName (int pitchClass, int octave, int octaveOffset);
 
 // ---------------------------------------------------------------------------------------
 // Macros (SPEC.md 13.1): 128 host-automatable knobs, each mapped to one target

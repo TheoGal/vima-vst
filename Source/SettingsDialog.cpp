@@ -56,7 +56,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         {
             const Globals d;
             auto& g = p.globals;
-            g.lightTheme = d.lightTheme; g.octaveLow = d.octaveLow; g.octaveHigh = d.octaveHigh; g.middleCIsC4 = d.middleCIsC4;
+            g.lightTheme = d.lightTheme; g.octaveLow = d.octaveLow; g.octaveHigh = d.octaveHigh; g.middleC = d.middleC;
             g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing; g.ccSmoothingTime = d.ccSmoothingTime;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
         });
@@ -92,15 +92,17 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     octHigh->setValue = [this] (int v) { ctx.edit (false, [v] (Project& p) { p.globals.octaveHigh = juce::jmax (v, p.globals.octaveLow + 1); }); };
     for (auto* k : { octLow, octHigh })
     {
-        k->format = [this] (int v) { return juce::String (v + (ctx.globalsCopy().middleCIsC4 ? 1 : 0)); };
-        k->parse = [this] (const juce::String& s) { return s.getIntValue() - (ctx.globalsCopy().middleCIsC4 ? 1 : 0); };
+        k->format = [this] (int v) { return juce::String (v + ctx.globalsCopy().octaveOffset()); };
+        k->parse = [this] (const juce::String& s) { return s.getIntValue() - ctx.globalsCopy().octaveOffset(); };
     }
-    for (int i = 0; i < 2; ++i)
+    // Middle C: C3 (Live, Logic, Cubase...), C4 (Reaper, scientific), C5 (FL Studio, Cakewalk, Renoise)
+    for (int i = 0; i < 3; ++i)
     {
         auto& p = pill();
-        p.text = [i] { return juce::String (i == 0 ? "C3" : "C4"); };
-        p.look = [this, i, G] { return choice (ctx.globalsCopy().middleCIsC4 == (i == 1), G()); };
-        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.middleCIsC4 = i == 1; }); };
+        p.text = [i] { return juce::StringArray { "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)" }[i]; };
+        p.font = [] { return Fonts::monoSemi (10.0f); };
+        p.look = [this, i, G] { return choice (ctx.globalsCopy().middleC == 3 + i, G()); };
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.middleC = 3 + i; }); };
         midCBtns.add (&p);
     }
 
@@ -252,7 +254,7 @@ void SettingsDialog::resized()
         r.removeFromLeft (8);
         rows.add ({ "HIGHEST", r.removeFromLeft (60), 1.0f, true });
     }
-    segment (rowArea ("Middle C is", 32), midCBtns, 52);
+    segment (rowArea ("Middle C is", 32), midCBtns, 120);
     divider();
 
     section ("USER SCALE");

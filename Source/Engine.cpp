@@ -180,7 +180,7 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
                 {
                     releaseSameNote (channel, pitch, s, out);
                     out.addEvent (juce::MidiMessage::noteOn (channel, pitch, (juce::uint8) juce::jlimit (1, 127, (int) step.velocity)), s);
-                    const double len = juce::jmax (stepLen * juce::jlimit (1, 100, (int) step.gate) / 100.0, ppqPerSample * 2.0);
+                    const double len = juce::jmax (stepLen * juce::jlimit (1, maxGate, (int) step.gate) / 100.0, ppqPerSample * 2.0);
                     addPendingOff (tn + len, channel, pitch);
                 }
             }

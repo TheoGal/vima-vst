@@ -98,9 +98,9 @@ const char* pitchClassName (int pc)
     return names[mod12 (pc)];
 }
 
-juce::String noteDisplayName (int pitchClass, int octave, bool middleCIsC4)
+juce::String noteDisplayName (int pitchClass, int octave, int octaveOffset)
 {
-    return juce::String (pitchClassName (pitchClass)) + juce::String (octave + (middleCIsC4 ? 1 : 0));
+    return juce::String (pitchClassName (pitchClass)) + juce::String (octave + octaveOffset);
 }
 
 juce::String patternLabel (int patternIndex)
@@ -152,19 +152,24 @@ void Project::resetToDefaults()
     {
         routing[(size_t) t] = TrackRouting();
         routing[(size_t) t].midiChannel = (std::uint8_t) (t + 1);
+        routing[(size_t) t].ccNumber = (std::uint8_t) (102 + t);
+        routing[(size_t) t].noteOut = t == 0;
     }
     globals = Globals();
     currentPattern = 0;
     for (auto& m : macros) m = MacroMap();
 }
 
+// Steps are stored as 8 bytes each (gate in two bytes, little endian). States saved before the
+// 400 % gate used 7 bytes per step with a one-byte gate; both are read.
 static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
 {
     juce::MemoryBlock mb;
     for (const auto& s : steps)
     {
-        const std::uint8_t bytes[7] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
-                                        (std::uint8_t) (s.octave - minOctave), s.velocity, s.gate, s.probability, s.cc };
+        const std::uint8_t bytes[8] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
+                                        (std::uint8_t) (s.octave - minOctave), s.velocity,
+                                        (std::uint8_t) (s.gate & 0xFF), (std::uint8_t) (s.gate >> 8), s.probability, s.cc };
         mb.append (bytes, sizeof (bytes));
     }
     return mb.toBase64Encoding();
@@ -173,22 +178,40 @@ static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
 static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& steps)
 {
     juce::MemoryBlock mb;
-    if (! mb.fromBase64Encoding (text) || mb.getSize() < (size_t) maxSteps * 7)
+    if (! mb.fromBase64Encoding (text))
+        return;
+    const size_t stride = mb.getSize() >= (size_t) maxSteps * 8 ? 8 : 7;
+    if (mb.getSize() < (size_t) maxSteps * stride)
         return;
     const auto* d = static_cast<const std::uint8_t*> (mb.getData());
     for (int i = 0; i < maxSteps; ++i)
     {
-        const auto* b = d + i * 7;
+        const auto* b = d + (size_t) i * stride;
         Step s;
         s.on = b[0] != 0;
         s.pitchClass = (std::int8_t) juce::jlimit (0, 11, (int) b[1]);
         s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, (int) b[2] + minOctave);
         s.velocity = (std::uint8_t) juce::jlimit (1, 127, (int) b[3]);
-        s.gate = (std::uint8_t) juce::jlimit (1, 100, (int) b[4]);
-        s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[5]);
-        s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[6]);
+        const int gate = stride == 8 ? (int) b[4] | ((int) b[5] << 8) : (int) b[4];
+        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, gate);
+        s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[stride - 2]);
+        s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[stride - 1]);
         steps[(size_t) i] = s;
     }
+}
+
+// The empty pattern of states saved before the new init values (version 1): those states
+// left out patterns equal to it, so they must be read back as this.
+static const Pattern& legacyEmptyPattern()
+{
+    static const Pattern p = []
+    {
+        Pattern e;
+        for (auto& t : e.tracks)
+            for (auto& s : t.steps) { s.on = false; s.pitchClass = 0; s.gate = 50; }
+        return e;
+    }();
+    return p;
 }
 
 static const Pattern& emptyPattern()
@@ -294,7 +317,7 @@ bool Project::loadMacros (const juce::ValueTree& root)
 juce::ValueTree Project::toValueTree() const
 {
     juce::ValueTree root ("VIMA");
-    root.setProperty ("version", 1, nullptr);
+    root.setProperty ("version", 2, nullptr);
     root.setProperty ("currentPattern", currentPattern, nullptr);
 
     const auto& g = globals;
@@ -304,7 +327,7 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("userScale", (int) g.userScale, nullptr);
     gt.setProperty ("octaveLow", g.octaveLow, nullptr);
     gt.setProperty ("octaveHigh", g.octaveHigh, nullptr);
-    gt.setProperty ("middleCIsC4", g.middleCIsC4, nullptr);
+    gt.setProperty ("middleC", g.middleC, nullptr);
     gt.setProperty ("lightTheme", g.lightTheme, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
     gt.setProperty ("ccSmoothingTime", g.ccSmoothingTime, nullptr);
@@ -370,6 +393,13 @@ void Project::fromValueTree (const juce::ValueTree& root)
     if (! root.hasType ("VIMA"))
         return;
     resetToDefaults();
+    if ((int) root.getProperty ("version", 1) < 2)
+    {
+        // saved before the init values changed: patterns not stored were the old empty pattern,
+        // and missing settings had the old defaults
+        for (auto& p : patterns) p = legacyEmptyPattern();
+        globals.ccSmoothing = true;
+    }
     currentPattern = juce::jlimit (0, numPatterns - 1, (int) root.getProperty ("currentPattern", 0));
 
     auto gt = root.getChildWithName ("Globals");
@@ -381,7 +411,10 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
         g.octaveLow = juce::jlimit (minOctave, maxOctave - 1, (int) gt.getProperty ("octaveLow", g.octaveLow));
         g.octaveHigh = juce::jlimit (g.octaveLow + 1, maxOctave, (int) gt.getProperty ("octaveHigh", g.octaveHigh));
-        g.middleCIsC4 = (bool) gt.getProperty ("middleCIsC4", g.middleCIsC4);
+        if (gt.hasProperty ("middleC"))
+            g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC"));
+        else
+            g.middleC = (bool) gt.getProperty ("middleCIsC4", false) ? 4 : 3;
         g.lightTheme = (bool) gt.getProperty ("lightTheme", g.lightTheme);
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.ccSmoothingTime = juce::jlimit (1, 100, (int) gt.getProperty ("ccSmoothingTime", g.ccSmoothingTime));
