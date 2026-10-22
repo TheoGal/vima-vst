@@ -44,11 +44,10 @@ private:
     void openScale();
 
     Context& ctx;
-    KnobTile lengthTile { "LENGTH", "steps" }, swingTile { "SWING", "" }, channelTile { "MIDI CH", "" };
+    KnobTile lengthTile { "LENGTH", "steps" }, swingTile { "SWING", "" }, channelTile { "MIDI CH", "" }, ccNumberTile { "CC NUM", "" };
     LabelledTile divisionTile { "DIVISION" }, directionTile { "DIRECTION" }, scaleTile { "SCALE" },
                  noteOutTile { "NOTE OUT" }, ccOutTile { "CC OUT" }, sliderTile { "SLIDER" };
     Pill divisionBtn, scaleNameBtn, scaleOnBtn, noteOutBtn, ccOutBtn;
     juce::OwnedArray<Pill> directionBtns, sliderBtns;
-    Knob ccNumberKnob;
 };
 } // namespace vima

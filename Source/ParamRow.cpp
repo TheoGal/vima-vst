@@ -206,17 +206,17 @@ ParamRow::ParamRow (Context& c) : ctx (c)
         ctx.edit (false, [t] (Project& p) { p.routing[(size_t) t].ccOut = ! p.routing[(size_t) t].ccOut; });
     };
     ccOutTile.addAndMakeVisible (ccOutBtn);
-    ccNumberKnob.minValue = 0; ccNumberKnob.maxValue = 127; ccNumberKnob.defaultValue = 102;
-    ccNumberKnob.fontSize = 10.0f;
-    ccNumberKnob.colour = [] { return Theme::current().cyan; };
-    ccNumberKnob.getValue = [this] { return (int) ctx.routingCopy().ccNumber; };
-    ccNumberKnob.setValue = [this] (int v)
+    ccNumberTile.knob.minValue = 0; ccNumberTile.knob.maxValue = 127; ccNumberTile.knob.defaultValue = 102;
+    ccNumberTile.knob.fontSize = 10.0f;
+    ccNumberTile.knob.colour = [] { return Theme::current().cyan; };
+    ccNumberTile.knob.getValue = [this] { return (int) ctx.routingCopy().ccNumber; };
+    ccNumberTile.knob.setValue = [this] (int v)
     {
         const int t = ctx.ui.track;
         ctx.edit (false, [t, v] (Project& p) { p.routing[(size_t) t].ccNumber = (std::uint8_t) v; });
     };
-    ccNumberKnob.onGestureStart = [this] { ccNumberKnob.defaultValue = 102 + ctx.ui.track; };   // init: 102-109
-    ccOutTile.addAndMakeVisible (ccNumberKnob);
+    ccNumberTile.knob.onGestureStart = [this] { ccNumberTile.knob.defaultValue = 102 + ctx.ui.track; };   // init: 102-109
+    addAndMakeVisible (ccNumberTile);
     addAndMakeVisible (ccOutTile);
 
     // SLIDER lane switch (note mode)
@@ -260,6 +260,7 @@ void ParamRow::updateVisibility()
     noteOutTile.setVisible (! cc);
     sliderTile.setVisible (! cc);
     ccOutTile.setVisible (cc);
+    ccNumberTile.setVisible (cc);
 }
 
 void ParamRow::resized()
@@ -276,15 +277,23 @@ void ParamRow::resized()
     place (directionTile, 136);
     place (swingTile, 106);
     place (channelTile, 106);
+    // Mode-specific controls sit on the right, the output ON/OFF always last (SPEC.md 12.2)
+    auto right = r;
+    auto placeRight = [&right] (juce::Component& c, int w)
+    {
+        c.setBounds (right.removeFromRight (w));
+        right.removeFromRight (8);
+    };
     if (ctx.ui.ccMode)
     {
-        place (ccOutTile, 150);
+        placeRight (ccOutTile, 88);
+        placeRight (ccNumberTile, 122);
     }
     else
     {
-        place (scaleTile, 128);
-        place (noteOutTile, 88);
-        sliderTile.setBounds (getLocalBounds().removeFromRight (150));
+        placeRight (noteOutTile, 88);
+        placeRight (sliderTile, 150);
+        placeRight (scaleTile, 128);
     }
 
     divisionBtn.setBounds (divisionTile.getLocalBounds().withTrimmedTop (18).withTrimmedBottom (4));
@@ -300,12 +309,7 @@ void ParamRow::resized()
         scaleNameBtn.setBounds (b);
     }
     noteOutBtn.setBounds (noteOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
-    {
-        auto b = ccOutTile.getLocalBounds().reduced (6, 0).withTrimmedLeft (2);
-        ccNumberKnob.setBounds (b.removeFromRight (40).withSizeKeepingCentre (40, 40));
-        b.removeFromRight (8);
-        ccOutBtn.setBounds (b.withTrimmedTop (22).withHeight (20));
-    }
+    ccOutBtn.setBounds (ccOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
     {
         auto b = sliderTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20);
         const int w = (b.getWidth() - 6) / 3;

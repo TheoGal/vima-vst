@@ -292,13 +292,14 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 ### 12.2 Track parameter row controls
 
+- **Layout**: the track-wide controls on the left, in this order: LENGTH, DIVISION, DIRECTION, SWING, MIDI CH. The mode-specific controls are aligned to the right edge, with the output ON/OFF always last: note mode SCALE, SLIDER, NOTE OUT; CC mode CC NUM, CC OUT. The free space between the two groups separates them.
 - **Numeric values** (LENGTH, SWING, MIDI CH, CC number): small arc knobs (40 px), styled like the octave knob, value shown inside. No extra unit text beside them except "steps" for LENGTH.
 - No explanatory or help text in the main window (no hints under Selection or Shift).
 - **DIVISION**: click opens a popover grid with the straight values on one row and triplets on a second row. Mouse wheel on the tile steps through values.
 - **DIRECTION**: three inline icon buttons (forward, backward, ping-pong). No menu.
 - **SCALE**: two parts. A scale-name button (for example "C MIN") and a separate ON/OFF toggle for the current track. Clicking the name opens a popover, styled like the DIVISION popover, with a "GLOBAL" tag (the choice applies to every track that has SCALE on), a ROOT row (C to B) and a grid of the 14 scales plus USER. Picking a scale closes the popover. The mouse wheel over the name steps through the scales. Only one popover is open at a time.
-- **NOTE OUT** and **CC OUT**: on/off toggles. The CC OUT tile also holds the CC number knob.
-- To avoid accidents, part-specific controls are only shown in their own mode: SCALE and NOTE OUT only in note mode, CC OUT (with the CC number) only in CC mode. Track-wide controls are shown in both.
+- **NOTE OUT** and **CC OUT**: on/off toggles, the last tile of the row. The CC number has its own tile, **CC NUM**, left of CC OUT.
+- To avoid accidents, part-specific controls are only shown in their own mode: SCALE and NOTE OUT only in note mode, CC NUM and CC OUT only in CC mode. Track-wide controls are shown in both.
 - The NOTES and CC mode buttons in the header each carry an LED showing whether that output is on for the selected track (lit in green / cyan when on, dark grey when off). The LEDs are visible in both modes, so the hidden output's state is always known. The selected mode button is shown with a tinted background and accent outline, so the LED stays readable.
 - **SLIDER**: VEL / GATE / PROB switch (note mode only).
 
@@ -459,6 +460,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
 - 2026-10-22: No backwards compatibility with earlier test builds (14).
 - 2026-10-22: Macro mappings are always fixed (track, pattern, step). SHOWN / CURRENT removed everywhere; hardware-controller mapping that follows the screen is set aside for now. The shown track is no longer saved for macros.
+- 2026-10-22: Parameter row: track-wide controls on the left; mode-specific controls on the right with the output ON/OFF last; CC number in its own tile (CC NUM).
 - 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing; an independent CC lane is a second track on the same channel). In CC mode the step buttons, the ON lane button, randomize, copy/paste and the macro target "CC ON" use the CC on/off. Thumbnails show both parts side by side.
 - 2026-10-22: The STEPS button (back to the step view, in the patterns view and the Macros page) is filled green so it stands out.
 - 2026-10-22: LEARN shows mapped controls (outline + macro number), refuses remapping, right-click frees, moves to the next free macro; the editor refuses duplicates. Built together with fixed-only mappings and the removal of the old-project code.
