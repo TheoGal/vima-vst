@@ -115,7 +115,7 @@ juce::String patternLabel (int patternIndex)
 bool TrackPattern::hasOnSteps() const
 {
     for (int i = 0; i < length; ++i)
-        if (steps[(size_t) i].on) return true;
+        if (steps[(size_t) i].on || steps[(size_t) i].ccOn) return true;
     return false;
 }
 
@@ -124,6 +124,14 @@ int TrackPattern::onStepCount() const
     int n = 0;
     for (int i = 0; i < length; ++i)
         if (steps[(size_t) i].on) ++n;
+    return n;
+}
+
+int TrackPattern::ccOnStepCount() const
+{
+    int n = 0;
+    for (int i = 0; i < length; ++i)
+        if (steps[(size_t) i].ccOn) ++n;
     return n;
 }
 
@@ -160,15 +168,16 @@ void Project::resetToDefaults()
     for (auto& m : macros) m = MacroMap();
 }
 
-// Steps are stored as 8 bytes each (gate in two bytes, little endian).
+// Steps are stored as 9 bytes each (gate in two bytes, little endian).
 static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
 {
     juce::MemoryBlock mb;
     for (const auto& s : steps)
     {
-        const std::uint8_t bytes[8] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
+        const std::uint8_t bytes[9] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
                                         (std::uint8_t) (s.octave - minOctave), s.velocity,
-                                        (std::uint8_t) (s.gate & 0xFF), (std::uint8_t) (s.gate >> 8), s.probability, s.cc };
+                                        (std::uint8_t) (s.gate & 0xFF), (std::uint8_t) (s.gate >> 8), s.probability, s.cc,
+                                        (std::uint8_t) (s.ccOn ? 1 : 0) };
         mb.append (bytes, sizeof (bytes));
     }
     return mb.toBase64Encoding();
@@ -179,7 +188,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
     juce::MemoryBlock mb;
     if (! mb.fromBase64Encoding (text))
         return;
-    constexpr size_t stride = 8;
+    constexpr size_t stride = 9;
     if (mb.getSize() < (size_t) maxSteps * stride)
         return;
     const auto* d = static_cast<const std::uint8_t*> (mb.getData());
@@ -195,6 +204,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
         s.gate = (std::uint16_t) juce::jlimit (1, maxGate, gate);
         s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[6]);
         s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[7]);
+        s.ccOn = b[8] != 0;
         steps[(size_t) i] = s;
     }
 }
@@ -324,7 +334,7 @@ juce::ValueTree Project::toValueTree() const
     for (const auto& e : g.chain) chainText.add (juce::String (e.pattern) + ":" + juce::String (e.repeats));
     gt.setProperty ("chain", chainText.joinIntoString (","), nullptr);
     juce::String lanes;
-    for (bool b : { g.laneOn, g.laneNote, g.laneOct, g.laneVel, g.laneGate, g.laneProb, g.laneCC }) lanes << (b ? "1" : "0");
+    for (bool b : { g.laneOn, g.laneNote, g.laneOct, g.laneVel, g.laneGate, g.laneProb, g.laneCC, g.laneCcOn }) lanes << (b ? "1" : "0");
     gt.setProperty ("lanes", lanes, nullptr);
     juce::StringArray ranges;
     for (const auto* r : { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
@@ -405,10 +415,10 @@ void Project::fromValueTree (const juce::ValueTree& root)
                                (std::uint8_t) juce::jlimit (1, 99, parts[1].getIntValue()) });
         }
         const auto lanes = gt.getProperty ("lanes").toString();
-        if (lanes.length() == 7)
+        if (lanes.length() == 8)
         {
-            bool* flags[] = { &g.laneOn, &g.laneNote, &g.laneOct, &g.laneVel, &g.laneGate, &g.laneProb, &g.laneCC };
-            for (int i = 0; i < 7; ++i) *flags[i] = lanes[i] == '1';
+            bool* flags[] = { &g.laneOn, &g.laneNote, &g.laneOct, &g.laneVel, &g.laneGate, &g.laneProb, &g.laneCC, &g.laneCcOn };
+            for (int i = 0; i < 8; ++i) *flags[i] = lanes[i] == '1';
         }
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
         LaneRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };

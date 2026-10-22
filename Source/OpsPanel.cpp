@@ -15,6 +15,7 @@ namespace
             case Lane::gate:        return g.laneGate;
             case Lane::probability: return g.laneProb;
             case Lane::cc:          return g.laneCC;
+            case Lane::ccOn:        return g.laneCcOn;
         }
         return g.laneOn;
     }
@@ -29,7 +30,7 @@ namespace
             case Lane::gate:        return g.rangeGate;
             case Lane::probability: return g.rangeProb;
             case Lane::cc:          return g.rangeCC;
-            case Lane::on:          break;
+            case Lane::on: case Lane::ccOn: break;
         }
         return g.rangeVel;
     }
@@ -38,7 +39,8 @@ namespace
     {
         switch (l)
         {
-            case Lane::on:          return "ON";
+            case Lane::on:
+            case Lane::ccOn:        return "ON";
             case Lane::note:        return "NOTE";
             case Lane::octave:      return "OCT";
             case Lane::velocity:    return "VEL";
@@ -58,7 +60,7 @@ namespace
             case Lane::gate:        return t.purple;
             case Lane::probability: return t.amber;
             case Lane::cc:          return t.cyan;
-            case Lane::octave: case Lane::on: break;
+            case Lane::octave: case Lane::on: case Lane::ccOn: break;
         }
         return t.text2;
     }
@@ -70,7 +72,7 @@ namespace
     }
     const std::vector<Lane>& ccLanes()
     {
-        static const std::vector<Lane> l { Lane::on, Lane::cc };
+        static const std::vector<Lane> l { Lane::ccOn, Lane::cc };
         return l;
     }
 
@@ -108,7 +110,7 @@ void RangeBar::axis (int& lo, int& hi) const
         case Lane::gate:        lo = 1; hi = maxGate; return;
         case Lane::probability: lo = 0; hi = 100; return;
         case Lane::cc:          lo = 0; hi = 127; return;
-        case Lane::on:          lo = 0; hi = 1; return;
+        case Lane::on: case Lane::ccOn: lo = 0; hi = 1; return;
     }
 }
 
@@ -119,7 +121,7 @@ juce::String RangeBar::valueText (int v) const
         case Lane::note:   return pitchClassName (v);
         case Lane::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
         case Lane::gate: case Lane::probability: return juce::String (v) + "%";
-        case Lane::on: case Lane::velocity: case Lane::cc: break;
+        case Lane::on: case Lane::ccOn: case Lane::velocity: case Lane::cc: break;
     }
     return juce::String (v);
 }
@@ -326,7 +328,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     addAndMakeVisible (clearBtn);
 
     // Lane chips (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
-    std::vector<Lane> all { Lane::on, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc };
+    std::vector<Lane> all { Lane::on, Lane::ccOn, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc };
     {
         auto* p = laneChips.add (new Pill());
         p->text = [] { return juce::String ("ALL"); };
@@ -429,7 +431,7 @@ void OpsPanel::refreshState()
     for (auto* p : laneChips)
     {
         const int l = p->getProperties()["lane"];
-        p->setVisible (l < 0 || (cc ? (l == (int) Lane::on || l == (int) Lane::cc) : l != (int) Lane::cc));
+        p->setVisible (l < 0 || (cc ? (l == (int) Lane::ccOn || l == (int) Lane::cc) : (l != (int) Lane::cc && l != (int) Lane::ccOn)));
     }
     for (auto* r : ranges)
     {

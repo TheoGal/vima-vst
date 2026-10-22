@@ -79,36 +79,38 @@ void PatternSlot::paint (juce::Graphics& g)
     if (playing)
         draw::led (g, { (float) top.getRight() - 7.0f, (float) top.getCentreY() }, 6.0f, t.neutral, true);
 
-    // Thumbnail: one bar per track, height = density, colour = output (7.1.1)
+    // Thumbnail (7.1.1): one bar per track. Height = how many steps are on, out of the length.
+    // Notes out only: the note part in green. CC out only: the CC part in cyan. Both: two thin
+    // bars side by side (notes left, CC right). Neither: grey (the busier part).
     auto thumb = inner.removeFromBottom (22).toFloat();
     const float gap = 2.0f;
     const float w = (thumb.getWidth() - gap * (numTracks - 1)) / (float) numTracks;
-    for (int k = 0; k < numTracks; ++k)
+    auto drawBar = [&g, &t] (juce::Rectangle<float> col, int on, int length, juce::Colour c)
     {
-        const auto& tp = pattern.tracks[(size_t) k];
-        const auto& r = routing[(size_t) k];
-        const int on = tp.onStepCount();
-        auto col = thumb.withX (thumb.getX() + k * (w + gap)).withWidth (w);
         if (on == 0)
         {
             g.setColour (t.sliderTrack);
             g.fillRect (col.removeFromBottom (2.0f));
-            continue;
+            return;
         }
-        const float h = 3.0f + 19.0f * (float) on / (float) juce::jmax (1, (int) tp.length);
-        auto bar = col.removeFromBottom (h);
+        g.setColour (c);
+        g.fillRect (col.removeFromBottom (3.0f + 19.0f * (float) on / (float) juce::jmax (1, length)));
+    };
+    for (int k = 0; k < numTracks; ++k)
+    {
+        const auto& tp = pattern.tracks[(size_t) k];
+        const auto& r = routing[(size_t) k];
+        const int notes = tp.onStepCount(), ccs = tp.ccOnStepCount(), len = (int) tp.length;
+        auto col = thumb.withX (thumb.getX() + k * (w + gap)).withWidth (w);
         if (r.noteOut && r.ccOut)
         {
-            g.setColour (t.green);
-            g.fillRect (bar.removeFromBottom (bar.getHeight() * 0.5f));
-            g.setColour (t.cyan);
-            g.fillRect (bar);
+            const float half = (col.getWidth() - 1.0f) * 0.5f;
+            drawBar (col.withWidth (half), notes, len, t.green);
+            drawBar (col.withTrimmedLeft (col.getWidth() - half), ccs, len, t.cyan);
         }
-        else
-        {
-            g.setColour (r.noteOut ? t.green : r.ccOut ? t.cyan : t.dim);
-            g.fillRect (bar);
-        }
+        else if (r.noteOut) drawBar (col, notes, len, t.green);
+        else if (r.ccOut)   drawBar (col, ccs, len, t.cyan);
+        else                drawBar (col, juce::jmax (notes, ccs), len, t.dim);
     }
     if (inChain)
     {

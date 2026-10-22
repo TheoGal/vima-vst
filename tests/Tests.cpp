@@ -49,6 +49,7 @@ Step blankStep()
 {
     Step s;
     s.on = false;
+    s.ccOn = false;
     s.pitchClass = 0;
     s.gate = 50;
     return s;
@@ -138,7 +139,7 @@ bool near (double a, double b, double tol = 0.002) { return std::abs (a - b) <= 
 
 void fillOn (TrackPattern& tp, int pc = 0, int oct = 3)
 {
-    for (auto& s : tp.steps) { s.on = true; s.pitchClass = (std::int8_t) pc; s.octave = (std::int8_t) oct; }
+    for (auto& s : tp.steps) { s.on = true; s.ccOn = true; s.pitchClass = (std::int8_t) pc; s.octave = (std::int8_t) oct; }
 }
 
 // ---------------------------------------------------------------------------------------
@@ -170,7 +171,7 @@ void testModel()
     // state round trip
     auto p = std::make_unique<Project>();
     legacyBlank (*p);
-    p->patterns[5].tracks[3].steps[7] = { true, 4, 5, 33, 77, 60, 99 };
+    p->patterns[5].tracks[3].steps[7] = { true, false, 4, 5, 33, 77, 60, 99 };
     p->patterns[5].tracks[3].length = 24;
     p->patterns[5].tracks[3].division = 8;
     p->patterns[5].tracks[3].direction = Direction::pingPong;
@@ -311,8 +312,8 @@ void testOutputs()
         Runner r;
         auto& tp = r.track (0);
         tp.length = 4;
-        tp.steps[0] = { true, 0, 3, 100, 50, 100, 0 };
-        tp.steps[2] = { true, 0, 3, 100, 50, 100, 100 };
+        tp.steps[0] = { true, true, 0, 3, 100, 50, 100, 0 };
+        tp.steps[2] = { true, true, 0, 3, 100, 50, 100, 100 };
         r.project->routing[0].noteOut = false;
         r.project->routing[0].ccOut = true;
         r.project->globals.ccSmoothing = true;
@@ -450,6 +451,7 @@ void testOperations()
     {
         for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].on = tp.steps[1].on = tp.steps[2].on = true;
+        tp.steps[0].ccOn = tp.steps[1].ccOn = tp.steps[2].ccOn = true;
         tp.steps[0].cc = 0; tp.steps[1].cc = 64; tp.steps[2].cc = 127;
         tp.steps[3].cc = 0;   // off step
         p->globals.laneCC = true;
@@ -512,7 +514,7 @@ void testOperations()
 
         // smooth works on non-adjacent steps only
         for (auto& s : tp.steps) s = blankStep();
-        for (int i : { 0, 1, 2 }) tp.steps[(size_t) i].on = true;
+        for (int i : { 0, 1, 2 }) tp.steps[(size_t) i].on = tp.steps[(size_t) i].ccOn = true;
         tp.steps[0].cc = 0; tp.steps[1].cc = 50; tp.steps[2].cc = 100;
         smooth (*p, makeScope (*p, 0, 0, (std::uint32_t) ((1u << 0) | (1u << 2))), true);
         check (tp.steps[0].cc == 1 && tp.steps[2].cc == 99 && tp.steps[1].cc == 50, "smooth on steps 1 and 3 only");
@@ -887,6 +889,41 @@ void testInitAndGate()
            "middle C shown as C3, C4 or C5");
 }
 
+void testCcOnOff()
+{
+    section ("Separate note and CC on/off");
+    Runner r;
+    auto& tp = r.track (0);
+    tp.length = 4;
+    r.project->routing[0].noteOut = true;
+    r.project->routing[0].ccOut = true;
+    r.project->globals.ccSmoothing = false;
+    for (int i = 0; i < 4; ++i) { tp.steps[(size_t) i].cc = (std::uint8_t) (10 * (i + 1)); }
+    tp.steps[0].on = true;  tp.steps[0].ccOn = false;   // note only
+    tp.steps[1].on = false; tp.steps[1].ccOn = true;    // CC only
+    tp.steps[2].on = true;  tp.steps[2].ccOn = true;    // both
+    r.run (1.0);
+    const auto ons = r.noteOns(), ccs = r.ccs();
+    bool notesOk = ons.size() == 2 && near (ons[0].ppq, 0.0) && near (ons[1].ppq, 0.5);
+    bool ccOk = ccs.size() == 2 && near (ccs[0].ppq, 0.25) && ccs[0].msg.getControllerValue() == 20 && near (ccs[1].ppq, 0.5);
+    check (notesOk, "notes play on note-on steps only");
+    check (ccOk, "CC values are sent on CC-on steps only, also where the note is off");
+
+    Project p;
+    legacyBlank (p);
+    auto& t = p.patterns[0].tracks[0];
+    t.steps[0].on = true;
+    p.globals.laneCcOn = true; p.globals.laneOn = false; p.globals.laneCC = false;
+    juce::Random rnd (7);
+    randomize (p, makeScope (p, 0, 0, -1, -1), true, rnd);
+    bool notesUntouched = t.steps[0].on;
+    for (int i = 1; i < 16; ++i) notesUntouched = notesUntouched && ! t.steps[(size_t) i].on;
+    int ccOnCount = 0;
+    for (int i = 0; i < 16; ++i) ccOnCount += t.steps[(size_t) i].ccOn ? 1 : 0;
+    check (notesUntouched && ccOnCount > 0, "in CC mode, randomizing ON changes the CC on/off only");
+    check (Step().ccOn, "init: CC steps are on");
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -902,6 +939,7 @@ int main (int argc, char** argv)
     testTransport();
     testPresets();
     testInitAndGate();
+    testCcOnOff();
 
     section ("Editor interactions (simulated mouse)");
     {
@@ -1100,6 +1138,13 @@ int main (int argc, char** argv)
             // CC mode hides note controls
             if (auto* ccBtn = findPill (ed, "CC")) click (*ccBtn);
             check (ctx.ui.ccMode && findPill (ed, "NOTE OUT") == nullptr, "CC mode shows the CC part only");
+            if (auto* c0 = findChild<StepCell> (ed, 0))
+            {
+                const auto before = stepOf (ctx.ui.track, 0);
+                if (auto* tg = findChild<Pill> (*c0)) click (*tg);
+                const auto after = stepOf (ctx.ui.track, 0);
+                check (after.ccOn != before.ccOn && after.on == before.on, "in CC mode the step button switches the CC on/off only");
+            }
             if (auto* notes = findPill (ed, "NOTES")) click (*notes);
             check (! ctx.ui.ccMode, "back to note mode");
         }

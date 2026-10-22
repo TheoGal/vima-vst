@@ -35,7 +35,7 @@ Last updated: 2026-10-21
 
 - 8 tracks, shown as "01" to "08". No track names.
 - Selected with a **dropdown** in the header. No sidebar.
-- Every track always has both a note part and a CC part. The NOTES / CC switch in the header only changes which part is shown and edited. It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
+- Every track always has both a note part and a CC part, sharing the track's steps, length, division, direction and swing, but each with **its own on/off per step** (5). The NOTES / CC switch in the header only changes which part is shown and edited (including which on/off the step buttons and the ON lane chip use). It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
 
 Where track settings live (decided during the build):
 
@@ -67,14 +67,14 @@ A new instance, NEW in the FILE menu, CLEAR in the patterns view and a right-cli
 | MIDI channel | track number (1-8) |
 | CC number | 102 + track index: tracks 1-8 = CC 102-109 (undefined CCs in the MIDI spec) |
 | Length / division / direction / swing / scale | 16 / 1/16 / forward / 0% / on |
-| Steps | all 32 on, note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
+| Steps | all 32 on (note on and CC on), note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
 | Current pattern | B01 · 01 |
 | Global scale | C minor |
 | Middle C | C3 |
 | CC smoothing | off, time 100% |
 | Pattern change by CC | off, channel 16, CC 20; quantize 1 BAR |
 | Chain | off, loop on, empty |
-| LANES | NOTE only |
+| LANES | NOTE only (in CC mode: none) |
 | RANGES | full range of every lane (NOTE C-B, OCT = all octaves (C-2 to G8 with middle C = C3), VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
 | SHIFT ALL lane / SLIDER lane / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
@@ -89,7 +89,8 @@ Per step values:
 
 | Value | Range | Notes |
 |---|---|---|
-| On / off | on / off | An off step sends nothing (no note, no CC) but still takes its time slot. It is not skipped. |
+| Note on / off | on / off | Whether the step plays its note. An off step still takes its time slot; it is not skipped. |
+| CC on / off | on / off | Whether the step sends its CC value, **independent of the note on/off**: a step can send CC without a note, or a note without CC. Length, division, direction and swing are shared by both parts. |
 | Note | pitch class | Separate control from octave. |
 | Octave | user-defined range (Settings) | |
 | Velocity | 1-127 | Minimum is 1, never 0: in MIDI a Note On with velocity 0 is treated as a Note Off. Every operation (knob, Randomize, Smooth, Shift, ranges) clamps velocity to 1-127. |
@@ -131,13 +132,13 @@ There is no step skip, no chords, no drum mode. Note mode only.
 #### 7.1.1 Pattern thumbnail
 
 - 8 bars, one per track, track 01 on the left to track 08 on the right.
-- **Height = density**: the number of "on" steps divided by the track's length. A busy track is a tall bar, a sparse one a short bar.
-- **Color = what the track outputs**:
-  - Notes output on only: green.
-  - CC output on only: cyan.
-  - Both on: a split bar, green bottom half and cyan top half.
-  - Both outputs off but the track has on steps: dim grey, at its density height (content exists but is silent).
-  - No on steps: a thin dark baseline (empty track).
+- **Height = density**: the number of steps that are on, divided by the track's length. A busy track is a tall bar, a sparse one a short bar.
+- **Which part and color = what the track outputs**:
+  - Notes output on only: the note part's density, green.
+  - CC output on only: the CC part's density, cyan.
+  - Both on: two thin bars side by side, notes (green) on the left and CC (cyan) on the right, each at its own density.
+  - Both outputs off: dim grey, at the busier part's density (content exists but is silent).
+  - No steps on: a thin dark baseline.
 
 ### 7.2 Chain (proposed)
 
@@ -380,7 +381,7 @@ Targets:
 | GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
 | TRACK | Notes Out, CC Out | 1-8 | - | - |
 | TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | B01 · 01 to B04 · 16 | - |
-| STEP | On/Off, Note, Octave, Velocity, Gate, Probability, CC value | 1-8 | B01 · 01 to B04 · 16 | 1-32 |
+| STEP | Note On, Note, Octave, Velocity, Gate, Probability, CC On, CC value | 1-8 | B01 · 01 to B04 · 16 | 1-32 |
 
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Range**: each mapping has MIN and MAX (default: the full range). The whole macro travel covers MIN to MAX. MIN above MAX inverts the direction.
@@ -458,6 +459,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
 - 2026-10-22: No backwards compatibility with earlier test builds (14).
 - 2026-10-22: Macro mappings are always fixed (track, pattern, step). SHOWN / CURRENT removed everywhere; hardware-controller mapping that follows the screen is set aside for now. The shown track is no longer saved for macros.
+- 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing; an independent CC lane is a second track on the same channel). In CC mode the step buttons, the ON lane chip, randomize, copy/paste and the macro target "CC ON" use the CC on/off. Thumbnails show both parts side by side.
 - 2026-10-22: The STEPS button (back to the step view, in the patterns view and the Macros page) is filled green so it stands out.
 - 2026-10-22: LEARN shows mapped controls (outline + macro number), refuses remapping, right-click frees, moves to the next free macro; the editor refuses duplicates. Built together with fixed-only mappings and the removal of the old-project code.
 - 2026-10-22: Octave range setting removed: octaves cover the whole MIDI range; Settings keeps only the middle C convention for pitch.

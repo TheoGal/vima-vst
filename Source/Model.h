@@ -33,7 +33,8 @@ inline int midiNote (int octave, int pitchClass) { return 12 * (octave + 2) + pi
 // in the octave of middle C, velocity 100, gate 100 %, probability 100 %, CC 64.
 struct Step
 {
-    bool on = true;
+    bool on = true;               // note on/off
+    bool ccOn = true;             // CC on/off: the CC part has its own on/off (SPEC.md 5)
     std::int8_t pitchClass = 5;   // 0-11 (C to B)
     std::int8_t octave = 3;       // minOctave..maxOctave; 3 = the octave starting at middle C (MIDI 60)
     std::uint8_t velocity = 100;  // 1-127 (never 0: velocity 0 is a note-off in MIDI)
@@ -43,7 +44,7 @@ struct Step
 
     bool operator== (const Step& o) const
     {
-        return on == o.on && pitchClass == o.pitchClass && octave == o.octave && velocity == o.velocity
+        return on == o.on && ccOn == o.ccOn && pitchClass == o.pitchClass && octave == o.octave && velocity == o.velocity
             && gate == o.gate && probability == o.probability && cc == o.cc;
     }
     bool operator!= (const Step& o) const { return ! (*this == o); }
@@ -73,8 +74,9 @@ struct TrackPattern
     bool scaleOn = true;
     std::array<Step, maxSteps> steps {};
 
-    bool hasOnSteps() const;
-    int onStepCount() const;
+    bool hasOnSteps() const;     // any note or CC step on
+    int onStepCount() const;     // note steps on, within the length
+    int ccOnStepCount() const;   // CC steps on, within the length
 };
 
 struct Pattern
@@ -179,6 +181,7 @@ struct Globals
     Chain chain;
 
     // Randomize / smooth lane selection and ranges
+    bool laneCcOn = false;         // the ON chip in CC mode (CC on/off)
     bool laneOn = false, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = false;
     LaneRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
               rangeProb { 0, 100 }, rangeCC { 0, 127 };
@@ -208,9 +211,10 @@ enum class MacroTarget : std::uint8_t
     none,
     pattern, chainOn,                                                      // global
     noteOut, ccOut, length, division, direction, swing, scaleOn,           // track
-    stepOn, note, octave, velocity, gate, probability, cc                  // step
+    stepOn, note, octave, velocity, gate, probability, cc,                 // step
+    ccStepOn                                                               // step (CC part)
 };
-constexpr int numMacroTargets = 17;
+constexpr int numMacroTargets = 18;
 
 struct MacroMap
 {

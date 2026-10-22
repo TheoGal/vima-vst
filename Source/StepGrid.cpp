@@ -69,7 +69,8 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         const auto& t = Theme::current();
         // on = accent fill; off (within the length) = grey fill; beyond the length = outline only.
         // The playhead is shown on the LEDs only.
-        const bool on = stepCopy().on;
+        const auto st = stepCopy();
+        const bool on = ctx.ui.ccMode ? st.ccOn : st.on;   // each part has its own on/off
         const bool beyond = index >= ctx.trackCopy().length;
         const auto accent = ctx.modeAccent();
         if (on && ! beyond) return Pill::Look { accent, accent, t.onAccent, 1.5f, false };
@@ -78,7 +79,12 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     };
     toggle.onClick = [this]
     {
-        ctx.edit (true, [this] (Project& p) { auto& s = ctx.liveTrack (p).steps[(size_t) index]; s.on = ! s.on; });
+        const bool cc = ctx.ui.ccMode;
+        ctx.edit (true, [this, cc] (Project& p)
+        {
+            auto& s = ctx.liveTrack (p).steps[(size_t) index];
+            if (cc) s.ccOn = ! s.ccOn; else s.on = ! s.on;
+        });
     };
     addAndMakeVisible (toggle);
 
@@ -237,7 +243,9 @@ void StepCell::refreshState()
 
     const auto tp = ctx.trackCopy();
     const bool beyond = index >= tp.length;
-    const bool on = tp.steps[(size_t) index].on && ! beyond;
+    const auto& stp = tp.steps[(size_t) index];
+    const bool on = (cc_ ? stp.ccOn : stp.on) && ! beyond;
+    setLearnTarget (toggle, cc_ ? MacroTarget::ccStepOn : MacroTarget::stepOn);
     setAlpha (beyond ? 0.35f : 1.0f);
     const float a = on ? 1.0f : 0.32f;
     pitch.setAlpha (a);

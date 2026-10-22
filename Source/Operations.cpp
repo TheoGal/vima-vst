@@ -52,12 +52,13 @@ Scope makeScope (const Project& p, int pattern, int track, int selFirst, int sel
 std::vector<Lane> activeLanes (const Globals& g, bool ccMode)
 {
     std::vector<Lane> lanes;
-    if (g.laneOn) lanes.push_back (Lane::on);
     if (ccMode)
     {
+        if (g.laneCcOn) lanes.push_back (Lane::ccOn);
         if (g.laneCC) lanes.push_back (Lane::cc);
         return lanes;
     }
+    if (g.laneOn) lanes.push_back (Lane::on);
     if (g.laneNote) lanes.push_back (Lane::note);
     if (g.laneOct) lanes.push_back (Lane::octave);
     if (g.laneVel) lanes.push_back (Lane::velocity);
@@ -161,6 +162,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
             switch (lane)
             {
                 case Lane::on:          s.on = r.nextFloat() < 0.7f; break;
+                case Lane::ccOn:        s.ccOn = r.nextFloat() < 0.7f; break;
                 case Lane::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
                 case Lane::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : minOctave); break;
                 case Lane::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;
@@ -194,6 +196,7 @@ static int laneValue (const Project& p, const TrackPattern& tp, const Step& s, L
         case Lane::probability: return s.probability;
         case Lane::cc:          return s.cc;
         case Lane::on:          return s.on ? 1 : 0;
+        case Lane::ccOn:        return s.ccOn ? 1 : 0;
     }
     return 0;
 }
@@ -226,7 +229,8 @@ static void laneLimits (const Project& p, const TrackPattern& tp, Lane lane, int
         case Lane::gate:        lo = 1; hi = maxGate; return;
         case Lane::probability: lo = 0; hi = 100; return;
         case Lane::cc:          lo = 0; hi = 127; return;
-        case Lane::on:          lo = 0; hi = 1; return;
+        case Lane::on:
+        case Lane::ccOn:        lo = 0; hi = 1; return;
     }
 }
 
@@ -247,6 +251,7 @@ static void setLaneValue (const Project& p, const TrackPattern& tp, Step& s, Lan
         case Lane::probability: s.probability = (std::uint8_t) v; break;
         case Lane::cc:          s.cc = (std::uint8_t) v; break;
         case Lane::on:          s.on = v != 0; break;
+        case Lane::ccOn:        s.ccOn = v != 0; break;
     }
 }
 
@@ -255,19 +260,21 @@ void smooth (Project& p, const Scope& sc, bool ccMode)
     auto& tp = trackOf (p, sc.pattern, sc.track);
     for (auto lane : activeLanes (p.globals, ccMode))
     {
-        if (lane == Lane::on)
+        if (lane == Lane::on || lane == Lane::ccOn)
             continue;   // on/off has no average
+        // the CC lane follows the CC on/off, the note lanes the note on/off
+        auto active = [lane] (const Step& st) { return lane == Lane::cc ? st.ccOn : st.on; };
         long long sum = 0;
         int n = 0;
         for (int i = 0; i < maxSteps; ++i)
-            if (sc.contains (i) && tp.steps[(size_t) i].on) { sum += laneValue (p, tp, tp.steps[(size_t) i], lane); ++n; }
+            if (sc.contains (i) && active (tp.steps[(size_t) i])) { sum += laneValue (p, tp, tp.steps[(size_t) i], lane); ++n; }
         if (n == 0)
             continue;
         const int avg = (int) std::llround ((double) sum / n);
         for (int i = 0; i < maxSteps; ++i)
         {
             auto& s = tp.steps[(size_t) i];
-            if (! sc.contains (i) || ! s.on) continue;   // off steps are not smoothed
+            if (! sc.contains (i) || ! active (s)) continue;   // off steps are not smoothed
             const int v = laneValue (p, tp, s, lane);
             if (v != avg)
                 setLaneValue (p, tp, s, lane, v + (v < avg ? 1 : -1));
@@ -292,7 +299,7 @@ void applyShift (Project& p, const ShiftGesture& gst, int amount)
         if (! gst.scope.contains (i)) continue;
         const auto& original = gst.snapshot[(size_t) i];
         auto s = original;
-        if (gst.lane != Lane::on)
+        if (gst.lane != Lane::on && gst.lane != Lane::ccOn)
             setLaneValue (p, tp, s, gst.lane, laneValue (p, tp, original, gst.lane) + amount);
         tp.steps[(size_t) i] = s;
     }
@@ -326,6 +333,7 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
             switch (l)
             {
                 case Lane::on:          s.on = c.step.on; break;
+                case Lane::ccOn:        s.ccOn = c.step.ccOn; break;
                 case Lane::note:        s.pitchClass = c.step.pitchClass; break;
                 case Lane::octave:      s.octave = c.step.octave; break;
                 case Lane::velocity:    s.velocity = c.step.velocity; break;

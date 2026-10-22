@@ -165,13 +165,14 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
             playStep[(size_t) t] = idx;
 
             const auto& step = tp.steps[(size_t) idx];
-            if (! step.on)
+            if (! step.on && ! step.ccOn)
                 continue;
 
             const int s = sampleFor (tn);
             const int channel = juce::jlimit (1, 16, (int) route.midiChannel);
 
-            if (route.noteOut && (step.probability >= 100 || random.nextInt (100) < step.probability))
+            // notes follow the note on/off, CC values the CC on/off (SPEC.md 5)
+            if (step.on && route.noteOut && (step.probability >= 100 || random.nextInt (100) < step.probability))
             {
                 int pitch = midiNote (step.octave, step.pitchClass);
                 if (tp.scaleOn)
@@ -185,7 +186,7 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
                 }
             }
 
-            if (route.ccOut && ! g.ccSmoothing)
+            if (step.ccOn && route.ccOut && ! g.ccSmoothing)
             {
                 out.addEvent (juce::MidiMessage::controllerEvent (channel, route.ccNumber, step.cc), s);
                 lastCCSent[(size_t) t] = step.cc;
@@ -225,13 +226,13 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
             long long n0 = 0;
             bool found0 = false;
             for (long long n = base + 1; n >= base - searchRange; --n)
-                if (timeOf (n) <= x + 1.0e-9 && stepAt (n).on) { n0 = n; found0 = true; break; }
+                if (timeOf (n) <= x + 1.0e-9 && stepAt (n).ccOn) { n0 = n; found0 = true; break; }
             if (! found0)
                 return -1;
             long long n1 = 0;
             bool found1 = false;
             for (long long n = base - 1; n <= base + searchRange; ++n)
-                if (timeOf (n) > x + 1.0e-9 && stepAt (n).on) { n1 = n; found1 = true; break; }
+                if (timeOf (n) > x + 1.0e-9 && stepAt (n).ccOn) { n1 = n; found1 = true; break; }
             const int v0 = stepAt (n0).cc;
             if (! found1)
                 return v0;
