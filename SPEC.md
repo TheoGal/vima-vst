@@ -70,12 +70,12 @@ A new instance, NEW in the FILE menu, CLEAR in the patterns view and a right-cli
 | Steps | all 32 on, note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
 | Current pattern | B01 · 01 |
 | Global scale | C minor |
-| Octave range / middle C | 0-6 / C3 |
+| Middle C | C3 |
 | CC smoothing | off, time 100% |
 | Pattern change by CC | off, channel 16, CC 20; quantize 1 BAR |
 | Chain | off, loop on, empty |
 | LANES | NOTE only |
-| RANGES | full range of every lane (NOTE C-B, OCT = the octave range, VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
+| RANGES | full range of every lane (NOTE C-B, OCT = all octaves (C-2 to G8 with middle C = C3), VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
 | SHIFT ALL lane / SLIDER lane / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
 | Theme | dark |
@@ -249,7 +249,7 @@ A relative shift of all steps in scope.
 Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window. Sections, top to bottom:
 
 - **Appearance**: Theme, DARK / LIGHT (neutral).
-- **Pitch** (green): Octave range as two knobs, LOWEST and HIGHEST (the highest is always above the lowest). Middle C is (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (lowest C-2)**, **C4 (lowest C-1)** or **C5 (lowest C0)**, shown with the lowest C in brackets, in capitals like the rest of Settings: "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)". C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3.
+- **Pitch** (green): there is no octave range setting; octaves always cover the whole MIDI range (MIDI notes 0-127). Middle C is (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (lowest C-2)**, **C4 (lowest C-1)** or **C5 (lowest C0)**, shown with the lowest C in brackets, in capitals like the rest of Settings: "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)". C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3.
 - **User scale** (green): 12 note toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root). The root is always included. A ROOT row above the toggles sets the root right here, so the user does not need to go back and forth with the main window. It is the same global root as in the SCALE menu: changing it in either place changes both. The toggle labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC output** (cyan): Smooth between steps ON/OFF, and Smoothing time as a knob in percent of a step (1-100%). The time is dimmed when smoothing is off.
 - **Pattern change** (neutral): From incoming CC ON/OFF, with MIDI CH and CC number knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END. OFF means no quantize: the pattern changes the instant it is picked (see 7.3).
@@ -314,7 +314,7 @@ This section lists every mouse action, control by control. On macOS, Alt is Opti
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
 - **Right-click or Alt + click**: reset to the default.
 - Defaults are the init values (4.1): LENGTH 16, SWING 0%, MIDI CH = the track number, CC number = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults (for MIN / MAX: the full range).
-- The NOTE knob moves through in-scale notes only when the track's scale is on; the OCTAVE knob stays within the octave range from Settings.
+- The NOTE knob moves through in-scale notes only when the track's scale is on; the OCTAVE knob covers the whole MIDI range (C-2 to G8 with middle C = C3; notes above MIDI 127 are not played).
 
 **Buttons** (all on/off and choice buttons, chips and tabs)
 - **Click**: act. The action happens when the mouse button is released over the button; releasing elsewhere cancels.
@@ -385,7 +385,7 @@ Targets:
 
 - **SHOWN** = the track shown in the main window (saved with the project), for use with controllers: the same macros always control the track on screen. **CURRENT** = the playing pattern.
 - **Range**: each mapping has MIN and MAX (default: the full range). The whole macro travel covers MIN to MAX. MIN above MAX inverts the direction.
-- **Note** follows the scale like the step's note knob: when the target track's scale is on, the macro moves only through in-scale notes between MIN and MAX (C minor over C-B = 7 positions spread over the whole travel); with the scale off, through all 12. MIN / MAX are set as note names. **Octave** covers the octave range from Settings.
+- **Note** follows the scale like the step's note knob: when the target track's scale is on, the macro moves only through in-scale notes between MIN and MAX (C minor over C-B = 7 positions spread over the whole travel); with the scale off, through all 12. MIN / MAX are set as note names. **Octave** covers the whole MIDI range.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing, pattern switch, chain, SHOWN track switch, remapping), the macro moves to match, as a short gesture so hosts can record it. A target value outside MIN / MAX is shown at the nearest end and is not overwritten by that.
 - The host shows the target value as the macro's value text ("96", "1/16", "B01 · 05"); unmapped macros show "-".
 - Host changes are not added to undo. Mappings are saved with the project.
@@ -402,7 +402,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ### 13.3 Presets and macro mapping sets
 
-- **Presets** hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, octave range, middle C, CC smoothing, pattern change by CC, quantize, lanes and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
+- **Presets** hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, middle C, CC smoothing, pattern change by CC, quantize, lanes and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
 - **FILE** button (folder icon) in the header, between the HOST box and UNDO, opens a menu: the current preset's name (or UNSAVED), NEW (asks first; clears the music, keeps mappings), LOAD..., SAVE (overwrites the current preset file), SAVE AS...
 - LOAD and SAVE AS use the system's file dialogs, starting in **Documents/VIMA/Presets**. Files can be saved anywhere. Extension **.vima** (XML).
 - Loading a preset clears undo. The current preset file is remembered with the DAW project.
@@ -451,6 +451,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Octave range setting removed: octaves cover the whole MIDI range; Settings keeps only the middle C convention for pitch.
 - 2026-10-22: Built: init values (4.1), gate up to 400%, step slider click / draw, wheel on SHIFT ALL, middle C C3 / C4 / C5. Old projects keep their saved content.
 - 2026-10-22: Middle C setting gets C5 (FL Studio, Cakewalk, Renoise); each choice shows its lowest C in brackets.
 - 2026-10-22: Gate range 1-400% (percentage of a step, no click-in points). Step sliders: click jumps, drag draws. Every knob supports the mouse wheel. No INIT button: NEW in the FILE menu covers it. (To be built together with the new init values.)

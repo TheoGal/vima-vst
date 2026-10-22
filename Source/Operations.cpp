@@ -88,7 +88,8 @@ int soundingNote (const Project& p, int pattern, int track, int step)
 
 static void setPitch (Step& s, int pitch, const Globals& g)
 {
-    const int lo = midiNote (g.octaveLow, 0), hi = midiNote (g.octaveHigh, 11);
+    juce::ignoreUnused (g);
+    const int lo = lowestPitch, hi = highestPitch;
     pitch = juce::jlimit (lo, hi, pitch);
     s.pitchClass = (std::int8_t) mod12 (pitch);
     s.octave = (std::int8_t) (floorDiv12 (pitch) - 2);
@@ -125,7 +126,7 @@ void setPitchClass (Project& p, int pattern, int track, int step, int pitchClass
 void nudgeOctave (Project& p, int pattern, int track, int step, int delta)
 {
     auto& s = trackOf (p, pattern, track).steps[(size_t) juce::jlimit (0, maxSteps - 1, step)];
-    s.octave = (std::int8_t) juce::jlimit (p.globals.octaveLow, p.globals.octaveHigh, s.octave + delta);
+    s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, s.octave + delta);
 }
 
 // ---------------------------------------------------------------------------------------
@@ -148,8 +149,8 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
     if (pcs.empty())
         for (int pc = 0; pc < 12; ++pc) pcs.push_back (pc);
 
-    const int octLo = juce::jmax (g.octaveLow, juce::jmin (g.rangeOct.min, g.rangeOct.max));
-    const int octHi = juce::jmin (g.octaveHigh, juce::jmax (g.rangeOct.min, g.rangeOct.max));
+    const int octLo = juce::jmax (minOctave, juce::jmin (g.rangeOct.min, g.rangeOct.max));
+    const int octHi = juce::jmin (maxOctave, juce::jmax (g.rangeOct.min, g.rangeOct.max));
 
     for (int i = 0; i < maxSteps; ++i)
     {
@@ -161,7 +162,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
             {
                 case Lane::on:          s.on = r.nextFloat() < 0.7f; break;
                 case Lane::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
-                case Lane::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : g.octaveLow); break;
+                case Lane::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : minOctave); break;
                 case Lane::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;
                 case Lane::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
                 case Lane::probability: s.probability = (std::uint8_t) juce::jlimit (0, 100, randomIn (r, g.rangeProb.min, g.rangeProb.max)); break;
@@ -205,7 +206,7 @@ static void laneLimits (const Project& p, const TrackPattern& tp, Lane lane, int
     {
         case Lane::note:
         {
-            const int loPitch = midiNote (g.octaveLow, 0), hiPitch = midiNote (g.octaveHigh, 11);
+            const int loPitch = lowestPitch, hiPitch = highestPitch;
             if (tp.scaleOn)
             {
                 const auto mask = g.scaleMask();
@@ -220,7 +221,7 @@ static void laneLimits (const Project& p, const TrackPattern& tp, Lane lane, int
             }
             return;
         }
-        case Lane::octave:      lo = g.octaveLow; hi = g.octaveHigh; return;
+        case Lane::octave:      lo = minOctave; hi = maxOctave; return;
         case Lane::velocity:    lo = 1; hi = 127; return;
         case Lane::gate:        lo = 1; hi = maxGate; return;
         case Lane::probability: lo = 0; hi = 100; return;

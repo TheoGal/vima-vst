@@ -103,11 +103,7 @@ void RangeBar::axis (int& lo, int& hi) const
     switch (lane)
     {
         case Lane::note:        lo = 0; hi = 11; return;
-        case Lane::octave:
-        {
-            const auto g = ctx.globalsCopy();
-            lo = g.octaveLow; hi = g.octaveHigh; return;
-        }
+        case Lane::octave:      lo = minOctave; hi = maxOctave; return;
         case Lane::velocity:    lo = 1; hi = 127; return;
         case Lane::gate:        lo = 1; hi = maxGate; return;
         case Lane::probability: lo = 0; hi = 100; return;

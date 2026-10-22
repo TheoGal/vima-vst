@@ -22,7 +22,8 @@ constexpr int maxChainEntries = 64;
 // Internal octave numbering: MIDI note = 12 * (octave + 2) + pitchClass, so C3 = 60
 // (the "middle C is C3" convention). The C4 convention only changes the displayed number.
 constexpr int minOctave = -2;
-constexpr int maxOctave = 8;
+constexpr int maxOctave = 8;     // octave 8 reaches G (MIDI 127); higher notes are not played
+constexpr int lowestPitch = 0, highestPitch = 127;
 constexpr int maxGate = 400;   // gate: 1-400 % of one step
 
 inline int midiNote (int octave, int pitchClass) { return 12 * (octave + 2) + pitchClass; }
@@ -161,7 +162,6 @@ struct Globals
     int scale = 1;                 // MINOR
     int root = 0;                  // C
     std::uint16_t userScale = 0b010110101101;   // natural minor shape by default, root always on
-    int octaveLow = 0, octaveHigh = 6;          // octave range for knobs and randomize
     int middleC = 3;               // octave number shown for middle C: 3, 4 or 5 (display only)
     int octaveOffset() const { return middleC - 3; }
     bool lightTheme = false;
@@ -180,7 +180,7 @@ struct Globals
 
     // Randomize / smooth lane selection and ranges
     bool laneOn = false, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = false;
-    LaneRange rangeNote { 0, 11 }, rangeOct { 0, 6 }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
+    LaneRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
               rangeProb { 0, 100 }, rangeCC { 0, 127 };
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)

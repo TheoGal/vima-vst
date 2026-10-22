@@ -35,7 +35,7 @@ void macroLimits (MacroTarget t, const Globals& g, int& lo, int& hi)
     const auto& i = macroTargetInfo (t);
     lo = i.min;
     hi = i.max;
-    if (t == MacroTarget::octave) { lo = g.octaveLow; hi = g.octaveHigh; }
+    juce::ignoreUnused (g);
 }
 
 MacroMap defaultMacroMap (MacroTarget t, int track, int step, const Globals& g)

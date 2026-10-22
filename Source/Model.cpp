@@ -325,8 +325,6 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("scale", g.scale, nullptr);
     gt.setProperty ("root", g.root, nullptr);
     gt.setProperty ("userScale", (int) g.userScale, nullptr);
-    gt.setProperty ("octaveLow", g.octaveLow, nullptr);
-    gt.setProperty ("octaveHigh", g.octaveHigh, nullptr);
     gt.setProperty ("middleC", g.middleC, nullptr);
     gt.setProperty ("lightTheme", g.lightTheme, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
@@ -409,8 +407,6 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.scale = juce::jlimit (0, numScales - 1, (int) gt.getProperty ("scale", g.scale));
         g.root = juce::jlimit (0, 11, (int) gt.getProperty ("root", g.root));
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
-        g.octaveLow = juce::jlimit (minOctave, maxOctave - 1, (int) gt.getProperty ("octaveLow", g.octaveLow));
-        g.octaveHigh = juce::jlimit (g.octaveLow + 1, maxOctave, (int) gt.getProperty ("octaveHigh", g.octaveHigh));
         if (gt.hasProperty ("middleC"))
             g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC"));
         else

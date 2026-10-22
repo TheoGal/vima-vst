@@ -128,7 +128,8 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     {
         const auto g = ctx.globalsCopy();
         const int o = (int) std::floor (soundingPitch (ctx, index) / 12.0) - 2;
-        return g.octaveHigh > g.octaveLow ? (float) (o - g.octaveLow) / (float) (g.octaveHigh - g.octaveLow) : 1.0f;
+        juce::ignoreUnused (g);
+        return (float) (o - minOctave) / (float) (maxOctave - minOctave);
     };
     octave.nudge = [this] (int d)
     {
@@ -143,7 +144,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         {
             const int o = shown - p.globals.octaveOffset();
             p.patterns[(size_t) p.currentPattern].tracks[(size_t) t].steps[(size_t) index].octave
-                = (std::int8_t) juce::jlimit (p.globals.octaveLow, p.globals.octaveHigh, o);
+                = (std::int8_t) juce::jlimit (minOctave, maxOctave, o);
         });
     };
     octave.onGestureStart = gestureStart;

@@ -56,7 +56,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         {
             const Globals d;
             auto& g = p.globals;
-            g.lightTheme = d.lightTheme; g.octaveLow = d.octaveLow; g.octaveHigh = d.octaveHigh; g.middleC = d.middleC;
+            g.lightTheme = d.lightTheme; g.middleC = d.middleC;
             g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing; g.ccSmoothingTime = d.ccSmoothingTime;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
         });
@@ -80,21 +80,6 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     }
 
     // Pitch
-    octLow = &knob();
-    octLow->colour = G;
-    octLow->minValue = minOctave; octLow->maxValue = maxOctave - 1; octLow->defaultValue = 0;
-    octLow->getValue = [this] { return ctx.globalsCopy().octaveLow; };
-    octLow->setValue = [this] (int v) { ctx.edit (false, [v] (Project& p) { p.globals.octaveLow = juce::jmin (v, p.globals.octaveHigh - 1); }); };
-    octHigh = &knob();
-    octHigh->colour = G;
-    octHigh->minValue = minOctave + 1; octHigh->maxValue = maxOctave; octHigh->defaultValue = 6;
-    octHigh->getValue = [this] { return ctx.globalsCopy().octaveHigh; };
-    octHigh->setValue = [this] (int v) { ctx.edit (false, [v] (Project& p) { p.globals.octaveHigh = juce::jmax (v, p.globals.octaveLow + 1); }); };
-    for (auto* k : { octLow, octHigh })
-    {
-        k->format = [this] (int v) { return juce::String (v + ctx.globalsCopy().octaveOffset()); };
-        k->parse = [this] (const juce::String& s) { return s.getIntValue() - ctx.globalsCopy().octaveOffset(); };
-    }
     // Middle C: C3 (Live, Logic, Cubase...), C4 (Reaper, scientific), C5 (FL Studio, Cakewalk, Renoise)
     for (int i = 0; i < 3; ++i)
     {
@@ -244,16 +229,6 @@ void SettingsDialog::resized()
     divider();
 
     section ("PITCH");
-    {
-        auto r = rowArea ("Octave range", 40);
-        octLow->setBounds (r.removeFromLeft (40));
-        r.removeFromLeft (8);
-        rows.add ({ "LOWEST", r.removeFromLeft (56), 1.0f, true });
-        r.removeFromLeft (12);
-        octHigh->setBounds (r.removeFromLeft (40));
-        r.removeFromLeft (8);
-        rows.add ({ "HIGHEST", r.removeFromLeft (60), 1.0f, true });
-    }
     segment (rowArea ("Middle C is", 32), midCBtns, 120);
     divider();
 
