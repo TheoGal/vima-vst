@@ -427,7 +427,8 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 
 ### 15.1 Decided, not built yet
 
-(nothing pending)
+1. **Remove the Smoothing time setting** (Settings, CC OUTPUT). CC smoothing is just ON or OFF; when on, it always glides over the whole gap between two CC-on steps (what 100% did).
+2. **Note knob arc follows the scale**: with the track's scale on, the arc shows the note's position among the scale's notes, so the highest in-scale note (A# in C minor) is fully turned right and the lowest (C) fully left. With the scale off, all 12 notes as now. The same for the NOTE range bar and note macros if they show an arc.
 
 ### 15.2 Open
 
