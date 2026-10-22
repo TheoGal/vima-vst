@@ -126,7 +126,7 @@ There is no step skip, no chords, no drum mode. Note mode only.
 - Global screen, so it uses the neutral color. Green and cyan only appear in the pattern thumbnails (note content and CC content).
 - **Banks**: a row of 4 buttons. A small dot marks the bank holding the playing or queued pattern.
 - **Pattern grid**: 4 x 4 slots for the current bank. Each slot shows its number, a state (PLAYING with a lit LED, NEXT with a dashed outline, STORED, EMPTY), and an 8-bar thumbnail of the 8 tracks (see 7.1.1). A thin line at the bottom marks patterns used in the chain.
-- **Clicking a slot** selects it and queues it as the next pattern. The switch happens at the next quantize point (Settings: 1 beat, 1 bar or pattern end), or instantly when quantize is OFF.
+- **Clicking a slot** selects it (to be changed: see 15.1 item 6, select vs play). Today it also queues it as the next pattern. The switch happens at the next quantize point (Settings: 1 beat, 1 bar or pattern end), or instantly when quantize is OFF.
 - **Selected bar**: COPY, PASTE and CLEAR for the selected pattern, plus a track dropdown with COPY TRACK to copy a single track. The clipboard content is shown at the right.
 
 #### 7.1.1 Pattern thumbnail
@@ -432,6 +432,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 3. **Remove the CHROMATIC scale** from the scale list: a track with its scale OFF already plays all 12 notes. 13 built-in scales plus USER remain.
 4. **Remove MIN / MAX from macros**: every macro always covers its target's full range (for notes: all in-scale notes, or all 12 with the scale off). The RANGE section goes away from the mapping editor, and from the spec (13.1, 13.2) when built.
 5. **Step macro names and order**: NOTE ON is renamed **NOTE STEP**, CC ON is renamed **CC STEP**. Order in the editor: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE.
+6. **Pattern slots: select vs play.** Each slot in the patterns view gets a small **play button at the top center**. Clicking anywhere else in the slot only **selects** it (for COPY / PASTE / CLEAR / COPY TRACK), without playing it. Clicking the play button selects it **and** queues it to play (quantize applies). The header picker and arrows still play patterns directly.
 
 ### 15.2 Open
 
