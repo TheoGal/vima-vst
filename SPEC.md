@@ -297,7 +297,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 - **Top**: one button with the step number inside, used as the on/off toggle. On: filled with the mode accent, number in a dark contrasting color. Off (within the length): filled grey. Beyond the length: outline only (and the whole cell dimmed).
 - **Note mode**: pitch knob, octave knob below it, then a vertical slider. A global "SLIDER" switch (top right of the parameter row) makes all sliders show velocity, gate or probability. The slider takes that lane's color.
-- **CC mode**: one larger knob showing the step's CC value. Cells keep the same height in both modes so the layout does not jump.
+- **CC mode**: one tall cyan slider for the step's CC value (0-127), filling the cell below the step button, with the value under it. It works like the note-mode sliders: click to jump, click and drag across neighbouring steps to draw. Cells keep the same height in both modes so the layout does not jump.
 - Off steps: controls dimmed.
 - The playhead is shown on the LED bar only; step cells do not change as it passes.
 - Knobs are flat arc rings (270 degrees) with the value as text in the middle.
@@ -319,7 +319,7 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 
 This section lists every mouse action, control by control. On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click also counts as a right-click.
 
-**Knobs and step sliders** (track LENGTH, SWING, MIDI CH, CC number; per-step NOTE, OCTAVE, CC; the VEL / GATE / PROB step sliders; the knobs in Settings and in the macro mapping editor)
+**Knobs and step sliders** (track LENGTH, SWING, MIDI CH, CC number; per-step NOTE, OCTAVE; the VEL / GATE / PROB step sliders and the CC step sliders; the knobs in Settings and in the macro mapping editor)
 - **Knobs, drag up / down**: change the value, relative to where the drag started.
 - **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps in one move (one undo step).
 - **Shift + drag**: fine control (3 times slower).
@@ -489,6 +489,7 @@ Nothing at the moment.
 - 2026-10-22: Start / stop button in the HOST box (stop while the host plays, or run on its own while the host is stopped). Playhead on the LEDs only. Off steps within the length have a grey filled on/off button.
 - 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".
 - 2026-10-22: Built: no CC smoothing time (smoothing glides over the whole gap); the note knob arc spreads the in-scale notes over the whole arc; no CHROMATIC scale (13 + USER); macros always cover the full range (no MIN / MAX); step macros NOTE STEP and CC STEP; pattern slots select on click and play from their play button; patterns view copy / paste works like step copy / paste, CLEAR never erases; patterns numbered 1-64 in pages (no banks); no NONE button in the macro editor.
+- 2026-10-23: CC mode: the per-step CC value is a slider (like the note-mode sliders, with drawing) instead of a knob.
 - 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
 - 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.
 - 2026-10-21: Reduced to 8 tracks and 64 patterns. Pattern change by CC now reaches every pattern.

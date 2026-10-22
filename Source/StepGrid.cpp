@@ -171,10 +171,11 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     octave.pixelsPerStep = 10.0f;
     addAndMakeVisible (octave);
 
-    // Velocity / gate / probability slider
+    // Step slider: velocity / gate / probability in note mode, the CC value in CC mode
     slider.getValue = [this]
     {
         const auto s = stepCopy();
+        if (ctx.ui.ccMode) return (int) s.cc;
         switch (ctx.ui.slider)
         {
             case SliderLane::velocity:    return (int) s.velocity;
@@ -186,10 +187,12 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     slider.setValue = [this] (int v)
     {
         const auto lane = ctx.ui.slider;
-        ctx.edit (false, [this, lane, v] (Project& p)
+        const bool ccMode = ctx.ui.ccMode;
+        ctx.edit (false, [this, lane, ccMode, v] (Project& p)
         {
             auto& s = ctx.liveTrack (p).steps[(size_t) index];
-            if (lane == SliderLane::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
+            if (ccMode) s.cc = (std::uint8_t) juce::jlimit (0, 127, v);
+            else if (lane == SliderLane::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
             else if (lane == SliderLane::gate) s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v);
             else s.probability = (std::uint8_t) juce::jlimit (0, 100, v);
         });
@@ -197,6 +200,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     slider.barColour = [this]
     {
         const auto& t = Theme::current();
+        if (ctx.ui.ccMode) return t.cyan;
         return ctx.ui.slider == SliderLane::velocity ? t.green : ctx.ui.slider == SliderLane::gate ? t.purple : t.amber;
     };
     slider.onGestureStart = gestureStart;
@@ -205,24 +209,12 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     slider.format = [] (int v) { return juce::String (v); };
     addAndMakeVisible (slider);
 
-    // CC value (CC mode)
-    cc.thickness = 5.0f;
-    cc.fontSize = 14.0f;
-    cc.minValue = 0; cc.maxValue = 127; cc.defaultValue = 64;
-    cc.colour = [] { return Theme::current().cyan; };
-    cc.getValue = [this] { return (int) stepCopy().cc; };
-    cc.setValue = [this] (int v) { ctx.edit (false, [this, v] (Project& p) { ctx.liveTrack (p).steps[(size_t) index].cc = (std::uint8_t) v; }); };
-    cc.onGestureStart = gestureStart;
-    cc.pixelsPerStep = 3.0f;
-    addAndMakeVisible (cc);
-
     // LEARN targets (SPEC.md 13.1)
     getProperties().set ("learnStep", index);
     setLearnTarget (toggle, MacroTarget::stepOn);
     setLearnTarget (pitch, MacroTarget::note);
     setLearnTarget (octave, MacroTarget::octave);
     setLearnTarget (slider, -1);
-    setLearnTarget (cc, MacroTarget::cc);
 
     refreshState();
 }
@@ -245,13 +237,12 @@ void StepCell::refreshState()
     const bool cc_ = ctx.ui.ccMode;
     pitch.setVisible (! cc_);
     octave.setVisible (! cc_);
-    slider.setVisible (! cc_);
-    cc.setVisible (cc_);
 
     const auto lane = ctx.ui.slider;
-    slider.minValue = lane == SliderLane::probability ? 0 : 1;
-    slider.maxValue = lane == SliderLane::velocity ? 127 : lane == SliderLane::gate ? maxGate : 100;
-    slider.defaultValue = 100;   // init values: velocity 100, gate 100 %, probability 100 %
+    slider.minValue = cc_ ? 0 : lane == SliderLane::probability ? 0 : 1;
+    slider.maxValue = cc_ ? 127 : lane == SliderLane::velocity ? 127 : lane == SliderLane::gate ? maxGate : 100;
+    slider.defaultValue = cc_ ? 64 : 100;   // init values: CC 64; velocity 100, gate 100 %, probability 100 %
+    setLearnTarget (slider, cc_ ? (int) MacroTarget::cc : -1);
     octave.defaultValue = 3 + ctx.globalsCopy().octaveOffset();   // the octave of middle C, as shown
     octave.textColour = Theme::current().text2;
 
@@ -265,7 +256,7 @@ void StepCell::refreshState()
     pitch.setAlpha (a);
     octave.setAlpha (a);
     slider.setAlpha (a);
-    cc.setAlpha (a);
+    resized();
     repaint();
 }
 
@@ -281,8 +272,10 @@ void StepCell::resized()
     b.removeFromTop (4);
     labelArea = b.removeFromBottom (13);
     b.removeFromBottom (4);
-    slider.setBounds (b.withTrimmedTop (2).reduced (9, 0));
-    cc.setBounds (rest.withSizeKeepingCentre (56, 56));
+    if (ctx.ui.ccMode)   // CC mode: one tall CC slider in place of the note controls
+        slider.setBounds (rest.withTrimmedBottom (13 + 4).withTrimmedTop (2).reduced (9, 0));
+    else
+        slider.setBounds (b.withTrimmedTop (2).reduced (9, 0));
 }
 
 void StepCell::paint (juce::Graphics& g)
@@ -292,17 +285,17 @@ void StepCell::paint (juce::Graphics& g)
     const bool alt = (index / 4) % 2 == 1;
     draw::tile (g, getLocalBounds().toFloat(), beyond ? t.beyond : (alt ? t.tileAlt : t.tile), t.border3);
 
-    if (! ctx.ui.ccMode)
     {
         const auto s = stepCopy();
         juce::String text;
-        switch (ctx.ui.slider)
+        if (ctx.ui.ccMode) text = juce::String ((int) s.cc);
+        else switch (ctx.ui.slider)
         {
             case SliderLane::velocity:    text = juce::String ((int) s.velocity); break;
             case SliderLane::gate:        text = juce::String ((int) s.gate) + "%"; break;
             case SliderLane::probability: text = juce::String ((int) s.probability) + "%"; break;
         }
-        g.setColour (t.muted.withMultipliedAlpha (s.on ? 1.0f : 0.32f));
+        g.setColour (t.muted.withMultipliedAlpha ((ctx.ui.ccMode ? s.ccOn : s.on) ? 1.0f : 0.32f));
         g.setFont (Fonts::mono (10.0f));
         g.drawText (text, labelArea, juce::Justification::centred);
     }

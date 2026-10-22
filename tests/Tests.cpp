@@ -1160,6 +1160,14 @@ int main (int argc, char** argv)
                 if (auto* tg = findChild<Pill> (*c0)) click (*tg);
                 const auto after = stepOf (ctx.ui.track, 0);
                 check (after.ccOn != before.ccOn && after.on == before.on, "in CC mode the step button switches the CC on/off only");
+                if (auto* sl = findChild<LaneSlider> (*c0))
+                {
+                    click (*sl, { sl->getWidth() / 2, 0 });
+                    const int top = stepOf (ctx.ui.track, 0).cc;
+                    click (*sl, { sl->getWidth() / 2, sl->getHeight() + 40 });
+                    check (sl->isVisible() && sl->getHeight() > 100 && top == 127 && stepOf (ctx.ui.track, 0).cc == 0,
+                           "CC mode: the CC value is a tall slider (top = 127, bottom = 0)");
+                }
             }
             if (auto* notes = findPill (ed, "NOTES")) click (*notes);
             check (! ctx.ui.ccMode, "back to note mode");

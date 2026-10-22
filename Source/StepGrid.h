@@ -38,7 +38,7 @@ private:
     Context& ctx;
     const int index;
     Pill toggle;
-    Knob pitch, octave, cc;
+    Knob pitch, octave;
     LaneSlider slider;
     juce::Rectangle<int> labelArea;
     Step stepCopy() const;
