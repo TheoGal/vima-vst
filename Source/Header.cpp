@@ -91,8 +91,7 @@ Header::Header (Context& c) : ctx (c)
     notesBtn.font = ccBtn.font = [] { return Fonts::monoSemi (12.0f).withExtraKerningFactor (0.08f); };
     notesBtn.ledColour = [this] { return ctx.routingCopy().noteOut ? Theme::current().green : Theme::current().ledOff; };
     ccBtn.ledColour = [this] { return ctx.routingCopy().ccOut ? Theme::current().cyan : Theme::current().ledOff; };
-    notesBtn.ledGlow = [this] { return ctx.routingCopy().noteOut; };
-    ccBtn.ledGlow = [this] { return ctx.routingCopy().ccOut; };
+    notesBtn.ledGlow = ccBtn.ledGlow = [] { return false; };   // plain dot, no glow ring
     notesBtn.justification = ccBtn.justification = juce::Justification::centredLeft;
     notesBtn.textInset = ccBtn.textInset = 2;
     notesBtn.onClick = [this] { ctx.ui.ccMode = false; Popover::closeAll (*ctx.root); ctx.changed(); };
