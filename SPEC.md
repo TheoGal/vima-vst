@@ -223,7 +223,7 @@ A relative shift of all steps in scope.
 Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window. Sections, top to bottom:
 
 - **Appearance**: Theme, DARK / LIGHT (neutral).
-- **Pitch** (green): Octave range as two knobs, LOWEST and HIGHEST (the highest is always above the lowest). Middle C is C3 or C4.
+- **Pitch** (green): Octave range as two knobs, LOWEST and HIGHEST (the highest is always above the lowest). Middle C is (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (lowest C-2)**, **C4 (lowest C-1)** or **C5 (lowest C0)**, shown with the lowest C in brackets exactly like that. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. *(C5 and the bracket labels: not built yet, see 15.1.)*
 - **User scale** (green): 12 note toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root). The root is always included. A ROOT row above the toggles sets the root right here, so the user does not need to go back and forth with the main window. It is the same global root as in the SCALE menu: changing it in either place changes both. The toggle labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC output** (cyan): Smooth between steps ON/OFF, and Smoothing time as a knob in percent of a step (1-100%). The time is dimmed when smoothing is off.
 - **Pattern change** (neutral): From incoming CC ON/OFF, with MIDI CH and CC number knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END. OFF means no quantize: the pattern changes the instant it is picked (see 7.3).
@@ -397,7 +397,8 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 1. **Gate up to 400%** (table in 4 / 5): engine handles notes longer than a step (same-pitch retrigger, stop, pattern change, jumps); slider, typing, randomize range, smooth, shift and gate macros use 1-400%. Defaults and existing values stay as they are.
 2. **Step sliders**: click jumps to the value; click and drag across sliders draws (12.3).
 3. **Mouse wheel on the SHIFT ALL knob** (12.3). Rule: every knob supports the mouse wheel.
-4. **New init (default) values**: the user will send the full list. Build items 1-4 together.
+4. **Middle C setting with three choices**: C3 (lowest C-2), C4 (lowest C-1), C5 (lowest C0) (section 11). No automatic choice per host.
+5. **New init (default) values**: the user will send the full list. Build items 1-5 together.
 
 ### 15.2 Open
 
@@ -428,6 +429,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Middle C setting gets C5 (FL Studio, Cakewalk, Renoise); each choice shows its lowest C in brackets.
 - 2026-10-22: Gate range 1-400% (percentage of a step, no click-in points). Step sliders: click jumps, drag draws. Every knob supports the mouse wheel. No INIT button: NEW in the FILE menu covers it. (To be built together with the new init values.)
 - 2026-10-22: Mouse interaction reference written (12.3), as the base for the manual.
 - 2026-10-22: Tested in Live 12 (Windows): Live strips the MIDI channel from a VST3's output, so in Live one VIMA instance per destination track is used. Accepted.
