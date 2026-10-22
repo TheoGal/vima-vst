@@ -276,12 +276,54 @@ Opened with the SETTINGS button. 600 x 720 dialog, same style as the main window
 - The NOTES and CC mode buttons in the header each carry an LED showing whether that output is on for the selected track (lit in green / cyan when on, dark grey when off). The LEDs are visible in both modes, so the hidden output's state is always known. The selected mode button is shown with a tinted background and accent outline, so the LED stays readable.
 - **SLIDER**: VEL / GATE / PROB switch (note mode only).
 
-### 12.3 Knob and slider interaction (all knobs, including the per-step knobs, and the step sliders)
+### 12.3 Mouse interaction reference
 
-- Drag up / down to change the value. Mouse wheel changes it by one step.
-- Shift + drag for fine control.
-- Double-click to type a value.
-- Right-click (or Alt + click) to reset to default.
+This section lists every mouse action, control by control. On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click also counts as a right-click.
+
+**Knobs and step sliders** (track LENGTH, SWING, MIDI CH, CC number; per-step NOTE, OCTAVE, CC; the VEL / GATE / PROB step sliders; the knobs in Settings and in the macro mapping editor)
+- **Drag up / down**: change the value, relative to where the drag started (clicking a slider does not jump to the click position).
+- **Shift + drag**: fine control (3 times slower).
+- **Mouse wheel**: one step per notch.
+- **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
+- **Right-click or Alt + click**: reset to the default.
+- Defaults: LENGTH 16, SWING 0%, MIDI CH = the track number, CC number 74, NOTE C, OCTAVE 3, VELOCITY 100, GATE 50%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults (for MIN / MAX: the full range).
+- The NOTE knob moves through in-scale notes only when the track's scale is on; the OCTAVE knob stays within the octave range from Settings.
+
+**Buttons** (all on/off and choice buttons, chips and tabs)
+- **Click**: act. The action happens when the mouse button is released over the button; releasing elsewhere cancels.
+- **Right-click**: does nothing.
+- **Mouse wheel** on the DIVISION value: next / previous division (wheel up = shorter steps). On the scale name in the SCALE tile: next / previous scale.
+- **SMOOTH**: click for one smoothing step; **press and hold** to repeat (after 0.4 s, about 14 times per second). One press or one hold is one undo step.
+
+**LED bar** (above each row of steps)
+- **Click**: select one step. **Drag**: select a run of steps.
+- **Ctrl + click**: add or remove one step. **Ctrl + drag**: add a run.
+- While **COPIED** is lit: a click only picks the landing step of the paste (no selection, no drag).
+- Clicks beyond the track length do nothing.
+
+**Step on/off button** (step number): click toggles the step.
+
+**SHIFT ALL knob**: drag up / down to shift the chosen lane (Shift + drag = finer). The knob springs back to 0 on release; the whole drag is one undo step. No wheel, double-click or reset.
+
+**RANGES bars** (operations panel): click or drag; the nearest handle (MIN or MAX) follows the mouse. The handles cannot cross. No wheel, double-click or reset.
+
+**Header**
+- TRACK: click for the track list. NOTES / CC: click to switch.
+- PATTERN: ‹ › step to the previous / next pattern (queued, following quantize); click the name for the pattern picker.
+- Start / stop button in the BPM box: see 3.
+- FILE (folder icon): presets menu (13.3). UNDO: one step back. MACROS: Macros page; reads "LEARN M005" while learning. SETTINGS: settings dialog.
+
+**Patterns view**
+- Pattern slot: click to select it and queue it.
+- Chain row: drag the row (grip on the left) to reorder; - / + change the repeats; x removes the entry.
+
+**Macros page**
+- Macro cell: click to select. **Drag up / down** moves the macro (Shift + drag = finer), **mouse wheel** moves it one value (one in-scale note for a note target). Unmapped macros cannot be moved. No double-click or reset.
+- LEARN: see 13.2. While learning, a click on a control in the step or patterns view maps it instead of changing it.
+
+**Popovers** (DIVISION, SCALE, pattern picker): click an option to choose it; click outside to close.
+
+**Keyboard**: no shortcuts, except typing into a knob after a double-click.
 
 ### 12.4 Operations panel (bottom, left to right)
 
@@ -376,6 +418,7 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 - 2026-10-21: Pattern thumbnails: bar height = density, color = output (green, cyan, split for both, grey for silent).
 - 2026-10-21: Name: VIMA. Repository TheoGal/vima-vst.
 - 2026-10-21: Added: window resizing (75%-200%, uniform scaling), chain reordering by dragging, Ctrl-click / Ctrl-drag selection of non-adjacent steps. Pasting keeps the spacing of copied steps.
+- 2026-10-22: Mouse interaction reference written (12.3), as the base for the manual.
 - 2026-10-22: Tested in Live 12 (Windows): Live strips the MIDI channel from a VST3's output, so in Live one VIMA instance per destination track is used. Accepted.
 - 2026-10-22: Presets (music only, .vima) from a FILE menu in the header with system file dialogs; macro mapping sets (.vimamacros) saved / loaded on the Macros page; files in Documents/VIMA. The word HOST was removed from the header.
 - 2026-10-22: No macro-mapped indicators on controls. Output LEDs on the NOTES / CC buttons are plain dots, no glow ring.
