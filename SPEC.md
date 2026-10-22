@@ -145,7 +145,7 @@ There is no step skip, no chords, no drum mode. Note mode only.
 - An ordered list (song list) of up to 64 entries, shown on the right of the patterns view.
 - Each entry: playing LED, position number, pattern (for example "B02 · 07"), length in bars (one play of the pattern times its repeats) with a progress bar while playing, a repeat count (-/+, 1 to 99) and a remove button.
 - **+ ADD** appends the selected pattern. CLEAR empties the chain. Entries can repeat the same pattern.
-- **CHAIN ON/OFF** turns chain playback on. **LOOP ON/OFF**: at the end of the chain, loop back to the first entry, or stay on the last one.
+- **CHAIN ON/OFF** turns chain playback on. **LOOP ON/OFF**: at the end of the chain, LOOP ON goes back to the first entry; LOOP OFF plays the chain once, then keeps playing (repeating) its last pattern until the transport stops or another pattern is picked.
 - One play of a pattern lasts as long as its longest track (length x division).
 - A manually queued pattern (clicking a slot) takes priority over the chain for the next change.
 - **Reordering**: drag an entry up or down the list (a grip on its left shows it can be dragged). A line shows where it will land. Playback keeps following the entry that is playing, wherever it moves. Removing an entry also keeps playback on the right entry.
@@ -432,7 +432,6 @@ Opened with the MACROS button in the header (between UNDO and SETTINGS); STEPS g
 3. **Remove the CHROMATIC scale** from the scale list: a track with its scale OFF already plays all 12 notes. 13 built-in scales plus USER remain.
 4. **Remove MIN / MAX from macros**: every macro always covers its target's full range (for notes: all in-scale notes, or all 12 with the scale off). The RANGE section goes away from the mapping editor, and from the spec (13.1, 13.2) when built.
 5. **Step macro names and order**: NOTE ON is renamed **NOTE STEP**, CC ON is renamed **CC STEP**. Order in the editor: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE.
-6. **Remove LOOP ON/OFF** from the patterns view: VIMA always loops, a single pattern or the whole chain (at the end of the chain it goes back to the first entry).
 
 ### 15.2 Open
 
