@@ -54,9 +54,8 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
     hostPlaying = host.playing;
     hostBpm = host.bpm;
 
-    // Transport button: the host starting always starts VIMA again
-    if (host.playing && ! lastHostPlaying) userStopped = false;
-    lastHostPlaying = host.playing;
+    // Transport button: stopped with the button while the host played = held (userStopped).
+    // A held VIMA ignores the host stopping and starting again; only its own button releases it.
     if (host.playing)
     {
         freeRun = false;
@@ -96,6 +95,7 @@ void VimaProcessor::toggleTransport()
         userStopped = false;
     else
     {
+        userStopped = false;   // pressing play always releases the hold
         freeRunRestart = true;
         freeRun = true;
     }

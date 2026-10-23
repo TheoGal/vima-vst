@@ -412,7 +412,7 @@ void Header::paint (juce::Graphics& g)
         draw::tile (g, transportBtn.getBounds().toFloat(), t.tile, t.border2, 4.0f);
         const auto c = transportBtn.getBounds().toFloat().getCentre();
         if (ctx.proc.engine.isPlaying) drawPlay (g, c, ctx.modeAccent());
-        else drawStop (g, c, t.muted);
+        else drawStop (g, c, ctx.proc.userStopped.load() ? t.amber : t.muted);   // amber: held, does not follow the host
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (12.0f));
         g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);

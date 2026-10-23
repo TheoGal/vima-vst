@@ -28,8 +28,12 @@ Last updated: 2026-10-21
 ## 3. Transport and clock
 
 - Follows the host: plays when the host plays, stops when the host stops, follows host tempo and song position.
-- **Start / stop button** (the play / stop icon in the HOST box of the header, next to the BPM): while VIMA plays, it stops VIMA (also while the host keeps playing). While VIMA is stopped and the host plays, it starts VIMA again in sync. While the host is stopped, it starts VIMA on its own from step 1 at the host's tempo; pressing it again, or the host starting, ends that. The host starting always starts VIMA, even after it was stopped with the button.
-- The icon shows whether VIMA is playing.
+- **Start / stop button** (the play / stop icon in the HOST box of the header, next to the BPM):
+  - **Stop while the host plays**: VIMA stops and is **held**. A held VIMA ignores the host stopping and starting again; it stays stopped until its own play button is pressed. The stop icon is **amber** while held.
+  - **Play while the host plays**: VIMA starts again in sync with the host and the hold is released; from then on it follows the host.
+  - **Play while the host is stopped**: VIMA runs on its own from step 1 at the host's tempo (this also releases a hold). Stopping it with the button, or the host starting, ends that. A stop made while the host is stopped does not hold: the next time the host plays, VIMA follows.
+  - The hold is not saved: it is released when the project is reopened.
+- The icon shows whether VIMA is playing (play icon), stopped (grey stop icon) or held (amber stop icon).
 
 ## 4. Tracks
 
@@ -490,6 +494,7 @@ Nothing at the moment.
 - 2026-10-22: Copy/paste redesign (9.1): COPY follows the armed lanes and lights up as COPIED; no selection while COPIED, an LED click picks the landing step with a ghost preview, PASTE writes and stays ready for more; COPIED or CLEAR empties the clipboard. Selection readout replaced by "LENGTH: n, STEPS: n".
 - 2026-10-22: Built: no CC smoothing time (smoothing glides over the whole gap); the note knob arc spreads the in-scale notes over the whole arc; no CHROMATIC scale (13 + USER); macros always cover the full range (no MIN / MAX); step macros NOTE STEP and CC STEP; pattern slots select on click and play from their play button; patterns view copy / paste works like step copy / paste, CLEAR never erases; patterns numbered 1-64 in pages (no banks); no NONE button in the macro editor.
 - 2026-10-23: CC mode: the per-step CC value is a slider (like the note-mode sliders, with drawing) instead of a knob.
+- 2026-10-23: Transport button: a stop while the host plays holds VIMA (amber stop icon) through host stops and restarts, until VIMA's own play button; a stop while the host is stopped does not hold.
 - 2026-10-21: Note macros are scale dependent, like the note knobs. The SHOWN track is saved with the project. No right-click mapping (right-click resets controls).
 - 2026-10-21: Host automation through 128 mappable macros (13.1, 13.2) instead of fixed parameters. Step targets can use a fixed track and pattern, or SHOWN / CURRENT for controllers. No direct MIDI learn in VIMA. Scale and root are not targets.
 - 2026-10-21: Reduced to 8 tracks and 64 patterns. Pattern change by CC now reaches every pattern.

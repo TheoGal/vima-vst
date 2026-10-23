@@ -759,6 +759,76 @@ void testTransport()
     proc->toggleTransport();
     run (10);
     check (! proc->engine.isPlaying.load() && notes == 0, "pressing it again stops VIMA");
+
+    // a fake host transport
+    struct Host : juce::AudioPlayHead
+    {
+        bool playing = false;
+        double ppq = 0.0;
+        juce::Optional<PositionInfo> getPosition() const override
+        {
+            PositionInfo i;
+            i.setIsPlaying (playing);
+            i.setBpm (120.0);
+            i.setPpqPosition (ppq);
+            i.setTimeInSamples ((juce::int64) (ppq * 24000.0));
+            return i;
+        }
+    } host;
+    proc->setPlayHead (&host);
+    auto hostRun = [&] (int blocks)
+    {
+        notes = 0;
+        for (int b = 0; b < blocks; ++b)
+        {
+            midi.clear();
+            proc->processBlock (audio, midi);
+            for (const auto m : midi) notes += m.getMessage().isNoteOn() ? 1 : 0;
+            if (host.playing) host.ppq += 250.0 * 2.0 / 48000.0;
+        }
+    };
+
+    // stopped with the button while the host plays: held through a host stop and restart
+    host.playing = true; host.ppq = 0.0;
+    hostRun (96);
+    check (proc->engine.isPlaying.load() && notes >= 4, "the host plays: VIMA follows");
+    proc->toggleTransport();
+    hostRun (10);
+    check (! proc->engine.isPlaying.load() && proc->userStopped.load(), "stopped with the button while the host plays: VIMA is held");
+    host.playing = false;
+    hostRun (10);
+    host.playing = true; host.ppq = 0.0;
+    hostRun (96);
+    check (! proc->engine.isPlaying.load() && notes == 0, "held: VIMA ignores the host stopping and starting again");
+    proc->toggleTransport();
+    hostRun (96);
+    check (proc->engine.isPlaying.load() && notes >= 4 && ! proc->userStopped.load(), "VIMA's play button releases the hold, in sync with the host");
+
+    // stopped with the button while the host is stopped: not held
+    host.playing = false;
+    hostRun (10);
+    proc->toggleTransport();
+    hostRun (20);
+    check (proc->engine.isPlaying.load(), "host stopped: the button runs VIMA on its own");
+    proc->toggleTransport();
+    hostRun (10);
+    check (! proc->userStopped.load(), "stopped while the host is stopped: not held");
+    host.playing = true; host.ppq = 0.0;
+    hostRun (96);
+    check (proc->engine.isPlaying.load() && notes >= 4, "then the host plays: VIMA follows");
+
+    // held, then play pressed while the host is stopped: runs on its own and releases the hold
+    proc->toggleTransport();
+    host.playing = false;
+    hostRun (10);
+    proc->toggleTransport();
+    hostRun (20);
+    check (proc->engine.isPlaying.load() && ! proc->userStopped.load(), "play with the host stopped releases the hold too");
+    proc->toggleTransport();
+    host.playing = true; host.ppq = 0.0;
+    hostRun (96);
+    check (proc->engine.isPlaying.load() && notes >= 4, "and the host plays: VIMA follows");
+    proc->setPlayHead (nullptr);
 }
 
 void testPresets()
