@@ -107,10 +107,12 @@ Per step values:
 | Octave | the whole MIDI range: C-2 to 8 (with middle C = C3) | Notes above MIDI 127 (G8) are not played. |
 | Velocity | 1-127 | Never 0: in MIDI a Note On with velocity 0 is a Note Off. Every operation clamps velocity to 1-127. |
 | Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step, up to 400% = four steps (legato and long notes). When a note is still held and the same pitch plays again on the same channel, the old note ends just before the new one. |
-| Probability | 0-100% | Chance that an "on" step actually plays its note each time it is reached. 100% = always. Applies to **notes only**: CC is always sent when the step's CC is on. |
+| Probability | 0-100% | Chance that an "on" step actually plays its note each time it is reached. 100% = always. **Strictly a note-mode parameter**: it is not shown in CC mode and never affects CC, which is always sent when the step's CC is on. |
 | CC value | 0-127 | Sent when the track's CC output and the step's CC are on (10). |
 
 Pitch display and scale behavior:
+
+- **The scale is a master setting for everything note related**: when a track's scale is on, every note control, display and operation follows it (note knob and its arc, NOTE range, Randomize, Smooth, Shift, note macros, playback).
 
 - The step's note knob and octave knob always show the note that will actually sound (scale applied, middle C setting applied to the octave number).
 - When the track's scale is on, the note knob can only land on notes in the scale, and its arc follows the scale: the in-scale notes are spread evenly over the whole arc, whatever their number (7 in C minor, 3 in a 3-note user scale). The lowest in-scale note (from C up) is fully left, the highest fully right (A# in C minor). With the scale off, the arc covers all 12 notes, C to B.
@@ -509,9 +511,8 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-1. **Probability also gates CC**: a step that fails its probability roll sends neither its note nor its CC (without smoothing). Probability then applies to the whole step (5, 10).
-2. **NOTE range bar follows the scale**: when the current track's scale is on, the NOTE bar in RANGES shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5); with the scale off, C to B as now.
-3. **Ranges of unarmed lanes are dimmed** in RANGES (12.6).
+1. **NOTE range bar follows the scale**: when the current track's scale is on, the NOTE bar in RANGES shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5); with the scale off, C to B as now.
+2. **Ranges of unarmed lanes are dimmed** in RANGES (12.6).
 
 ### 15.2 Open
 
@@ -559,3 +560,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-23: The chain does not follow the song position (always starts from its first entry); kept on purpose.
 - 2026-10-23: Confirmed: Ableton Live strips MIDI channels internally, so a VST step sequencer cannot drive several channels natively in Live; Max for Live would be the way to build that. VIMA stays one instance per destination track in Live.
 - 2026-10-23: Spec checked against the code and rewritten to match the build.
+- 2026-10-23: Probability is strictly a note-mode parameter (UI and function); it never affects CC. The scale is the master setting for every note-related control and operation. Queued: scale-aware NOTE range bar, dimmed ranges for unarmed lanes.
