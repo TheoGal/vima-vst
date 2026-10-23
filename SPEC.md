@@ -521,6 +521,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 15.1 Decided, not built yet
 
 1. **Press feedback on PASTE and CLEAR**: in the step operations panel and in the patterns view, PASTE and CLEAR fill with green while the mouse button is held down, and return to their normal look when released.
+2. **Narrower PATTERN box** in the header: it was sized for "B01 · 01"; now that patterns are two-digit numbers, shrink it to fit ‹, "PATTERN", the number and › (about 150 px instead of 204), without other changes.
 
 ### 15.2 Open
 
