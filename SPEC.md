@@ -513,6 +513,8 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 1. **NOTE range bar follows the scale**: when the current track's scale is on, the NOTE bar in RANGES shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5); with the scale off, C to B as now.
 2. **Ranges of unarmed lanes are dimmed** in RANGES (12.6).
+3. **"Lanes" is renamed "params" everywhere** (UI and spec): the LANES group becomes PARAMS, "armed lanes" become "armed params".
+4. **ALL is its own state**: clicking ALL lights only ALL (every param of the mode is armed, but the single buttons stay unlit). While ALL is lit, clicking a param turns ALL off and arms only that param. Clicking the lit ALL turns it off (nothing armed). Outside ALL, the param buttons toggle one by one as now. With ALL on, no range is dimmed.
 
 ### 15.2 Open
 
