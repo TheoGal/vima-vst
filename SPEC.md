@@ -524,6 +524,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 2. **Narrower PATTERN box** in the header: it was sized for "B01 · 01"; now that patterns are two-digit numbers, shrink it to fit ‹, "PATTERN", the number and › (about 150 px instead of 204), without other changes.
 3. **PATTERN box in the patterns view's bottom bar**: the "SELECTED 19" label is replaced by a box reading "PATTERN  19" (the selected pattern), styled exactly like the TRACK box next to it (same tile, border, font and spacing). It is display only, not a selector: clicking it does nothing.
 4. **Patterns view slot cues swapped**: the **selected** slot gets the thick white outline (solid); the **playing** slot gets the brighter background (it keeps the "PLAYING" tag and lit LED); a **queued** slot has no outline of its own: its **play button blinks** (with the "NEXT" tag) until the switch. The paste destination keeps its thin dashed outline. The header pattern picker (7.4) is not changed.
+5. **Octave in green**: the step octave knobs (arc) and the OCT range bar use the note green, like NOTE and VEL, instead of the light grey that reads as a global / neutral color. The octave param color in 12.1 changes accordingly.
 
 ### 15.2 Open
 
