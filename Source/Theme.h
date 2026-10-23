@@ -19,6 +19,9 @@ struct Theme
     juce::Colour onNeutral;   // text on neutral fills
     juce::Colour selection;   // selected LEDs
     juce::Colour shadow;
+    juce::Colour knobTrack;   // inactive part of knob arcs
+    juce::Colour ledIdle;     // LED bar: unlit step within the length
+    juce::Colour ledBeyond;   // LED bar: step beyond the length
 
     static const Theme& dark();
     static const Theme& light();

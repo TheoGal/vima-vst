@@ -12,7 +12,8 @@ const Theme& Theme::dark()
         c (0x222830), c (0x262C35), c (0x2A313B), c (0x3A414C), c (0x4A525E), c (0x5A6372),
         c (0x8A94A3), c (0xC5CBD4), c (0xEEF1F5),
         c (0xDDE2E8), c (0x4FD98A), c (0x5CC8FF), c (0xB48CFF), c (0xFFB547),
-        c (0x0B1410), c (0x0E1114), c (0xEEF1F5), juce::Colour (0x80000000)
+        c (0x0B1410), c (0x0E1114), c (0xEEF1F5), juce::Colour (0x80000000),
+        c (0x222830), c (0x2A313B), c (0x101317)
     };
     return t;
 }
@@ -20,12 +21,14 @@ const Theme& Theme::dark()
 const Theme& Theme::light()
 {
     static const Theme t {
-        // greys with a cool tint: blue about 19 above red, green in between (SPEC.md 12.1)
-        c (0xCFD7E2), c (0xD7DFEA), c (0xDDE5F0), c (0xD5DDE8), c (0xC7CFDA), c (0xC4CCD7), c (0xC9D1DC),
-        c (0xBFC7D2), c (0xB7BFCA), c (0xADB5C0), c (0xA1A9B4), c (0x8A929D), c (0x6F7782),
+        // cool greys (blue about 19 above red). A darker frame with brighter tiles, firm lines
+        // and saturated accents; knob tracks and idle LEDs stay soft so values read clearly (SPEC.md 12.1)
+        c (0xC3CDDA), c (0xD6DEE9), c (0xEAEFF6), c (0xE1E8F1), c (0xCDD5E0), c (0xC2CCD9), c (0xD9E1EC),
+        c (0xA3AEBD), c (0x97A2B2), c (0x8C98A8), c (0xA9B3C2), c (0x8A929D), c (0x6F7782),
         c (0x525B68), c (0x2C333D), c (0x11151A),
-        c (0x2A313B), c (0x12864A), c (0x0874AE), c (0x6539C2), c (0xA86600),
-        c (0xF5F7FA), c (0xCFD7E2), c (0x11151A), juce::Colour (0x38141E2D)
+        c (0x2A313B), c (0x00954D), c (0x0077C8), c (0x6A2CE6), c (0xC26D00),
+        c (0xF5F7FA), c (0xC3CDDA), c (0x11151A), juce::Colour (0x38141E2D),
+        c (0xBFC7D2), c (0xADB5C0), c (0xC7CFDA)
     };
     return t;
 }

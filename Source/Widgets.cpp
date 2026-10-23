@@ -71,7 +71,7 @@ void Knob::paint (juce::Graphics& g)
     const auto c = b.getCentre();
     const int v = getValue ? getValue() : 0;
 
-    draw::arc (g, c, r, thickness, 1.0f, t.border);
+    draw::arc (g, c, r, thickness, 1.0f, t.knobTrack);
     float f = 0.0f;
     if (fraction) f = fraction();
     else if (maxValue > minValue) f = (float) (v - minValue) / (float) (maxValue - minValue);

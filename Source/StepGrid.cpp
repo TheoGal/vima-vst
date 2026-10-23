@@ -473,7 +473,7 @@ void StepGrid::paint (juce::Graphics& g)
         const bool beyond = i >= len;
         const bool ghost = ((ghostMask >> i) & 1u) != 0;
         const bool selected = ((sel >> i) & 1u) != 0;
-        juce::Colour c = beyond ? t.beyond : t.border3;
+        juce::Colour c = beyond ? t.ledBeyond : t.ledIdle;
         if (selected) c = t.selection;
         if (i == play && ! beyond) c = accent;
         if (ghost) c = accent.withAlpha (0.55f);

@@ -104,7 +104,7 @@ void MacroCell::paint (juce::Graphics& g)
     auto lines = r.removeFromBottom (26);
     const auto centre = r.getCentre().toFloat();
     const float radius = juce::jmin (18.0f, (float) r.getHeight() * 0.5f - 2.0f);
-    draw::arc (g, centre, radius, 3.0f, 1.0f, t.sliderTrack);
+    draw::arc (g, centre, radius, 3.0f, 1.0f, t.knobTrack);
     if (info.value)
     {
         draw::arc (g, centre, radius, 3.0f, macroNormalized (info.map, *info.value, info.notes), colour);
