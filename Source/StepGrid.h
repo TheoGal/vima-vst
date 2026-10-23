@@ -1,6 +1,6 @@
 #pragma once
 
-// The 2 x 16 step grid with an LED bar above each row (playhead + selection, SPEC.md 8, 12.1).
+// The 2 x 16 step grid with an LED bar above each row (playhead + selection, SPEC.md 8, 12.3).
 
 #include "Context.h"
 #include "Widgets.h"
@@ -8,7 +8,7 @@
 namespace vima
 {
 // Step slider: a click sets the value at the click position; dragging across neighbouring
-// sliders draws values over several steps (SPEC.md 12.3). Wheel, double-click typing and
+// sliders draws values over several steps (SPEC.md 12.5). Wheel, double-click typing and
 // right-click / Alt + click reset work as on knobs.
 class LaneSlider : public Knob
 {

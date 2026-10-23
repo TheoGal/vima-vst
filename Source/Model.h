@@ -29,7 +29,7 @@ constexpr int maxGate = 400;   // gate: 1-400 % of one step
 inline int midiNote (int octave, int pitchClass) { return 12 * (octave + 2) + pitchClass; }
 
 // ---------------------------------------------------------------------------------------
-// Defaults = the init values (SPEC.md 5): every step on, F (the middle of the note knob)
+// Defaults = the init values (SPEC.md 4.1): every step on, F (the middle of the note knob)
 // in the octave of middle C, velocity 100, gate 100 %, probability 100 %, CC 64.
 struct Step
 {
@@ -96,7 +96,7 @@ struct TrackRouting
 };
 
 // ---------------------------------------------------------------------------------------
-// Scales: 14 built-in + USER. Each is a 12-bit mask of pitch classes relative to the root.
+// Scales: 13 built-in + USER. Each is a 12-bit mask of pitch classes relative to the root.
 constexpr int numScales = 14;
 constexpr int userScaleIndex = 13;
 struct ScaleInfo
@@ -111,7 +111,7 @@ enum class Quantize : std::uint8_t { off, beat, bar, patternEnd };
 
 struct ChainEntry
 {
-    std::uint8_t pattern = 0;   // 0..191
+    std::uint8_t pattern = 0;   // 0..63
     std::uint8_t repeats = 1;   // 1..99
 };
 

@@ -6,7 +6,7 @@
 #include "Operations.h"
 #include "MacroParams.h"
 
-// VIMA: instrument plugin that outputs MIDI (notes and CC) from a 16-track step sequencer.
+// VIMA: instrument plugin that outputs MIDI (notes and CC) from an 8-track step sequencer.
 //
 // Threading: the Project is shared between the message thread (editing) and the audio
 // thread (playback), guarded by a SpinLock that is only ever held briefly. All edits go

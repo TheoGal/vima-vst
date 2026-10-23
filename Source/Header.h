@@ -1,7 +1,7 @@
 #pragma once
 
 // Top bar: name, track dropdown, NOTES/CC switch with output LEDs, pattern quick picker,
-// HOST box (start / stop, BPM), FILE menu (presets), UNDO, MACROS, SETTINGS (SPEC.md 12, layout item 1; 7.4).
+// HOST box (start / stop, BPM), FILE menu (presets), UNDO, MACROS, SETTINGS (SPEC.md 12.2, layout item 1; 7.4).
 
 #include "Context.h"
 #include "Widgets.h"

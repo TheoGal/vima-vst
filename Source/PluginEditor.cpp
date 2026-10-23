@@ -176,7 +176,7 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     setLookAndFeel (&lnf);
 
     // Everything is laid out at 1200 x 720 inside `content`, which is scaled as a whole
-    // when the window is resized (SPEC.md 12: resizing)
+    // when the window is resized (SPEC.md 12.1: resizing)
     content.paintBackground = [] (juce::Graphics& g) { g.fillAll (Theme::current().bg); };
     addAndMakeVisible (content);
     content.addAndMakeVisible (header);

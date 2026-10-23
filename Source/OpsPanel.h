@@ -1,6 +1,6 @@
 #pragma once
 
-// Operations panel (SPEC.md 12.4): selection with COPY / PASTE / CLEAR, lane chips, ranges,
+// Operations panel (SPEC.md 12.6): selection with COPY / PASTE / CLEAR, lane chips, ranges,
 // RANDOMIZE and SMOOTH, SHIFT ALL.
 
 #include "Context.h"
