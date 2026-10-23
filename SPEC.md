@@ -527,7 +527,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 5. **Octave in green**: the step octave knobs (arc) and the OCT range bar use the note green, like NOTE and VEL, instead of the light grey that reads as a global / neutral color. The octave param color in 12.1 changes accordingly.
 6. **Cooler light theme**: every grey in the LIGHT theme gets a slightly stronger blue tint: blue about 18-20 above red, green in between (today blue is about 10 above red). Background about #D0D6DF; panels, tiles, alternate step groups and borders shifted the same way. Still reads as grey, just cooler. Accents unchanged. The palette in 12.1 is updated with the final values.
 7. **Init PARAMS in note mode: ON and NOTE** armed (instead of NOTE only). CC mode init unchanged (CC). 4.1 and 9.2 updated.
-8. **Chevron on menu / popover buttons**: every button that opens a menu or a popover shows a small down-pointing chevron **before** its text: the header TRACK dropdown (its chevron moves from after the number to before the text), the header PATTERN number (pattern picker), the DIVISION value, the SCALE name, and the TRACK box in the patterns view. (FILE and SETTINGS: see open question.)
+8. **Chevron on menu / popover buttons**: every button that opens a menu or a popover shows a small down-pointing chevron **after** its value, like the header TRACK dropdown today ("03⌄"): the header PATTERN number (pattern picker), the DIVISION value, the SCALE name, and the TRACK box in the patterns view. The header TRACK dropdown stays as it is. Not for FILE or SETTINGS.
 
 ### 15.2 Open
 
