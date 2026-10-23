@@ -89,22 +89,59 @@ RangeBar::RangeBar (Context& c, Lane l) : ctx (c), lane (l)
     setMouseCursor (juce::MouseCursor::LeftRightResizeCursor);
 }
 
+// NOTE: the notes the bar shows. With the current track's scale on, only the in-scale notes,
+// spread over the whole bar (like the note knob arc, SPEC.md 5); otherwise C to B.
+std::vector<int> RangeBar::notePositions() const
+{
+    std::vector<int> pcs;
+    const auto g = ctx.globalsCopy();
+    const bool scaleOn = ctx.trackCopy().scaleOn;
+    const auto mask = g.scaleMask();
+    for (int pc = 0; pc < 12; ++pc)
+        if (! scaleOn || inScale (mask, g.root, pc)) pcs.push_back (pc);
+    if (pcs.empty()) pcs.push_back (g.root);
+    return pcs;
+}
+
+// Ranges in bar units: for NOTE, positions in notePositions(); for the other params, values
 LaneRange RangeBar::get() const
 {
     auto g = ctx.globalsCopy();
-    return laneRange (g, lane);
+    const auto r = laneRange (g, lane);
+    if (lane != Lane::note)
+        return r;
+    const auto pcs = notePositions();
+    const int n = (int) pcs.size();
+    const int lo = juce::jmin (r.min, r.max), hi = juce::jmax (r.min, r.max);
+    int a = n - 1, b = 0;
+    for (int i = 0; i < n; ++i) if (pcs[(size_t) i] >= lo) { a = i; break; }
+    for (int i = n - 1; i >= 0; --i) if (pcs[(size_t) i] <= hi) { b = i; break; }
+    if (b < a) b = a;
+    return { a, b };
 }
 
 void RangeBar::set (LaneRange r)
 {
+    if (lane == Lane::note)
+    {
+        const auto pcs = notePositions();
+        const int n = (int) pcs.size();
+        r = { pcs[(size_t) juce::jlimit (0, n - 1, r.min)], pcs[(size_t) juce::jlimit (0, n - 1, r.max)] };
+    }
     ctx.edit (false, [this, r] (Project& p) { laneRange (p.globals, lane) = r; });
+}
+
+bool RangeBar::armed() const
+{
+    const auto lanes = activeLanes (ctx.globalsCopy(), ctx.ui.ccMode);
+    return std::find (lanes.begin(), lanes.end(), lane) != lanes.end();
 }
 
 void RangeBar::axis (int& lo, int& hi) const
 {
     switch (lane)
     {
-        case Lane::note:        lo = 0; hi = 11; return;
+        case Lane::note:        lo = 0; hi = (int) notePositions().size() - 1; return;
         case Lane::octave:      lo = minOctave; hi = maxOctave; return;
         case Lane::velocity:    lo = 1; hi = 127; return;
         case Lane::gate:        lo = 1; hi = maxGate; return;
@@ -118,7 +155,11 @@ juce::String RangeBar::valueText (int v) const
 {
     switch (lane)
     {
-        case Lane::note:   return pitchClassName (v);
+        case Lane::note:
+        {
+            const auto pcs = notePositions();
+            return pitchClassName (pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, v)]);
+        }
         case Lane::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
         case Lane::gate: case Lane::probability: return juce::String (v) + "%";
         case Lane::on: case Lane::ccOn: case Lane::velocity: case Lane::cc: break;
@@ -163,6 +204,14 @@ void RangeBar::mouseDrag (const juce::MouseEvent& e)
 }
 
 void RangeBar::paint (juce::Graphics& g)
+{
+    // ranges of unarmed params are dimmed (SPEC.md 12.6)
+    g.beginTransparencyLayer (armed() ? 1.0f : 0.35f);
+    paintBar (g);
+    g.endTransparencyLayer();
+}
+
+void RangeBar::paintBar (juce::Graphics& g)
 {
     const auto& t = Theme::current();
     int lo = 0, hi = 0;
@@ -327,28 +376,28 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     };
     addAndMakeVisible (clearBtn);
 
-    // Lane chips (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
+    // PARAMS buttons (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
     std::vector<Lane> all { Lane::on, Lane::ccOn, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc };
     {
         auto* p = laneChips.add (new Pill());
         p->text = [] { return juce::String ("ALL"); };
         p->getProperties().set ("lane", -1);
+        // ALL is its own state: only ALL lights up. Clicking the lit ALL does nothing
+        // (something is always armed, SPEC.md 9.2).
         p->look = [this]
         {
             const auto g = ctx.globalsCopy();
-            auto gg = g;
-            bool allOn = true;
-            for (auto l : ctx.ui.ccMode ? ccLanes() : noteLanes()) allOn = allOn && laneFlag (gg, l);
-            return chipLook (allOn, ctx.modeAccent());
+            return chipLook (ctx.ui.ccMode ? g.laneAllCc : g.laneAllNote, ctx.modeAccent());
         };
         p->onClick = [this]
         {
             const bool cc = ctx.ui.ccMode;
             ctx.edit (false, [cc] (Project& pr)
             {
-                bool allOn = true;
-                for (auto l : cc ? ccLanes() : noteLanes()) allOn = allOn && laneFlag (pr.globals, l);
-                for (auto l : cc ? ccLanes() : noteLanes()) laneFlag (pr.globals, l) = ! allOn;
+                auto& all = cc ? pr.globals.laneAllCc : pr.globals.laneAllNote;
+                if (all) return;
+                all = true;
+                for (auto l : cc ? ccLanes() : noteLanes()) laneFlag (pr.globals, l) = false;
             });
         };
         addAndMakeVisible (p);
@@ -358,8 +407,38 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         auto* p = laneChips.add (new Pill());
         p->getProperties().set ("lane", (int) l);
         p->text = [l] { return juce::String (laneName (l)); };
-        p->look = [this, l] { auto g = ctx.globalsCopy(); return chipLook (laneFlag (g, l), ctx.modeAccent()); };
-        p->onClick = [this, l] { ctx.edit (false, [l] (Project& pr) { auto& f = laneFlag (pr.globals, l); f = ! f; }); };
+        p->look = [this, l]
+        {
+            auto g = ctx.globalsCopy();
+            const bool all = ctx.ui.ccMode ? g.laneAllCc : g.laneAllNote;
+            return chipLook (! all && laneFlag (g, l), ctx.modeAccent());
+        };
+        p->onClick = [this, l]
+        {
+            const bool cc = ctx.ui.ccMode;
+            ctx.edit (false, [l, cc] (Project& pr)
+            {
+                auto& g = pr.globals;
+                auto& all = cc ? g.laneAllCc : g.laneAllNote;
+                const auto& modeLanes = cc ? ccLanes() : noteLanes();
+                if (all)
+                {
+                    // leaving ALL: only the clicked param is armed
+                    all = false;
+                    for (auto m : modeLanes) laneFlag (g, m) = false;
+                    laneFlag (g, l) = true;
+                    return;
+                }
+                auto& f = laneFlag (g, l);
+                if (f)
+                {
+                    int armed = 0;
+                    for (auto m : modeLanes) armed += laneFlag (g, m) ? 1 : 0;
+                    if (armed <= 1) return;   // the last armed param stays armed
+                }
+                f = ! f;
+            });
+        };
         addAndMakeVisible (p);
     }
     for (auto* p : laneChips) { p->font = [] { return Fonts::monoSemi (11.0f); }; p->radius = 5.0f; }
@@ -548,7 +627,7 @@ void OpsPanel::paint (juce::Graphics& g)
         g.setFont (Fonts::monoSemi (13.0f));
         g.drawText (text, selCol.withTrimmedTop (22).withHeight (18), juce::Justification::centredLeft);
     }
-    draw::label (g, "LANES", lanesCol.withHeight (12), t.muted);
+    draw::label (g, "PARAMS", lanesCol.withHeight (12), t.muted);
     draw::label (g, "RANGES", rangesCol.withHeight (12), t.muted);
     g.setColour (t.border);
     g.fillRect (shiftCol.getX(), shiftCol.getY(), 1, shiftCol.getHeight());

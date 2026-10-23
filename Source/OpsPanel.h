@@ -23,6 +23,9 @@ private:
     juce::String valueText (int) const;
     juce::Rectangle<float> barArea() const;
     int valueAt (float x) const;
+    std::vector<int> notePositions() const;
+    bool armed() const;
+    void paintBar (juce::Graphics&);
 
     Context& ctx;
     Lane lane;

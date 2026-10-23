@@ -52,6 +52,8 @@ Scope makeScope (const Project& p, int pattern, int track, int selFirst, int sel
 std::vector<Lane> activeLanes (const Globals& g, bool ccMode)
 {
     std::vector<Lane> lanes;
+    if (ccMode && g.laneAllCc) return { Lane::ccOn, Lane::cc };
+    if (! ccMode && g.laneAllNote) return { Lane::on, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability };
     if (ccMode)
     {
         if (g.laneCcOn) lanes.push_back (Lane::ccOn);

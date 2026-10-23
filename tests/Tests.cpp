@@ -908,9 +908,10 @@ void testInitAndGate()
                       && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
-        check (g.laneNote && ! g.laneOn && ! g.laneVel && ! g.laneGate && ! g.laneCC && g.rangeGate.max == maxGate && g.rangeVel.min == 1
+        check (g.laneNote && ! g.laneOn && ! g.laneVel && ! g.laneGate && g.laneCC && ! g.laneCcOn && ! g.laneAllNote && ! g.laneAllCc
+                   && g.rangeGate.max == maxGate && g.rangeVel.min == 1
                    && g.rangeVel.max == 127 && ! g.ccSmoothing && g.middleC == 3,
-               "init globals: NOTE lane only, full ranges, CC smoothing off, middle C = C3");
+               "init globals: NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
     }
     {
         Project p;
@@ -1219,6 +1220,34 @@ int main (int argc, char** argv)
                 w.deltaY = 1.0f;
                 shift->mouseWheelMove (mouseEvent (*shift, { 5, 5 }, { 5, 5 }), w);
                 check (stepOf (3, 0).velocity == 71, "SHIFT ALL: one wheel notch up shifts by +1");
+            }
+
+            // PARAMS: ALL is its own state; something is always armed
+            if (auto* ops = findChild<OpsPanel> (ed))
+            {
+                proc->edit (-1, [] (Project& p)
+                {
+                    auto& g = p.globals;
+                    g.laneAllNote = false;
+                    g.laneOn = g.laneOct = g.laneVel = g.laneGate = g.laneProb = false;
+                    g.laneNote = true;
+                });
+                ed.refreshAll();
+                auto armed = [&] { return proc->read ([] (const Project& p) { return activeLanes (p.globals, false); }); };
+                if (auto* b = findPill (*ops, "NOTE")) click (*b);
+                check (armed().size() == 1 && armed()[0] == Lane::note, "clicking the only armed param does nothing");
+                if (auto* b = findPill (*ops, "ALL")) click (*b);
+                const auto g1 = proc->read ([] (const Project& p) { return p.globals; });
+                check (g1.laneAllNote && ! g1.laneNote && armed().size() == 6, "ALL arms every note param, and only ALL is lit");
+                if (auto* b = findPill (*ops, "ALL")) click (*b);
+                check (proc->read ([] (const Project& p) { return p.globals.laneAllNote; }), "clicking the lit ALL does nothing");
+                if (auto* b = findPill (*ops, "VEL")) click (*b);
+                check (armed().size() == 1 && armed()[0] == Lane::velocity && ! proc->read ([] (const Project& p) { return p.globals.laneAllNote; }),
+                       "while ALL is lit, clicking a param arms only that param");
+                if (auto* b = findPill (*ops, "GATE")) click (*b);
+                check (armed().size() == 2, "outside ALL, params toggle one by one");
+                proc->edit (-1, [] (Project& p) { auto& g = p.globals; g.laneVel = g.laneGate = false; g.laneNote = true; });
+                ed.refreshAll();
             }
 
             // CC mode hides note controls

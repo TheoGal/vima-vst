@@ -44,7 +44,7 @@ Last updated: 2026-10-23 (checked against the code at that date).
 
 - 8 tracks, shown as "01" to "08". No track names.
 - Selected with the **TRACK dropdown** in the header. Switching tracks clears the step selection.
-- Every track always has both a **note part** and a **CC part**. They share the track's 32 steps, length, division, direction and swing, but each has **its own on/off per step** (5). The NOTES / CC switch in the header only changes which part is shown and edited (including which on/off the step buttons, the ON lane button, Randomize and Copy use). It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
+- Every track always has both a **note part** and a **CC part**. They share the track's 32 steps, length, division, direction and swing, but each has **its own on/off per step** (5). The NOTES / CC switch in the header only changes which part is shown and edited (including which on/off the step buttons, the ON param button, Randomize and Copy use). It does not change what the track outputs; that is set by the NOTE OUT and CC OUT toggles.
 - An independent CC rhythm (different length or division from the notes) is made with a second track on the same MIDI channel.
 
 Where track settings live:
@@ -85,9 +85,9 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
-| LANES | NOTE only (CC mode: none armed) |
-| RANGES | full range of every lane (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
-| SHIFT ALL lane / SLIDER lane / view | NOTE / VEL / NOTES |
+| PARAMS | NOTE armed in note mode, CC armed in CC mode (ALL off) |
+| RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
+| SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
 | Theme | dark |
 
@@ -163,7 +163,7 @@ There is no step skip, no chords per step and no drum mode.
 Works like step copy / paste (9.1):
 
 - **COPY** copies the whole selected pattern; **COPY TRACK** copies the selected pattern's track chosen in the TRACK dropdown. The button lights up and reads **COPIED** or **TRACK COPIED**. There is one clipboard: copying again replaces it.
-- A copy takes **everything**: all steps (note and CC parts) and all settings stored in the pattern. Armed lanes do not apply here. Routing (channel, outputs, CC number) is not part of a pattern and is not copied.
+- A copy takes **everything**: all steps (note and CC parts) and all settings stored in the pattern. Armed params do not apply here. Routing (channel, outputs, CC number) is not part of a pattern and is not copied.
 - While a copy button is lit, a click on a slot only picks the **destination pattern**, shown with a dashed outline (the ghost preview). The selection does not change. The slot play buttons still play.
 - For a track copy, the **destination track** is the one in the TRACK dropdown when PASTE is pressed, so track 1 can be pasted into track 2 of the same or another pattern.
 - **PASTE** is dimmed until a destination is picked. It writes there (one undo step), and the button stays lit for more pastes.
@@ -220,38 +220,44 @@ Works like step copy / paste (9.1):
 
 ## 9. Step operations
 
-Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, lanes and ranges, the chain and macro mappings are not undone. Loading a preset or NEW clears the undo history. Host automation (macros) is not added to undo.
+Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or NEW clears the undo history. Host automation (macros) is not added to undo.
 
 ### 9.1 Copy / Paste (steps)
 
 - Copy / paste is the way to move steps between tracks and patterns.
-- **COPY** copies the steps in scope (the selection, or all steps within the length if none), but **only the lanes armed in LANES** (the same lane buttons as Randomize and Smooth; in CC mode that is ON and CC). The lanes are fixed at the moment of copying. With no lane armed, COPY does nothing.
+- **COPY** copies the steps in scope (the selection, or all steps within the length if none), but **only the params armed in PARAMS** (the same buttons as Randomize and Smooth; with ALL, every param of the mode). The params are fixed at the moment of copying.
 - After COPY the button lights up and reads **COPIED**, and the selection is gone: while COPIED is lit there is no selection at all. A click on an LED only picks the **landing step** (where the first copied step goes); dragging and Ctrl-click do not select.
 - Once a landing step is picked, a **ghost preview** on the LEDs shows where the steps will land. Copied steps **keep their spacing**: copying steps 1, 3 and 6 and landing at 9 writes steps 9, 11 and 14; the steps in the gaps are left unchanged.
-- **PASTE** (dimmed until a landing step is picked) writes the copied lanes there. COPIED stays lit, so the user can pick another landing step, switch track or pattern, and paste again.
+- **PASTE** (dimmed until a landing step is picked) writes the copied params there. COPIED stays lit, so the user can pick another landing step, switch track or pattern, and paste again.
 - Clicking **COPIED** empties the clipboard and turns it back into COPY. **CLEAR** deselects, and when COPIED is lit also empties the clipboard and removes the ghost preview.
 - A paste that runs past the destination track's length is **cut off** at the last step. It never wraps around to step 1.
 - While COPIED is lit, Randomize, Smooth and Shift act on all steps (there is no selection).
 
 ### 9.2 Randomize
 
-- Lane selection with the **lane buttons** (the LANES group, shared with Smooth and Copy): ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or ALL, ON, CC in CC mode (ON = CC on/off). ALL arms or disarms every lane of the mode. The LED bar chooses which steps; the lane buttons choose which values of those steps.
-- Each lane except ON has a min / max range (RANGES, 12.4). Random values stay inside it.
+- Which values change is chosen with the **PARAMS** buttons (shared with Smooth and Copy): ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or ALL, ON, CC in CC mode (ON = CC on/off). The LED bar chooses which steps; the PARAMS buttons choose which values of those steps.
+- **Arming params**:
+  - Clicking **ALL** lights only ALL: every param of the mode is armed, but the single buttons stay unlit.
+  - While ALL is lit, clicking a param turns ALL off and arms **only that param**.
+  - Outside ALL, the param buttons toggle one by one.
+  - **Something is always armed**: clicking the only lit button (ALL, or the last armed param) does nothing.
+  - Note mode and CC mode each keep their own ALL and params. Init: NOTE in note mode, CC in CC mode.
+- Each param except ON has a min / max range (RANGES, 12.6). Random values stay inside it.
 - **ON**: each step is switched on with a 70% chance.
-- **NOTE**: a random note from the NOTE range, which is a pitch-class range (C to B, the same for every octave). With the track's scale on, only in-scale notes within the range; if none is in range, any note.
+- **NOTE**: a random note from the NOTE range, which is a pitch-class range (the same for every octave). With the track's scale on, only in-scale notes within the range (the NOTE bar then shows only in-scale notes, 12.6); if none is in range, any note.
 - Applies to the steps in scope (8.2), including off steps.
 
 ### 9.3 Smooth
 
 - A SMOOTH button pulls the values of the steps in scope one step closer to their average.
-- For each armed lane (same lane buttons as Randomize):
-  1. Calculate the average of that lane's values over the steps in scope, **rounded to the nearest whole number**.
+- For each armed param (same PARAMS buttons as Randomize):
+  1. Calculate the average of that param's values over the steps in scope, **rounded to the nearest whole number**.
   2. Every value below the average goes up by 1, every value above it goes down by 1. Values equal to the average do not move.
 - Example: CC values 0, 64, 127 give an average of 63.67, rounded to 64. One press gives 1, 64, 126.
 - The average is recalculated on every press.
-- Units of "one step" per lane: NOTE 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
+- Units of "one step" per param: NOTE 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
 - NOTE and octave are treated as one combined pitch for NOTE smoothing, so notes converge across octave boundaries.
-- The ON lane is ignored by Smooth (on/off has no average).
+- The ON param is ignored by Smooth (on/off has no average).
 - Off steps are **excluded** from Smooth: they are not counted in the average and their values are not changed. (Randomize, by contrast, includes off steps.)
 - Smooth ignores the Randomize ranges (it only moves values toward the average, never outside the current spread).
 - Press once for one step. **Press and hold** repeats (after 0.4 s, about 14 times per second). One press or one hold is one undo entry.
@@ -260,13 +266,13 @@ Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers eve
 
 A relative shift of all steps in scope.
 
-- A lane selector picks what the shift changes:
+- A param selector (its own buttons, separate from PARAMS) picks what the shift changes:
   - **NOTE**: ±1 per detent, in scale steps when the track's scale is on (semitones when it is off). Crossing the top or bottom of an octave rolls into the next or previous octave.
   - **OCT**: ±1 octave per detent.
   - **VEL**: ±1 per detent.
   - **GATE**: ±1% per detent.
   - **PROB**: ±1% per detent.
-  - **CC** (CC mode, the only lane there): ±1 CC value per detent.
+  - **CC** (CC mode, the only param there): ±1 CC value per detent.
 - Controlled by an **endless knob**. While turning, it shows the running offset (for example "+3"). It returns to 0 when released, because it is a one-time action, not a stored setting.
 - **Capping**: each step moves relative to its own value. A step that reaches its limit stays at the limit while the others keep moving.
 - **Gesture snapshot**: during one drag, every step is calculated from its value at the moment the knob was grabbed. Turning back within the same drag restores the original shape exactly. Steps update live while dragging (so the change can be heard), and the whole drag is one undo entry.
@@ -299,7 +305,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 - DARK palette: background #0E1114, panels #12161B / #161A20, borders #222830 / #2A313B, text #EEF1F5 / #C5CBD4 / #8A94A3.
 - LIGHT palette, built on a light grey, not white: background #D3D7DD, panels #DCE0E5, tiles #E3E6EA, alternate step groups #DADDE2, borders #C2C7CF / #B9BFC8 / #AEB5BF, text #11151A / #2C333D / #525B68, neutral #2A313B, selection LED #11151A. Accents are darkened for contrast: note green #12864A, CC cyan #0874AE, gate purple #6539C2, probability amber #A86600.
 - Mode accents (dark theme): note mode green #4FD98A, CC mode cyan #5CC8FF. The accent colors the mode switch, lit step buttons, note arcs, the playhead LED, RANDOMIZE and SMOOTH.
-- Lane colors: velocity green (same as note mode), gate purple #B48CFF, probability amber #FFB547, CC cyan, octave light grey #C5CBD4.
+- Param colors: velocity green (same as note mode), gate purple #B48CFF, probability amber #FFB547, CC cyan, octave light grey #C5CBD4.
 - Color tells which part a control affects:
   - **Track-wide and global** controls (LENGTH, DIVISION, DIRECTION, SWING, MIDI CH, the patterns view, the Macros page) use a fixed neutral (#DDE2E8 dark) and never change color with the mode.
   - **Note part** controls (SCALE, NOTE OUT) are green.
@@ -321,7 +327,7 @@ The NOTES and CC mode buttons each carry an LED showing whether that output is o
 ### 12.3 Step cell
 
 - **Top**: one button with the step number inside, used as the on/off toggle of the shown part (note on/off in note mode, CC on/off in CC mode). On: filled with the mode accent, number in a dark contrasting color. Off (within the length): filled grey. Beyond the length: outline only, and the whole cell dimmed.
-- **Note mode**: note knob, octave knob below it, then a vertical slider with its value under it. The **SLIDER** switch in the parameter row makes all sliders show velocity, gate or probability. The slider takes that lane's color, and so does the value under it.
+- **Note mode**: note knob, octave knob below it, then a vertical slider with its value under it. The **SLIDER** switch in the parameter row makes all sliders show velocity, gate or probability. The slider takes that param's color, and so does the value under it.
 - **CC mode**: one tall cyan slider for the step's CC value (0-127), filling the cell below the step button, with the value under it in cyan.
 - When the shown part of a step is off, its controls and value are dimmed.
 - Knobs are flat arc rings (270 degrees) with the value as text in the middle. Cells keep the same height in both modes so the layout does not jump.
@@ -350,7 +356,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - **Right-click or Alt + click**: reset to the default.
 - Defaults are the init values (4.1): MIDI CH = the track number, LENGTH 16, SWING 0%, CC NUM = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
 
-**Buttons** (on/off and choice buttons, lane buttons, tabs)
+**Buttons** (on/off and choice buttons, PARAMS buttons, tabs)
 - **Click**: the action happens when the mouse button is released over the button; releasing elsewhere cancels.
 - **Right-click**: does nothing (except on mapped controls while LEARN is on, 13.2).
 - **Mouse wheel** on the DIVISION tile: next / previous division (wheel up = shorter steps). On the scale name: next / previous scale.
@@ -364,7 +370,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Step button** (step number): click toggles the shown part of the step on / off.
 
-**SHIFT ALL knob**: drag up / down to shift the chosen lane (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
+**SHIFT ALL knob**: drag up / down to shift the chosen param (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
 **RANGES bars**: click or drag; the nearest handle (min or max) follows the mouse. The handles cannot cross. No wheel, double-click or reset.
 
@@ -389,10 +395,10 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 ### 12.6 Operations panel (bottom, left to right)
 
 1. **SELECTION**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
-2. **LANES**: lane buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ALL, ON, CC in CC mode (9.2).
-3. **RANGES**: a min / max bar per lane, in that lane's color (OCT in grey): NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). The NOTE bar is always C to B (a pitch-class range, not scale-aware).
+2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ALL, ON, CC in CC mode. ALL is its own state and something is always armed (9.2).
+3. **RANGES**: a min / max bar per param, in that param's color (OCT in grey): NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent).
-5. **SHIFT ALL**: endless knob plus lane buttons (NOTE, OCT, VEL, GATE, PROB in note mode; CC only in CC mode).
+5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB in note mode; CC only in CC mode).
 
 ### 12.7 Mockups
 
@@ -400,7 +406,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 ## 13. State, macros and presets
 
-- The full state is saved with the DAW project: all patterns, routing, global settings, chain, lanes and ranges, macro mappings and the current pattern, plus per-instance view settings: the window size, the track shown in the editor and the current preset file.
+- The full state is saved with the DAW project: all patterns, routing, global settings, chain, armed params and ranges, macro mappings and the current pattern, plus per-instance view settings: the window size, the track shown in the editor and the current preset file.
 - Not saved: the NOTES / CC view, the selection, clipboards, undo history, LEARN and the transport hold.
 
 ### 13.1 Macros (host automation)
@@ -437,14 +443,14 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005" in amber. A banner on the Macros page explains it while listening.
 - While learning: clicks map instead of editing; an amber frame marks the view; the control under the mouse is highlighted; **every mapped control keeps an amber outline with its macro number** (for example "M005"), following the track and pattern on screen.
 - **A mapped control cannot be mapped again**: clicking it does nothing (the outline flashes). **Right-click** a mapped control to free it (unmap its macro).
-- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current lane: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON.
+- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON.
 - **No duplicates in the editor either**: a change in the mapping editor that would point a second macro at a control that already has one is refused, and the footer shows "ALREADY ON M003".
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
-- Colors follow the lanes: note step, note, octave and velocity green, gate purple, probability amber, CC step and CC value cyan, track and global targets neutral.
+- Colors follow the params: note step, note, octave and velocity green, gate purple, probability amber, CC step and CC value cyan, track and global targets neutral.
 
 ### 13.3 Presets and macro mapping sets
 
-- **Presets** hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, middle C, CC smoothing, pattern change by CC, quantize, lanes and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
+- **Presets** hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, middle C, CC smoothing, pattern change by CC, quantize, armed params and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
 - **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens a menu: the current preset's name ("PRESET: SONG", or "PRESET: UNSAVED"), NEW (asks first; resets the music to the init values, keeps mappings and theme), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
 - LOAD and SAVE AS use the system's file dialogs, starting in **Documents/VIMA/Presets**. Files can be saved anywhere. Extension **.vima** (XML).
 - Loading a preset or NEW clears undo. The current preset file is remembered with the DAW project.
@@ -502,7 +508,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, lightTheme, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", lanes as 8 flags, ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from the init pattern). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack and presetPath.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, lightTheme, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags (note-mode and CC-mode params, ALL for each mode; stored as the `lanes` property), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from the init pattern). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack and presetPath.
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the theme.
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
@@ -511,10 +517,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-1. **NOTE range bar follows the scale**: when the current track's scale is on, the NOTE bar in RANGES shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5); with the scale off, C to B as now.
-2. **Ranges of unarmed lanes are dimmed** in RANGES (12.6).
-3. **"Lanes" is renamed "params" everywhere** (UI and spec): the LANES group becomes PARAMS, "armed lanes" become "armed params".
-4. **ALL is its own state**: clicking ALL lights only ALL (every param of the mode is armed, but the single buttons stay unlit). While ALL is lit, clicking a param turns ALL off and arms only that param. Outside ALL, the param buttons toggle one by one as now. **Something is always armed**: clicking the only lit button (ALL, or the last armed param) does nothing. NOTES and CC mode each keep their own ALL and params. With ALL on, no range is dimmed. Init: note mode NOTE, CC mode CC (so CC mode no longer starts with nothing armed); "COPY with nothing armed" no longer exists.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -529,8 +532,8 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-21: Main window is the hybrid layout (board C). Track dropdown, no names, no sidebar.
 - 2026-10-21: LED bar is playhead and selection. Selection shown only on the LEDs.
 - 2026-10-21: Scope rule: every step operation acts on the selection, or all steps if none.
-- 2026-10-21: Per-track transpose replaced by SHIFT ALL with lane selector, capping and gesture snapshot.
-- 2026-10-21: Probability added per step and as a lane. Colors: note mode and velocity green, gate purple, probability amber, CC cyan.
+- 2026-10-21: Per-track transpose replaced by SHIFT ALL with a param selector, capping and gesture snapshot.
+- 2026-10-21: Probability added per step and as a param. Colors: note mode and velocity green, gate purple, probability amber, CC cyan.
 - 2026-10-21: Mutate removed, replaced by Smooth (each press moves values one step toward their rounded average).
 - 2026-10-21: Track-wide parameters use a fixed neutral color; note-part controls green, CC-part controls cyan. Part-specific controls only shown in their own mode. Output LEDs on the NOTES / CC buttons.
 - 2026-10-21: No help text in the main window. Theme switching lives in Settings.
@@ -546,7 +549,7 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-22: Macro mappings are always fixed (track, pattern, step); following the screen (SHOWN / CURRENT) was removed.
 - 2026-10-22: No backwards compatibility with earlier test builds (14).
 - 2026-10-22: LEARN shows mapped controls (outline + macro number), refuses remapping, right-click frees, moves to the next free macro; the editor refuses duplicates. No macro indicators outside LEARN.
-- 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing). In CC mode the step buttons, the ON lane, randomize, copy / paste and the CC Step macro use the CC on/off. Thumbnails show both parts.
+- 2026-10-22: Note and CC parts have separate on/off per step (shared length, division, direction, swing). In CC mode the step buttons, the ON param, randomize, copy / paste and the CC Step macro use the CC on/off. Thumbnails show both parts.
 - 2026-10-22: Parameter row: MIDI CH first, then the per-pattern settings; mode-specific controls on the right with the output ON/OFF last; CC number in its own tile (CC NUM).
 - 2026-10-22: The STEPS button (patterns view, Macros page) is filled green.
 - 2026-10-22: Octave range setting removed; octaves cover the whole MIDI range. Middle C setting C3 / C4 / C5 with the lowest C shown.
@@ -555,11 +558,12 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-22: Tested in Live 12 (Windows): Live strips the MIDI channel from a VST3's output; one VIMA instance per destination track in Live. Accepted.
 - 2026-10-22: Presets (music only, .vima) from a FILE menu in the header; macro mapping sets (.vimamacros) on the Macros page; files in Documents/VIMA. The word HOST removed from the header.
 - 2026-10-22: Start / stop button next to the BPM. Playhead on the LEDs only. Off steps within the length have a grey filled step button.
-- 2026-10-22: Step copy / paste redesign (9.1): lanes, COPIED, landing step with ghost preview, PASTE stays ready; selection readout "LENGTH: n, STEPS: n".
+- 2026-10-22: Step copy / paste redesign (9.1): armed params, COPIED, landing step with ghost preview, PASTE stays ready; selection readout "LENGTH: n, STEPS: n".
 - 2026-10-22: No CC smoothing time; the note knob arc spreads the in-scale notes; no CHROMATIC scale; macros always cover the full range; step macros NOTE STEP and CC STEP; pattern slots select on click and play from their play button; patterns view copy / paste works like step copy / paste and CLEAR never erases; patterns numbered 1-64 in pages (no banks); no NONE button in the macro editor.
-- 2026-10-23: CC mode: the per-step CC value is a slider (like the note-mode sliders, with drawing) instead of a knob. Slider values are shown in their lane's color.
+- 2026-10-23: CC mode: the per-step CC value is a slider (like the note-mode sliders, with drawing) instead of a knob. Slider values are shown in their param's color.
 - 2026-10-23: Transport button: a stop while the host plays holds VIMA (amber stop icon) through host stops and restarts, until VIMA's own play button; a stop while the host is stopped does not hold.
 - 2026-10-23: The chain does not follow the song position (always starts from its first entry); kept on purpose.
 - 2026-10-23: Confirmed: Ableton Live strips MIDI channels internally, so a VST step sequencer cannot drive several channels natively in Live; Max for Live would be the way to build that. VIMA stays one instance per destination track in Live.
 - 2026-10-23: Spec checked against the code and rewritten to match the build.
 - 2026-10-23: Probability is strictly a note-mode parameter (UI and function); it never affects CC. The scale is the master setting for every note-related control and operation. Queued: scale-aware NOTE range bar, dimmed ranges for unarmed lanes.
+- 2026-10-23: "Lanes" renamed "params" everywhere (UI: PARAMS). ALL is its own state; something is always armed (CC mode starts with CC armed). Ranges of unarmed params are dimmed. The NOTE range bar follows the scale.
