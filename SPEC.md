@@ -509,13 +509,13 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Probability also gates CC**: a step that fails its probability roll sends neither its note nor its CC (without smoothing). Probability then applies to the whole step (5, 10).
+2. **NOTE range bar follows the scale**: when the current track's scale is on, the NOTE bar in RANGES shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5); with the scale off, C to B as now.
+3. **Ranges of unarmed lanes are dimmed** in RANGES (12.6).
 
 ### 15.2 Open
 
-1. Probability and CC: should a step that fails its probability roll also skip its CC? (Current behavior: probability affects notes only.)
-2. Should the NOTE range bar (RANGES) follow the scale like the note knob, or stay a C-B pitch-class range? (Current: C-B.)
-3. Should RANGES of lanes that are not armed be dimmed? (Current: all ranges shown at full strength.)
+Nothing at the moment.
 
 ## 16. Decision log
 
