@@ -1,4 +1,5 @@
 #include "Header.h"
+#include "BinaryData.h"
 #include "Popovers.h"
 
 namespace vima
@@ -223,7 +224,7 @@ void Header::resized()
     auto r = getLocalBounds().withTrimmedBottom (1).reduced (20, 0);
     const int cy = r.getCentreY();
 
-    nameArea = r.removeFromLeft (50);
+    nameArea = r.removeFromLeft (60);
     r.removeFromLeft (14 + 1 + 14);   // separator
 
     trackBox.setVisible (! pv);
@@ -360,9 +361,22 @@ void Header::paint (juce::Graphics& g)
     g.setColour (t.border);
     g.fillRect (0, getHeight() - 1, getWidth(), 1);
 
-    g.setColour (t.text);
-    g.setFont (Fonts::monoSemi (15.0f).withExtraKerningFactor (0.14f));
-    g.drawText ("VIMA", nameArea, juce::Justification::centredLeft);
+    // The header shows the Greek wordmark "βήμα" (SPEC.md 12.1); everywhere else the plugin is "VIMA"
+    {
+        static std::unique_ptr<juce::Drawable> logo;
+        static juce::Colour logoColour;
+        if (logo == nullptr || logoColour != t.text)
+        {
+            const auto svgText = juce::String::fromUTF8 (BinaryData::vimawordmarkui_svg, BinaryData::vimawordmarkui_svgSize)
+                                     .replace ("#EEF1F5", "#" + t.text.toDisplayString (false));
+            if (auto xml = juce::XmlDocument::parse (svgText))
+                logo = juce::Drawable::createFromSVG (*xml);
+            logoColour = t.text;
+        }
+        if (logo != nullptr)
+            logo->drawWithin (g, nameArea.toFloat().withSizeKeepingCentre ((float) nameArea.getWidth(), 25.0f),
+                              juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid, 1.0f);
+    }
     g.setColour (t.border);
     g.fillRect (nameArea.getRight() + 14, getHeight() / 2 - 11, 1, 22);
 

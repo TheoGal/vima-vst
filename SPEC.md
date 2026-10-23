@@ -2,6 +2,8 @@
 
 Name: **VIMA** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
 
+**Naming rule**: everywhere the plugin is called by its English name, **VIMA** (product name, host plugin list, file names, folders, manual text, README, release notes). The Greek word "βήμα" appears only in two places: when explaining the origin of the name (as above), and as the wordmark in the plugin's header.
+
 Status: **in testing**. Every push is built by GitHub Actions; testers use the CI builds. This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the PDF manual.
 
 Last updated: 2026-10-23 (checked against the code at that date).
@@ -301,7 +303,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 
 - Modern, flat, "digital". Not skeuomorphic: no fake hardware, textures, shadows or 3D knobs.
 - Fonts: IBM Plex Sans (labels) and IBM Plex Mono (values), embedded in the plugin.
-- **Logo**: "βήμα" in a calligraphic serif italic (a high-contrast italic; outlines from Noto Serif Display Italic, SIL Open Font License), in Resources/logo as SVG and PNG, dark and light: the wordmark and a square "β" icon. Not yet used in the plugin's UI (the header still reads VIMA).
+- **Logo**: the wordmark "βήμα" in a high-contrast serif italic (outlines from Noto Serif Display Italic, SIL Open Font License; no font needed). Files in Resources/logo as SVG and PNG, dark and light: the wordmark and a square "β" icon (with a short green bar). `vima-wordmark-ui.svg` is the tight version embedded in the plugin and drawn in the header, in the theme's text color. See the naming rule at the top: the Greek word is used only there and when explaining the name.
 - Two themes, **DARK** (default) and **LIGHT**, chosen in Settings. All colors are theme tokens, so both themes share one layout.
 - DARK palette: background #0E1114, panels #12161B / #161A20, borders #222830 / #2A313B, text #EEF1F5 / #C5CBD4 / #8A94A3.
 - LIGHT palette, built on a light grey, not white: background #D3D7DD, panels #DCE0E5, tiles #E3E6EA, alternate step groups #DADDE2, borders #C2C7CF / #B9BFC8 / #AEB5BF, text #11151A / #2C333D / #525B68, neutral #2A313B, selection LED #11151A. Accents are darkened for contrast: note green #12864A, CC cyan #0874AE, gate purple #6539C2, probability amber #A86600.
@@ -318,7 +320,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 
 ### 12.2 Layout (top to bottom)
 
-1. **Header**, left to right: VIMA; then in the step view the TRACK dropdown and the NOTES / CC mode switch, or in the patterns view and on the Macros page the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS); then on the right: the PATTERN box (7.4), the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2) and SETTINGS (11).
+1. **Header**, left to right: the "βήμα" wordmark (12.1); then in the step view the TRACK dropdown and the NOTES / CC mode switch, or in the patterns view and on the Macros page the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS); then on the right: the PATTERN box (7.4), the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2) and SETTINGS (11).
 2. **Track parameter row** (12.4).
 3. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it. Steps are grouped in fours by alternating tile shades.
 4. **Operations panel** (12.6).
@@ -567,4 +569,5 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-23: Confirmed: Ableton Live strips MIDI channels internally, so a VST step sequencer cannot drive several channels natively in Live; Max for Live would be the way to build that. VIMA stays one instance per destination track in Live.
 - 2026-10-23: Spec checked against the code and rewritten to match the build.
 - 2026-10-23: Probability is strictly a note-mode parameter (UI and function); it never affects CC. The scale is the master setting for every note-related control and operation. Queued: scale-aware NOTE range bar, dimmed ranges for unarmed lanes.
+- 2026-10-23: Logo: "βήμα" wordmark (high-contrast serif italic) and "β" icon; the wordmark replaces "VIMA" in the header. Naming rule: everywhere else the plugin is "VIMA"; the Greek word only explains the name and appears in the header.
 - 2026-10-23: "Lanes" renamed "params" everywhere (UI: PARAMS). ALL is its own state; something is always armed (CC mode starts with CC armed). Ranges of unarmed params are dimmed. The NOTE range bar follows the scale.
