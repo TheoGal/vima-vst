@@ -138,7 +138,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     octave.thickness = 3.0f;
     octave.fontSize = 11.0f;
     octave.textColour = Theme::current().text2;
-    octave.colour = [] { return Theme::current().text2; };
+    octave.colour = [] { return Theme::current().green; };   // a note param: green (SPEC.md 12.1)
     octave.getValue = [this]
     {
         const auto g = ctx.globalsCopy();

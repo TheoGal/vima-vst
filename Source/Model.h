@@ -183,7 +183,7 @@ struct Globals
     // ALL is its own state per mode; something is always armed.
     bool laneAllNote = false, laneAllCc = false;
     bool laneCcOn = false;         // the ON param in CC mode (CC on/off)
-    bool laneOn = false, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = true;
+    bool laneOn = true, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = true;
     LaneRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
               rangeProb { 0, 100 }, rangeCC { 0, 127 };
 

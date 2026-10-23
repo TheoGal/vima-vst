@@ -259,7 +259,7 @@ void Header::resized()
     hostArea = right.removeFromRight (120).withSizeKeepingCentre (120, 32);
     transportBtn.setBounds (hostArea.withWidth (30).reduced (4, 4).translated (1, 0));
     right.removeFromRight (10);
-    patternArea = right.removeFromRight (204).withSizeKeepingCentre (204, 32);
+    patternArea = right.removeFromRight (162).withSizeKeepingCentre (162, 32);   // sized for two-digit numbers
     auto pa = patternArea.reduced (3);
     prevBtn.setBounds (pa.removeFromLeft (24));
     nextBtn.setBounds (pa.removeFromRight (24));
@@ -417,7 +417,12 @@ void Header::paint (juce::Graphics& g)
         const bool queued = ctx.proc.engine.queuedPattern.load() >= 0;
         g.setColour (t.text.withAlpha (queued && ctx.ui.blink ? 0.2f : 1.0f));
         g.setFont (Fonts::monoSemi (13.0f));
-        g.drawText (patternLabel (ctx.currentPattern()), pb.withTrimmedLeft (8 + lw + 6), juce::Justification::centredLeft);
+        const auto num = patternLabel (ctx.currentPattern());
+        const int nx = pb.getX() + 8 + lw + 6;
+        const int nw = juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), num);
+        g.drawText (num, pb.withX (nx).withWidth (nw + 2), juce::Justification::centredLeft);
+        // chevron after the number: the number opens the pattern picker
+        draw::chevronDown (g, { (float) (nx + nw + 11), (float) pb.getCentreY() }, t.text2, 10.0f);
     }
 
     // host status (display only)

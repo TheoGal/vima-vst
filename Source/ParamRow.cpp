@@ -130,6 +130,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     divisionBtn.font = [] { return Fonts::monoSemi (14.0f); };
     divisionBtn.justification = juce::Justification::centredLeft;
     divisionBtn.textInset = 8;
+    divisionBtn.chevron = true;   // opens the division popover
     divisionBtn.onClick = [this] { openDivision(); };
     divisionBtn.onWheel = [this] (int d)
     {
@@ -161,6 +162,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     scaleNameBtn.radius = 4.0f;
     scaleNameBtn.justification = juce::Justification::centredLeft;
     scaleNameBtn.textInset = 6;
+    scaleNameBtn.chevron = true;   // opens the scale popover
     scaleNameBtn.font = [] { return Fonts::monoSemi (10.0f); };
     scaleNameBtn.text = [this]
     {

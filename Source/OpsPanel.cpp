@@ -56,11 +56,11 @@ namespace
         const auto& t = Theme::current();
         switch (l)
         {
-            case Lane::note: case Lane::velocity: return t.green;
+            case Lane::note: case Lane::octave: case Lane::velocity: return t.green;
             case Lane::gate:        return t.purple;
             case Lane::probability: return t.amber;
             case Lane::cc:          return t.cyan;
-            case Lane::octave: case Lane::on: case Lane::ccOn: break;
+            case Lane::on: case Lane::ccOn: break;
         }
         return t.text2;
     }
@@ -360,6 +360,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         const auto lanes = ctx.ui.clipLanes;
         ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, lanes); });
     };
+    pasteBtn.pressedLook = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };   // green while held (SPEC.md 9.1)
     addAndMakeVisible (pasteBtn);
 
     clearBtn.text = [] { return juce::String ("CLEAR"); };
@@ -367,6 +368,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     clearBtn.look = plain;
     // CLEAR: deselect; when COPIED, also empty the clipboard (and the ghost preview)
     clearBtn.alpha = [this] { return (ctx.hasSelection() || ! ctx.ui.clip.empty()) ? 1.0f : 0.4f; };
+    clearBtn.pressedLook = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };
     clearBtn.onClick = [this]
     {
         ctx.ui.selection = 0;

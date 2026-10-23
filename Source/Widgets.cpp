@@ -199,7 +199,9 @@ Pill::Look Pill::toggle (bool on, juce::Colour accent)
 void Pill::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
-    const auto l = look ? look() : outline (t.border2, t.text2);
+    const bool enabled = ! alpha || alpha() >= 0.999f;
+    const bool pressed = pressedLook && enabled && isMouseButtonDown() && isMouseOver();
+    const auto l = pressed ? pressedLook() : (look ? look() : outline (t.border2, t.text2));
     if (alpha) g.setOpacity (alpha());
     auto b = getLocalBounds().toFloat();
     if (! l.fill.isTransparent())
@@ -253,15 +255,28 @@ void Pill::paint (juce::Graphics& g)
     if (text)
     {
         g.setColour (l.text);
-        g.setFont (font ? font() : Fonts::monoSemi (11.0f));
-        g.drawText (text(), textArea, justification, false);
+        const auto f = font ? font() : Fonts::monoSemi (11.0f);
+        g.setFont (f);
+        const auto s = text();
+        g.drawText (s, textArea, justification, false);
+        if (chevron)   // after the text (left-aligned text only)
+        {
+            const int w = juce::GlyphArrangement::getStringWidthInt (f, s);
+            draw::chevronDown (g, { (float) (textArea.getX() + w + 11), b.getCentreY() }, l.text.withMultipliedAlpha (0.8f), 10.0f);
+        }
     }
 }
 
 void Pill::mouseDown (const juce::MouseEvent& e)
 {
+    if (pressedLook) repaint();
     if (e.mods.isPopupMenu()) return;
     if (onPress) onPress();
+}
+
+void Pill::mouseDrag (const juce::MouseEvent&)
+{
+    if (pressedLook) repaint();
 }
 
 void Pill::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
@@ -278,6 +293,7 @@ void Pill::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDeta
 
 void Pill::mouseUp (const juce::MouseEvent& e)
 {
+    if (pressedLook) repaint();
     if (onRelease) onRelease();
     if (onClick && ! e.mods.isPopupMenu() && getLocalBounds().contains (e.getPosition()))
         onClick();

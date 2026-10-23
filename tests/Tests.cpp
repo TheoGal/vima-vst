@@ -908,10 +908,10 @@ void testInitAndGate()
                       && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
-        check (g.laneNote && ! g.laneOn && ! g.laneVel && ! g.laneGate && g.laneCC && ! g.laneCcOn && ! g.laneAllNote && ! g.laneAllCc
+        check (g.laneNote && g.laneOn && ! g.laneVel && ! g.laneGate && g.laneCC && ! g.laneCcOn && ! g.laneAllNote && ! g.laneAllCc
                    && g.rangeGate.max == maxGate && g.rangeVel.min == 1
                    && g.rangeVel.max == 127 && ! g.ccSmoothing && g.middleC == 3,
-               "init globals: NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
+               "init globals: ON and NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
     }
     {
         Project p;
@@ -1465,6 +1465,7 @@ int main (int argc, char** argv)
             auto queuedOrCurrent = [&] { const int q = proc->engine.queuedPattern.load(); return q >= 0 ? q : ctx.currentPattern(); };
             if (s2 && s3 && s0)
             {
+                check (findPill (*pv, "PATTERN  " + patternLabel (ctx.ui.selectedPattern)) != nullptr, "the bottom bar shows a PATTERN box");
                 check (findPill (*pv, "17 - 32") != nullptr && findPill (*pv, "1 - 16") != nullptr, "pattern page buttons read 1 - 16 ... 49 - 64");
                 const auto body = s2->getLocalBounds().getCentre().translated (0, 10);
                 click (*s2, body);

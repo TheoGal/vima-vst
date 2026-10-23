@@ -20,11 +20,12 @@ const Theme& Theme::dark()
 const Theme& Theme::light()
 {
     static const Theme t {
-        c (0xD3D7DD), c (0xDCE0E5), c (0xE3E6EA), c (0xDADDE2), c (0xCACFD6), c (0xC7CCD3), c (0xCDD2D8),
-        c (0xC2C7CF), c (0xB9BFC8), c (0xAEB5BF), c (0xA2A9B4), c (0x8A929E), c (0x6E7784),
+        // greys with a cool tint: blue about 19 above red, green in between (SPEC.md 12.1)
+        c (0xCFD7E2), c (0xD7DFEA), c (0xDDE5F0), c (0xD5DDE8), c (0xC7CFDA), c (0xC4CCD7), c (0xC9D1DC),
+        c (0xBFC7D2), c (0xB7BFCA), c (0xADB5C0), c (0xA1A9B4), c (0x8A929D), c (0x6F7782),
         c (0x525B68), c (0x2C333D), c (0x11151A),
         c (0x2A313B), c (0x12864A), c (0x0874AE), c (0x6539C2), c (0xA86600),
-        c (0xF5F7FA), c (0xD3D7DD), c (0x11151A), juce::Colour (0x38141E2D)
+        c (0xF5F7FA), c (0xCFD7E2), c (0x11151A), juce::Colour (0x38141E2D)
     };
     return t;
 }

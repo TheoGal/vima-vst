@@ -84,6 +84,8 @@ public:
     std::function<void()> onPress, onRelease;   // for press-and-hold buttons
     std::function<void (int)> onWheel;          // +1 / -1 per wheel step
     std::function<float()> alpha;               // optional opacity
+    std::function<Look()> pressedLook;          // look while the mouse button is held down
+    bool chevron = false;                       // a down chevron after the text: opens a menu / popover
     float radius = 5.0f;
     juce::Justification justification = juce::Justification::centred;
     int textInset = 0;
@@ -91,6 +93,7 @@ public:
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
+    void mouseDrag (const juce::MouseEvent&) override;
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
     // Standard looks

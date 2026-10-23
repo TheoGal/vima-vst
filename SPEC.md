@@ -87,7 +87,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
-| PARAMS | NOTE armed in note mode, CC armed in CC mode (ALL off) |
+| PARAMS | ON and NOTE armed in note mode, CC armed in CC mode (ALL off) |
 | RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
 | SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
@@ -144,10 +144,11 @@ There is no step skip, no chords per step and no drum mode.
 - Opened with the "OPEN PATTERNS VIEW" button in the header's pattern popover (7.4). It replaces the step view; the green **STEPS** button in the header goes back.
 - Global screen, so it uses the neutral color. Green and cyan only appear in the pattern thumbnails.
 - **Pages**: a row of 4 buttons, 1 - 16, 17 - 32, 33 - 48, 49 - 64. A small dot marks the page holding the playing or queued pattern.
-- **Pattern grid**: 4 x 4 slots for the current page. Each slot shows the pattern's own number (page 17 - 32 shows 17 to 32), a small **play button at the top center**, a state on the right (PLAYING with a lit LED and a thick outline, NEXT with a dashed outline, STORED, or EMPTY when no track has any step on), and a thumbnail of the 8 tracks (7.1.1). A thin line at the bottom marks patterns used in the chain.
+- **Pattern grid**: 4 x 4 slots for the current page. Each slot shows the pattern's own number (page 17 - 32 shows 17 to 32), a small **play button at the top center**, a state on the right (PLAYING with a lit LED, NEXT, STORED, or EMPTY when no track has any step on), and a thumbnail of the 8 tracks (7.1.1). A thin line at the bottom marks patterns used in the chain.
+- **Slot cues**: the **selected** slot has a thick white outline; the **playing** slot has a brighter background; a **queued** slot's play button **blinks** until the switch; while COPIED / TRACK COPIED is lit, the paste destination has a thin dashed outline (7.1.2).
 - **Clicking a slot** anywhere except its play button only **selects** it (for COPY, COPY TRACK and + ADD to the chain). It does not play it.
 - **The play button** selects the slot **and** queues it as the next pattern (7.3).
-- **Selected bar** (bottom): SELECTED and the selected pattern's number, COPY, the TRACK dropdown, COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
+- **Bottom bar**: a **PATTERN box** ("PATTERN  19", the selected pattern; styled like the TRACK box but display only), COPY, the TRACK dropdown, COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
 
 #### 7.1.1 Pattern thumbnail
 
@@ -196,7 +197,7 @@ Works like step copy / paste (9.1):
 ### 7.4 Quick pattern picker (main window header)
 
 - The PATTERN box in the header has **‹ and › arrows** for the previous / next pattern (crossing pages, wrapping from 64 to 01 and back). Each click queues that pattern (quantize applies).
-- Clicking the pattern number opens a **popover** (styled like the DIVISION and SCALE popovers): a PAGE row (1 - 16 to 49 - 64; a dot marks the page with the playing or queued pattern), the 16 slots of that page with the patterns' own numbers (playing = outlined with a lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button.
+- The box is sized for two-digit numbers; the number has a chevron after it. Clicking the number opens a **popover** (styled like the DIVISION and SCALE popovers): a PAGE row (1 - 16 to 49 - 64; a dot marks the page with the playing or queued pattern), the 16 slots of that page with the patterns' own numbers (playing = outlined with a lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button.
 - Picking a slot queues it (quantize applies) and closes the popover.
 - While a pattern is queued, the PATTERN box keeps showing the current pattern and **blinks** until the switch happens. It does not show the next pattern's number. The same applies in the patterns view and on the Macros page.
 
@@ -243,7 +244,7 @@ Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers eve
   - While ALL is lit, clicking a param turns ALL off and arms **only that param**.
   - Outside ALL, the param buttons toggle one by one.
   - **Something is always armed**: clicking the only lit button (ALL, or the last armed param) does nothing.
-  - Note mode and CC mode each keep their own ALL and params. Init: NOTE in note mode, CC in CC mode.
+  - Note mode and CC mode each keep their own ALL and params. Init: ON and NOTE in note mode, CC in CC mode.
 - Each param except ON has a min / max range (RANGES, 12.6). Random values stay inside it.
 - **ON**: each step is switched on with a 70% chance.
 - **NOTE**: a random note from the NOTE range, which is a pitch-class range (the same for every octave). With the track's scale on, only in-scale notes within the range (the NOTE bar then shows only in-scale notes, 12.6); if none is in range, any note.
@@ -306,9 +307,9 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 - **Logo**: the wordmark "βήμα" in a high-contrast serif italic (outlines from Noto Serif Display Italic, SIL Open Font License; no font needed). Files in Resources/logo as SVG and PNG, dark and light: the wordmark and a square "β" icon (with a short green bar). `vima-wordmark-ui.svg` is the tight version embedded in the plugin and drawn in the header, in the theme's text color. See the naming rule at the top: the Greek word is used only there and when explaining the name.
 - Two themes, **DARK** (default) and **LIGHT**, chosen in Settings. All colors are theme tokens, so both themes share one layout.
 - DARK palette: background #0E1114, panels #12161B / #161A20, borders #222830 / #2A313B, text #EEF1F5 / #C5CBD4 / #8A94A3.
-- LIGHT palette, built on a light grey, not white: background #D3D7DD, panels #DCE0E5, tiles #E3E6EA, alternate step groups #DADDE2, borders #C2C7CF / #B9BFC8 / #AEB5BF, text #11151A / #2C333D / #525B68, neutral #2A313B, selection LED #11151A. Accents are darkened for contrast: note green #12864A, CC cyan #0874AE, gate purple #6539C2, probability amber #A86600.
+- LIGHT palette, built on a cool light grey (not white; blue about 19 above red, green in between): background #CFD7E2, panels #D7DFEA, tiles #DDE5F0, alternate step groups #D5DDE8, borders #BFC7D2 / #B7BFCA / #ADB5C0, text #11151A / #2C333D / #525B68, neutral #2A313B, selection LED #11151A. Accents are darkened for contrast: note green #12864A, CC cyan #0874AE, gate purple #6539C2, probability amber #A86600.
 - Mode accents (dark theme): note mode green #4FD98A, CC mode cyan #5CC8FF. The accent colors the mode switch, lit step buttons, note arcs, the playhead LED, RANDOMIZE and SMOOTH.
-- Param colors: velocity green (same as note mode), gate purple #B48CFF, probability amber #FFB547, CC cyan, octave light grey #C5CBD4.
+- Param colors: velocity green (same as note mode), gate purple #B48CFF, probability amber #FFB547, CC cyan. Octave is a note param and is green too (octave knobs, OCT range).
 - Color tells which part a control affects:
   - **Track-wide and global** controls (LENGTH, DIVISION, DIRECTION, SWING, MIDI CH, the patterns view, the Macros page) use a fixed neutral (#DDE2E8 dark) and never change color with the mode.
   - **Note part** controls (SCALE, NOTE OUT) are green.
@@ -361,6 +362,8 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Buttons** (on/off and choice buttons, PARAMS buttons, tabs)
 - **Click**: the action happens when the mouse button is released over the button; releasing elsewhere cancels.
+- **PASTE** and **CLEAR** (operations panel and the patterns view's bottom bar) fill **green while held down** as press feedback (not while dimmed).
+- Buttons that open a menu or a popover show a small **down chevron after their value**: TRACK (header), the PATTERN number, DIVISION, the SCALE name, TRACK (patterns view). FILE and SETTINGS have none.
 - **Right-click**: does nothing (except on mapped controls while LEARN is on, 13.2).
 - **Mouse wheel** on the DIVISION tile: next / previous division (wheel up = shorter steps). On the scale name: next / previous scale.
 - **SMOOTH**: click for one smoothing step; **press and hold** to repeat (9.3).
@@ -399,7 +402,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 1. **SELECTION**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
 2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ALL, ON, CC in CC mode. ALL is its own state and something is always armed (9.2).
-3. **RANGES**: a min / max bar per param, in that param's color (OCT in grey): NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
+3. **RANGES**: a min / max bar per param, in that param's color: NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent).
 5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB in note mode; CC only in CC mode).
 
@@ -520,14 +523,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-1. **Press feedback on PASTE and CLEAR**: in the step operations panel and in the patterns view, PASTE and CLEAR fill with green while the mouse button is held down, and return to their normal look when released.
-2. **Narrower PATTERN box** in the header: it was sized for "B01 · 01"; now that patterns are two-digit numbers, shrink it to fit ‹, "PATTERN", the number and › (about 150 px instead of 204), without other changes.
-3. **PATTERN box in the patterns view's bottom bar**: the "SELECTED 19" label is replaced by a box reading "PATTERN  19" (the selected pattern), styled exactly like the TRACK box next to it (same tile, border, font and spacing). It is display only, not a selector: clicking it does nothing.
-4. **Patterns view slot cues swapped**: the **selected** slot gets the thick white outline (solid); the **playing** slot gets the brighter background (it keeps the "PLAYING" tag and lit LED); a **queued** slot has no outline of its own: its **play button blinks** (with the "NEXT" tag) until the switch. The paste destination keeps its thin dashed outline. The header pattern picker (7.4) is not changed.
-5. **Octave in green**: the step octave knobs (arc) and the OCT range bar use the note green, like NOTE and VEL, instead of the light grey that reads as a global / neutral color. The octave param color in 12.1 changes accordingly.
-6. **Cooler light theme**: every grey in the LIGHT theme gets a slightly stronger blue tint: blue about 18-20 above red, green in between (today blue is about 10 above red). Background about #D0D6DF; panels, tiles, alternate step groups and borders shifted the same way. Still reads as grey, just cooler. Accents unchanged. The palette in 12.1 is updated with the final values.
-7. **Init PARAMS in note mode: ON and NOTE** armed (instead of NOTE only). CC mode init unchanged (CC). 4.1 and 9.2 updated.
-8. **Chevron on menu / popover buttons**: every button that opens a menu or a popover shows a small down-pointing chevron **after** its value, like the header TRACK dropdown today ("03⌄"): the header PATTERN number (pattern picker), the DIVISION value, the SCALE name, and the TRACK box in the patterns view. The header TRACK dropdown stays as it is. Not for FILE or SETTINGS.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -578,3 +574,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-23: Probability is strictly a note-mode parameter (UI and function); it never affects CC. The scale is the master setting for every note-related control and operation. Queued: scale-aware NOTE range bar, dimmed ranges for unarmed lanes.
 - 2026-10-23: Logo: "βήμα" wordmark (high-contrast serif italic) and "β" icon; the wordmark replaces "VIMA" in the header. Naming rule: everywhere else the plugin is "VIMA"; the Greek word only explains the name and appears in the header.
 - 2026-10-23: "Lanes" renamed "params" everywhere (UI: PARAMS). ALL is its own state; something is always armed (CC mode starts with CC armed). Ranges of unarmed params are dimmed. The NOTE range bar follows the scale.
+- 2026-10-23: Built: PASTE / CLEAR fill green while held; narrower header PATTERN box; PATTERN box in the patterns view bar; slot cues (selected = outline, playing = background, queued = blinking play button); octave in green; cooler light theme greys; init PARAMS ON + NOTE; chevrons after the value on buttons that open menus or popovers.

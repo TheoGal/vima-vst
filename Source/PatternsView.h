@@ -57,7 +57,7 @@ private:
     Context& ctx;
     juce::OwnedArray<Pill> pageBtns;
     juce::OwnedArray<PatternSlot> slots;
-    Pill copyBtn, pasteBtn, clearBtn, trackBox, copyTrackBtn;
+    Pill copyBtn, pasteBtn, clearBtn, patternBox, trackBox, copyTrackBtn;
     Pill chainOnBtn, loopBtn, addBtn, clearChainBtn;
     juce::OwnedArray<ChainRow> chainRows;
     int dragIndex = -1, dropIndex = -1;   // chain reordering
