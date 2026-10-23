@@ -162,6 +162,7 @@ Works like step copy / paste (9.1):
 - Each entry: playing LED, position number, pattern (for example "23"), length in bars (one play of the pattern times its repeats) with a progress bar while playing, a repeat count (-/+, 1 to 99) and a remove button.
 - **+ ADD** appends the selected pattern. CLEAR empties the chain. Entries can repeat the same pattern.
 - **CHAIN ON/OFF** turns chain playback on. **LOOP ON/OFF**: at the end of the chain, LOOP ON goes back to the first entry; LOOP OFF plays the chain once, then keeps playing (repeating) its last pattern until the transport stops or another pattern is picked.
+- The chain does not follow the song position: when the host starts, the chain always starts from its first entry, wherever the host's playhead is. A jump while playing (locate or host loop) restarts the current entry from there. Steps inside a pattern still follow the host position, so timing stays in sync. (Decided to keep it this way: a song-position chain would make editing patterns from the DAW awkward.)
 - One play of a pattern lasts as long as its longest track (length x division).
 - A manually queued pattern (a slot's play button) takes priority over the chain for the next change.
 - **Reordering**: drag an entry up or down the list (a grip on its left shows it can be dragged). A line shows where it will land. Playback keeps following the entry that is playing, wherever it moves. Removing an entry also keeps playback on the right entry.
