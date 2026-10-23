@@ -152,14 +152,15 @@ There is no step skip, no chords per step and no drum mode.
 
 #### 7.1.1 Pattern thumbnail
 
-- 8 bars, one per track, track 01 on the left to track 08 on the right.
-- **Height = density**: the number of steps that are on (within the length), divided by the track's length.
-- **Which part and color = what the track outputs**:
-  - Notes output on only: the note part's density, green.
-  - CC output on only: the CC part's density, cyan.
-  - Both on: two thin bars side by side, notes (green) on the left and CC (cyan) on the right, each at its own density.
-  - Both outputs off: dim grey, at the busier part's density (content exists but is silent).
-  - No steps on: a thin dark baseline.
+A small picture of the pattern's steps, filling the cell below its top row: like a tiny step grid.
+
+- **8 horizontal rows, one per track**, track 01 at the top to track 08 at the bottom.
+- **Row width = track length**: 32 steps fill the cell's width, 16 half of it, and so on. Step 1 is at the left; every step has the same width in every track, so steps line up across tracks.
+- Each row is **grey** (the off-step grey) over the track's length, with a **stripe for every step that is on**, in the color of an output that is on:
+  - Notes output on only: the note part's on steps, green.
+  - CC output on only: the CC part's on steps, cyan.
+  - Both on: the row splits into two thin lines, notes (green) on top and CC (cyan) below.
+  - Both outputs off: a plain grey row (the length only; the track is silent).
 
 #### 7.1.2 Copy / paste of patterns and tracks
 
@@ -577,3 +578,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-23: Built: PASTE / CLEAR fill green while held; narrower header PATTERN box; PATTERN box in the patterns view bar; slot cues (selected = outline, playing = background, queued = blinking play button); octave in green; cooler light theme greys; init PARAMS ON + NOTE; chevrons after the value on buttons that open menus or popovers.
 - 2026-10-23: Light theme reworked: darker frame, brighter tiles, stronger lines, saturated accents; knob arc tracks and unlit LEDs kept soft so values and the playhead stay clear.
 - 2026-10-23: Dark theme: stronger strokes around buttons, tiles, step cells and panels (borders about 40% lighter); knob tracks and unlit LEDs unchanged.
+- 2026-10-24: Pattern thumbnails redesigned: one horizontal row per track, width = track length, a stripe per on step (green notes, cyan CC), grey for the length. Cells keep their size; 4 pages of 16 stay.

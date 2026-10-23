@@ -1506,6 +1506,30 @@ int main (int argc, char** argv)
             ctx.ui.viewPage = 0;
             ctx.changed();
         }
+        // Demo data for the screenshot: varied lengths, rhythms and outputs
+        proc->edit (-1, [] (Project& p)
+        {
+            juce::Random r (11);
+            const int lens[] = { 32, 16, 24, 8, 32, 12, 20, 16 };
+            for (int pat = 0; pat < 16; ++pat)
+                for (int t = 0; t < numTracks; ++t)
+                {
+                    auto& tp = p.patterns[(size_t) pat].tracks[(size_t) t];
+                    tp.length = (std::uint8_t) lens[(t + pat) % 8];
+                    const float dn = 0.15f + 0.7f * r.nextFloat(), dc = 0.2f + 0.6f * r.nextFloat();
+                    for (int i = 0; i < maxSteps; ++i)
+                    {
+                        tp.steps[(size_t) i].on = (i % 4 == 0) || r.nextFloat() < dn * 0.6f;
+                        tp.steps[(size_t) i].ccOn = r.nextFloat() < dc;
+                    }
+                }
+            p.patterns[0].tracks[0].length = 32;
+            for (int i = 0; i < maxSteps; ++i) p.patterns[0].tracks[0].steps[(size_t) i].on = (i == 0 || i == 15 || i == 31);
+            for (int t = 0; t < numTracks; ++t) { p.routing[(size_t) t].noteOut = t < 4 || t == 6; p.routing[(size_t) t].ccOut = t >= 3 && t != 7; }
+            p.routing[0].ccOut = false;
+        });
+        ctx.ui.viewPage = 0;
+        ctx.changed();
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
         ctx.showPatterns (false);
 

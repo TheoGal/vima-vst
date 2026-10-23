@@ -128,38 +128,42 @@ void PatternSlot::paint (juce::Graphics& g)
     if (playing)
         draw::led (g, { (float) top.getRight() - 7.0f, (float) top.getCentreY() }, 6.0f, t.neutral, true);
 
-    // Thumbnail (7.1.1): one bar per track. Height = how many steps are on, out of the length.
-    // Notes out only: the note part in green. CC out only: the CC part in cyan. Both: two thin
-    // bars side by side (notes left, CC right). Neither: grey (the busier part).
-    auto thumb = inner.removeFromBottom (22).toFloat();
+    // Thumbnail (7.1.1): one horizontal bar per track, track 01 at the top, using the cell's
+    // width and height. The bar's width follows the track length (32 steps = full width), step 1
+    // at the left. A grey bar with a stripe for every step that is on, in the color of an output
+    // that is on (notes green, CC cyan; both: two thin rows). Both outputs off: plain grey.
+    auto thumb = inner.withTrimmedTop (6).toFloat();
     const float gap = 2.0f;
-    const float w = (thumb.getWidth() - gap * (numTracks - 1)) / (float) numTracks;
-    auto drawBar = [&g, &t] (juce::Rectangle<float> col, int on, int length, juce::Colour c)
+    const float h = (thumb.getHeight() - gap * (numTracks - 1)) / (float) numTracks;
+    const float stepW = thumb.getWidth() / (float) maxSteps;
+    auto drawBar = [&g, &t, stepW] (juce::Rectangle<float> row, const TrackPattern& tp, bool cc, bool show, juce::Colour c)
     {
-        if (on == 0)
-        {
-            g.setColour (t.sliderTrack);
-            g.fillRect (col.removeFromBottom (2.0f));
-            return;
-        }
+        const int len = juce::jlimit (minLength, maxSteps, (int) tp.length);
+        g.setColour (t.ledOff);   // the track's length
+        g.fillRect (row.withWidth (stepW * (float) len));
+        if (! show) return;
         g.setColour (c);
-        g.fillRect (col.removeFromBottom (3.0f + 19.0f * (float) on / (float) juce::jmax (1, length)));
+        for (int i = 0; i < len; ++i)
+        {
+            const auto& st = tp.steps[(size_t) i];
+            if (cc ? st.ccOn : st.on)
+                g.fillRect (row.getX() + stepW * (float) i, row.getY(), juce::jmax (1.0f, stepW - 1.0f), row.getHeight());
+        }
     };
     for (int k = 0; k < numTracks; ++k)
     {
         const auto& tp = pattern.tracks[(size_t) k];
         const auto& r = routing[(size_t) k];
-        const int notes = tp.onStepCount(), ccs = tp.ccOnStepCount(), len = (int) tp.length;
-        auto col = thumb.withX (thumb.getX() + k * (w + gap)).withWidth (w);
+        auto row = thumb.withY (thumb.getY() + k * (h + gap)).withHeight (h);
         if (r.noteOut && r.ccOut)
         {
-            const float half = (col.getWidth() - 1.0f) * 0.5f;
-            drawBar (col.withWidth (half), notes, len, t.green);
-            drawBar (col.withTrimmedLeft (col.getWidth() - half), ccs, len, t.cyan);
+            const float half = (row.getHeight() - 1.0f) * 0.5f;
+            drawBar (row.withHeight (half), tp, false, true, t.green);
+            drawBar (row.withTrimmedTop (row.getHeight() - half), tp, true, true, t.cyan);
         }
-        else if (r.noteOut) drawBar (col, notes, len, t.green);
-        else if (r.ccOut)   drawBar (col, ccs, len, t.cyan);
-        else                drawBar (col, juce::jmax (notes, ccs), len, t.dim);
+        else if (r.noteOut) drawBar (row, tp, false, true, t.green);
+        else if (r.ccOut)   drawBar (row, tp, true, true, t.cyan);
+        else                drawBar (row, tp, false, false, t.dim);
     }
     if (inChain)
     {
