@@ -526,6 +526,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 4. **Patterns view slot cues swapped**: the **selected** slot gets the thick white outline (solid); the **playing** slot gets the brighter background (it keeps the "PLAYING" tag and lit LED); a **queued** slot has no outline of its own: its **play button blinks** (with the "NEXT" tag) until the switch. The paste destination keeps its thin dashed outline. The header pattern picker (7.4) is not changed.
 5. **Octave in green**: the step octave knobs (arc) and the OCT range bar use the note green, like NOTE and VEL, instead of the light grey that reads as a global / neutral color. The octave param color in 12.1 changes accordingly.
 6. **Cooler light theme**: every grey in the LIGHT theme gets a slightly stronger blue tint: blue about 18-20 above red, green in between (today blue is about 10 above red). Background about #D0D6DF; panels, tiles, alternate step groups and borders shifted the same way. Still reads as grey, just cooler. Accents unchanged. The palette in 12.1 is updated with the final values.
+7. **Init PARAMS in note mode: ON and NOTE** armed (instead of NOTE only). CC mode init unchanged (CC). 4.1 and 9.2 updated.
 
 ### 15.2 Open
 
