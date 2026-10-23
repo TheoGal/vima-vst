@@ -520,7 +520,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Press feedback on PASTE and CLEAR**: in the step operations panel and in the patterns view, PASTE and CLEAR fill with green while the mouse button is held down, and return to their normal look when released.
 
 ### 15.2 Open
 
