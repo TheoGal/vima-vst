@@ -301,6 +301,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 
 - Modern, flat, "digital". Not skeuomorphic: no fake hardware, textures, shadows or 3D knobs.
 - Fonts: IBM Plex Sans (labels) and IBM Plex Mono (values), embedded in the plugin.
+- **Logo**: "βήμα" in a calligraphic italic (outlines from EB Garamond Italic Bold, SIL Open Font License), in Resources/logo as SVG and PNG, dark and light: the wordmark, the wordmark with a 16-step LED bar (one step lit green), and a square "β" icon. Not yet used in the plugin's UI (the header still reads VIMA).
 - Two themes, **DARK** (default) and **LIGHT**, chosen in Settings. All colors are theme tokens, so both themes share one layout.
 - DARK palette: background #0E1114, panels #12161B / #161A20, borders #222830 / #2A313B, text #EEF1F5 / #C5CBD4 / #8A94A3.
 - LIGHT palette, built on a light grey, not white: background #D3D7DD, panels #DCE0E5, tiles #E3E6EA, alternate step groups #DADDE2, borders #C2C7CF / #B9BFC8 / #AEB5BF, text #11151A / #2C333D / #525B68, neutral #2A313B, selection LED #11151A. Accents are darkened for contrast: note green #12864A, CC cyan #0874AE, gate purple #6539C2, probability amber #A86600.
