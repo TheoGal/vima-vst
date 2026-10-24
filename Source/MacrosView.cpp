@@ -190,7 +190,11 @@ MacrosView::MacrosView (Context& c) : ctx (c)
         p->radius = 5.0f;
         p->font = [] { return Fonts::monoSemi (11.0f); };
         p->text = [b] { return juce::String (b * macrosPerPage + 1) + " - " + juce::String (b * macrosPerPage + macrosPerPage); };
-        p->look = [this, b] { return segLook (ctx.ui.macroPage == b, Theme::current().neutral); };
+        p->look = [this, b]   // like the patterns view page buttons: filled when chosen, outlined otherwise
+        {
+            const auto& t = Theme::current();
+            return ctx.ui.macroPage == b ? Pill::filled (t.neutral, t.onNeutral) : Pill::outline (t.border2, t.text2);
+        };
         p->onClick = [this, b]
         {
             ctx.ui.macroPage = b;
