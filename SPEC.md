@@ -524,7 +524,10 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Curves, rotate and invert** (operations panel, under RANDOMIZE and SMOOTH, which get a little shorter). Layout as in the mockup: a row of four shape icon buttons (SINE, TRIANGLE, RAMP up, SQUARE), then a row with ‹ (rotate left), › (rotate right) and INV. Mode accent, outlined like SMOOTH; green while pressed. All act on the steps in scope (8.2) and the armed PARAMS, like Randomize; each press is one undo step; off steps are included (like Randomize).
+   - **Shapes**: one cycle from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. NOTE uses the in-scale notes when the track's scale is on (5). ON: a step is on where the curve is in its upper half. Ramp down = RAMP then INV.
+   - **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = last value goes first, ‹ = first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: NOTE moves pitch classes only, OCT only when OCT is armed.
+   - **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 0%. NOTE flips in-scale positions within the NOTE range (octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
 
 ### 15.2 Open
 
