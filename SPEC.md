@@ -528,6 +528,7 @@ Opened with the MACROS button in the header; STEPS goes back.
    - **Shapes**: one cycle from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. NOTE uses the in-scale notes when the track's scale is on (5). ON: a step is on where the curve is in its upper half. Ramp down = RAMP then INV.
    - **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = last value goes first, ‹ = first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: NOTE moves pitch classes only, OCT only when OCT is armed.
    - **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 0%. NOTE flips in-scale positions within the NOTE range (octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
+2. **Probability 1-100%, never 0** (like velocity 1-127): a step's probability can no longer be 0%. Everywhere: the step slider, Randomize, Smooth, Shift, Invert, curves, macros and loading; the PROB range bar runs 1-100% (init 1-100%). (A step that should not play is switched off instead.)
 
 ### 15.2 Open
 
