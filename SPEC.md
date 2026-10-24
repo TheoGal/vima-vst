@@ -13,7 +13,7 @@ Last updated: 2026-10-24 (checked against the code at that date).
 ## 1. Identity
 
 - An **8-track MIDI step sequencer** plugin with its own design. It is not a clone of Zaquencer or any other product, and does not follow their behavior.
-- Strong focus on randomization and quick, destructive "happy accident" editing, with undo as the safety net.
+- Strong focus on **guided randomization**: randomness you steer, by choosing which params change (PARAMS), within which limits (RANGES), on which steps (the selection), and shaping it afterwards (SMOOTH, curves, rotate, invert). Quick, destructive "happy accident" editing, with undo as the safety net.
 
 ## 2. Plugin format and hosting
 
@@ -537,7 +537,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
   > I have been a MIDI freak for a long time. Under the name Softcore I wrote music and built control surfaces: a lot of Lemur templates for the iPad, some of them a bit out of this world. One of them, Microtonic Lemuriized (2013), turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing". I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
   >
-  > VIMA comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Randomize what you choose and nothing else. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
+  > VIMA comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Guided randomization: chance that you steer, on the steps you pick, for the parameters you choose, within the ranges you set. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
   >
   > VIMA was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
 
@@ -606,3 +606,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: Plain zero everywhere: the value font is VIMA Mono (IBM Plex Mono with its plain zero as the default, renamed per the OFL).
 - 2026-10-24: Curves (sine, triangle, ramp, square), rotate ‹ › and invert added under RANDOMIZE / SMOOTH (9.5); rotate and invert work on any values. Probability is 1-100%, never 0.
 - 2026-10-24: Macros page: page buttons and TARGET buttons outlined like the other buttons.
+- 2026-10-24: "Guided randomization" adopted as the term for VIMA's approach (Identity, manual).
