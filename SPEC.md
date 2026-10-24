@@ -529,6 +529,20 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
 
+## 14.8 Manual notes
+
+The PDF manual is written from this spec. Material that belongs only in the manual:
+
+- **Introduction (draft, in Ted's voice):**
+
+  > I have been a MIDI freak for a long time. Under the name Softcore I wrote music and built control surfaces: a lot of Lemur templates for the iPad, some of them a bit out of this world. One of them, Microtonic Lemuriized (2013), turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing". I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
+  >
+  > VIMA comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Randomize what you choose and nothing else. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
+  >
+  > VIMA was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
+
+- Name origin: VIMA comes from the Greek "βήμα" (step); see the naming rule at the top.
+
 ## 15. Open questions
 
 ### 15.1 Decided, not built yet
