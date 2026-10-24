@@ -279,7 +279,7 @@ void ParamRow::resized()
     place (channelTile, 106);
     r.removeFromLeft (14);
     place (lengthTile, 106);
-    place (divisionTile, 94);   // fits "DIVISION" and "1/32T" with its chevron
+    place (divisionTile, 76);   // fits "DIVISION" and "1/32T" with its chevron
     place (directionTile, 136);
     place (swingTile, 106);
     // Mode-specific controls sit on the right, the output ON/OFF always last (SPEC.md 12.4)
