@@ -547,7 +547,8 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Theme is a user-wide preference**: the DARK / LIGHT choice is stored once for the user (a small settings file in Documents/VIMA) and used by every VIMA instance, instead of per instance. Today it is saved per project instance but applied globally, so two instances with different themes fight. Presets and projects no longer carry the theme.
+2. **Code cleanup pass before 1.0** (no behavior changes; all tests must still pass): remove leftovers (an empty loop in the operations panel, unused parameters in the note helper, the macro range helper and the octave knob, the unused `noteDisplayName` helper, an unused variable in the header layout); rename "lane" to "param" throughout the code to match the UI (the saved field names may change too, no backwards compatibility); rename the Macros page's leftover "bank" variable to "page"; shrink the Settings dialog to its content (it still has the height of the removed smoothing time row).
 
 ### 15.2 Open
 
