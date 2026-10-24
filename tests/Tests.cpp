@@ -1523,10 +1523,21 @@ int main (int argc, char** argv)
                         tp.steps[(size_t) i].ccOn = r.nextFloat() < dc;
                     }
                 }
+            // every thumbnail case on a track: notes only, CC only, both, empty, outputs off
+            for (int pat = 0; pat < 16; ++pat)
+                for (int t : { 0, 6 })
+                    for (auto& st : p.patterns[(size_t) pat].tracks[(size_t) t].steps) st.ccOn = false;     // notes only
+            for (int pat = 0; pat < 16; ++pat)
+                for (auto& st : p.patterns[(size_t) pat].tracks[5].steps) st.on = false;                     // CC only
+            for (int pat = 0; pat < 16; pat += 3)
+                for (auto& st : p.patterns[(size_t) pat].tracks[4].steps) st.on = st.ccOn = false;           // empty
             p.patterns[0].tracks[0].length = 32;
             for (int i = 0; i < maxSteps; ++i) p.patterns[0].tracks[0].steps[(size_t) i].on = (i == 0 || i == 15 || i == 31);
-            for (int t = 0; t < numTracks; ++t) { p.routing[(size_t) t].noteOut = t < 4 || t == 6; p.routing[(size_t) t].ccOut = t >= 3 && t != 7; }
-            p.routing[0].ccOut = false;
+            // outputs: 1-2 notes, 3 notes + CC (CC steps dimmed: CC out off), 4 both off (dimmed),
+            // 6 CC, 7 notes off (dimmed, notes only), 8 both
+            const bool noteOut[] = { true, true, true, false, true, false, false, true };
+            const bool ccOut[]   = { false, true, false, false, true, true, false, true };
+            for (int t = 0; t < numTracks; ++t) { p.routing[(size_t) t].noteOut = noteOut[t]; p.routing[(size_t) t].ccOut = ccOut[t]; }
         });
         ctx.ui.viewPage = 0;
         ctx.changed();
