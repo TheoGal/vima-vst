@@ -524,7 +524,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Thumbnail rows of silent tracks show their steps dimmed**: when both outputs of a track are off, its row is no longer plain grey: it shows the note part's on steps (green) and the CC part's on steps (cyan) as two thin lines, dimmed, over the grey length (7.1.1).
 
 ### 15.2 Open
 
