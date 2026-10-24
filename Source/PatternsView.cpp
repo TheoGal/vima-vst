@@ -128,20 +128,22 @@ void PatternSlot::paint (juce::Graphics& g)
     if (playing)
         draw::led (g, { (float) top.getRight() - 7.0f, (float) top.getCentreY() }, 6.0f, t.neutral, true);
 
-    // Thumbnail (7.1.1): one horizontal bar per track, track 01 at the top, using the cell's
-    // width and height. The bar's width follows the track length (32 steps = full width), step 1
-    // at the left. A grey bar with a stripe for every step that is on, in the color of an output
-    // that is on (notes green, CC cyan; both: two thin rows). Both outputs off: plain grey.
+    // Thumbnail (7.1.1): one horizontal row per track, track 01 at the top, using the cell's
+    // width and height. Each row has two thin lines, notes (green) above and CC (cyan) below:
+    // grey over the track length (32 steps = full width, step 1 at the left) with a stripe for
+    // every step that is on. A part whose output is off is dimmed; a part with no step on is
+    // not shown.
     auto thumb = inner.withTrimmedTop (6).toFloat();
     const float gap = 2.0f;
     const float h = (thumb.getHeight() - gap * (numTracks - 1)) / (float) numTracks;
     const float stepW = thumb.getWidth() / (float) maxSteps;
-    auto drawBar = [&g, &t, stepW] (juce::Rectangle<float> row, const TrackPattern& tp, bool cc, bool show, juce::Colour c)
+    auto drawBar = [&g, &t, stepW] (juce::Rectangle<float> row, const TrackPattern& tp, bool cc, juce::Colour c)
     {
         const int len = juce::jlimit (minLength, maxSteps, (int) tp.length);
+        if ((cc ? tp.ccOnStepCount() : tp.onStepCount()) == 0)
+            return;   // a part with no step on is not shown
         g.setColour (t.ledOff);   // the track's length
         g.fillRect (row.withWidth (stepW * (float) len));
-        if (! show) return;
         g.setColour (c);
         for (int i = 0; i < len; ++i)
         {
@@ -155,15 +157,10 @@ void PatternSlot::paint (juce::Graphics& g)
         const auto& tp = pattern.tracks[(size_t) k];
         const auto& r = routing[(size_t) k];
         auto row = thumb.withY (thumb.getY() + k * (h + gap)).withHeight (h);
-        if (r.noteOut && r.ccOut)
-        {
-            const float half = (row.getHeight() - 1.0f) * 0.5f;
-            drawBar (row.withHeight (half), tp, false, true, t.green);
-            drawBar (row.withTrimmedTop (row.getHeight() - half), tp, true, true, t.cyan);
-        }
-        else if (r.noteOut) drawBar (row, tp, false, true, t.green);
-        else if (r.ccOut)   drawBar (row, tp, true, true, t.cyan);
-        else                drawBar (row, tp, false, false, t.dim);
+        // notes above, CC below; a part whose output is off is dimmed
+        const float half = (row.getHeight() - 1.0f) * 0.5f;
+        drawBar (row.withHeight (half), tp, false, r.noteOut ? t.green : t.green.withMultipliedAlpha (0.35f));
+        drawBar (row.withTrimmedTop (row.getHeight() - half), tp, true, r.ccOut ? t.cyan : t.cyan.withMultipliedAlpha (0.35f));
     }
     if (inChain)
     {

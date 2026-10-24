@@ -155,12 +155,11 @@ There is no step skip, no chords per step and no drum mode.
 A small picture of the pattern's steps, filling the cell below its top row: like a tiny step grid.
 
 - **8 horizontal rows, one per track**, track 01 at the top to track 08 at the bottom.
-- **Row width = track length**: 32 steps fill the cell's width, 16 half of it, and so on. Step 1 is at the left; every step has the same width in every track, so steps line up across tracks.
-- Each row is **grey** (the off-step grey) over the track's length, with a **stripe for every step that is on**, in the color of an output that is on:
-  - Notes output on only: the note part's on steps, green.
-  - CC output on only: the CC part's on steps, cyan.
-  - Both on: the row splits into two thin lines, notes (green) on top and CC (cyan) below.
-  - Both outputs off: a plain grey row (the length only; the track is silent).
+- Each row has **two thin lines**: the note part (green) above and the CC part (cyan) below.
+- **Line width = track length**: 32 steps fill the cell's width, 16 half of it, and so on. Step 1 is at the left; every step has the same width in every track, so steps line up across tracks.
+- Each line is **grey** (the off-step grey) over the track's length, with a **stripe for every step that is on** in that part.
+- A part whose **output is off** (NOTE OUT or CC OUT) is shown **dimmed**, so its content is visible but clearly silent.
+- A part with **no step on** is **not shown** at all (no grey line). A track with no step on in either part leaves its row empty.
 
 #### 7.1.2 Copy / paste of patterns and tracks
 
@@ -524,7 +523,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-1. **Thumbnail rows of silent tracks show their steps dimmed**: when both outputs of a track are off, its row is no longer plain grey: it shows the note part's on steps (green) and the CC part's on steps (cyan) as two thin lines, dimmed, over the grey length (7.1.1).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -579,3 +578,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-23: Light theme reworked: darker frame, brighter tiles, stronger lines, saturated accents; knob arc tracks and unlit LEDs kept soft so values and the playhead stay clear.
 - 2026-10-23: Dark theme: stronger strokes around buttons, tiles, step cells and panels (borders about 40% lighter); knob tracks and unlit LEDs unchanged.
 - 2026-10-24: Pattern thumbnails redesigned: one horizontal row per track, width = track length, a stripe per on step (green notes, cyan CC), grey for the length. Cells keep their size; 4 pages of 16 stay.
+- 2026-10-24: Thumbnails: every row shows both parts (notes above, CC below); an output that is off is dimmed; a part with no step on is not shown.
