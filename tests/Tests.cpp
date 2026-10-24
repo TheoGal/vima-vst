@@ -267,9 +267,9 @@ void testOutputs()
     {
         Runner r;
         fillOn (r.track (0));
-        for (auto& s : r.track (0).steps) s.probability = 0;
-        r.run (4.0);
-        check (r.noteOns().empty(), "probability 0% plays nothing");
+        for (auto& s : r.track (0).steps) s.probability = 1;
+        r.run (64.0);
+        check (r.noteOns().size() < 15, "probability 1% (the lowest) plays rarely, got " + juce::String ((int) r.noteOns().size()) + " of 256");
     }
     {
         Runner r;
@@ -674,8 +674,8 @@ void testMacros()
            "a macro changes its own pattern only");
     check (proc->read ([] (const Project& p) { return p.globals.chainOn; }), "macro on Chain On");
     check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[1].steps[0].pitchClass; }) == 7, "macro on a step note");
-    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) == 50,
-           "a macro covers the full range: 50% probability gives 50");
+    check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[3].steps[0].probability; }) >= 50,
+           "a macro covers the full range: halfway gives about 50% probability (1-100)");
     proc->syncParamsToHost();
     check (macro (0)->getCurrentValueAsText() == "33" && macro (4)->getCurrentValueAsText() == "G", "host shows the target value as text");
 
@@ -993,6 +993,73 @@ void testCcOnOff()
     check (Step().ccOn, "init: CC steps are on");
 }
 
+void testCurves()
+{
+    section ("Curves, rotate, invert");
+    auto p = std::make_unique<Project>();
+    auto& g = p->globals;
+    auto& tp = p->patterns[0].tracks[0];   // length 16, C minor, scale on
+    auto only = [&] (std::initializer_list<Lane> lanes)
+    {
+        g.laneAllNote = g.laneAllCc = false;
+        g.laneOn = g.laneNote = g.laneOct = g.laneVel = g.laneGate = g.laneProb = g.laneCC = g.laneCcOn = false;
+        for (auto l : lanes)
+            switch (l)
+            {
+                case Lane::on: g.laneOn = true; break;          case Lane::note: g.laneNote = true; break;
+                case Lane::octave: g.laneOct = true; break;     case Lane::velocity: g.laneVel = true; break;
+                case Lane::gate: g.laneGate = true; break;      case Lane::probability: g.laneProb = true; break;
+                case Lane::cc: g.laneCC = true; break;          case Lane::ccOn: g.laneCcOn = true; break;
+            }
+    };
+    const auto all = makeScope (*p, 0, 0, -1, -1);
+
+    only ({ Lane::cc });
+    applyCurve (*p, all, true, CurveShape::ramp);
+    check (tp.steps[0].cc == 0 && tp.steps[15].cc == 127 && tp.steps[7].cc > 50 && tp.steps[7].cc < 70, "RAMP: 0 at the first step, 127 at the last");
+    applyCurve (*p, all, true, CurveShape::sine);
+    check (std::abs (tp.steps[0].cc - 64) <= 1 && tp.steps[4].cc == 127 && tp.steps[12].cc == 0, "SINE: one cycle, middle - top - middle - bottom");
+    applyCurve (*p, all, true, CurveShape::triangle);
+    check (tp.steps[0].cc == 0 && tp.steps[15].cc == 0 && tp.steps[7].cc > 115, "TRIANGLE: up to the middle and back down");
+    applyCurve (*p, all, true, CurveShape::square);
+    check (tp.steps[0].cc == 127 && tp.steps[7].cc == 127 && tp.steps[8].cc == 0 && tp.steps[15].cc == 0, "SQUARE: first half high, second half low");
+    g.rangeCC = { 20, 60 };
+    applyCurve (*p, all, true, CurveShape::ramp);
+    check (tp.steps[0].cc == 20 && tp.steps[15].cc == 60, "a curve stays inside the param's RANGE");
+
+    rotateSteps (*p, all, true, 1);
+    check (tp.steps[0].cc == 60 && tp.steps[1].cc == 20, "ROTATE >: the last value goes first");
+    rotateSteps (*p, all, true, -1);
+    check (tp.steps[0].cc == 20 && tp.steps[15].cc == 60, "ROTATE <: back where it was");
+    for (int i = 0; i < 16; ++i) tp.steps[(size_t) i].cc = (std::uint8_t) (i * 2);
+    const auto three = makeScope (*p, 0, 0, (1u << 1) | (1u << 5) | (1u << 9));
+    rotateSteps (*p, three, true, 1);
+    check (tp.steps[1].cc == 18 && tp.steps[5].cc == 2 && tp.steps[9].cc == 10 && tp.steps[3].cc == 6,
+           "non-adjacent selection: values cycle through the selected steps only");
+
+    g.rangeCC = { 0, 100 };
+    tp.steps[0].cc = 30; tp.steps[1].cc = 50; tp.steps[2].cc = 100;
+    invertSteps (*p, all, true);
+    check (tp.steps[0].cc == 70 && tp.steps[1].cc == 50 && tp.steps[2].cc == 0, "INV flips around the RANGE center (0-100: 30 -> 70)");
+
+    only ({ Lane::on });
+    applyCurve (*p, all, false, CurveShape::square);
+    check (tp.steps[0].on && tp.steps[7].on && ! tp.steps[8].on && ! tp.steps[15].on, "ON with SQUARE: on in the upper half");
+    invertSteps (*p, all, false);
+    check (! tp.steps[0].on && tp.steps[8].on, "INV on ON swaps on and off");
+
+    only ({ Lane::note });
+    applyCurve (*p, all, false, CurveShape::ramp);
+    check (tp.steps[0].pitchClass == 0 && tp.steps[15].pitchClass == 10, "NOTE follows the scale: C minor ramp runs C to A#");
+    invertSteps (*p, all, false);
+    check (tp.steps[0].pitchClass == 10 && tp.steps[15].pitchClass == 0, "INV on NOTE mirrors the in-scale notes");
+
+    only ({ Lane::probability });
+    for (auto& st : tp.steps) st.probability = 100;
+    invertSteps (*p, all, false);
+    check (tp.steps[0].probability == 1, "INV on PROB: 100% becomes 1%, never 0");
+}
+
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
@@ -1009,6 +1076,7 @@ int main (int argc, char** argv)
     testPresets();
     testInitAndGate();
     testCcOnOff();
+    testCurves();
 
     section ("Editor interactions (simulated mouse)");
     {

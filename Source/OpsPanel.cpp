@@ -145,7 +145,7 @@ void RangeBar::axis (int& lo, int& hi) const
         case Lane::octave:      lo = minOctave; hi = maxOctave; return;
         case Lane::velocity:    lo = 1; hi = 127; return;
         case Lane::gate:        lo = 1; hi = maxGate; return;
-        case Lane::probability: lo = 0; hi = 100; return;
+        case Lane::probability: lo = 1; hi = 100; return;
         case Lane::cc:          lo = 0; hi = 127; return;
         case Lane::on: case Lane::ccOn: lo = 0; hi = 1; return;
     }
@@ -475,6 +475,71 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     smoothBtn.onRelease = [this] { stopTimer(); };
     addAndMakeVisible (smoothBtn);
 
+    // Curves, rotate, invert (SPEC.md 9.5): act on the scope and the armed params, one undo step each
+    {
+        auto stroke = [] (juce::Graphics& g, const juce::Path& p, juce::Colour c)
+        {
+            g.setColour (c);
+            g.strokePath (p, juce::PathStrokeType (1.6f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+        };
+        auto box = [] (juce::Rectangle<float> b) { return b.withSizeKeepingCentre (juce::jmin (b.getWidth() - 8.0f, 16.0f), 10.0f); };
+        std::vector<std::function<void (juce::Graphics&, juce::Rectangle<float>, juce::Colour)>> icons;
+        icons.push_back ([=] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+        {
+            const auto r = box (b); juce::Path p;
+            for (int i = 0; i <= 24; ++i)
+            {
+                const float x = r.getX() + r.getWidth() * (float) i / 24.0f;
+                const float y = r.getCentreY() - std::sin ((float) i / 24.0f * juce::MathConstants<float>::twoPi) * r.getHeight() * 0.5f;
+                if (i == 0) p.startNewSubPath (x, y); else p.lineTo (x, y);
+            }
+            stroke (g, p, c);
+        });
+        icons.push_back ([=] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+        {
+            const auto r = box (b); juce::Path p;
+            p.startNewSubPath (r.getX(), r.getBottom()); p.lineTo (r.getCentreX(), r.getY()); p.lineTo (r.getRight(), r.getBottom());
+            stroke (g, p, c);
+        });
+        icons.push_back ([=] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+        {
+            const auto r = box (b); juce::Path p;
+            p.startNewSubPath (r.getX(), r.getBottom()); p.lineTo (r.getRight(), r.getY()); p.lineTo (r.getRight(), r.getBottom());
+            stroke (g, p, c);
+        });
+        icons.push_back ([=] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+        {
+            const auto r = box (b); juce::Path p;
+            p.startNewSubPath (r.getX(), r.getBottom()); p.lineTo (r.getX(), r.getY()); p.lineTo (r.getCentreX(), r.getY());
+            p.lineTo (r.getCentreX(), r.getBottom()); p.lineTo (r.getRight(), r.getBottom()); p.lineTo (r.getRight(), r.getY());
+            stroke (g, p, c);
+        });
+        for (int i = 0; i < 7; ++i)
+        {
+            auto* p = shapeBtns.add (new Pill());
+            p->radius = 5.0f;
+            p->look = [this] { return Pill::outline (ctx.modeAccent().withAlpha (0.6f), ctx.modeAccent()); };
+            p->pressedLook = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };
+            p->font = [] { return Fonts::monoSemi (11.0f); };
+            if (i < 4) p->icon = icons[(size_t) i];
+            else p->text = [i] { return juce::String (i == 4 ? "<" : i == 5 ? ">" : "INV"); };
+            static const char* titles[] = { "Sine", "Triangle", "Ramp", "Square", "Rotate left", "Rotate right", "Invert" };
+            p->setTitle (titles[i]);
+            p->onClick = [this, i]
+            {
+                const auto sc = ctx.scope();
+                const bool cc = ctx.ui.ccMode;
+                ctx.edit (true, [&] (Project& pr)
+                {
+                    if (i < 4) applyCurve (pr, sc, cc, (CurveShape) i);
+                    else if (i < 6) rotateSteps (pr, sc, cc, i == 5 ? 1 : -1);
+                    else invertSteps (pr, sc, cc);
+                });
+            };
+            addAndMakeVisible (p);
+        }
+    }
+
     addAndMakeVisible (shiftKnob);
     for (auto l : { Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc })
     {
@@ -575,11 +640,19 @@ void OpsPanel::resized()
     }
     {
         auto c = buttonsCol;
-        const int h = 36 * 2 + 8;
+        const int h = 30 * 2 + 6 + 8 + 24 * 2 + 4;
         auto b = c.withSizeKeepingCentre (c.getWidth(), h);
-        randomBtn.setBounds (b.removeFromTop (36));
+        randomBtn.setBounds (b.removeFromTop (30));
+        b.removeFromTop (6);
+        smoothBtn.setBounds (b.removeFromTop (30));
         b.removeFromTop (8);
-        smoothBtn.setBounds (b.removeFromTop (36));
+        auto row1 = b.removeFromTop (24);
+        b.removeFromTop (4);
+        auto row2 = b.removeFromTop (24);
+        const int w1 = (row1.getWidth() - 3 * 4) / 4;
+        for (int i = 0; i < 4; ++i) shapeBtns[i]->setBounds (row1.getX() + i * (w1 + 4), row1.getY(), w1, 24);
+        const int w2 = (row2.getWidth() - 2 * 4) / 3;
+        for (int i = 0; i < 3; ++i) shapeBtns[4 + i]->setBounds (row2.getX() + i * (w2 + 4), row2.getY(), w2, 24);
     }
     {
         auto c = shiftCol.withTrimmedLeft (16).withTrimmedTop (20);

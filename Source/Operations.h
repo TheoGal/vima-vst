@@ -46,6 +46,16 @@ int soundingNote (const Project&, int pattern, int track, int step);
 void randomize (Project&, const Scope&, bool ccMode, juce::Random&);
 void smooth (Project&, const Scope&, bool ccMode);
 
+// Curves (SPEC.md 9.5): write one cycle of a shape over the scope (first to last step), for every
+// armed param, between the param's RANGE min and max
+enum class CurveShape { sine, triangle, ramp, square };
+void applyCurve (Project&, const Scope&, bool ccMode, CurveShape);
+// Rotate the armed params' values by one step among the steps in scope: +1 = the last value goes
+// first, -1 = the first value goes last
+void rotateSteps (Project&, const Scope&, bool ccMode, int direction);
+// Flip the armed params' values around the center of their RANGE (min + max - value)
+void invertSteps (Project&, const Scope&, bool ccMode);
+
 struct ShiftGesture
 {
     Scope scope;

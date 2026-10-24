@@ -203,7 +203,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
         s.velocity = (std::uint8_t) juce::jlimit (1, 127, (int) b[3]);
         const int gate = (int) b[4] | ((int) b[5] << 8);
         s.gate = (std::uint16_t) juce::jlimit (1, maxGate, gate);
-        s.probability = (std::uint8_t) juce::jlimit (0, 100, (int) b[6]);
+        s.probability = (std::uint8_t) juce::jlimit (1, 100, (int) b[6]);   // never 0
         s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[7]);
         s.ccOn = b[8] != 0;
         steps[(size_t) i] = s;
@@ -428,6 +428,8 @@ void Project::fromValueTree (const juce::ValueTree& root)
                 auto mm = juce::StringArray::fromTokens (rangeParts[i], ":", "");
                 if (mm.size() == 2) { rs[i]->min = mm[0].getIntValue(); rs[i]->max = mm[1].getIntValue(); }
             }
+        g.rangeProb.min = juce::jlimit (1, 100, g.rangeProb.min);
+        g.rangeProb.max = juce::jlimit (1, 100, g.rangeProb.max);
     }
 
     for (auto rt : root)

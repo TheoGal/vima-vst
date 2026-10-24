@@ -19,7 +19,7 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::octave,      MacroKind::step,   "OCTAVE",     "Octave",      true,  minOctave, maxOctave },
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
     { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
-    { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  0, 100 },
+    { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  1, 100 },
     { MacroTarget::cc,          MacroKind::step,   "CC VALUE",   "CC Value",    true,  0, 127 },
     { MacroTarget::ccStepOn,    MacroKind::step,   "CC STEP",    "CC Step",     true,  0, 1 },
 };
@@ -133,7 +133,7 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
         case MacroTarget::octave:      s.octave = (std::int8_t) v; break;
         case MacroTarget::velocity:    s.velocity = (std::uint8_t) v; break;
         case MacroTarget::gate:        s.gate = (std::uint16_t) v; break;
-        case MacroTarget::probability: s.probability = (std::uint8_t) v; break;
+        case MacroTarget::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, v); break;
         case MacroTarget::cc:          s.cc = (std::uint8_t) v; break;
     }
     return true;

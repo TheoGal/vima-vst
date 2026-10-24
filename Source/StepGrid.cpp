@@ -194,7 +194,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
             if (ccMode) s.cc = (std::uint8_t) juce::jlimit (0, 127, v);
             else if (lane == SliderLane::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
             else if (lane == SliderLane::gate) s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v);
-            else s.probability = (std::uint8_t) juce::jlimit (0, 100, v);
+            else s.probability = (std::uint8_t) juce::jlimit (1, 100, v);   // never 0
         });
     };
     slider.barColour = [this]
@@ -239,7 +239,7 @@ void StepCell::refreshState()
     octave.setVisible (! cc_);
 
     const auto lane = ctx.ui.slider;
-    slider.minValue = cc_ ? 0 : lane == SliderLane::probability ? 0 : 1;
+    slider.minValue = cc_ ? 0 : 1;   // velocity and probability never 0
     slider.maxValue = cc_ ? 127 : lane == SliderLane::velocity ? 127 : lane == SliderLane::gate ? maxGate : 100;
     slider.defaultValue = cc_ ? 64 : 100;   // init values: CC 64; velocity 100, gate 100 %, probability 100 %
     setLearnTarget (slider, cc_ ? (int) MacroTarget::cc : -1);

@@ -185,7 +185,7 @@ struct Globals
     bool laneCcOn = false;         // the ON param in CC mode (CC on/off)
     bool laneOn = true, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = true;
     LaneRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
-              rangeProb { 0, 100 }, rangeCC { 0, 127 };
+              rangeProb { 1, 100 }, rangeCC { 0, 127 };
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)
 };

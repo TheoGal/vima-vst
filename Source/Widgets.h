@@ -85,7 +85,8 @@ public:
     std::function<void (int)> onWheel;          // +1 / -1 per wheel step
     std::function<float()> alpha;               // optional opacity
     std::function<Look()> pressedLook;          // look while the mouse button is held down
-    bool chevron = false;                       // a down chevron after the text: opens a menu / popover
+    bool chevron = false;
+    std::function<void (juce::Graphics&, juce::Rectangle<float>, juce::Colour)> icon;   // drawn instead of text                       // a down chevron after the text: opens a menu / popover
     float radius = 5.0f;
     juce::Justification justification = juce::Justification::centred;
     int textInset = 0;

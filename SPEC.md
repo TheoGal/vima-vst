@@ -88,7 +88,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
 | PARAMS | ON and NOTE armed in note mode, CC armed in CC mode (ALL off) |
-| RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 0-100%, CC 0-127) |
+| RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 1-100%, CC 0-127) |
 | SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
 | Theme | dark |
@@ -109,7 +109,7 @@ Per step values:
 | Octave | the whole MIDI range: C-2 to 8 (with middle C = C3) | Notes above MIDI 127 (G8) are not played. |
 | Velocity | 1-127 | Never 0: in MIDI a Note On with velocity 0 is a Note Off. Every operation clamps velocity to 1-127. |
 | Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step, up to 400% = four steps (legato and long notes). When a note is still held and the same pitch plays again on the same channel, the old note ends just before the new one. |
-| Probability | 0-100% | Chance that an "on" step actually plays its note each time it is reached. 100% = always. **Strictly a note-mode parameter**: it is not shown in CC mode and never affects CC, which is always sent when the step's CC is on. |
+| Probability | 1-100% | Chance that an "on" step actually plays its note each time it is reached. 100% = always. **Never 0%** (like velocity): every operation clamps it to 1-100%; a step that should not play is switched off instead. **Strictly a note-mode parameter**: it is not shown in CC mode and never affects CC, which is always sent when the step's CC is on. |
 | CC value | 0-127 | Sent when the track's CC output and the step's CC are on (10). |
 
 Pitch display and scale behavior:
@@ -281,6 +281,14 @@ A relative shift of all steps in scope.
 - **Capping**: each step moves relative to its own value. A step that reaches its limit stays at the limit while the others keep moving.
 - **Gesture snapshot**: during one drag, every step is calculated from its value at the moment the knob was grabbed. Turning back within the same drag restores the original shape exactly. Steps update live while dragging (so the change can be heard), and the whole drag is one undo entry.
 
+### 9.5 Curves, rotate and invert
+
+Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the armed PARAMS, like Randomize; each press is one undo step; off steps are included (like Randomize).
+
+- **Shapes**: SINE, TRIANGLE, RAMP (up) and SQUARE write one cycle of the shape from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. SINE starts at the middle and goes up first; TRIANGLE peaks in the middle; RAMP runs from min at the first step to max at the last; SQUARE is high for the first half, low for the second. NOTE uses the notes of the NOTE range, in-scale only when the track's scale is on (5); octaves are not changed unless OCT is armed. ON: a step is on where the curve is in its upper half. A ramp down is RAMP then INV.
+- **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = the last value goes first, ‹ = the first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: NOTE moves pitch classes only, OCT only when OCT is armed; with only some params armed, only those move (for example ON alone shifts the rhythm under fixed notes).
+- **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 1%, GATE 100% becomes 301%. With CC range 0-100: 30 becomes 70. NOTE mirrors the notes of the NOTE range (in-scale when the scale is on; octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
+
 ## 10. CC output
 
 - One CC per track (CC NUM), on the track's MIDI channel, when the track's CC OUT is on.
@@ -404,7 +412,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 1. **SELECTION**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
 2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ALL, ON, CC in CC mode. ALL is its own state and something is always armed (9.2).
 3. **RANGES**: a min / max bar per param, in that param's color: NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
-4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent).
+4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent), and under them the curve buttons (9.5): a row of four shape icons (sine, triangle, ramp up, square), then a row with ‹, › and INV. Outlined in the mode accent; green while pressed.
 5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB in note mode; CC only in CC mode).
 
 ### 12.7 Mockups
@@ -524,11 +532,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 15.1 Decided, not built yet
 
-1. **Curves, rotate and invert** (operations panel, under RANDOMIZE and SMOOTH, which get a little shorter). Layout as in the mockup: a row of four shape icon buttons (SINE, TRIANGLE, RAMP up, SQUARE), then a row with ‹ (rotate left), › (rotate right) and INV. Mode accent, outlined like SMOOTH; green while pressed. All act on the steps in scope (8.2) and the armed PARAMS, like Randomize; each press is one undo step; off steps are included (like Randomize).
-   - **Shapes**: one cycle from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. NOTE uses the in-scale notes when the track's scale is on (5). ON: a step is on where the curve is in its upper half. Ramp down = RAMP then INV.
-   - **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = last value goes first, ‹ = first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: NOTE moves pitch classes only, OCT only when OCT is armed.
-   - **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 0%. NOTE flips in-scale positions within the NOTE range (octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
-2. **Probability 1-100%, never 0** (like velocity 1-127): a step's probability can no longer be 0%. Everywhere: the step slider, Randomize, Smooth, Shift, Invert, curves, macros and loading; the PROB range bar runs 1-100% (init 1-100%). (A step that should not play is switched off instead.)
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -585,3 +589,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: Pattern thumbnails redesigned: one horizontal row per track, width = track length, a stripe per on step (green notes, cyan CC), grey for the length. Cells keep their size; 4 pages of 16 stay.
 - 2026-10-24: Thumbnails: every row shows both parts (notes above, CC below); an output that is off is dimmed; a part with no step on is not shown.
 - 2026-10-24: Plain zero everywhere: the value font is VIMA Mono (IBM Plex Mono with its plain zero as the default, renamed per the OFL).
+- 2026-10-24: Curves (sine, triangle, ramp, square), rotate ‹ › and invert added under RANDOMIZE / SMOOTH (9.5); rotate and invert work on any values. Probability is 1-100%, never 0.

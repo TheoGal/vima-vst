@@ -63,6 +63,7 @@ private:
 
     Context& ctx;
     Pill copyBtn, pasteBtn, clearBtn, randomBtn, smoothBtn;
+    juce::OwnedArray<Pill> shapeBtns;   // SINE, TRIANGLE, RAMP, SQUARE, ROTATE <, ROTATE >, INVERT
     juce::OwnedArray<Pill> laneChips, shiftChips;
     juce::OwnedArray<RangeBar> ranges;
     ShiftKnob shiftKnob;

@@ -252,6 +252,11 @@ void Pill::paint (juce::Graphics& g)
         g.setColour (l.text);
         g.fillEllipse ((float) getWidth() - 7.0f, 3.0f, 4.0f, 4.0f);
     }
+    if (icon)
+    {
+        icon (g, b, l.text);
+        return;
+    }
     if (text)
     {
         g.setColour (l.text);
