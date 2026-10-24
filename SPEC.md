@@ -438,6 +438,24 @@ Targets:
 | TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | 01 to 64 | - |
 | STEP | Note Step, Note, Octave, Velocity, Gate, Probability, CC Step, CC Value | 1-8 | 01 to 64 | 1-32 |
 
+**Exposed vs not exposed (checklist)**
+
+Exposed as macro targets (the table above, nothing else):
+
+- Global: Pattern (which pattern plays), Chain On.
+- Track routing (the same in every pattern): Notes Out, CC Out.
+- Track settings (per pattern): Length, Division, Direction, Swing, Scale On.
+- Step values (per pattern and step): Note Step (note on/off), Note, Octave, Velocity, Gate, Probability, CC Step (CC on/off), CC Value.
+
+Not exposed (set in the plugin only):
+
+- Track routing: MIDI channel, CC number.
+- Scale and pitch: the selected scale, the root, the user scale notes, middle C.
+- Chain: LOOP on/off, the chain entries and their repeats.
+- Settings: CC smoothing, pattern change by CC (on/off, channel, CC number), quantize, theme.
+- Editing tools: PARAMS (armed params, ALL), RANGES, SLIDER lane, NOTES / CC view, the selection, the track shown, the patterns view page.
+- Actions: RANDOMIZE, SMOOTH, the curves (shapes, rotate, invert), SHIFT ALL, COPY / PASTE / CLEAR, COPY TRACK, undo, the start / stop button, preset and mapping-set load / save.
+
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Full range**: every macro always covers its target's whole range over its whole travel. There is no min / max per mapping.
 - **Note Step** and **CC Step** switch the step's note part and CC part on or off (5).
