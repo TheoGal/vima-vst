@@ -56,10 +56,11 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         {
             const Globals d;
             auto& g = p.globals;
-            g.lightTheme = d.lightTheme; g.middleC = d.middleC;
+            g.middleC = d.middleC;
             g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
         });
+        Theme::setLight (false);   // the theme default: dark
     };
 
     doneBtn = &pill();
@@ -74,8 +75,8 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     {
         auto& p = pill();
         p.text = [i] { return juce::String (i == 0 ? "DARK" : "LIGHT"); };
-        p.look = [this, i, N] { return choice (ctx.globalsCopy().lightTheme == (i == 1), N()); };
-        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.lightTheme = i == 1; }); };
+        p.look = [i, N] { return choice (Theme::isLight() == (i == 1), N()); };
+        p.onClick = [this, i] { Theme::setLight (i == 1); ctx.changed(); };   // user-wide, all instances
         themeBtns.add (&p);
     }
 
@@ -168,7 +169,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
 
 juce::Rectangle<int> SettingsDialog::panelBounds() const
 {
-    return getLocalBounds().withSizeKeepingCentre (600, 700);
+    return getLocalBounds().withSizeKeepingCentre (600, 604);   // sized to its content
 }
 
 void SettingsDialog::mouseDown (const juce::MouseEvent& e)

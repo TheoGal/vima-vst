@@ -18,14 +18,14 @@ struct MacroTargetInfo
     const char* name;      // "VELOCITY"
     const char* hostName;  // "Velocity"
     bool perPattern;       // stored in each pattern (track settings and steps)
-    int min, max;          // full range (octave: see macroLimits)
+    int min, max;          // full range of the target
 };
 
 const MacroTargetInfo& macroTargetInfo (MacroTarget);
 MacroKind macroKind (MacroTarget);
 
 // Full value range of a target
-void macroLimits (MacroTarget, const Globals&, int& lo, int& hi);
+void macroLimits (MacroTarget, int& lo, int& hi);
 
 // A new mapping covering the full range. Every mapping is fixed (SPEC.md 13.1): one track,
 // one pattern (for settings stored per pattern) and one step.
@@ -64,4 +64,7 @@ juce::String macroValueText (const Globals&, const MacroMap&, int plain);
 juce::String macroTargetName (const MacroMap&, bool compact = false);   // "STEP 05 VELOCITY" ("STEP 05 VEL"), "LENGTH", "-"
 juce::String macroWhereText (const MacroMap&, bool compact = false);    // "T03 · 05", "T03", "GLOBAL"
 juce::String macroId (int index);                  // "M001"
+// Name the host shows for a macro: "Vel St05 Tr03 Pat23", "Swing Tr03 Pat23", "NotesOut Tr03",
+// "Pattern"; "Macro 1" when unmapped (SPEC.md 13.1)
+juce::String macroHostName (const MacroMap&, int index);
 } // namespace vima

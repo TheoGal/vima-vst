@@ -1,5 +1,6 @@
 #include "Theme.h"
 #include "BinaryData.h"
+#include <atomic>
 
 namespace vima
 {
@@ -33,10 +34,51 @@ const Theme& Theme::light()
     return t;
 }
 
-static bool lightOn = false;
-const Theme& Theme::current() { return lightOn ? light() : dark(); }
-void Theme::setLight (bool l) { lightOn = l; }
-bool Theme::isLight() { return lightOn; }
+// ---------------------------------------------------------------------------------------
+// User-wide theme preference
+namespace
+{
+    std::atomic<int> themeRevision { 0 };
+    bool lightOn = false;
+    bool loaded = false;
+
+    juce::File& settingsFile()
+    {
+        static juce::File f = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory)
+                                  .getChildFile ("VIMA").getChildFile ("Settings.xml");
+        return f;
+    }
+
+    void ensureLoaded()
+    {
+        if (loaded) return;
+        loaded = true;
+        if (auto xml = juce::XmlDocument::parse (settingsFile()))
+            lightOn = xml->getBoolAttribute ("lightTheme", false);
+    }
+}
+
+const Theme& Theme::current() { ensureLoaded(); return lightOn ? light() : dark(); }
+bool Theme::isLight() { ensureLoaded(); return lightOn; }
+int Theme::revision() { return themeRevision.load(); }
+
+void Theme::setLight (bool l)
+{
+    ensureLoaded();
+    if (l == lightOn) return;
+    lightOn = l;
+    ++themeRevision;
+    juce::XmlElement xml ("VIMASETTINGS");
+    xml.setAttribute ("lightTheme", l);
+    settingsFile().getParentDirectory().createDirectory();
+    xml.writeTo (settingsFile());
+}
+
+void Theme::setSettingsFile (const juce::File& f)
+{
+    settingsFile() = f;
+    loaded = false;
+}
 
 // ---------------------------------------------------------------------------------------
 namespace

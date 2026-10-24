@@ -31,12 +31,11 @@ const MacroTargetInfo& macroTargetInfo (MacroTarget t)
 
 MacroKind macroKind (MacroTarget t) { return macroTargetInfo (t).kind; }
 
-void macroLimits (MacroTarget t, const Globals& g, int& lo, int& hi)
+void macroLimits (MacroTarget t, int& lo, int& hi)
 {
     const auto& i = macroTargetInfo (t);
     lo = i.min;
     hi = i.max;
-    juce::ignoreUnused (g);
 }
 
 MacroMap defaultMacroMap (MacroTarget t, int track, int pattern, int step, const Globals&)
@@ -106,7 +105,7 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
     if (! current.has_value())
         return false;
     int lo = 0, hi = 1;
-    macroLimits (m.target, p.globals, lo, hi);
+    macroLimits (m.target, lo, hi);
     v = juce::jlimit (lo, hi, v);
     if (v == *current)
         return false;
@@ -168,12 +167,7 @@ namespace
         return count;
     }
 
-    void limits (const MacroMap& m, int& lo, int& hi)
-    {
-        const auto& i = macroTargetInfo (m.target);
-        lo = i.min;
-        hi = i.max;
-    }
+    void limits (const MacroMap& m, int& lo, int& hi) { macroLimits (m.target, lo, hi); }
 }
 
 int macroPositions (const MacroMap& m, const MacroNotes& n)
@@ -310,6 +304,38 @@ juce::String macroWhereText (const MacroMap& m, bool compact)
     if (compact)
         pattern = pattern.removeCharacters (" ");
     return track + dot + pattern;
+}
+
+juce::String macroHostName (const MacroMap& m, int index)
+{
+    if (! m.mapped())
+        return "Macro " + juce::String (index + 1);
+    auto two = [] (int v) { return juce::String (v).paddedLeft ('0', 2); };
+    const auto tr = " Tr" + two (m.track + 1);
+    const auto pat = " Pat" + two (m.pattern + 1);
+    const auto st = " St" + two (m.step + 1);
+    switch (m.target)
+    {
+        case MacroTarget::none:        break;
+        case MacroTarget::pattern:     return "Pattern";
+        case MacroTarget::chainOn:     return "Chain On";
+        case MacroTarget::noteOut:     return "NotesOut" + tr;
+        case MacroTarget::ccOut:       return "CCOut" + tr;
+        case MacroTarget::length:      return "Length" + tr + pat;
+        case MacroTarget::division:    return "Div" + tr + pat;
+        case MacroTarget::direction:   return "Dir" + tr + pat;
+        case MacroTarget::swing:       return "Swing" + tr + pat;
+        case MacroTarget::scaleOn:     return "Scale" + tr + pat;
+        case MacroTarget::stepOn:      return "NoteStep" + st + tr + pat;
+        case MacroTarget::note:        return "Note" + st + tr + pat;
+        case MacroTarget::octave:      return "Oct" + st + tr + pat;
+        case MacroTarget::velocity:    return "Vel" + st + tr + pat;
+        case MacroTarget::gate:        return "Gate" + st + tr + pat;
+        case MacroTarget::probability: return "Prob" + st + tr + pat;
+        case MacroTarget::cc:          return "CCval" + st + tr + pat;
+        case MacroTarget::ccStepOn:    return "CCStep" + st + tr + pat;
+    }
+    return "Macro " + juce::String (index + 1);
 }
 
 juce::String macroId (int index)

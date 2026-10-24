@@ -2,7 +2,7 @@
 
 // Track parameter row (SPEC.md 12.4): LENGTH, DIVISION, DIRECTION, SWING, MIDI CH (track-wide,
 // neutral), SCALE and NOTE OUT (note mode, green), CC OUT with CC number (CC mode, cyan),
-// SLIDER lane switch (note mode).
+// SLIDER param switch (note mode).
 
 #include "Context.h"
 #include "Widgets.h"

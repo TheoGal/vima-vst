@@ -49,24 +49,24 @@ Scope makeScope (const Project& p, int pattern, int track, int selFirst, int sel
     return makeScope (p, pattern, track, rangeMask (selFirst, selLast < 0 ? selFirst : selLast));
 }
 
-std::vector<Lane> activeLanes (const Globals& g, bool ccMode)
+std::vector<Param> armedParams (const Globals& g, bool ccMode)
 {
-    std::vector<Lane> lanes;
-    if (ccMode && g.laneAllCc) return { Lane::ccOn, Lane::cc };
-    if (! ccMode && g.laneAllNote) return { Lane::on, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability };
+    std::vector<Param> params;
+    if (ccMode && g.armAllCc) return { Param::ccOn, Param::cc };
+    if (! ccMode && g.armAllNote) return { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability };
     if (ccMode)
     {
-        if (g.laneCcOn) lanes.push_back (Lane::ccOn);
-        if (g.laneCC) lanes.push_back (Lane::cc);
-        return lanes;
+        if (g.armCcOn) params.push_back (Param::ccOn);
+        if (g.armCC) params.push_back (Param::cc);
+        return params;
     }
-    if (g.laneOn) lanes.push_back (Lane::on);
-    if (g.laneNote) lanes.push_back (Lane::note);
-    if (g.laneOct) lanes.push_back (Lane::octave);
-    if (g.laneVel) lanes.push_back (Lane::velocity);
-    if (g.laneGate) lanes.push_back (Lane::gate);
-    if (g.laneProb) lanes.push_back (Lane::probability);
-    return lanes;
+    if (g.armOn) params.push_back (Param::on);
+    if (g.armNote) params.push_back (Param::note);
+    if (g.armOct) params.push_back (Param::octave);
+    if (g.armVel) params.push_back (Param::velocity);
+    if (g.armGate) params.push_back (Param::gate);
+    if (g.armProb) params.push_back (Param::probability);
+    return params;
 }
 
 static TrackPattern& trackOf (Project& p, int pattern, int track)
@@ -89,9 +89,8 @@ int soundingNote (const Project& p, int pattern, int track, int step)
     return pitch;
 }
 
-static void setPitch (Step& s, int pitch, const Globals& g)
+static void setPitch (Step& s, int pitch)
 {
-    juce::ignoreUnused (g);
     const int lo = lowestPitch, hi = highestPitch;
     pitch = juce::jlimit (lo, hi, pitch);
     s.pitchClass = (std::int8_t) mod12 (pitch);
@@ -143,7 +142,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
 {
     auto& tp = trackOf (p, sc.pattern, sc.track);
     const auto& g = p.globals;
-    const auto lanes = activeLanes (g, ccMode);
+    const auto params = armedParams (g, ccMode);
     const auto mask = g.scaleMask();
 
     std::vector<int> pcs;
@@ -159,30 +158,30 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
     {
         if (! sc.contains (i)) continue;
         auto& s = tp.steps[(size_t) i];
-        for (auto lane : lanes)
+        for (auto param : params)
         {
-            switch (lane)
+            switch (param)
             {
-                case Lane::on:          s.on = r.nextFloat() < 0.7f; break;
-                case Lane::ccOn:        s.ccOn = r.nextFloat() < 0.7f; break;
-                case Lane::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
-                case Lane::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : minOctave); break;
-                case Lane::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;
-                case Lane::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
-                case Lane::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, randomIn (r, g.rangeProb.min, g.rangeProb.max)); break;
-                case Lane::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, randomIn (r, g.rangeCC.min, g.rangeCC.max)); break;
+                case Param::on:          s.on = r.nextFloat() < 0.7f; break;
+                case Param::ccOn:        s.ccOn = r.nextFloat() < 0.7f; break;
+                case Param::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
+                case Param::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : minOctave); break;
+                case Param::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;
+                case Param::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
+                case Param::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, randomIn (r, g.rangeProb.min, g.rangeProb.max)); break;
+                case Param::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, randomIn (r, g.rangeCC.min, g.rangeCC.max)); break;
             }
         }
     }
 }
 
-// Value of a lane as one number (NOTE: combined pitch, in scale degrees when the scale is on)
-static int laneValue (const Project& p, const TrackPattern& tp, const Step& s, Lane lane)
+// Value of a param as one number (NOTE: combined pitch, in scale degrees when the scale is on)
+static int paramValue (const Project& p, const TrackPattern& tp, const Step& s, Param param)
 {
     const auto& g = p.globals;
-    switch (lane)
+    switch (param)
     {
-        case Lane::note:
+        case Param::note:
         {
             int pitch = midiNote (s.octave, s.pitchClass);
             if (tp.scaleOn)
@@ -192,24 +191,24 @@ static int laneValue (const Project& p, const TrackPattern& tp, const Step& s, L
             }
             return pitch;
         }
-        case Lane::octave:      return s.octave;
-        case Lane::velocity:    return s.velocity;
-        case Lane::gate:        return s.gate;
-        case Lane::probability: return s.probability;
-        case Lane::cc:          return s.cc;
-        case Lane::on:          return s.on ? 1 : 0;
-        case Lane::ccOn:        return s.ccOn ? 1 : 0;
+        case Param::octave:      return s.octave;
+        case Param::velocity:    return s.velocity;
+        case Param::gate:        return s.gate;
+        case Param::probability: return s.probability;
+        case Param::cc:          return s.cc;
+        case Param::on:          return s.on ? 1 : 0;
+        case Param::ccOn:        return s.ccOn ? 1 : 0;
     }
     return 0;
 }
 
-// Limits of a lane value (NOTE limits follow the octave range setting)
-static void laneLimits (const Project& p, const TrackPattern& tp, Lane lane, int& lo, int& hi)
+// Limits of a param value (NOTE limits follow the octave range setting)
+static void paramLimits (const Project& p, const TrackPattern& tp, Param param, int& lo, int& hi)
 {
     const auto& g = p.globals;
-    switch (lane)
+    switch (param)
     {
-        case Lane::note:
+        case Param::note:
         {
             const int loPitch = lowestPitch, hiPitch = highestPitch;
             if (tp.scaleOn)
@@ -226,50 +225,50 @@ static void laneLimits (const Project& p, const TrackPattern& tp, Lane lane, int
             }
             return;
         }
-        case Lane::octave:      lo = minOctave; hi = maxOctave; return;
-        case Lane::velocity:    lo = 1; hi = 127; return;
-        case Lane::gate:        lo = 1; hi = maxGate; return;
-        case Lane::probability: lo = 1; hi = 100; return;   // never 0 (like velocity)
-        case Lane::cc:          lo = 0; hi = 127; return;
-        case Lane::on:
-        case Lane::ccOn:        lo = 0; hi = 1; return;
+        case Param::octave:      lo = minOctave; hi = maxOctave; return;
+        case Param::velocity:    lo = 1; hi = 127; return;
+        case Param::gate:        lo = 1; hi = maxGate; return;
+        case Param::probability: lo = 1; hi = 100; return;   // never 0 (like velocity)
+        case Param::cc:          lo = 0; hi = 127; return;
+        case Param::on:
+        case Param::ccOn:        lo = 0; hi = 1; return;
     }
 }
 
-static void setLaneValue (const Project& p, const TrackPattern& tp, Step& s, Lane lane, int v)
+static void setParamValue (const Project& p, const TrackPattern& tp, Step& s, Param param, int v)
 {
     const auto& g = p.globals;
     int lo = 0, hi = 0;
-    laneLimits (p, tp, lane, lo, hi);
+    paramLimits (p, tp, param, lo, hi);
     v = juce::jlimit (lo, hi, v);
-    switch (lane)
+    switch (param)
     {
-        case Lane::note:
-            setPitch (s, tp.scaleOn ? degreeToPitch (g.scaleMask(), g.root, v) : v, g);
+        case Param::note:
+            setPitch (s, tp.scaleOn ? degreeToPitch (g.scaleMask(), g.root, v) : v);
             break;
-        case Lane::octave:      s.octave = (std::int8_t) v; break;
-        case Lane::velocity:    s.velocity = (std::uint8_t) v; break;
-        case Lane::gate:        s.gate = (std::uint16_t) v; break;
-        case Lane::probability: s.probability = (std::uint8_t) v; break;
-        case Lane::cc:          s.cc = (std::uint8_t) v; break;
-        case Lane::on:          s.on = v != 0; break;
-        case Lane::ccOn:        s.ccOn = v != 0; break;
+        case Param::octave:      s.octave = (std::int8_t) v; break;
+        case Param::velocity:    s.velocity = (std::uint8_t) v; break;
+        case Param::gate:        s.gate = (std::uint16_t) v; break;
+        case Param::probability: s.probability = (std::uint8_t) v; break;
+        case Param::cc:          s.cc = (std::uint8_t) v; break;
+        case Param::on:          s.on = v != 0; break;
+        case Param::ccOn:        s.ccOn = v != 0; break;
     }
 }
 
 void smooth (Project& p, const Scope& sc, bool ccMode)
 {
     auto& tp = trackOf (p, sc.pattern, sc.track);
-    for (auto lane : activeLanes (p.globals, ccMode))
+    for (auto param : armedParams (p.globals, ccMode))
     {
-        if (lane == Lane::on || lane == Lane::ccOn)
+        if (param == Param::on || param == Param::ccOn)
             continue;   // on/off has no average
-        // the CC lane follows the CC on/off, the note lanes the note on/off
-        auto active = [lane] (const Step& st) { return lane == Lane::cc ? st.ccOn : st.on; };
+        // the CC param follows the CC on/off, the note params the note on/off
+        auto active = [param] (const Step& st) { return param == Param::cc ? st.ccOn : st.on; };
         long long sum = 0;
         int n = 0;
         for (int i = 0; i < maxSteps; ++i)
-            if (sc.contains (i) && active (tp.steps[(size_t) i])) { sum += laneValue (p, tp, tp.steps[(size_t) i], lane); ++n; }
+            if (sc.contains (i) && active (tp.steps[(size_t) i])) { sum += paramValue (p, tp, tp.steps[(size_t) i], param); ++n; }
         if (n == 0)
             continue;
         const int avg = (int) std::llround ((double) sum / n);
@@ -277,9 +276,9 @@ void smooth (Project& p, const Scope& sc, bool ccMode)
         {
             auto& s = tp.steps[(size_t) i];
             if (! sc.contains (i) || ! active (s)) continue;   // off steps are not smoothed
-            const int v = laneValue (p, tp, s, lane);
+            const int v = paramValue (p, tp, s, param);
             if (v != avg)
-                setLaneValue (p, tp, s, lane, v + (v < avg ? 1 : -1));
+                setParamValue (p, tp, s, param, v + (v < avg ? 1 : -1));
         }
     }
 }
@@ -287,17 +286,17 @@ void smooth (Project& p, const Scope& sc, bool ccMode)
 // ---- curves, rotate, invert (SPEC.md 9.5) ----------------------------------------
 namespace
 {
-    LaneRange rangeOf (const Globals& g, Lane l)
+    ParamRange rangeOf (const Globals& g, Param l)
     {
         switch (l)
         {
-            case Lane::note:        return g.rangeNote;
-            case Lane::octave:      return g.rangeOct;
-            case Lane::velocity:    return g.rangeVel;
-            case Lane::gate:        return g.rangeGate;
-            case Lane::probability: return g.rangeProb;
-            case Lane::cc:          return g.rangeCC;
-            case Lane::on: case Lane::ccOn: break;
+            case Param::note:        return g.rangeNote;
+            case Param::octave:      return g.rangeOct;
+            case Param::velocity:    return g.rangeVel;
+            case Param::gate:        return g.rangeGate;
+            case Param::probability: return g.rangeProb;
+            case Param::cc:          return g.rangeCC;
+            case Param::on: case Param::ccOn: break;
         }
         return { 0, 1 };
     }
@@ -317,34 +316,34 @@ namespace
     }
 
     // Raw stored value of a param (NOTE = pitch class only), for rotate
-    int rawValue (const Step& s, Lane l)
+    int rawValue (const Step& s, Param l)
     {
         switch (l)
         {
-            case Lane::on:          return s.on ? 1 : 0;
-            case Lane::ccOn:        return s.ccOn ? 1 : 0;
-            case Lane::note:        return s.pitchClass;
-            case Lane::octave:      return s.octave;
-            case Lane::velocity:    return s.velocity;
-            case Lane::gate:        return s.gate;
-            case Lane::probability: return s.probability;
-            case Lane::cc:          return s.cc;
+            case Param::on:          return s.on ? 1 : 0;
+            case Param::ccOn:        return s.ccOn ? 1 : 0;
+            case Param::note:        return s.pitchClass;
+            case Param::octave:      return s.octave;
+            case Param::velocity:    return s.velocity;
+            case Param::gate:        return s.gate;
+            case Param::probability: return s.probability;
+            case Param::cc:          return s.cc;
         }
         return 0;
     }
 
-    void setRaw (Step& s, Lane l, int v)
+    void setRaw (Step& s, Param l, int v)
     {
         switch (l)
         {
-            case Lane::on:          s.on = v != 0; break;
-            case Lane::ccOn:        s.ccOn = v != 0; break;
-            case Lane::note:        s.pitchClass = (std::int8_t) juce::jlimit (0, 11, v); break;
-            case Lane::octave:      s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, v); break;
-            case Lane::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, v); break;
-            case Lane::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v); break;
-            case Lane::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, v); break;
-            case Lane::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, v); break;
+            case Param::on:          s.on = v != 0; break;
+            case Param::ccOn:        s.ccOn = v != 0; break;
+            case Param::note:        s.pitchClass = (std::int8_t) juce::jlimit (0, 11, v); break;
+            case Param::octave:      s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, v); break;
+            case Param::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, v); break;
+            case Param::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v); break;
+            case Param::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, v); break;
+            case Param::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, v); break;
         }
     }
 
@@ -374,20 +373,20 @@ void applyCurve (Project& p, const Scope& sc, bool ccMode, CurveShape shape)
     for (int i = 0; i < maxSteps; ++i) if (sc.contains (i)) last = i;
     const int span = last - first + 1;   // by step position: gaps in the selection are respected
     const auto pcs = notePositions (g, tp);
-    for (auto lane : activeLanes (g, ccMode))
+    for (auto param : armedParams (g, ccMode))
         for (int i = 0; i < maxSteps; ++i)
         {
             if (! sc.contains (i)) continue;
             const double f = shapeAt (shape, i - first, span);
             auto& s = tp.steps[(size_t) i];
-            if (lane == Lane::on || lane == Lane::ccOn)
-                setRaw (s, lane, f >= 0.5 ? 1 : 0);
-            else if (lane == Lane::note)
+            if (param == Param::on || param == Param::ccOn)
+                setRaw (s, param, f >= 0.5 ? 1 : 0);
+            else if (param == Param::note)
                 s.pitchClass = (std::int8_t) pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, (int) std::lround (f * (double) (pcs.size() - 1)))];
             else
             {
-                const auto r = rangeOf (g, lane);
-                setRaw (s, lane, (int) std::lround (r.min + f * (double) (r.max - r.min)));
+                const auto r = rangeOf (g, param);
+                setRaw (s, param, (int) std::lround (r.min + f * (double) (r.max - r.min)));
             }
         }
 }
@@ -399,14 +398,14 @@ void rotateSteps (Project& p, const Scope& sc, bool ccMode, int direction)
     for (int i = 0; i < maxSteps; ++i) if (sc.contains (i)) idx.push_back (i);
     const int n = (int) idx.size();
     if (n < 2) return;
-    for (auto lane : activeLanes (p.globals, ccMode))
+    for (auto param : armedParams (p.globals, ccMode))
     {
         std::vector<int> v ((size_t) n);
-        for (int k = 0; k < n; ++k) v[(size_t) k] = rawValue (tp.steps[(size_t) idx[(size_t) k]], lane);
+        for (int k = 0; k < n; ++k) v[(size_t) k] = rawValue (tp.steps[(size_t) idx[(size_t) k]], param);
         for (int k = 0; k < n; ++k)
         {
             const int from = direction > 0 ? (k - 1 + n) % n : (k + 1) % n;   // > : the last value goes first
-            setRaw (tp.steps[(size_t) idx[(size_t) k]], lane, v[(size_t) from]);
+            setRaw (tp.steps[(size_t) idx[(size_t) k]], param, v[(size_t) from]);
         }
     }
 }
@@ -417,14 +416,14 @@ void invertSteps (Project& p, const Scope& sc, bool ccMode)
     const auto& g = p.globals;
     const auto pcs = notePositions (g, tp);
     const int np = (int) pcs.size();
-    for (auto lane : activeLanes (g, ccMode))
+    for (auto param : armedParams (g, ccMode))
         for (int i = 0; i < maxSteps; ++i)
         {
             if (! sc.contains (i)) continue;
             auto& s = tp.steps[(size_t) i];
-            if (lane == Lane::on || lane == Lane::ccOn)
-                setRaw (s, lane, rawValue (s, lane) != 0 ? 0 : 1);
-            else if (lane == Lane::note)
+            if (param == Param::on || param == Param::ccOn)
+                setRaw (s, param, rawValue (s, param) != 0 ? 0 : 1);
+            else if (param == Param::note)
             {
                 // the nearest NOTE position, mirrored
                 int best = 0;
@@ -434,17 +433,17 @@ void invertSteps (Project& p, const Scope& sc, bool ccMode)
             }
             else
             {
-                const auto r = rangeOf (g, lane);
-                setRaw (s, lane, r.min + r.max - rawValue (s, lane));
+                const auto r = rangeOf (g, param);
+                setRaw (s, param, r.min + r.max - rawValue (s, param));
             }
         }
 }
 
-ShiftGesture beginShift (const Project& p, const Scope& sc, Lane lane)
+ShiftGesture beginShift (const Project& p, const Scope& sc, Param param)
 {
     ShiftGesture gst;
     gst.scope = sc;
-    gst.lane = lane;
+    gst.param = param;
     gst.snapshot = trackOf (p, sc.pattern, sc.track).steps;
     return gst;
 }
@@ -457,8 +456,8 @@ void applyShift (Project& p, const ShiftGesture& gst, int amount)
         if (! gst.scope.contains (i)) continue;
         const auto& original = gst.snapshot[(size_t) i];
         auto s = original;
-        if (gst.lane != Lane::on && gst.lane != Lane::ccOn)
-            setLaneValue (p, tp, s, gst.lane, laneValue (p, tp, original, gst.lane) + amount);
+        if (gst.param != Param::on && gst.param != Param::ccOn)
+            setParamValue (p, tp, s, gst.param, paramValue (p, tp, original, gst.param) + amount);
         tp.steps[(size_t) i] = s;
     }
 }
@@ -475,7 +474,7 @@ std::vector<ClipStep> copySteps (const Project& p, const Scope& sc)
 }
 
 std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const std::vector<ClipStep>& clip,
-                          const std::vector<Lane>& lanes)
+                          const std::vector<Param>& params)
 {
     auto& tp = trackOf (p, pattern, track);
     std::uint32_t written = 0;
@@ -484,20 +483,20 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
         const int i = start + c.offset;
         if (i < 0 || i >= tp.length) continue;   // cut off at the track length, never wrap
         auto& s = tp.steps[(size_t) i];
-        if (lanes.empty())
+        if (params.empty())
             s = c.step;
-        for (auto l : lanes)
+        for (auto l : params)
         {
             switch (l)
             {
-                case Lane::on:          s.on = c.step.on; break;
-                case Lane::ccOn:        s.ccOn = c.step.ccOn; break;
-                case Lane::note:        s.pitchClass = c.step.pitchClass; break;
-                case Lane::octave:      s.octave = c.step.octave; break;
-                case Lane::velocity:    s.velocity = c.step.velocity; break;
-                case Lane::gate:        s.gate = c.step.gate; break;
-                case Lane::probability: s.probability = c.step.probability; break;
-                case Lane::cc:          s.cc = c.step.cc; break;
+                case Param::on:          s.on = c.step.on; break;
+                case Param::ccOn:        s.ccOn = c.step.ccOn; break;
+                case Param::note:        s.pitchClass = c.step.pitchClass; break;
+                case Param::octave:      s.octave = c.step.octave; break;
+                case Param::velocity:    s.velocity = c.step.velocity; break;
+                case Param::gate:        s.gate = c.step.gate; break;
+                case Param::probability: s.probability = c.step.probability; break;
+                case Param::cc:          s.cc = c.step.cc; break;
             }
         }
         written |= (1u << i);

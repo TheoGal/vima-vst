@@ -495,10 +495,10 @@ void MacrosView::paint (juce::Graphics& g)
     g.fillAll (t.bg);
 
     int mapped = 0;
-    const int bank = ctx.ui.macroPage;
-    ctx.proc.read ([&mapped, bank] (const Project& p)
+    const int page = ctx.ui.macroPage;
+    ctx.proc.read ([&mapped, page] (const Project& p)
     {
-        for (int k = 0; k < macrosPerPage; ++k) mapped += p.macros[(size_t) (bank * macrosPerPage + k)].mapped() ? 1 : 0;
+        for (int k = 0; k < macrosPerPage; ++k) mapped += p.macros[(size_t) (page * macrosPerPage + k)].mapped() ? 1 : 0;
         return 0;
     });
     {

@@ -222,7 +222,6 @@ void Header::resized()
 {
     const bool pv = ctx.ui.patternsView || ctx.ui.macrosView;
     auto r = getLocalBounds().withTrimmedBottom (1).reduced (20, 0);
-    const int cy = r.getCentreY();
 
     nameArea = r.removeFromLeft (60);
     r.removeFromLeft (14 + 1 + 14);   // separator
@@ -264,7 +263,6 @@ void Header::resized()
     prevBtn.setBounds (pa.removeFromLeft (24));
     nextBtn.setBounds (pa.removeFromRight (24));
     patternBtn.setBounds (pa);
-    juce::ignoreUnused (cy);
 }
 
 void Header::showTrackMenu()

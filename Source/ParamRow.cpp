@@ -221,23 +221,23 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     addAndMakeVisible (ccNumberTile);
     addAndMakeVisible (ccOutTile);
 
-    // SLIDER lane switch (note mode)
-    const std::array<SliderLane, 3> lanes { SliderLane::velocity, SliderLane::gate, SliderLane::probability };
+    // SLIDER param switch (note mode)
+    const std::array<SliderParam, 3> params { SliderParam::velocity, SliderParam::gate, SliderParam::probability };
     const char* names[] = { "VEL", "GATE", "PROB" };
     for (int i = 0; i < 3; ++i)
     {
         auto* p = new Pill();
-        const auto lane = lanes[(size_t) i];
+        const auto param = params[(size_t) i];
         p->radius = 4.0f;
         p->font = [] { return Fonts::monoSemi (10.0f); };
         p->text = [n = juce::String (names[i])] { return n; };
-        p->look = [this, lane, i]
+        p->look = [this, param, i]
         {
             const auto& t = Theme::current();
             const juce::Colour accents[] = { t.green, t.purple, t.amber };
-            return segmentLook (ctx.ui.slider == lane, accents[i]);
+            return segmentLook (ctx.ui.slider == param, accents[i]);
         };
-        p->onClick = [this, lane] { ctx.ui.slider = lane; ctx.changed(); };
+        p->onClick = [this, param] { ctx.ui.slider = param; ctx.changed(); };
         sliderBtns.add (p);
         sliderTile.addAndMakeVisible (p);
     }

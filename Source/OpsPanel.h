@@ -1,6 +1,6 @@
 #pragma once
 
-// Operations panel (SPEC.md 12.6): selection with COPY / PASTE / CLEAR, lane chips, ranges,
+// Operations panel (SPEC.md 12.6): selection with COPY / PASTE / CLEAR, param chips, ranges,
 // RANDOMIZE and SMOOTH, SHIFT ALL.
 
 #include "Context.h"
@@ -11,14 +11,14 @@ namespace vima
 class RangeBar : public juce::Component
 {
 public:
-    RangeBar (Context&, Lane);
+    RangeBar (Context&, Param);
     void paint (juce::Graphics&) override;
     void mouseDown (const juce::MouseEvent&) override;
     void mouseDrag (const juce::MouseEvent&) override;
 
 private:
-    LaneRange get() const;
-    void set (LaneRange);
+    ParamRange get() const;
+    void set (ParamRange);
     void axis (int& lo, int& hi) const;
     juce::String valueText (int) const;
     juce::Rectangle<float> barArea() const;
@@ -28,7 +28,7 @@ private:
     void paintBar (juce::Graphics&);
 
     Context& ctx;
-    Lane lane;
+    Param param;
     int dragging = 0;   // 1 = min handle, 2 = max handle
 };
 
@@ -64,10 +64,10 @@ private:
     Context& ctx;
     Pill copyBtn, pasteBtn, clearBtn, randomBtn, smoothBtn;
     juce::OwnedArray<Pill> shapeBtns;   // SINE, TRIANGLE, RAMP, SQUARE, ROTATE <, ROTATE >, INVERT
-    juce::OwnedArray<Pill> laneChips, shiftChips;
+    juce::OwnedArray<Pill> paramBtns, shiftChips;
     juce::OwnedArray<RangeBar> ranges;
     ShiftKnob shiftKnob;
-    juce::Rectangle<int> selCol, lanesCol, rangesCol, buttonsCol, shiftCol;
+    juce::Rectangle<int> selCol, paramsCol, rangesCol, buttonsCol, shiftCol;
     bool repeating = false;
 };
 } // namespace vima

@@ -92,7 +92,7 @@ private:
     vima::LearnOverlay learnOverlay;
     std::unique_ptr<vima::SettingsDialog> settings;
 
-    int lastRevision = -1, lastPattern = -1, lastPlayStep = -2, blinkCounter = 0, lastChainPos = -2;
+    int lastTheme = -1, lastRevision = -1, lastPattern = -1, lastPlayStep = -2, blinkCounter = 0, lastChainPos = -2;
     bool lastPlaying = false, lastQueued = false;
     double lastBpm = 0.0;
     float lastProgress = -1.0f;

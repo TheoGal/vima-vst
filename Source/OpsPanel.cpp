@@ -4,75 +4,75 @@ namespace vima
 {
 namespace
 {
-    bool& laneFlag (Globals& g, Lane l)
+    bool& armFlag (Globals& g, Param l)
     {
         switch (l)
         {
-            case Lane::on:          return g.laneOn;
-            case Lane::note:        return g.laneNote;
-            case Lane::octave:      return g.laneOct;
-            case Lane::velocity:    return g.laneVel;
-            case Lane::gate:        return g.laneGate;
-            case Lane::probability: return g.laneProb;
-            case Lane::cc:          return g.laneCC;
-            case Lane::ccOn:        return g.laneCcOn;
+            case Param::on:          return g.armOn;
+            case Param::note:        return g.armNote;
+            case Param::octave:      return g.armOct;
+            case Param::velocity:    return g.armVel;
+            case Param::gate:        return g.armGate;
+            case Param::probability: return g.armProb;
+            case Param::cc:          return g.armCC;
+            case Param::ccOn:        return g.armCcOn;
         }
-        return g.laneOn;
+        return g.armOn;
     }
 
-    LaneRange& laneRange (Globals& g, Lane l)
+    ParamRange& paramRange (Globals& g, Param l)
     {
         switch (l)
         {
-            case Lane::note:        return g.rangeNote;
-            case Lane::octave:      return g.rangeOct;
-            case Lane::velocity:    return g.rangeVel;
-            case Lane::gate:        return g.rangeGate;
-            case Lane::probability: return g.rangeProb;
-            case Lane::cc:          return g.rangeCC;
-            case Lane::on: case Lane::ccOn: break;
+            case Param::note:        return g.rangeNote;
+            case Param::octave:      return g.rangeOct;
+            case Param::velocity:    return g.rangeVel;
+            case Param::gate:        return g.rangeGate;
+            case Param::probability: return g.rangeProb;
+            case Param::cc:          return g.rangeCC;
+            case Param::on: case Param::ccOn: break;
         }
         return g.rangeVel;
     }
 
-    const char* laneName (Lane l)
+    const char* paramName (Param l)
     {
         switch (l)
         {
-            case Lane::on:
-            case Lane::ccOn:        return "ON";
-            case Lane::note:        return "NOTE";
-            case Lane::octave:      return "OCT";
-            case Lane::velocity:    return "VEL";
-            case Lane::gate:        return "GATE";
-            case Lane::probability: return "PROB";
-            case Lane::cc:          return "CC";
+            case Param::on:
+            case Param::ccOn:        return "ON";
+            case Param::note:        return "NOTE";
+            case Param::octave:      return "OCT";
+            case Param::velocity:    return "VEL";
+            case Param::gate:        return "GATE";
+            case Param::probability: return "PROB";
+            case Param::cc:          return "CC";
         }
         return "";
     }
 
-    juce::Colour laneColour (Lane l)
+    juce::Colour paramColour (Param l)
     {
         const auto& t = Theme::current();
         switch (l)
         {
-            case Lane::note: case Lane::octave: case Lane::velocity: return t.green;
-            case Lane::gate:        return t.purple;
-            case Lane::probability: return t.amber;
-            case Lane::cc:          return t.cyan;
-            case Lane::on: case Lane::ccOn: break;
+            case Param::note: case Param::octave: case Param::velocity: return t.green;
+            case Param::gate:        return t.purple;
+            case Param::probability: return t.amber;
+            case Param::cc:          return t.cyan;
+            case Param::on: case Param::ccOn: break;
         }
         return t.text2;
     }
 
-    const std::vector<Lane>& noteLanes()
+    const std::vector<Param>& noteParams()
     {
-        static const std::vector<Lane> l { Lane::on, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability };
+        static const std::vector<Param> l { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability };
         return l;
     }
-    const std::vector<Lane>& ccLanes()
+    const std::vector<Param>& ccParams()
     {
-        static const std::vector<Lane> l { Lane::ccOn, Lane::cc };
+        static const std::vector<Param> l { Param::ccOn, Param::cc };
         return l;
     }
 
@@ -84,7 +84,7 @@ namespace
 }
 
 // ---------------------------------------------------------------------------------------
-RangeBar::RangeBar (Context& c, Lane l) : ctx (c), lane (l)
+RangeBar::RangeBar (Context& c, Param l) : ctx (c), param (l)
 {
     setMouseCursor (juce::MouseCursor::LeftRightResizeCursor);
 }
@@ -104,11 +104,11 @@ std::vector<int> RangeBar::notePositions() const
 }
 
 // Ranges in bar units: for NOTE, positions in notePositions(); for the other params, values
-LaneRange RangeBar::get() const
+ParamRange RangeBar::get() const
 {
     auto g = ctx.globalsCopy();
-    const auto r = laneRange (g, lane);
-    if (lane != Lane::note)
+    const auto r = paramRange (g, param);
+    if (param != Param::note)
         return r;
     const auto pcs = notePositions();
     const int n = (int) pcs.size();
@@ -120,49 +120,49 @@ LaneRange RangeBar::get() const
     return { a, b };
 }
 
-void RangeBar::set (LaneRange r)
+void RangeBar::set (ParamRange r)
 {
-    if (lane == Lane::note)
+    if (param == Param::note)
     {
         const auto pcs = notePositions();
         const int n = (int) pcs.size();
         r = { pcs[(size_t) juce::jlimit (0, n - 1, r.min)], pcs[(size_t) juce::jlimit (0, n - 1, r.max)] };
     }
-    ctx.edit (false, [this, r] (Project& p) { laneRange (p.globals, lane) = r; });
+    ctx.edit (false, [this, r] (Project& p) { paramRange (p.globals, param) = r; });
 }
 
 bool RangeBar::armed() const
 {
-    const auto lanes = activeLanes (ctx.globalsCopy(), ctx.ui.ccMode);
-    return std::find (lanes.begin(), lanes.end(), lane) != lanes.end();
+    const auto params = armedParams (ctx.globalsCopy(), ctx.ui.ccMode);
+    return std::find (params.begin(), params.end(), param) != params.end();
 }
 
 void RangeBar::axis (int& lo, int& hi) const
 {
-    switch (lane)
+    switch (param)
     {
-        case Lane::note:        lo = 0; hi = (int) notePositions().size() - 1; return;
-        case Lane::octave:      lo = minOctave; hi = maxOctave; return;
-        case Lane::velocity:    lo = 1; hi = 127; return;
-        case Lane::gate:        lo = 1; hi = maxGate; return;
-        case Lane::probability: lo = 1; hi = 100; return;
-        case Lane::cc:          lo = 0; hi = 127; return;
-        case Lane::on: case Lane::ccOn: lo = 0; hi = 1; return;
+        case Param::note:        lo = 0; hi = (int) notePositions().size() - 1; return;
+        case Param::octave:      lo = minOctave; hi = maxOctave; return;
+        case Param::velocity:    lo = 1; hi = 127; return;
+        case Param::gate:        lo = 1; hi = maxGate; return;
+        case Param::probability: lo = 1; hi = 100; return;
+        case Param::cc:          lo = 0; hi = 127; return;
+        case Param::on: case Param::ccOn: lo = 0; hi = 1; return;
     }
 }
 
 juce::String RangeBar::valueText (int v) const
 {
-    switch (lane)
+    switch (param)
     {
-        case Lane::note:
+        case Param::note:
         {
             const auto pcs = notePositions();
             return pitchClassName (pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, v)]);
         }
-        case Lane::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
-        case Lane::gate: case Lane::probability: return juce::String (v) + "%";
-        case Lane::on: case Lane::ccOn: case Lane::velocity: case Lane::cc: break;
+        case Param::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
+        case Param::gate: case Param::probability: return juce::String (v) + "%";
+        case Param::on: case Param::ccOn: case Param::velocity: case Param::cc: break;
     }
     return juce::String (v);
 }
@@ -220,7 +220,7 @@ void RangeBar::paintBar (juce::Graphics& g)
     auto area = getLocalBounds();
     g.setColour (t.text2);
     g.setFont (Fonts::monoSemi (11.0f));
-    g.drawText (laneName (lane), area.removeFromLeft (38), juce::Justification::centredLeft);
+    g.drawText (paramName (param), area.removeFromLeft (38), juce::Justification::centredLeft);
     area.removeFromLeft (10);
     g.setColour (t.text);
     g.setFont (Fonts::mono (11.0f));
@@ -234,7 +234,7 @@ void RangeBar::paintBar (juce::Graphics& g)
     g.fillRoundedRectangle (track, 2.0f);
     auto xOf = [&] (int v) { return b.getX() + b.getWidth() * (float) (juce::jlimit (lo, hi, v) - lo) / (float) juce::jmax (1, hi - lo); };
     const float x0 = xOf (r.min), x1 = xOf (r.max);
-    g.setColour (laneColour (lane));
+    g.setColour (paramColour (param));
     g.fillRoundedRectangle (track.withLeft (x0).withRight (juce::jmax (x0 + 1.0f, x1)), 2.0f);
     g.setColour (t.text);
     g.fillEllipse (juce::Rectangle<float> (10.0f, 10.0f).withCentre ({ x0, track.getCentreY() }));
@@ -251,10 +251,10 @@ ShiftKnob::ShiftKnob (Context& c) : ctx (c)
 void ShiftKnob::mouseDown (const juce::MouseEvent& e)
 {
     if (e.mods.isPopupMenu()) return;
-    const auto lane = ctx.ui.ccMode ? Lane::cc : ctx.ui.shiftLane;
+    const auto param = ctx.ui.ccMode ? Param::cc : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
     ctx.beginGesture();   // the whole drag is one undo entry
-    gesture = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, lane); });
+    gesture = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
     startY = e.getScreenY();
     active = true;
     ctx.ui.shiftAmount = 0;
@@ -283,10 +283,10 @@ void ShiftKnob::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const float d = std::abs (w.deltaY) > std::abs (w.deltaX) ? w.deltaY : -w.deltaX;
     if (juce::exactlyEqual (d, 0.0f) || active) return;
     const int k = (d > 0.0f) != w.isReversed ? 1 : -1;
-    const auto lane = ctx.ui.ccMode ? Lane::cc : ctx.ui.shiftLane;
+    const auto param = ctx.ui.ccMode ? Param::cc : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
     ctx.beginGesture();
-    const auto g = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, lane); });
+    const auto g = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
     ctx.edit (false, [&g, k] (Project& p) { applyShift (p, g, k); });
 }
 
@@ -330,11 +330,11 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
             ctx.changed();
             return;
         }
-        const auto lanes = activeLanes (ctx.globalsCopy(), ctx.ui.ccMode);
-        if (lanes.empty()) return;   // no lane armed: nothing to copy
+        const auto params = armedParams (ctx.globalsCopy(), ctx.ui.ccMode);
+        if (params.empty()) return;   // no param armed: nothing to copy
         const auto sc = ctx.scope();
         ctx.ui.clip = ctx.proc.read ([&] (const Project& p) { return copySteps (p, sc); });
-        ctx.ui.clipLanes = lanes;
+        ctx.ui.clipParams = params;
         ctx.ui.clipSpan = ctx.ui.clip.empty() ? 0 : ctx.ui.clip.back().offset + 1;
         ctx.ui.selection = 0;        // no selection while COPIED
         ctx.ui.pasteStart = -1;
@@ -342,7 +342,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     };
     addAndMakeVisible (copyBtn);
 
-    // PASTE writes the copied lanes at the landing step (the ghost preview). COPIED stays lit.
+    // PASTE writes the copied params at the landing step (the ghost preview). COPIED stays lit.
     pasteBtn.text = [] { return juce::String ("PASTE"); };
     pasteBtn.font = smallFont;
     pasteBtn.look = [this]
@@ -357,8 +357,8 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         if (ctx.ui.clip.empty() || ctx.ui.pasteStart < 0) return;
         const int t = ctx.ui.track, start = ctx.ui.pasteStart;
         const auto clip = ctx.ui.clip;
-        const auto lanes = ctx.ui.clipLanes;
-        ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, lanes); });
+        const auto params = ctx.ui.clipParams;
+        ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, params); });
     };
     pasteBtn.pressedLook = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };   // green while held (SPEC.md 9.1)
     addAndMakeVisible (pasteBtn);
@@ -379,41 +379,41 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     addAndMakeVisible (clearBtn);
 
     // PARAMS buttons (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
-    std::vector<Lane> all { Lane::on, Lane::ccOn, Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc };
+    std::vector<Param> all { Param::on, Param::ccOn, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc };
     {
-        auto* p = laneChips.add (new Pill());
+        auto* p = paramBtns.add (new Pill());
         p->text = [] { return juce::String ("ALL"); };
-        p->getProperties().set ("lane", -1);
+        p->getProperties().set ("param", -1);
         // ALL is its own state: only ALL lights up. Clicking the lit ALL does nothing
         // (something is always armed, SPEC.md 9.2).
         p->look = [this]
         {
             const auto g = ctx.globalsCopy();
-            return chipLook (ctx.ui.ccMode ? g.laneAllCc : g.laneAllNote, ctx.modeAccent());
+            return chipLook (ctx.ui.ccMode ? g.armAllCc : g.armAllNote, ctx.modeAccent());
         };
         p->onClick = [this]
         {
             const bool cc = ctx.ui.ccMode;
             ctx.edit (false, [cc] (Project& pr)
             {
-                auto& all = cc ? pr.globals.laneAllCc : pr.globals.laneAllNote;
+                auto& all = cc ? pr.globals.armAllCc : pr.globals.armAllNote;
                 if (all) return;
                 all = true;
-                for (auto l : cc ? ccLanes() : noteLanes()) laneFlag (pr.globals, l) = false;
+                for (auto l : cc ? ccParams() : noteParams()) armFlag (pr.globals, l) = false;
             });
         };
         addAndMakeVisible (p);
     }
     for (auto l : all)
     {
-        auto* p = laneChips.add (new Pill());
-        p->getProperties().set ("lane", (int) l);
-        p->text = [l] { return juce::String (laneName (l)); };
+        auto* p = paramBtns.add (new Pill());
+        p->getProperties().set ("param", (int) l);
+        p->text = [l] { return juce::String (paramName (l)); };
         p->look = [this, l]
         {
             auto g = ctx.globalsCopy();
-            const bool all = ctx.ui.ccMode ? g.laneAllCc : g.laneAllNote;
-            return chipLook (! all && laneFlag (g, l), ctx.modeAccent());
+            const bool all = ctx.ui.ccMode ? g.armAllCc : g.armAllNote;
+            return chipLook (! all && armFlag (g, l), ctx.modeAccent());
         };
         p->onClick = [this, l]
         {
@@ -421,21 +421,21 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
             ctx.edit (false, [l, cc] (Project& pr)
             {
                 auto& g = pr.globals;
-                auto& all = cc ? g.laneAllCc : g.laneAllNote;
-                const auto& modeLanes = cc ? ccLanes() : noteLanes();
+                auto& all = cc ? g.armAllCc : g.armAllNote;
+                const auto& modeParams = cc ? ccParams() : noteParams();
                 if (all)
                 {
                     // leaving ALL: only the clicked param is armed
                     all = false;
-                    for (auto m : modeLanes) laneFlag (g, m) = false;
-                    laneFlag (g, l) = true;
+                    for (auto m : modeParams) armFlag (g, m) = false;
+                    armFlag (g, l) = true;
                     return;
                 }
-                auto& f = laneFlag (g, l);
+                auto& f = armFlag (g, l);
                 if (f)
                 {
                     int armed = 0;
-                    for (auto m : modeLanes) armed += laneFlag (g, m) ? 1 : 0;
+                    for (auto m : modeParams) armed += armFlag (g, m) ? 1 : 0;
                     if (armed <= 1) return;   // the last armed param stays armed
                 }
                 f = ! f;
@@ -443,9 +443,9 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         };
         addAndMakeVisible (p);
     }
-    for (auto* p : laneChips) { p->font = [] { return Fonts::monoSemi (11.0f); }; p->radius = 5.0f; }
+    for (auto* p : paramBtns) { p->font = [] { return Fonts::monoSemi (11.0f); }; p->radius = 5.0f; }
 
-    for (auto l : { Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc })
+    for (auto l : { Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc })
         addAndMakeVisible (ranges.add (new RangeBar (ctx, l)));
 
     randomBtn.text = [] { return juce::String ("RANDOMIZE"); };
@@ -541,15 +541,15 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     }
 
     addAndMakeVisible (shiftKnob);
-    for (auto l : { Lane::note, Lane::octave, Lane::velocity, Lane::gate, Lane::probability, Lane::cc })
+    for (auto l : { Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc })
     {
         auto* p = shiftChips.add (new Pill());
-        p->getProperties().set ("lane", (int) l);
+        p->getProperties().set ("param", (int) l);
         p->radius = 4.0f;
         p->font = [] { return Fonts::monoSemi (10.0f); };
-        p->text = [l] { return juce::String (laneName (l)); };
-        p->look = [this, l] { return chipLook (ctx.ui.ccMode ? l == Lane::cc : ctx.ui.shiftLane == l, ctx.modeAccent()); };
-        p->onClick = [this, l] { if (! ctx.ui.ccMode) { ctx.ui.shiftLane = l; ctx.changed(); } };
+        p->text = [l] { return juce::String (paramName (l)); };
+        p->look = [this, l] { return chipLook (ctx.ui.ccMode ? l == Param::cc : ctx.ui.shiftParam == l, ctx.modeAccent()); };
+        p->onClick = [this, l] { if (! ctx.ui.ccMode) { ctx.ui.shiftParam = l; ctx.changed(); } };
         addAndMakeVisible (p);
     }
 }
@@ -574,21 +574,17 @@ void OpsPanel::timerCallback()
 void OpsPanel::refreshState()
 {
     const bool cc = ctx.ui.ccMode;
-    for (auto* p : laneChips)
+    for (auto* p : paramBtns)
     {
-        const int l = p->getProperties()["lane"];
-        p->setVisible (l < 0 || (cc ? (l == (int) Lane::ccOn || l == (int) Lane::cc) : (l != (int) Lane::cc && l != (int) Lane::ccOn)));
-    }
-    for (auto* r : ranges)
-    {
-        juce::ignoreUnused (r);
+        const int l = p->getProperties()["param"];
+        p->setVisible (l < 0 || (cc ? (l == (int) Param::ccOn || l == (int) Param::cc) : (l != (int) Param::cc && l != (int) Param::ccOn)));
     }
     for (int i = 0; i < ranges.size(); ++i)
         ranges[i]->setVisible (cc ? i == 5 : i < 5);
     for (auto* p : shiftChips)
     {
-        const int l = p->getProperties()["lane"];
-        p->setVisible (cc ? l == (int) Lane::cc : l != (int) Lane::cc);
+        const int l = p->getProperties()["param"];
+        p->setVisible (cc ? l == (int) Param::cc : l != (int) Param::cc);
     }
     resized();
     repaint();
@@ -606,7 +602,7 @@ void OpsPanel::resized()
         return c;
     };
     selCol = take (1.05f);
-    lanesCol = take (0.95f);
+    paramsCol = take (0.95f);
     rangesCol = take (1.25f);
     buttonsCol = take (0.62f);
     shiftCol = r;
@@ -618,9 +614,9 @@ void OpsPanel::resized()
         clearBtn.setBounds (c.removeFromLeft (64));
     }
     {
-        auto c = lanesCol.withTrimmedTop (20);
+        auto c = paramsCol.withTrimmedTop (20);
         int x = c.getX(), y = c.getY();
-        for (auto* p : laneChips)
+        for (auto* p : paramBtns)
         {
             if (! p->isVisible()) continue;
             const int w = juce::GlyphArrangement::getStringWidthInt (Fonts::monoSemi (11.0f), p->text ? p->text() : juce::String()) + 22;
@@ -702,7 +698,7 @@ void OpsPanel::paint (juce::Graphics& g)
         g.setFont (Fonts::monoSemi (13.0f));
         g.drawText (text, selCol.withTrimmedTop (22).withHeight (18), juce::Justification::centredLeft);
     }
-    draw::label (g, "PARAMS", lanesCol.withHeight (12), t.muted);
+    draw::label (g, "PARAMS", paramsCol.withHeight (12), t.muted);
     draw::label (g, "RANGES", rangesCol.withHeight (12), t.muted);
     g.setColour (t.border);
     g.fillRect (shiftCol.getX(), shiftCol.getY(), 1, shiftCol.getHeight());

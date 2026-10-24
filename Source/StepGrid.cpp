@@ -3,7 +3,7 @@
 namespace vima
 {
 // ---------------------------------------------------------------------------------------
-void LaneSlider::paint (juce::Graphics& g)
+void StepSlider::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
     auto b = getLocalBounds().toFloat();
@@ -21,7 +21,7 @@ void LaneSlider::paint (juce::Graphics& g)
     g.restoreState();
 }
 
-void LaneSlider::mouseDown (const juce::MouseEvent& e)
+void StepSlider::mouseDown (const juce::MouseEvent& e)
 {
     if (e.mods.isPopupMenu() || e.mods.isAltDown())
     {
@@ -33,18 +33,18 @@ void LaneSlider::mouseDown (const juce::MouseEvent& e)
     if (onDraw) onDraw (e.getScreenPosition(), true);
 }
 
-void LaneSlider::mouseDrag (const juce::MouseEvent& e)
+void StepSlider::mouseDrag (const juce::MouseEvent& e)
 {
     if (drawing && onDraw) onDraw (e.getScreenPosition(), false);
 }
 
-void LaneSlider::mouseUp (const juce::MouseEvent&)
+void StepSlider::mouseUp (const juce::MouseEvent&)
 {
     if (drawing && onGestureEnd) onGestureEnd();
     drawing = false;
 }
 
-int LaneSlider::valueAtScreenY (int screenY) const
+int StepSlider::valueAtScreenY (int screenY) const
 {
     const auto b = getScreenBounds();
     const float f = 1.0f - (float) (screenY - b.getY()) / (float) juce::jmax (1, b.getHeight());
@@ -146,9 +146,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     };
     octave.fraction = [this]
     {
-        const auto g = ctx.globalsCopy();
         const int o = (int) std::floor (soundingPitch (ctx, index) / 12.0) - 2;
-        juce::ignoreUnused (g);
         return (float) (o - minOctave) / (float) (maxOctave - minOctave);
     };
     octave.nudge = [this] (int d)
@@ -178,22 +176,22 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         if (ctx.ui.ccMode) return (int) s.cc;
         switch (ctx.ui.slider)
         {
-            case SliderLane::velocity:    return (int) s.velocity;
-            case SliderLane::gate:        return (int) s.gate;
-            case SliderLane::probability: return (int) s.probability;
+            case SliderParam::velocity:    return (int) s.velocity;
+            case SliderParam::gate:        return (int) s.gate;
+            case SliderParam::probability: return (int) s.probability;
         }
         return 0;
     };
     slider.setValue = [this] (int v)
     {
-        const auto lane = ctx.ui.slider;
+        const auto param = ctx.ui.slider;
         const bool ccMode = ctx.ui.ccMode;
-        ctx.edit (false, [this, lane, ccMode, v] (Project& p)
+        ctx.edit (false, [this, param, ccMode, v] (Project& p)
         {
             auto& s = ctx.liveTrack (p).steps[(size_t) index];
             if (ccMode) s.cc = (std::uint8_t) juce::jlimit (0, 127, v);
-            else if (lane == SliderLane::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
-            else if (lane == SliderLane::gate) s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v);
+            else if (param == SliderParam::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
+            else if (param == SliderParam::gate) s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v);
             else s.probability = (std::uint8_t) juce::jlimit (1, 100, v);   // never 0
         });
     };
@@ -201,7 +199,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     {
         const auto& t = Theme::current();
         if (ctx.ui.ccMode) return t.cyan;
-        return ctx.ui.slider == SliderLane::velocity ? t.green : ctx.ui.slider == SliderLane::gate ? t.purple : t.amber;
+        return ctx.ui.slider == SliderParam::velocity ? t.green : ctx.ui.slider == SliderParam::gate ? t.purple : t.amber;
     };
     slider.onGestureStart = gestureStart;
     slider.onDraw = [this] (juce::Point<int> p, bool start) { if (auto* grid = dynamic_cast<StepGrid*> (getParentComponent())) grid->drawSliders (p, start, index / 16); };
@@ -238,9 +236,9 @@ void StepCell::refreshState()
     pitch.setVisible (! cc_);
     octave.setVisible (! cc_);
 
-    const auto lane = ctx.ui.slider;
+    const auto param = ctx.ui.slider;
     slider.minValue = cc_ ? 0 : 1;   // velocity and probability never 0
-    slider.maxValue = cc_ ? 127 : lane == SliderLane::velocity ? 127 : lane == SliderLane::gate ? maxGate : 100;
+    slider.maxValue = cc_ ? 127 : param == SliderParam::velocity ? 127 : param == SliderParam::gate ? maxGate : 100;
     slider.defaultValue = cc_ ? 64 : 100;   // init values: CC 64; velocity 100, gate 100 %, probability 100 %
     setLearnTarget (slider, cc_ ? (int) MacroTarget::cc : -1);
     octave.defaultValue = 3 + ctx.globalsCopy().octaveOffset();   // the octave of middle C, as shown
@@ -291,11 +289,11 @@ void StepCell::paint (juce::Graphics& g)
         if (ctx.ui.ccMode) text = juce::String ((int) s.cc);
         else switch (ctx.ui.slider)
         {
-            case SliderLane::velocity:    text = juce::String ((int) s.velocity); break;
-            case SliderLane::gate:        text = juce::String ((int) s.gate) + "%"; break;
-            case SliderLane::probability: text = juce::String ((int) s.probability) + "%"; break;
+            case SliderParam::velocity:    text = juce::String ((int) s.velocity); break;
+            case SliderParam::gate:        text = juce::String ((int) s.gate) + "%"; break;
+            case SliderParam::probability: text = juce::String ((int) s.probability) + "%"; break;
         }
-        // the value in its lane's color (velocity green, gate purple, probability amber, CC cyan)
+        // the value in its param's color (velocity green, gate purple, probability amber, CC cyan)
         const auto colour = slider.barColour ? slider.barColour() : t.muted;
         g.setColour (colour.withMultipliedAlpha ((ctx.ui.ccMode ? s.ccOn : s.on) ? 1.0f : 0.32f));
         g.setFont (Fonts::mono (10.0f));

@@ -9,7 +9,7 @@
 
 namespace vima
 {
-enum class Lane { on, note, octave, velocity, gate, probability, cc, ccOn };   // on = note on/off, ccOn = CC on/off
+enum class Param { on, note, octave, velocity, gate, probability, cc, ccOn };   // on = note on/off, ccOn = CC on/off
 
 // The steps an operation acts on: a set of steps (bit n = step n), always within the track length
 struct Scope
@@ -30,8 +30,8 @@ Scope makeScope (const Project&, int pattern, int track, std::uint32_t selection
 // Same, for a contiguous range (selFirst < 0 = no selection)
 Scope makeScope (const Project&, int pattern, int track, int selFirst, int selLast);
 
-// Lanes enabled in the LANES chips for a mode (note mode or CC mode)
-std::vector<Lane> activeLanes (const Globals&, bool ccMode);
+// Params enabled in the LANES chips for a mode (note mode or CC mode)
+std::vector<Param> armedParams (const Globals&, bool ccMode);
 
 // ---- single step edits --------------------------------------------------------------
 // Pitch knob: move the step's pitch class by `delta` positions (only in-scale notes when the track's scale is on)
@@ -59,10 +59,10 @@ void invertSteps (Project&, const Scope&, bool ccMode);
 struct ShiftGesture
 {
     Scope scope;
-    Lane lane = Lane::note;
+    Param param = Param::note;
     std::array<Step, maxSteps> snapshot {};   // the track's steps when the knob was grabbed
 };
-ShiftGesture beginShift (const Project&, const Scope&, Lane);
+ShiftGesture beginShift (const Project&, const Scope&, Param);
 void applyShift (Project&, const ShiftGesture&, int amount);   // computed from the snapshot, values capped
 
 // Copied steps keep their spacing: offset = distance from the first copied step
@@ -72,10 +72,10 @@ struct ClipStep
     Step step;
 };
 std::vector<ClipStep> copySteps (const Project&, const Scope&);
-// Paste with the first copied step at `start`, keeping the spacing. Only the given lanes are
+// Paste with the first copied step at `start`, keeping the spacing. Only the given params are
 // written (empty = whole steps). Steps past the track length are cut off. Returns the steps written.
 std::uint32_t pasteSteps (Project&, int pattern, int track, int start, const std::vector<ClipStep>&,
-                          const std::vector<Lane>& lanes = {});
+                          const std::vector<Param>& params = {});
 
 // ---- undo ---------------------------------------------------------------------------
 class UndoHistory

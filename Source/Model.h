@@ -156,8 +156,8 @@ private:
     int count = 0;
 };
 
-// Randomize lane ranges (global, shared by all tracks)
-struct LaneRange { int min, max; };
+// Randomize param ranges (global, shared by all tracks)
+struct ParamRange { int min, max; };
 
 struct Globals
 {
@@ -166,7 +166,6 @@ struct Globals
     std::uint16_t userScale = 0b010110101101;   // natural minor shape by default, root always on
     int middleC = 3;               // octave number shown for middle C: 3, 4 or 5 (display only)
     int octaveOffset() const { return middleC - 3; }
-    bool lightTheme = false;
 
     bool ccSmoothing = false;      // glide over the whole gap between two CC-on steps
 
@@ -181,10 +180,10 @@ struct Globals
 
     // PARAMS armed for copy / randomize / smooth (SPEC.md 9.2), and the ranges.
     // ALL is its own state per mode; something is always armed.
-    bool laneAllNote = false, laneAllCc = false;
-    bool laneCcOn = false;         // the ON param in CC mode (CC on/off)
-    bool laneOn = true, laneNote = true, laneOct = false, laneVel = false, laneGate = false, laneProb = false, laneCC = true;
-    LaneRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
+    bool armAllNote = false, armAllCc = false;
+    bool armCcOn = false;         // the ON param in CC mode (CC on/off)
+    bool armOn = true, armNote = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
+    ParamRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
               rangeProb { 1, 100 }, rangeCC { 0, 127 };
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)
@@ -200,7 +199,6 @@ int pitchToDegree (std::uint16_t mask, int root, int midiNoteNumber);
 int degreeToPitch (std::uint16_t mask, int root, int degree);
 
 const char* pitchClassName (int pc);
-juce::String noteDisplayName (int pitchClass, int octave, int octaveOffset);
 
 // ---------------------------------------------------------------------------------------
 // Macros (SPEC.md 13.1): 128 host-automatable knobs, each mapped to one target

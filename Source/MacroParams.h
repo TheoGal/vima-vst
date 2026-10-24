@@ -21,12 +21,14 @@ namespace vima
 class MacroParameter : public juce::AudioParameterFloat
 {
 public:
-    MacroParameter (int index, std::function<juce::String (int, float)> text);
+    MacroParameter (int index, std::function<juce::String (int, float)> text, std::function<juce::String (int)> name);
     juce::String getText (float normalised, int maximumLength) const override;
+    juce::String getName (int maximumLength) const override;   // follows the mapping (SPEC.md 13.1)
 
 private:
     const int index;
     std::function<juce::String (int, float)> textFn;
+    std::function<juce::String (int)> nameFn;
 };
 
 class MacroParams
@@ -49,6 +51,9 @@ public:
 
     juce::RangedAudioParameter* param (int index) const { return entries[(size_t) index].param; }
 
+    // Host name of a macro: "Vel St05 Tr03 Pat23" when mapped, "Macro 1" when not (any thread)
+    juce::String nameFor (int index);
+
 private:
     struct Entry
     {
@@ -65,6 +70,8 @@ private:
     std::array<int, numMacros> values {};
     std::array<bool, numMacros> valid {};
     std::array<MacroNotes, numMacros> notes {};
+    std::array<juce::String, numMacros> lastNames;   // names last announced to the host
+    juce::AudioProcessor& processor;
 
     // copy used by getText (any thread)
     juce::SpinLock textLock;

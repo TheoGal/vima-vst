@@ -10,7 +10,7 @@ namespace vima
 // Step slider: a click sets the value at the click position; dragging across neighbouring
 // sliders draws values over several steps (SPEC.md 12.5). Wheel, double-click typing and
 // right-click / Alt + click reset work as on knobs.
-class LaneSlider : public Knob
+class StepSlider : public Knob
 {
 public:
     std::function<juce::Colour()> barColour;
@@ -39,7 +39,7 @@ private:
     const int index;
     Pill toggle;
     Knob pitch, octave;
-    LaneSlider slider;
+    StepSlider slider;
     juce::Rectangle<int> labelArea;
     Step stepCopy() const;
 };

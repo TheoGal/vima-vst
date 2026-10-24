@@ -34,8 +34,8 @@ LearnOverlay::Hit LearnOverlay::resolve (juce::Component* c)
             hit.component = c;
             const int v = props["learnTarget"];
             if (v >= 0) hit.target = (MacroTarget) v;
-            else hit.target = ctx.ui.slider == SliderLane::velocity ? MacroTarget::velocity
-                            : ctx.ui.slider == SliderLane::gate     ? MacroTarget::gate
+            else hit.target = ctx.ui.slider == SliderParam::velocity ? MacroTarget::velocity
+                            : ctx.ui.slider == SliderParam::gate     ? MacroTarget::gate
                                                                     : MacroTarget::probability;
         }
         if (hit.component != nullptr && props.contains ("learnStep"))
@@ -171,8 +171,8 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     ctx.ui.selectedPattern = ctx.currentPattern();
     ctx.ui.viewPage = ctx.ui.selectedPattern / patternsPerPage;
 
-    Theme::setLight (ctx.globalsCopy().lightTheme);
     lnf.updateColours();
+    lastTheme = Theme::revision();
     setLookAndFeel (&lnf);
 
     // Everything is laid out at 1200 x 720 inside `content`, which is scaled as a whole
@@ -245,10 +245,9 @@ void VimaEditor::layoutContent()
 
 void VimaEditor::refreshAll()
 {
-    const auto g = ctx.globalsCopy();
-    if (Theme::isLight() != g.lightTheme)
+    if (Theme::revision() != lastTheme)
     {
-        Theme::setLight (g.lightTheme);
+        lastTheme = Theme::revision();
         lnf.updateColours();
     }
     const bool mv = ctx.ui.macrosView;
@@ -327,7 +326,7 @@ void VimaEditor::timerCallback()
 
     const int rev = proc.revision.load();
     const int pat = ctx.currentPattern();
-    if (rev != lastRevision || pat != lastPattern)
+    if (rev != lastRevision || pat != lastPattern || Theme::revision() != lastTheme)
     {
         if (pat != lastPattern && ! ctx.ui.patternsView)
             ctx.ui.selection = 0;

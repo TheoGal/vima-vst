@@ -3,11 +3,17 @@
 
 namespace vima
 {
-MacroParameter::MacroParameter (int i, std::function<juce::String (int, float)> text)
+MacroParameter::MacroParameter (int i, std::function<juce::String (int, float)> text, std::function<juce::String (int)> name)
     : juce::AudioParameterFloat (juce::ParameterID { "macro" + juce::String (i + 1).paddedLeft ('0', 3), 1 },
                                  "Macro " + juce::String (i + 1), juce::NormalisableRange<float> (0.0f, 1.0f), 0.0f),
-      index (i), textFn (std::move (text))
+      index (i), textFn (std::move (text)), nameFn (std::move (name))
 {
+}
+
+juce::String MacroParameter::getName (int maximumLength) const
+{
+    const auto s = nameFn ? nameFn (index) : AudioParameterFloat::getName (maximumLength);
+    return maximumLength > 0 ? s.substring (0, maximumLength) : s;
 }
 
 juce::String MacroParameter::getText (float normalised, int maximumLength) const
@@ -17,7 +23,7 @@ juce::String MacroParameter::getText (float normalised, int maximumLength) const
 }
 
 // ---------------------------------------------------------------------------------------
-MacroParams::MacroParams (juce::AudioProcessor& processor)
+MacroParams::MacroParams (juce::AudioProcessor& p) : processor (p)
 {
     for (int b = 0; b < numMacros / macrosPerPage; ++b)
     {
@@ -27,10 +33,12 @@ MacroParams::MacroParams (juce::AudioProcessor& processor)
         for (int k = 0; k < macrosPerPage; ++k)
         {
             const int i = b * macrosPerPage + k;
-            auto p = std::make_unique<MacroParameter> (i, [this] (int idx, float v) { return textFor (idx, v); });
-            entries[(size_t) i].param = p.get();
-            entries[(size_t) i].lastApplied = static_cast<juce::AudioProcessorParameter*> (p.get())->getValue();
-            group->addChild (std::move (p));
+            auto mp = std::make_unique<MacroParameter> (i, [this] (int idx, float v) { return textFor (idx, v); },
+                                                        [this] (int idx) { return nameFor (idx); });
+            entries[(size_t) i].param = mp.get();
+            entries[(size_t) i].lastApplied = static_cast<juce::AudioProcessorParameter*> (mp.get())->getValue();
+            lastNames[(size_t) i] = "Macro " + juce::String (i + 1);
+            group->addChild (std::move (mp));
         }
         processor.addParameterGroup (std::move (group));
     }
@@ -43,6 +51,16 @@ juce::String MacroParams::textFor (int index, float normalised)
     if (! m.mapped())
         return "-";
     return macroValueText (textGlobals, m, macroPlain (m, normalised, textNotes[(size_t) index]));
+}
+
+juce::String MacroParams::nameFor (int index)
+{
+    MacroMap m;
+    {
+        const juce::SpinLock::ScopedLockType sl (textLock);
+        m = textMaps[(size_t) index];
+    }
+    return macroHostName (m, index);
 }
 
 bool MacroParams::applyFromHost (Project& p, Engine& engine)
@@ -82,6 +100,16 @@ void MacroParams::capture (const Project& p)
 
 void MacroParams::pushToHost()
 {
+    // names follow the mappings: tell the host when any changed (automation stays linked by ID)
+    bool namesChanged = false;
+    for (int i = 0; i < numMacros; ++i)
+    {
+        const auto n = macroHostName (maps[(size_t) i], i);
+        if (n != lastNames[(size_t) i]) { lastNames[(size_t) i] = n; namesChanged = true; }
+    }
+    if (namesChanged)
+        processor.updateHostDisplay (juce::AudioProcessor::ChangeDetails().withParameterInfoChanged (true));
+
     for (int i = 0; i < numMacros; ++i)
     {
         auto& e = entries[(size_t) i];

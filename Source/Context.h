@@ -9,20 +9,20 @@
 
 namespace vima
 {
-enum class SliderLane { velocity, gate, probability };
+enum class SliderParam { velocity, gate, probability };
 
 struct UiState
 {
     int track = 0;               // selected track (0..7)
     bool ccMode = false;         // NOTES / CC view
-    SliderLane slider = SliderLane::velocity;
+    SliderParam slider = SliderParam::velocity;
 
     std::uint32_t selection = 0;     // selected steps (bit n = step n); 0 = none = all steps
 
     // Copy / paste (SPEC.md 9.1): while the clipboard holds steps ("COPIED"), there is no
     // selection; an LED click only picks where the paste lands.
     std::vector<ClipStep> clip;  // copied steps (with their spacing); empty = nothing copied
-    std::vector<Lane> clipLanes; // lanes armed when copying: only these are pasted
+    std::vector<Param> clipParams; // params armed when copying: only these are pasted
     int clipSpan = 0;            // first to last copied step
     int pasteStart = -1;         // landing step of the paste (-1 = not picked yet)
 
@@ -38,7 +38,7 @@ struct UiState
     TrackPattern trackClip;
     int patternsViewTrack = 0;   // track for COPY TRACK
 
-    Lane shiftLane = Lane::note;   // SHIFT ALL lane in note mode (CC mode always shifts CC)
+    Param shiftParam = Param::note;   // SHIFT ALL param in note mode (CC mode always shifts CC)
     int shiftAmount = 0;           // running offset while the shift knob is dragged
 
     bool macrosView = false;
@@ -51,7 +51,7 @@ struct UiState
 };
 
 // LEARN: controls carry their macro target as component properties (SPEC.md 13.1).
-// "learnTarget" = (int) MacroTarget, or -1 for the step slider (its current lane);
+// "learnTarget" = (int) MacroTarget, or -1 for the step slider (its current param);
 // "learnStep" = step index, on the step cell.
 inline void setLearnTarget (juce::Component& c, int target) { c.getProperties().set ("learnTarget", target); }
 inline void setLearnTarget (juce::Component& c, MacroTarget t) { setLearnTarget (c, (int) t); }

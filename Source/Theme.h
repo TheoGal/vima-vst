@@ -26,8 +26,14 @@ struct Theme
     static const Theme& dark();
     static const Theme& light();
     static const Theme& current();
+
+    // The theme is a user-wide preference (SPEC.md 11): stored once in Documents/VIMA and shared
+    // by every VIMA instance. setLight saves it; revision() changes on every switch, so open
+    // editors can follow.
     static void setLight (bool);
     static bool isLight();
+    static int revision();
+    static void setSettingsFile (const juce::File&);   // tests: use another file
 };
 
 struct Fonts

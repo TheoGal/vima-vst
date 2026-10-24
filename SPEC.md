@@ -91,7 +91,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 1-100%, CC 0-127) |
 | SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
-| Theme | dark |
+| Theme | dark (user-wide, 11) |
 
 Because every step starts on, every pattern holds content from the start (the patterns view shows them as STORED, 7.1).
 
@@ -300,12 +300,12 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 
 Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same style. Sections, top to bottom:
 
-- **APPEARANCE**: Theme, DARK / LIGHT.
+- **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once (Documents/VIMA/Settings.xml) and used by every VIMA instance; switching it in one instance switches all open VIMA windows. Projects and presets do not carry it.
 - **PITCH**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF (10).
 - **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
-- Footer: **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme, middle C, root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE**. A click outside the dialog also closes it.
+- Footer: **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark, for all instances), middle C, root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE**. A click outside the dialog also closes it.
 
 ## 12. UI
 
@@ -423,7 +423,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 ## 13. State, macros and presets
 
 - The full state is saved with the DAW project: all patterns, routing, global settings, chain, armed params and ranges, macro mappings and the current pattern, plus per-instance view settings: the window size, the track shown in the editor and the current preset file.
-- Not saved: the NOTES / CC view, the selection, clipboards, undo history, LEARN and the transport hold.
+- Not saved with the project: the theme (a user-wide preference, 11), the NOTES / CC view, the selection, clipboards, undo history, LEARN and the transport hold.
 
 ### 13.1 Macros (host automation)
 
@@ -461,6 +461,7 @@ Not exposed (set in the plugin only):
 - **Note Step** and **CC Step** switch the step's note part and CC part on or off (5).
 - **Note** follows the scale like the step's note knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
+- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Note, NoteStep, Oct, Vel, Gate, Prob, CCval, CCStep); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
 - The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
 - Host changes are not added to undo.
 
@@ -518,6 +519,9 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 14.4 Source map (Source/)
 
+Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...), pages, macros. The step slider class is `StepSlider`.
+
+
 - **Model.h/.cpp**: the data model (Step, TrackPattern, Pattern, TrackRouting, Globals, Chain, MacroMap, Project), constants, scales, divisions, serialization.
 - **Engine.h/.cpp**: audio-thread sequencer: host position to steps, notes, CC, smoothing, pattern switching, chain.
 - **Operations.h/.cpp**: step edits, scope, armed params, randomize, smooth, shift, curves, rotate, invert, copy / paste, undo history.
@@ -542,8 +546,9 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, lightTheme, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags (note-mode and CC-mode params, ALL for each mode; stored as the `lanes` property), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from the init pattern). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack and presetPath.
-- Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the theme.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from the init pattern). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack and presetPath.
+- Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children.
+- User settings: Documents/VIMA/Settings.xml, root `VIMASETTINGS` with `lightTheme` (the user-wide theme).
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
 
@@ -565,9 +570,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Theme is a user-wide preference**: the DARK / LIGHT choice is stored once for the user (a small settings file in Documents/VIMA) and used by every VIMA instance, instead of per instance. Today it is saved per project instance but applied globally, so two instances with different themes fight. Presets and projects no longer carry the theme.
-2. **Code cleanup pass before 1.0** (no behavior changes; all tests must still pass): remove leftovers (an empty loop in the operations panel, unused parameters in the note helper, the macro range helper and the octave knob, the unused `noteDisplayName` helper, an unused variable in the header layout); rename "lane" to "param" throughout the code to match the UI (the saved field names may change too, no backwards compatibility); rename the Macros page's leftover "bank" variable to "page"; shrink the Settings dialog to its content (it still has the height of the removed smoothing time row).
-3. **Macro names follow their mapping** in the host: a mapped macro is renamed after its target, and the host is told the names changed (automation stays linked through the fixed IDs macro001-macro128). Format, parameter first so it survives truncation: step targets "Vel St05 Tr03 Pat23" (Note, NoteStep, Oct, Vel, Gate, Prob, CCval, CCStep); per-pattern track targets "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; globals "Pattern", "Chain On". Unmapped macros keep "Macro 1" ... "Macro 128". The macro number is not part of the name (macros are only the go-between; the user looks for the controlled param). Hosts with a short-name field get the first 8 characters ("Vel St05").
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -627,3 +630,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: Curves (sine, triangle, ramp, square), rotate ‹ › and invert added under RANDOMIZE / SMOOTH (9.5); rotate and invert work on any values. Probability is 1-100%, never 0.
 - 2026-10-24: Macros page: page buttons and TARGET buttons outlined like the other buttons.
 - 2026-10-24: "Guided randomization" adopted as the term for VIMA's approach (Identity, manual).
+- 2026-10-24: Built: user-wide theme (all instances); code cleanup (leftovers removed, "lane" renamed "param" in the code, Settings dialog sized to its content); macro host names follow their mapping ("Vel St05 Tr03 Pat23").

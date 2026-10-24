@@ -97,11 +97,6 @@ const char* pitchClassName (int pc)
     return names[mod12 (pc)];
 }
 
-juce::String noteDisplayName (int pitchClass, int octave, int octaveOffset)
-{
-    return juce::String (pitchClassName (pitchClass)) + juce::String (octave + octaveOffset);
-}
-
 juce::String patternLabel (int patternIndex)
 {
     return juce::String (patternIndex + 1).paddedLeft ('0', 2);   // "05", "21"
@@ -265,26 +260,21 @@ juce::ValueTree Project::musicToValueTree() const
         if (root.getChild (i).hasType ("Macro"))
             root.removeChild (i, nullptr);
     auto g = root.getChildWithName ("Globals");
-    if (g.isValid()) g.removeProperty ("lightTheme", nullptr);
     return root;
 }
 
 void Project::loadMusic (const juce::ValueTree& tree)
 {
     const auto keepMacros = macros;
-    const bool keepTheme = globals.lightTheme;
     fromValueTree (tree);
     macros = keepMacros;
-    globals.lightTheme = keepTheme;
 }
 
 void Project::resetMusic()
 {
     const auto keepMacros = macros;
-    const bool keepTheme = globals.lightTheme;
     resetToDefaults();
     macros = keepMacros;
-    globals.lightTheme = keepTheme;
 }
 
 juce::ValueTree Project::macrosToValueTree() const
@@ -318,7 +308,6 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("root", g.root, nullptr);
     gt.setProperty ("userScale", (int) g.userScale, nullptr);
     gt.setProperty ("middleC", g.middleC, nullptr);
-    gt.setProperty ("lightTheme", g.lightTheme, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
     gt.setProperty ("patternCC", g.patternCC, nullptr);
     gt.setProperty ("patternCCChannel", g.patternCCChannel, nullptr);
@@ -329,10 +318,10 @@ juce::ValueTree Project::toValueTree() const
     juce::StringArray chainText;
     for (const auto& e : g.chain) chainText.add (juce::String (e.pattern) + ":" + juce::String (e.repeats));
     gt.setProperty ("chain", chainText.joinIntoString (","), nullptr);
-    juce::String lanes;
-    for (bool b : { g.laneOn, g.laneNote, g.laneOct, g.laneVel, g.laneGate, g.laneProb, g.laneCC, g.laneCcOn, g.laneAllNote, g.laneAllCc })
-        lanes << (b ? "1" : "0");
-    gt.setProperty ("lanes", lanes, nullptr);
+    juce::String params;
+    for (bool b : { g.armOn, g.armNote, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote, g.armAllCc })
+        params << (b ? "1" : "0");
+    gt.setProperty ("params", params, nullptr);
     juce::StringArray ranges;
     for (const auto* r : { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
         ranges.add (juce::String (r->min) + ":" + juce::String (r->max));
@@ -393,7 +382,6 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.root = juce::jlimit (0, 11, (int) gt.getProperty ("root", g.root));
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
         g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC", g.middleC));
-        g.lightTheme = (bool) gt.getProperty ("lightTheme", g.lightTheme);
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);
         g.patternCCChannel = juce::jlimit (1, 16, (int) gt.getProperty ("patternCCChannel", g.patternCCChannel));
@@ -410,18 +398,18 @@ void Project::fromValueTree (const juce::ValueTree& root)
                 g.chain.add ({ (std::uint8_t) juce::jlimit (0, numPatterns - 1, parts[0].getIntValue()),
                                (std::uint8_t) juce::jlimit (1, 99, parts[1].getIntValue()) });
         }
-        const auto lanes = gt.getProperty ("lanes").toString();
-        if (lanes.length() == 10)
+        const auto params = gt.getProperty ("params").toString();
+        if (params.length() == 10)
         {
-            bool* flags[] = { &g.laneOn, &g.laneNote, &g.laneOct, &g.laneVel, &g.laneGate, &g.laneProb, &g.laneCC, &g.laneCcOn,
-                              &g.laneAllNote, &g.laneAllCc };
-            for (int i = 0; i < 10; ++i) *flags[i] = lanes[i] == '1';
+            bool* flags[] = { &g.armOn, &g.armNote, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn,
+                              &g.armAllNote, &g.armAllCc };
+            for (int i = 0; i < 10; ++i) *flags[i] = params[i] == '1';
         }
         // something is always armed
-        if (! g.laneAllNote && ! (g.laneOn || g.laneNote || g.laneOct || g.laneVel || g.laneGate || g.laneProb)) g.laneNote = true;
-        if (! g.laneAllCc && ! (g.laneCcOn || g.laneCC)) g.laneCC = true;
+        if (! g.armAllNote && ! (g.armOn || g.armNote || g.armOct || g.armVel || g.armGate || g.armProb)) g.armNote = true;
+        if (! g.armAllCc && ! (g.armCcOn || g.armCC)) g.armCC = true;
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
-        LaneRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
+        ParamRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
         if (rangeParts.size() == 6)
             for (int i = 0; i < 6; ++i)
             {

@@ -17,6 +17,13 @@
 #include <memory>
 #include <vector>
 
+// The theme preference file used by the tests (never the real user settings)
+static juce::File testSettingsFile()
+{
+    return juce::File::getSpecialLocation (juce::File::tempDirectory).getChildFile ("vima-test-settings.xml");
+}
+
+
 using namespace vima;
 
 namespace
@@ -158,7 +165,6 @@ void testModel()
     g.scale = userScaleIndex;
     g.userScale = 0b000010010000;   // root missing on purpose
     check ((g.scaleMask() & 1) == 1, "the root is always in the user scale");
-    check (noteDisplayName (1, 3, false) == "C#3" && noteDisplayName (1, 3, true) == "C#4", "note names follow the middle C setting");
     check (patternLabel (0) == "01" && patternLabel (17) == "18" && patternLabel (63) == "64", "patterns are numbered 01-64");
     check (pageRangeText (0) == "1 - 16" && pageRangeText (3) == "49 - 64", "pattern pages read 1 - 16 ... 49 - 64");
     check (numScales == 14 && juce::String (scaleInfo (userScaleIndex).longName) == "USER" && juce::String (scaleInfo (userScaleIndex - 1).longName) != "CHROMATIC",
@@ -186,7 +192,7 @@ void testModel()
     p->globals.quantize = Quantize::off;
     p->globals.scale = 4;
     p->globals.root = 7;
-    p->globals.laneProb = true;
+    p->globals.armProb = true;
     p->globals.rangeVel = { 10, 20 };
     p->currentPattern = 5;
     auto q = std::make_unique<Project>();
@@ -196,7 +202,7 @@ void testModel()
     check (qs.length == 24 && qs.division == 8 && qs.direction == Direction::pingPong && qs.swing == 40, "track settings survive save/load");
     check (q->routing[3].midiChannel == 9 && q->routing[3].ccOut && q->routing[3].ccNumber == 21, "routing survives save/load");
     check (q->globals.chain.size() == 1 && q->globals.chain[0].repeats == 3 && q->globals.quantize == Quantize::off, "chain and quantize survive");
-    check (q->globals.scale == 4 && q->globals.root == 7 && q->globals.laneProb && q->globals.rangeVel.min == 10, "globals survive");
+    check (q->globals.scale == 4 && q->globals.root == 7 && q->globals.armProb && q->globals.rangeVel.min == 10, "globals survive");
     check (q->currentPattern == 5, "current pattern survives");
 }
 
@@ -428,8 +434,8 @@ void testOperations()
         check (sc.mask == rangeMask (0, 15), "a selection entirely beyond the length = all steps");
     }
     {
-        p->globals.laneOn = false;
-        p->globals.laneNote = true; p->globals.laneVel = true; p->globals.laneOct = true;
+        p->globals.armOn = false;
+        p->globals.armNote = true; p->globals.armVel = true; p->globals.armOct = true;
         p->globals.rangeVel = { 60, 70 };
         p->globals.rangeOct = { 2, 3 };
         randomize (*p, makeScope (*p, 0, 0, -1, -1), false, rnd);
@@ -451,7 +457,7 @@ void testOperations()
         tp.steps[0].ccOn = tp.steps[1].ccOn = tp.steps[2].ccOn = true;
         tp.steps[0].cc = 0; tp.steps[1].cc = 64; tp.steps[2].cc = 127;
         tp.steps[3].cc = 0;   // off step
-        p->globals.laneCC = true;
+        p->globals.armCC = true;
         smooth (*p, makeScope (*p, 0, 0, 0, 3), true);
         check (tp.steps[0].cc == 1 && tp.steps[1].cc == 64 && tp.steps[2].cc == 126, "smooth: 0, 64, 127 -> 1, 64, 126");
         check (tp.steps[3].cc == 0, "smooth leaves off steps alone");
@@ -459,23 +465,23 @@ void testOperations()
     {
         for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].velocity = 120; tp.steps[1].velocity = 60;
-        auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 1), Lane::velocity);
+        auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 1), Param::velocity);
         applyShift (*p, gst, 20);
         check (tp.steps[0].velocity == 127 && tp.steps[1].velocity == 80, "shift caps at the limit (127)");
         applyShift (*p, gst, 0);
         check (tp.steps[0].velocity == 120 && tp.steps[1].velocity == 60, "turning back in the same gesture restores the shape");
-        auto gst2 = beginShift (*p, makeScope (*p, 0, 0, 0, 1), Lane::velocity);
+        auto gst2 = beginShift (*p, makeScope (*p, 0, 0, 0, 1), Param::velocity);
         applyShift (*p, gst2, -200);
         check (tp.steps[0].velocity == 1 && tp.steps[1].velocity == 1, "velocity never goes below 1");
     }
     {
         for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].pitchClass = 10; tp.steps[0].octave = 3;   // A#3 in C minor
-        auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Lane::note);
+        auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Param::note);
         applyShift (*p, gst, 1);
         check (tp.steps[0].pitchClass == 0 && tp.steps[0].octave == 4, "note shift moves in scale steps and rolls into the next octave");
         tp.scaleOn = false;
-        auto gst2 = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Lane::note);
+        auto gst2 = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Param::note);
         applyShift (*p, gst2, 1);
         check (tp.steps[0].pitchClass == 1 && tp.steps[0].octave == 4, "scale off: note shift moves in semitones");
         tp.scaleOn = true;
@@ -678,6 +684,10 @@ void testMacros()
            "a macro covers the full range: halfway gives about 50% probability (1-100)");
     proc->syncParamsToHost();
     check (macro (0)->getCurrentValueAsText() == "33" && macro (4)->getCurrentValueAsText() == "G", "host shows the target value as text");
+    check (macro (0)->getName (64) == "Vel St05 Tr04 Pat01" && macro (1)->getName (64) == "Length Tr03 Pat10" && macro (2)->getName (64) == "Pattern"
+               && macro (4)->getName (64) == "Note St01 Tr02 Pat01" && macro (10)->getName (64) == "Macro 11",
+           "host names follow the mapping (Vel St05 Tr04 Pat01, Length Tr03 Pat10, Pattern), unmapped: Macro 11");
+    check (macro (0)->getName (8) == "Vel St05", "short names keep the param first");
 
     macro (2)->setValueNotifyingHost (macroNormalized (m (2), 6));
     block();
@@ -843,7 +853,6 @@ void testPresets()
         p.patterns[3].tracks[2].steps[5].velocity = 77;
         p.patterns[3].tracks[2].length = 12;
         p.globals.scale = 4;
-        p.globals.lightTheme = true;
         p.currentPattern = 3;
         p.macros[0] = defaultMacroMap (MacroTarget::velocity, 0, 0, 2, p.globals);
     });
@@ -860,7 +869,6 @@ void testPresets()
     {
         p.patterns[3].tracks[2].steps[5].velocity = 5;
         p.globals.scale = 0;
-        p.globals.lightTheme = false;
         p.currentPattern = 0;
         p.macros[0] = MacroMap();
         p.macros[9] = defaultMacroMap (MacroTarget::gate, 1, 0, 0, p.globals);
@@ -872,9 +880,12 @@ void testPresets()
                && get ([] (const Project& p) { return p.globals.scale; }) == 4
                && get ([] (const Project& p) { return p.currentPattern; }) == 3,
            "loading a preset restores patterns, settings and the current pattern");
-    check (get ([] (const Project& p) { return p.macros[9].target; }) == MacroTarget::gate && ! get ([] (const Project& p) { return p.macros[0].mapped(); })
-               && ! get ([] (const Project& p) { return p.globals.lightTheme; }),
-           "loading a preset keeps the macro mappings and the theme");
+    check (get ([] (const Project& p) { return p.macros[9].target; }) == MacroTarget::gate && ! get ([] (const Project& p) { return p.macros[0].mapped(); }),
+           "loading a preset keeps the macro mappings");
+    {
+        auto xml = juce::XmlDocument::parse (presetFile);
+        check (xml != nullptr && ! xml->toString().contains ("lightTheme"), "presets and projects do not carry the theme");
+    }
 
     // mapping sets
     const auto setFile = dir.getChildFile ("Live.vimamacros");
@@ -908,7 +919,7 @@ void testInitAndGate()
                       && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
-        check (g.laneNote && g.laneOn && ! g.laneVel && ! g.laneGate && g.laneCC && ! g.laneCcOn && ! g.laneAllNote && ! g.laneAllCc
+        check (g.armNote && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote && ! g.armAllCc
                    && g.rangeGate.max == maxGate && g.rangeVel.min == 1
                    && g.rangeVel.max == 127 && ! g.ccSmoothing && g.middleC == 3,
                "init globals: ON and NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
@@ -954,8 +965,11 @@ void testInitAndGate()
         for (auto& e : r.events) if (e.msg.isNoteOnOrOff()) balance += e.msg.isNoteOn() ? 1 : -1;
         check (balance == 0, "stopping ends all long notes");
     }
-    check (noteDisplayName (0, 3, 0) == "C3" && noteDisplayName (0, 3, 1) == "C4" && noteDisplayName (0, 3, 2) == "C5",
-           "middle C shown as C3, C4 or C5");
+    {
+        Globals g3, g4, g5;
+        g4.middleC = 4; g5.middleC = 5;
+        check (g3.octaveOffset() == 0 && g4.octaveOffset() == 1 && g5.octaveOffset() == 2, "middle C shown as C3, C4 or C5");
+    }
 }
 
 void testCcOnOff()
@@ -982,7 +996,7 @@ void testCcOnOff()
     legacyBlank (p);
     auto& t = p.patterns[0].tracks[0];
     t.steps[0].on = true;
-    p.globals.laneCcOn = true; p.globals.laneOn = false; p.globals.laneCC = false;
+    p.globals.armCcOn = true; p.globals.armOn = false; p.globals.armCC = false;
     juce::Random rnd (7);
     randomize (p, makeScope (p, 0, 0, -1, -1), true, rnd);
     bool notesUntouched = t.steps[0].on;
@@ -999,22 +1013,22 @@ void testCurves()
     auto p = std::make_unique<Project>();
     auto& g = p->globals;
     auto& tp = p->patterns[0].tracks[0];   // length 16, C minor, scale on
-    auto only = [&] (std::initializer_list<Lane> lanes)
+    auto only = [&] (std::initializer_list<Param> params)
     {
-        g.laneAllNote = g.laneAllCc = false;
-        g.laneOn = g.laneNote = g.laneOct = g.laneVel = g.laneGate = g.laneProb = g.laneCC = g.laneCcOn = false;
-        for (auto l : lanes)
+        g.armAllNote = g.armAllCc = false;
+        g.armOn = g.armNote = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = g.armCcOn = false;
+        for (auto l : params)
             switch (l)
             {
-                case Lane::on: g.laneOn = true; break;          case Lane::note: g.laneNote = true; break;
-                case Lane::octave: g.laneOct = true; break;     case Lane::velocity: g.laneVel = true; break;
-                case Lane::gate: g.laneGate = true; break;      case Lane::probability: g.laneProb = true; break;
-                case Lane::cc: g.laneCC = true; break;          case Lane::ccOn: g.laneCcOn = true; break;
+                case Param::on: g.armOn = true; break;          case Param::note: g.armNote = true; break;
+                case Param::octave: g.armOct = true; break;     case Param::velocity: g.armVel = true; break;
+                case Param::gate: g.armGate = true; break;      case Param::probability: g.armProb = true; break;
+                case Param::cc: g.armCC = true; break;          case Param::ccOn: g.armCcOn = true; break;
             }
     };
     const auto all = makeScope (*p, 0, 0, -1, -1);
 
-    only ({ Lane::cc });
+    only ({ Param::cc });
     applyCurve (*p, all, true, CurveShape::ramp);
     check (tp.steps[0].cc == 0 && tp.steps[15].cc == 127 && tp.steps[7].cc > 50 && tp.steps[7].cc < 70, "RAMP: 0 at the first step, 127 at the last");
     applyCurve (*p, all, true, CurveShape::sine);
@@ -1042,19 +1056,19 @@ void testCurves()
     invertSteps (*p, all, true);
     check (tp.steps[0].cc == 70 && tp.steps[1].cc == 50 && tp.steps[2].cc == 0, "INV flips around the RANGE center (0-100: 30 -> 70)");
 
-    only ({ Lane::on });
+    only ({ Param::on });
     applyCurve (*p, all, false, CurveShape::square);
     check (tp.steps[0].on && tp.steps[7].on && ! tp.steps[8].on && ! tp.steps[15].on, "ON with SQUARE: on in the upper half");
     invertSteps (*p, all, false);
     check (! tp.steps[0].on && tp.steps[8].on, "INV on ON swaps on and off");
 
-    only ({ Lane::note });
+    only ({ Param::note });
     applyCurve (*p, all, false, CurveShape::ramp);
     check (tp.steps[0].pitchClass == 0 && tp.steps[15].pitchClass == 10, "NOTE follows the scale: C minor ramp runs C to A#");
     invertSteps (*p, all, false);
     check (tp.steps[0].pitchClass == 10 && tp.steps[15].pitchClass == 0, "INV on NOTE mirrors the in-scale notes");
 
-    only ({ Lane::probability });
+    only ({ Param::probability });
     for (auto& st : tp.steps) st.probability = 100;
     invertSteps (*p, all, false);
     check (tp.steps[0].probability == 1, "INV on PROB: 100% becomes 1%, never 0");
@@ -1063,6 +1077,8 @@ void testCurves()
 int main (int argc, char** argv)
 {
     juce::ScopedJuceInitialiser_GUI gui;
+    testSettingsFile().deleteFile();
+    Theme::setSettingsFile (testSettingsFile());   // never touch the real user settings
     const juce::File outDir = argc > 1 ? juce::File (juce::String (argv[1])) : juce::File::getCurrentWorkingDirectory();
     outDir.createDirectory();
 
@@ -1132,17 +1148,17 @@ int main (int argc, char** argv)
 
             std::vector<Step> original;
             for (int i = 4; i <= 7; ++i) original.push_back (stepOf (2, i));
-            auto setLanes = [&] (bool all)
+            auto setParams = [&] (bool all)
             {
                 proc->edit (-1, [all] (Project& p)
                 {
                     auto& g = p.globals;
-                    g.laneOn = g.laneOct = g.laneVel = g.laneGate = g.laneProb = g.laneCC = all;
-                    g.laneNote = true;
+                    g.armOn = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = all;
+                    g.armNote = true;
                 });
                 ed.refreshAll();
             };
-            setLanes (true);
+            setParams (true);
 
             if (auto* copy = findPill (ed, "COPY")) click (*copy);
             check (ctx.ui.clip.size() == 4 && ctx.ui.clipSpan == 4, "COPY takes the 4 selected steps");
@@ -1164,10 +1180,10 @@ int main (int argc, char** argv)
             for (int k = 0; k < 4; ++k)
             {
                 auto a = stepOf (4, 10 + k), b = original[(size_t) k];
-                a.cc = b.cc;   // note mode: the CC lane is not copied
+                a.cc = b.cc;   // note mode: the CC param is not copied
                 same = same && a == b;
             }
-            check (same, "PASTE writes the steps at step 11 of track 5 (note-mode lanes)");
+            check (same, "PASTE writes the steps at step 11 of track 5 (note-mode params)");
             check (findPill (ed, "COPIED") != nullptr && ctx.ui.pasteStart == 10, "COPIED stays lit after pasting, for more pastes");
 
             if (auto* undo = findPill (ed, "UNDO")) click (*undo);
@@ -1176,8 +1192,8 @@ int main (int argc, char** argv)
             if (auto* copied = findPill (ed, "COPIED")) click (*copied);
             check (ctx.ui.clip.empty() && ctx.ui.pasteStart < 0 && findPill (ed, "COPY") != nullptr, "clicking COPIED empties the clipboard");
 
-            // only the armed lanes are copied
-            setLanes (false);   // NOTE only
+            // only the armed params are copied
+            setParams (false);   // NOTE only
             proc->edit (-1, [] (Project& p)
             {
                 auto& s0 = p.patterns[(size_t) p.currentPattern].tracks[4].steps[0];
@@ -1193,8 +1209,8 @@ int main (int argc, char** argv)
 
             if (auto* clr = findPill (ed, "CLEAR")) click (*clr);
             check (ctx.ui.clip.empty() && ctx.ui.pasteStart < 0 && ctx.ui.selection == 0, "CLEAR empties the clipboard and removes the ghost");
-            setLanes (true);
-            proc->edit (-1, [] (Project& p) { p.globals.laneOct = p.globals.laneProb = false; });
+            setParams (true);
+            proc->edit (-1, [] (Project& p) { p.globals.armOct = p.globals.armProb = false; });
 
             // step on/off and knobs in the first cell
             auto* cell = findChild<StepCell> (ed, 0);
@@ -1230,7 +1246,7 @@ int main (int argc, char** argv)
                     setPc (3, true);
                 }
 
-                auto* slider = findChild<LaneSlider> (*cell);
+                auto* slider = findChild<StepSlider> (*cell);
                 if (slider)
                 {
                     click (*slider, { slider->getWidth() / 2, 0 });
@@ -1242,7 +1258,7 @@ int main (int argc, char** argv)
 
                     // draw: press on step 1 near the bottom, drag to step 6 near the top
                     auto* cell6 = findChild<StepCell> (ed, 5);
-                    auto* slider6 = cell6 != nullptr ? findChild<LaneSlider> (*cell6) : nullptr;
+                    auto* slider6 = cell6 != nullptr ? findChild<StepSlider> (*cell6) : nullptr;
                     if (slider6 != nullptr)
                     {
                         const int before3 = stepOf (4, 3).velocity;
@@ -1275,7 +1291,7 @@ int main (int argc, char** argv)
 
             // SHIFT ALL on velocity over the whole track
             ctx.ui.selection = 0;
-            ctx.ui.shiftLane = Lane::velocity;
+            ctx.ui.shiftParam = Param::velocity;
             ed.refreshAll();
             proc->edit (-1, [] (Project& p) { for (auto& s : p.patterns[(size_t) p.currentPattern].tracks[3].steps) s.velocity = 120; });
             proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[3].steps[0].velocity = 60; });
@@ -1296,25 +1312,25 @@ int main (int argc, char** argv)
                 proc->edit (-1, [] (Project& p)
                 {
                     auto& g = p.globals;
-                    g.laneAllNote = false;
-                    g.laneOn = g.laneOct = g.laneVel = g.laneGate = g.laneProb = false;
-                    g.laneNote = true;
+                    g.armAllNote = false;
+                    g.armOn = g.armOct = g.armVel = g.armGate = g.armProb = false;
+                    g.armNote = true;
                 });
                 ed.refreshAll();
-                auto armed = [&] { return proc->read ([] (const Project& p) { return activeLanes (p.globals, false); }); };
+                auto armed = [&] { return proc->read ([] (const Project& p) { return armedParams (p.globals, false); }); };
                 if (auto* b = findPill (*ops, "NOTE")) click (*b);
-                check (armed().size() == 1 && armed()[0] == Lane::note, "clicking the only armed param does nothing");
+                check (armed().size() == 1 && armed()[0] == Param::note, "clicking the only armed param does nothing");
                 if (auto* b = findPill (*ops, "ALL")) click (*b);
                 const auto g1 = proc->read ([] (const Project& p) { return p.globals; });
-                check (g1.laneAllNote && ! g1.laneNote && armed().size() == 6, "ALL arms every note param, and only ALL is lit");
+                check (g1.armAllNote && ! g1.armNote && armed().size() == 6, "ALL arms every note param, and only ALL is lit");
                 if (auto* b = findPill (*ops, "ALL")) click (*b);
-                check (proc->read ([] (const Project& p) { return p.globals.laneAllNote; }), "clicking the lit ALL does nothing");
+                check (proc->read ([] (const Project& p) { return p.globals.armAllNote; }), "clicking the lit ALL does nothing");
                 if (auto* b = findPill (*ops, "VEL")) click (*b);
-                check (armed().size() == 1 && armed()[0] == Lane::velocity && ! proc->read ([] (const Project& p) { return p.globals.laneAllNote; }),
+                check (armed().size() == 1 && armed()[0] == Param::velocity && ! proc->read ([] (const Project& p) { return p.globals.armAllNote; }),
                        "while ALL is lit, clicking a param arms only that param");
                 if (auto* b = findPill (*ops, "GATE")) click (*b);
                 check (armed().size() == 2, "outside ALL, params toggle one by one");
-                proc->edit (-1, [] (Project& p) { auto& g = p.globals; g.laneVel = g.laneGate = false; g.laneNote = true; });
+                proc->edit (-1, [] (Project& p) { auto& g = p.globals; g.armVel = g.armGate = false; g.armNote = true; });
                 ed.refreshAll();
             }
 
@@ -1327,7 +1343,7 @@ int main (int argc, char** argv)
                 if (auto* tg = findChild<Pill> (*c0)) click (*tg);
                 const auto after = stepOf (ctx.ui.track, 0);
                 check (after.ccOn != before.ccOn && after.on == before.on, "in CC mode the step button switches the CC on/off only");
-                if (auto* sl = findChild<LaneSlider> (*c0))
+                if (auto* sl = findChild<StepSlider> (*c0))
                 {
                     click (*sl, { sl->getWidth() / 2, 0 });
                     const int top = stepOf (ctx.ui.track, 0).cc;
@@ -1370,9 +1386,13 @@ int main (int argc, char** argv)
         // settings: theme switch
         ctx.openSettings();
         if (auto* light = findPill (ed, "LIGHT")) click (*light);
-        check (ctx.globalsCopy().lightTheme && Theme::isLight(), "LIGHT in Settings switches the theme");
+        check (Theme::isLight(), "LIGHT in Settings switches the theme");
+        {
+            auto xml = juce::XmlDocument::parse (testSettingsFile());
+            check (xml != nullptr && xml->getBoolAttribute ("lightTheme"), "the theme is saved once for the user (all instances)");
+        }
         if (auto* dark = findPill (ed, "DARK")) click (*dark);
-        check (! ctx.globalsCopy().lightTheme, "DARK switches back");
+        check (! Theme::isLight(), "DARK switches back");
         if (auto* done = findPill (ed, "DONE")) click (*done);
         juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
 
@@ -1421,16 +1441,16 @@ int main (int argc, char** argv)
             auto* overlay = findChild<LearnOverlay> (ed);
             check (overlay != nullptr && overlay->isVisible(), "while learning, the step view is covered by the learn layer");
             auto* cell3 = findChild<StepCell> (ed, 2);
-            auto* sl = cell3 != nullptr ? findChild<LaneSlider> (*cell3) : nullptr;
+            auto* sl = cell3 != nullptr ? findChild<StepSlider> (*cell3) : nullptr;
             if (overlay != nullptr && sl != nullptr)
             {
-                ctx.ui.slider = SliderLane::gate;
+                ctx.ui.slider = SliderParam::gate;
                 const auto before = stepOf (ctx.ui.track, 2);
                 const auto slPoint = overlay->getLocalPoint (sl, sl->getLocalBounds().getCentre());
                 click (*overlay, slPoint);
                 const auto lm = ctx.macroCopy (41);
                 check (lm.target == MacroTarget::gate && lm.track == ctx.ui.track && lm.pattern == ctx.currentPattern() && lm.step == 2,
-                       "LEARN on the step 3 slider (GATE lane): fixed to this track, this pattern, step 3 gate");
+                       "LEARN on the step 3 slider (GATE param): fixed to this track, this pattern, step 3 gate");
                 check (stepOf (ctx.ui.track, 2) == before, "learning does not change the control");
                 check (ctx.ui.selectedMacro == 42, "LEARN moves on to the next free macro");
                 check (overlay->mappedControls().size() == 1, "while learning, the mapped control is outlined");
@@ -1441,7 +1461,7 @@ int main (int argc, char** argv)
                 check (ctx.macroCopy (42).target == MacroTarget::length, "LEARN on LENGTH");
                 overlay->mouseDown (mouseEvent (*overlay, slPoint, slPoint, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
                 check (! ctx.macroCopy (41).mapped() && overlay->mappedControls().size() == 1, "right-click frees a mapped control");
-                ctx.ui.slider = SliderLane::velocity;
+                ctx.ui.slider = SliderParam::velocity;
             }
             ctx.ui.macroLearn = false;
             ed.refreshAll();
@@ -1466,7 +1486,7 @@ int main (int argc, char** argv)
         {
             const auto sc = ctx.scope();
             ctx.ui.clip = proc->read ([&] (const Project& p) { return copySteps (p, sc); });
-            ctx.ui.clipLanes = activeLanes (ctx.globalsCopy(), false);
+            ctx.ui.clipParams = armedParams (ctx.globalsCopy(), false);
             ctx.ui.clipSpan = ctx.ui.clip.back().offset + 1;
             ctx.ui.selection = 0;
             ctx.ui.pasteStart = 20;
@@ -1478,10 +1498,10 @@ int main (int argc, char** argv)
             ed.refreshAll();
         }
 
-        ctx.ui.slider = SliderLane::probability;
+        ctx.ui.slider = SliderParam::probability;
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-dark-prob.png"));
-        ctx.ui.slider = SliderLane::velocity;
+        ctx.ui.slider = SliderParam::velocity;
 
         ctx.ui.ccMode = true;
         ed.refreshAll();
@@ -1642,7 +1662,7 @@ int main (int argc, char** argv)
         ctx.openSettings();
         snapshot (ed, outDir.getChildFile ("settings.png"));
 
-        proc->edit (-1, [] (Project& p) { p.globals.lightTheme = true; });
+        Theme::setLight (true);
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("settings-light.png"));
         ed.context().proc.editCurrent (false, [] (Project&) {});
@@ -1664,7 +1684,7 @@ int main (int argc, char** argv)
         auto proc = std::make_unique<VimaProcessor>();
         std::unique_ptr<juce::AudioProcessorEditor> ed (proc->createEditor());
         snapshot (*ed, outDir.getChildFile ("main-init.png"));
-        dynamic_cast<VimaEditor*> (ed.get())->context().ui.slider = SliderLane::gate;
+        dynamic_cast<VimaEditor*> (ed.get())->context().ui.slider = SliderParam::gate;
         dynamic_cast<VimaEditor*> (ed.get())->refreshAll();
         snapshot (*ed, outDir.getChildFile ("main-init-gate.png"));
         ed.reset();
