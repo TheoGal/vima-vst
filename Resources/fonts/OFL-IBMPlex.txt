@@ -1,3 +1,7 @@
+VIMA Mono (VIMAMono-Regular.ttf, VIMAMono-SemiBold.ttf) is a modified version of IBM Plex Mono:
+the digit zero uses the font's plain alternate (no dot). It is renamed because "Plex" is a
+Reserved Font Name. IBM Plex Sans is included unmodified.
+
 Copyright © 2017 IBM Corp. with Reserved Font Name "Plex"
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.

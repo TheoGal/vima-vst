@@ -49,8 +49,8 @@ namespace
             sans     = juce::Typeface::createSystemTypefaceFor (BinaryData::IBMPlexSansRegular_ttf, BinaryData::IBMPlexSansRegular_ttfSize);
             sansSemi = juce::Typeface::createSystemTypefaceFor (BinaryData::IBMPlexSansSemiBold_ttf, BinaryData::IBMPlexSansSemiBold_ttfSize);
             sansBold = juce::Typeface::createSystemTypefaceFor (BinaryData::IBMPlexSansBold_ttf, BinaryData::IBMPlexSansBold_ttfSize);
-            mono     = juce::Typeface::createSystemTypefaceFor (BinaryData::IBMPlexMonoRegular_ttf, BinaryData::IBMPlexMonoRegular_ttfSize);
-            monoSemi = juce::Typeface::createSystemTypefaceFor (BinaryData::IBMPlexMonoSemiBold_ttf, BinaryData::IBMPlexMonoSemiBold_ttfSize);
+            mono     = juce::Typeface::createSystemTypefaceFor (BinaryData::VIMAMonoRegular_ttf, BinaryData::VIMAMonoRegular_ttfSize);
+            monoSemi = juce::Typeface::createSystemTypefaceFor (BinaryData::VIMAMonoSemiBold_ttf, BinaryData::VIMAMonoSemiBold_ttfSize);
         }
     };
 

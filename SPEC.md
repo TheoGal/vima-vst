@@ -304,7 +304,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 ### 12.1 Look
 
 - Modern, flat, "digital". Not skeuomorphic: no fake hardware, textures, shadows or 3D knobs.
-- Fonts: IBM Plex Sans (labels) and IBM Plex Mono (values), embedded in the plugin.
+- Fonts: IBM Plex Sans (labels) and **VIMA Mono** (values), embedded in the plugin. VIMA Mono is IBM Plex Mono with the plain zero (no dot or slash) as the default "0", renamed because "Plex" is a Reserved Font Name under the OFL.
 - **Logo**: the wordmark "βήμα" in a high-contrast serif italic (outlines from Noto Serif Display Italic, SIL Open Font License; no font needed). Files in Resources/logo as SVG and PNG, dark and light: the wordmark and a square "β" icon (with a short green bar). `vima-wordmark-ui.svg` is the tight version embedded in the plugin and drawn in the header, in the theme's text color. See the naming rule at the top: the Greek word is used only there and when explaining the name.
 - Two themes, **DARK** (default) and **LIGHT**, chosen in Settings. All colors are theme tokens, so both themes share one layout.
 - DARK palette: background #0E1114, panels #12161B / #161A20, borders #343C48 / #3A4250 / #404957 (firm strokes around buttons, tiles, step cells and panels), knob arc tracks #222830 and unlit LEDs #2A313B (kept soft), text #EEF1F5 / #C5CBD4 / #8A94A3.
@@ -473,7 +473,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - CMake 3.22+, C++17, **JUCE 8.0.8** (downloaded by CMake FetchContent, or a local checkout with `-DJUCE_DIR=/path/to/JUCE`).
 - Plugin settings (CMakeLists.txt): product "Vima", company "TheoGal", bundle ID `gr.cnnbl.vima`, manufacturer code `Thgl`, plugin code `Vima`, VST3 only, IS_SYNTH, MIDI in and MIDI out, VST3 categories "Instrument Generator". **Do not change the codes or the bundle ID**: hosts would see a different plugin.
 - Windows builds use the static MSVC runtime, so the .vst3 works without the VC++ redistributable.
-- The IBM Plex fonts are embedded as binary data (Resources/fonts, SIL Open Font License).
+- The fonts are embedded as binary data (Resources/fonts, SIL Open Font License): IBM Plex Sans, and VIMA Mono, made from IBM Plex Mono by mapping "0" to its plain alternate glyph (`zero.alt02`) and renaming the family (see OFL-IBMPlex.txt).
 - License: AGPL-3.0.
 
 ### 14.2 CI (GitHub Actions, .github/workflows/build.yml)
@@ -580,3 +580,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-23: Dark theme: stronger strokes around buttons, tiles, step cells and panels (borders about 40% lighter); knob tracks and unlit LEDs unchanged.
 - 2026-10-24: Pattern thumbnails redesigned: one horizontal row per track, width = track length, a stripe per on step (green notes, cyan CC), grey for the length. Cells keep their size; 4 pages of 16 stay.
 - 2026-10-24: Thumbnails: every row shows both parts (notes above, CC below); an output that is off is dimmed; a part with no step on is not shown.
+- 2026-10-24: Plain zero everywhere: the value font is VIMA Mono (IBM Plex Mono with its plain zero as the default, renamed per the OFL).
