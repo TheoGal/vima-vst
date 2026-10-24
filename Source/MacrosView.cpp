@@ -4,12 +4,6 @@ namespace vima
 {
 namespace
 {
-    Pill::Look segLook (bool on, juce::Colour accent)
-    {
-        const auto& t = Theme::current();
-        return on ? Pill::Look { accent, accent, accent == t.neutral ? t.onNeutral : t.onAccent, 0.0f, false }
-                  : Pill::Look { juce::Colours::transparentBlack, juce::Colours::transparentBlack, t.text2, 0.0f, false };
-    }
     Pill::Look boxLook (bool on, juce::Colour accent)
     {
         const auto& t = Theme::current();
@@ -259,7 +253,7 @@ MacrosView::MacrosView (Context& c) : ctx (c)
         p->radius = 5.0f;
         p->font = [] { return Fonts::monoSemi (11.0f); };
         p->text = [n = juce::String (name)] { return n; };
-        p->look = [this, k = kind] { return segLook (macroKind (ctx.macroCopy (ctx.ui.selectedMacro).target) == k, Theme::current().neutral); };
+        p->look = [this, k = kind] { return boxLook (macroKind (ctx.macroCopy (ctx.ui.selectedMacro).target) == k, Theme::current().neutral); };
         p->onClick = [this, k = kind] { pickKind (k); };
         kindBtns.add (p);
         addAndMakeVisible (p);
@@ -459,8 +453,8 @@ void MacrosView::resized()
     clearBtn.setBounds (footer.withWidth (124));
 
     auto kindsRow = section (kindLabel, 30);
-    const int kw = (kindsRow.getWidth() - 2 * 3) / 3;
-    for (int k = 0; k < kindBtns.size(); ++k) kindBtns[k]->setBounds (kindsRow.getX() + k * (kw + 3), kindsRow.getY(), kw, 30);
+    const int kw = (kindsRow.getWidth() - 2 * 4) / 3;
+    for (int k = 0; k < kindBtns.size(); ++k) kindBtns[k]->setBounds (kindsRow.getX() + k * (kw + 4), kindsRow.getY(), kw, 30);
 
     targetLabel = trackLabel = patternLabel_ = stepLabel = emptyText = patternText = {};
     if (shownTargets.empty())
