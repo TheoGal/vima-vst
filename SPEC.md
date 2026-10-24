@@ -155,11 +155,12 @@ There is no step skip, no chords per step and no drum mode.
 A small picture of the pattern's steps, filling the cell below its top row: like a tiny step grid.
 
 - **8 horizontal rows, one per track**, track 01 at the top to track 08 at the bottom.
-- Each row has **two thin lines**: the note part (green) above and the CC part (cyan) below.
+- Each row has **up to two thin lines**: the note part (green) above and the CC part (cyan) below.
 - **Line width = track length**: 32 steps fill the cell's width, 16 half of it, and so on. Step 1 is at the left; every step has the same width in every track, so steps line up across tracks.
 - Each line is **grey** (the off-step grey) over the track's length, with a **stripe for every step that is on** in that part.
 - A part whose **output is off** (NOTE OUT or CC OUT) is shown **dimmed**, so its content is visible but clearly silent.
-- A part with **no step on** is **not shown** at all (no grey line). A track with no step on in either part leaves its row empty.
+- A part with **no step on** is **not shown** at all (no grey line), whatever its output; the other part then takes the **full row height**. A track with no step on in either part leaves its row empty.
+- In short: both parts with steps = two lines; one part with steps = one full-height line (dimmed if its output is off); no steps = empty row.
 
 #### 7.1.2 Copy / paste of patterns and tracks
 

@@ -132,7 +132,7 @@ void PatternSlot::paint (juce::Graphics& g)
     // width and height. Each row has two thin lines, notes (green) above and CC (cyan) below:
     // grey over the track length (32 steps = full width, step 1 at the left) with a stripe for
     // every step that is on. A part whose output is off is dimmed; a part with no step on is
-    // not shown.
+    // not shown (the other part then uses the full row).
     auto thumb = inner.withTrimmedTop (6).toFloat();
     const float gap = 2.0f;
     const float h = (thumb.getHeight() - gap * (numTracks - 1)) / (float) numTracks;
@@ -157,10 +157,19 @@ void PatternSlot::paint (juce::Graphics& g)
         const auto& tp = pattern.tracks[(size_t) k];
         const auto& r = routing[(size_t) k];
         auto row = thumb.withY (thumb.getY() + k * (h + gap)).withHeight (h);
-        // notes above, CC below; a part whose output is off is dimmed
-        const float half = (row.getHeight() - 1.0f) * 0.5f;
-        drawBar (row.withHeight (half), tp, false, r.noteOut ? t.green : t.green.withMultipliedAlpha (0.35f));
-        drawBar (row.withTrimmedTop (row.getHeight() - half), tp, true, r.ccOut ? t.cyan : t.cyan.withMultipliedAlpha (0.35f));
+        // notes above, CC below; a part whose output is off is dimmed. A part with no step on
+        // is not shown, and the other part then takes the full row height.
+        const auto noteColour = r.noteOut ? t.green : t.green.withMultipliedAlpha (0.35f);
+        const auto ccColour = r.ccOut ? t.cyan : t.cyan.withMultipliedAlpha (0.35f);
+        const bool hasNotes = tp.onStepCount() > 0, hasCC = tp.ccOnStepCount() > 0;
+        if (hasNotes && hasCC)
+        {
+            const float half = (row.getHeight() - 1.0f) * 0.5f;
+            drawBar (row.withHeight (half), tp, false, noteColour);
+            drawBar (row.withTrimmedTop (row.getHeight() - half), tp, true, ccColour);
+        }
+        else if (hasNotes) drawBar (row, tp, false, noteColour);
+        else if (hasCC)    drawBar (row, tp, true, ccColour);
     }
     if (inChain)
     {
