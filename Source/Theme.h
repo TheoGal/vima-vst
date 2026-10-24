@@ -27,7 +27,7 @@ struct Theme
     static const Theme& light();
     static const Theme& current();
 
-    // The theme is a user-wide preference (SPEC.md 11): stored once in Documents/VIMA and shared
+    // The theme is a user-wide preference (SPEC.md 11): stored once in the app settings folder and shared
     // by every VIMA instance. setLight saves it; revision() changes on every switch, so open
     // editors can follow.
     static void setLight (bool);

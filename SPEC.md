@@ -300,7 +300,7 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 
 Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same style. Sections, top to bottom:
 
-- **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once (Documents/VIMA/Settings.xml) and used by every VIMA instance; switching it in one instance switches all open VIMA windows. Projects and presets do not carry it.
+- **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\VIMA\Settings.xml`, macOS `~/Library/Application Support/VIMA/Settings.xml`; no permission prompts, unlike Documents) and used by every VIMA instance; switching it in one instance switches all open VIMA windows. Projects and presets do not carry it.
 - **PITCH**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF (10).
@@ -548,7 +548,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 
 - Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from the init pattern). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack and presetPath.
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children.
-- User settings: Documents/VIMA/Settings.xml, root `VIMASETTINGS` with `lightTheme` (the user-wide theme).
+- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\VIMA`, macOS `~/Library/Application Support/VIMA`, Linux `~/.config/VIMA`), root `VIMASETTINGS` with `lightTheme` (the user-wide theme). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the theme still switches for the session. Presets and mapping sets stay in Documents/VIMA (only touched from load / save dialogs).
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
 
@@ -631,3 +631,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: Macros page: page buttons and TARGET buttons outlined like the other buttons.
 - 2026-10-24: "Guided randomization" adopted as the term for VIMA's approach (Identity, manual).
 - 2026-10-24: Built: user-wide theme (all instances); code cleanup (leftovers removed, "lane" renamed "param" in the code, Settings dialog sized to its content); macro host names follow their mapping ("Vel St05 Tr03 Pat23").
+- 2026-10-24: The theme preference moved from Documents/VIMA to the app settings folder (no macOS privacy prompt, no Windows Controlled Folder Access block).
