@@ -6,7 +6,7 @@ Name: **VIMA** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
 
 Status: **in testing**. Every push is built by GitHub Actions; testers use the CI builds. This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the PDF manual.
 
-Last updated: 2026-10-23 (checked against the code at that date).
+Last updated: 2026-10-24 (checked against the code at that date).
 
 ---
 
@@ -371,11 +371,12 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Buttons** (on/off and choice buttons, PARAMS buttons, tabs)
 - **Click**: the action happens when the mouse button is released over the button; releasing elsewhere cancels.
-- **PASTE** and **CLEAR** (operations panel and the patterns view's bottom bar) fill **green while held down** as press feedback (not while dimmed).
+- **PASTE**, **CLEAR** (operations panel and the patterns view's bottom bar) and the **curve buttons** (shapes, ‹ ›, INV) fill **green while held down** as press feedback (not while dimmed).
 - Buttons that open a menu or a popover show a small **down chevron after their value**: TRACK (header), the PATTERN number, DIVISION, the SCALE name, TRACK (patterns view). FILE and SETTINGS have none.
 - **Right-click**: does nothing (except on mapped controls while LEARN is on, 13.2).
 - **Mouse wheel** on the DIVISION tile: next / previous division (wheel up = shorter steps). On the scale name: next / previous scale.
 - **SMOOTH**: click for one smoothing step; **press and hold** to repeat (9.3).
+- **Curve buttons**: a click applies the shape, rotates by one step, or inverts (9.5); one undo step per click.
 
 **LED bar**
 - **Click**: select one step. **Drag**: select a run of steps.
@@ -449,9 +450,9 @@ Targets:
 
 Opened with the MACROS button in the header; STEPS goes back.
 
-- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128), "N OF 32 MAPPED", SAVE and LOAD (13.3), LEARN. A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
+- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 32 MAPPED", SAVE and LOAD (13.3), LEARN. A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
 - **Right**: the mapping editor for the selected macro ("M017", with its host name "MACRO 17"):
-  - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro).
+  - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro). Outlined buttons, the chosen one filled, like the PARAMETER and TRACK buttons below.
   - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE. A new mapping starts on the track and pattern on screen.
   - **TRACK** (1-8), **PATTERN** (a knob, 01 to 64, for targets stored per pattern), **STEP** (a knob, 1-32, for step targets).
   - Footer: **CLEAR MAPPING** (unmaps the macro) and the current value ("NOW 16").
@@ -495,17 +496,17 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, patterns view, LEARN, Macros page). It also renders screenshots of every screen into the output folder. About 200 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 220 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
 - **Model.h/.cpp**: the data model (Step, TrackPattern, Pattern, TrackRouting, Globals, Chain, MacroMap, Project), constants, scales, divisions, serialization.
 - **Engine.h/.cpp**: audio-thread sequencer: host position to steps, notes, CC, smoothing, pattern switching, chain.
-- **Operations.h/.cpp**: step edits, scope, randomize, smooth, shift, copy / paste, undo history.
+- **Operations.h/.cpp**: step edits, scope, armed params, randomize, smooth, shift, curves, rotate, invert, copy / paste, undo history.
 - **Macros.h/.cpp**: macro targets: info, reading and writing values, value text. **MacroParams.h/.cpp**: the 128 host parameters and two-way sync.
 - **PluginProcessor**: state, locking, transport button, presets, host state. **PluginEditor**: the window, scaling, LEARN overlay.
 - **Context.h**: shared UI state (UiState) and helpers for all components.
-- UI components: **Header**, **ParamRow**, **StepGrid** (step cells, LED bars, sliders), **OpsPanel**, **PatternsView** (slots, chain), **MacrosView**, **SettingsDialog**, **Popovers**, **Widgets** (Pill buttons, Knob), **Theme** (colors, fonts, drawing helpers).
+- UI components: **Header**, **ParamRow**, **StepGrid** (step cells, LED bars, sliders), **OpsPanel**, **PatternsView** (slots, chain), **MacrosView**, **SettingsDialog**, **Popovers**, **Widgets** (Pill buttons with optional pressed look, chevron and drawn icon; Knob), **Theme** (colors, fonts, drawing helpers).
 
 ### 14.5 Threading
 
@@ -590,3 +591,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: Thumbnails: every row shows both parts (notes above, CC below); an output that is off is dimmed; a part with no step on is not shown.
 - 2026-10-24: Plain zero everywhere: the value font is VIMA Mono (IBM Plex Mono with its plain zero as the default, renamed per the OFL).
 - 2026-10-24: Curves (sine, triangle, ramp, square), rotate ‹ › and invert added under RANDOMIZE / SMOOTH (9.5); rotate and invert work on any values. Probability is 1-100%, never 0.
+- 2026-10-24: Macros page: page buttons and TARGET buttons outlined like the other buttons.
