@@ -494,18 +494,18 @@ void MacrosView::paint (juce::Graphics& g)
     const auto& t = Theme::current();
     g.fillAll (t.bg);
 
-    int mapped = 0;
-    const int page = ctx.ui.macroPage;
-    ctx.proc.read ([&mapped, page] (const Project& p)
+    // mapped macros in total, all pages (SPEC.md 13.2)
+    const int mapped = ctx.proc.read ([] (const Project& p)
     {
-        for (int k = 0; k < macrosPerPage; ++k) mapped += p.macros[(size_t) (page * macrosPerPage + k)].mapped() ? 1 : 0;
-        return 0;
+        int n = 0;
+        for (const auto& m : p.macros) n += m.mapped() ? 1 : 0;
+        return n;
     });
     {
         auto b = pagesLabel.withX (pageBtns.getLast()->getRight() + 16).withWidth (160);
         g.setColour (t.muted);
         g.setFont (Fonts::mono (10.0f));
-        g.drawText (juce::String (mapped) + " OF 32 MAPPED", b, juce::Justification::centredLeft);
+        g.drawText (juce::String (mapped) + " OF " + juce::String (numMacros) + " MAPPED", b, juce::Justification::centredLeft);
     }
 
     if (! learnBanner.isEmpty())

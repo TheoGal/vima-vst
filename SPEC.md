@@ -469,7 +469,7 @@ Not exposed (set in the plugin only):
 
 Opened with the MACROS button in the header; STEPS goes back.
 
-- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 32 MAPPED", SAVE and LOAD (13.3), LEARN. A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
+- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 128 MAPPED" (all pages), SAVE and LOAD (13.3), LEARN. A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
 - **Right**: the mapping editor for the selected macro ("M017", with its host name "MACRO 17"):
   - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro). Outlined buttons, the chosen one filled, like the PARAMETER and TRACK buttons below.
   - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE. A new mapping starts on the track and pattern on screen.
@@ -632,3 +632,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: "Guided randomization" adopted as the term for VIMA's approach (Identity, manual).
 - 2026-10-24: Built: user-wide theme (all instances); code cleanup (leftovers removed, "lane" renamed "param" in the code, Settings dialog sized to its content); macro host names follow their mapping ("Vel St05 Tr03 Pat23").
 - 2026-10-24: The theme preference moved from Documents/VIMA to the app settings folder (no macOS privacy prompt, no Windows Controlled Folder Access block).
+- 2026-10-25: Macros page shows the total mapped count ("40 OF 128 MAPPED"), not the current page's.
