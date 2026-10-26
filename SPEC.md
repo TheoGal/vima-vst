@@ -588,6 +588,8 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 ### 15.1 Decided, not built yet
 
 1. **Confirmation texts** (FileActions): Pattern NEW: "Reset pattern 05 to the init pattern? You can undo this." Macros NEW: "Clear all 128 macro mappings?" Preset NEW: "Clear all patterns, chain and settings? Macro mappings are kept."
+2. **Settings-dialog settings out of presets**: CC smoothing, pattern change by CC (on/off, channel, CC number) and quantize are no longer part of a preset: preset files do not store them, preset LOAD leaves them as they are, preset NEW does not reset them. They stay in the DAW project state (saved and restored with the project); a new instance starts with their init values. The **user scale notes stay in presets** (a preset can select USER, so it carries its notes); the root stays too (it is also in the SCALE popover).
+3. **Middle C becomes user-wide**, like the theme: stored once in Settings.xml (`middleC`), used by every VIMA instance, changed in one instance changes all open windows. Not in projects or presets. RESET DEFAULTS resets it to C3 for all instances. Update 4.1, 11, 13.3 and 14.7 (state format).
 
 ### 15.2 Open
 
