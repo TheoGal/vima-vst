@@ -1221,6 +1221,36 @@ int main (int argc, char** argv)
                 if (toggle) click (*toggle);
                 check (stepOf (4, 0).on != wasOn, "the step number button toggles the step");
 
+                // drawing on the step buttons: the pressed button's new state is painted along the row
+                auto toggleOf = [&] (int i) -> Pill* { auto* c = findChild<StepCell> (ed, i); return c ? findChild<Pill> (*c) : nullptr; };
+                auto stroke = [&] (int from, int to)
+                {
+                    auto* a = toggleOf (from);
+                    auto* b = toggleOf (to);
+                    if (a == nullptr || b == nullptr) return;
+                    const auto start = a->getLocalBounds().getCentre();
+                    const auto end = a->getLocalPoint (b, b->getLocalBounds().getCentre());
+                    a->mouseDown (mouseEvent (*a, start, start));
+                    a->mouseDrag (mouseEvent (*a, end, start, true));
+                    a->mouseUp (mouseEvent (*a, end, start, true));
+                };
+                proc->edit (-1, [] (Project& p)
+                {
+                    auto& tp = p.patterns[(size_t) p.currentPattern].tracks[4];
+                    for (int i = 0; i < 32; ++i) tp.steps[(size_t) i].on = (i == 1 || i == 20);
+                });
+                stroke (0, 3);
+                check (stepOf (4, 0).on && stepOf (4, 1).on && stepOf (4, 2).on && stepOf (4, 3).on && ! stepOf (4, 4).on,
+                       "press an off step and drag: the steps along the way turn on (on ones stay on)");
+                stroke (1, 4);
+                check (stepOf (4, 0).on && ! stepOf (4, 1).on && ! stepOf (4, 2).on && ! stepOf (4, 3).on && ! stepOf (4, 4).on,
+                       "press an on step and drag: the steps along the way turn off (off ones stay off)");
+                stroke (2, 20);   // from step 3 (off) down into the second row: the stroke stays in row 1
+                check (stepOf (4, 2).on && stepOf (4, 3).on && stepOf (4, 4).on && ! stepOf (4, 18).on && ! stepOf (4, 19).on,
+                       "a stroke stays in the row where it started");
+                proc->performUndo();
+                check (! stepOf (4, 2).on && ! stepOf (4, 3).on && ! stepOf (4, 4).on && stepOf (4, 0).on, "a whole stroke is one undo step");
+
                 auto* pitchKnob = findChild<Knob> (*cell, 0);
                 const int pcBefore = stepOf (4, 0).pitchClass;
                 proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[4].steps[0].pitchClass = 0; });

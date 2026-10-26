@@ -82,6 +82,7 @@ public:
     std::function<bool()> cornerDot;            // small marker dot in the top right corner
     std::function<void()> onClick;
     std::function<void()> onPress, onRelease;   // for press-and-hold buttons
+    std::function<void (juce::Point<int> screenPos)> onDrag;   // mouse dragged while pressed
     std::function<void (int)> onWheel;          // +1 / -1 per wheel step
     std::function<float()> alpha;               // optional opacity
     std::function<Look()> pressedLook;          // look while the mouse button is held down

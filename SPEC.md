@@ -384,7 +384,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - While **COPIED** is lit: a click only picks the landing step of the paste (no selection, no drag).
 - Clicks beyond the track length do nothing.
 
-**Step button** (step number): click toggles the shown part of the step on / off.
+**Step button** (step number): click toggles the shown part of the step on / off (note on/off in note mode, CC on/off in CC mode). **Click and drag across neighbouring step buttons** to paint: pressing an off step turns it on and every step the drag passes turns on too (steps already on stay on); pressing an on step turns it off and the drag turns the others off (steps already off stay off). Like the sliders, a stroke stays in the row where it started, and the whole stroke is one undo step.
 
 **SHIFT ALL knob**: drag up / down to shift the chosen param (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
@@ -570,7 +570,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Drawing on the step buttons** (note mode and CC mode, acting on the part shown): pressing a step button that is **off** turns it on, and dragging over other step buttons turns them **on** too (buttons already on stay on). Pressing a button that is **on** turns it off, and dragging turns the others **off** (buttons already off stay off). The whole stroke is one undo step. Like the step sliders, a stroke stays in the row where it started (decided).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -633,3 +633,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: Built: user-wide theme (all instances); code cleanup (leftovers removed, "lane" renamed "param" in the code, Settings dialog sized to its content); macro host names follow their mapping ("Vel St05 Tr03 Pat23").
 - 2026-10-24: The theme preference moved from Documents/VIMA to the app settings folder (no macOS privacy prompt, no Windows Controlled Folder Access block).
 - 2026-10-25: Macros page shows the total mapped count ("40 OF 128 MAPPED"), not the current page's.
+- 2026-10-26: Step buttons can be painted by dragging (the pressed button's new state is applied along the row; one undo step).

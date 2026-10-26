@@ -33,6 +33,7 @@ public:
     void resized() override;
     void refreshState();   // visibility and dimming
     void drawAt (juce::Point<int> screenPos);   // slider drawing: set this step from the point's height
+    void setShownOn (bool on);                  // step button drawing: the shown part (note or CC) on / off
 
 private:
     Context& ctx;
@@ -59,6 +60,9 @@ public:
     void refreshCells();
     void repaintLeds();
     void drawSliders (juce::Point<int> screenPos, bool start, int row);   // slider drawing: the steps under the mouse path
+    // Step button drawing (SPEC.md 12.5): every step button under the mouse path, in the row where
+    // the stroke started, is switched to `on`
+    void drawToggles (juce::Point<int> screenPos, bool start, int row, bool on);
 
     static constexpr int ledHeight = 16, ledGap = 3, cellHeight = 182, rowGap = 8;
 
@@ -72,6 +76,8 @@ private:
     int dragFrom = -1;
     juce::Point<int> lastDraw;
     int drawRow = 0;   // drawing stays in the row where it started
+    bool drawingToggles = false, toggleValue = false;
+    void stroke (juce::Point<int> screenPos, bool start, int row);   // follows the mouse path in one row
     void drawOne (juce::Point<int> screenPos);
     std::uint32_t dragBase = 0;   // selection kept while Ctrl-dragging (added to)
 };

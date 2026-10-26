@@ -279,9 +279,10 @@ void Pill::mouseDown (const juce::MouseEvent& e)
     if (onPress) onPress();
 }
 
-void Pill::mouseDrag (const juce::MouseEvent&)
+void Pill::mouseDrag (const juce::MouseEvent& e)
 {
     if (pressedLook) repaint();
+    if (onDrag && ! e.mods.isPopupMenu()) onDrag (e.getScreenPosition());
 }
 
 void Pill::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)

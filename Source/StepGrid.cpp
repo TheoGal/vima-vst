@@ -77,14 +77,19 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         if (! beyond) return Pill::Look { t.ledOff, t.ledOff, t.text2, 1.5f, false };
         return Pill::Look { juce::Colours::transparentBlack, on ? accent : t.dim, on ? accent : t.muted, 1.5f, false };
     };
-    toggle.onClick = [this]
+    // Press: the step flips; dragging paints the same state over the other step buttons of the row
+    toggle.onPress = [this]
     {
-        const bool cc = ctx.ui.ccMode;
-        ctx.edit (true, [this, cc] (Project& p)
-        {
-            auto& s = ctx.liveTrack (p).steps[(size_t) index];
-            if (cc) s.ccOn = ! s.ccOn; else s.on = ! s.on;
-        });
+        const auto st = stepCopy();
+        const bool newValue = ! (ctx.ui.ccMode ? st.ccOn : st.on);
+        ctx.beginGesture();   // the whole stroke is one undo step
+        if (auto* grid = dynamic_cast<StepGrid*> (getParentComponent()))
+            grid->drawToggles (toggle.getScreenBounds().getCentre(), true, index / 16, newValue);
+    };
+    toggle.onDrag = [this] (juce::Point<int> p)
+    {
+        if (auto* grid = dynamic_cast<StepGrid*> (getParentComponent()))
+            grid->drawToggles (p, false, index / 16, false);
     };
     addAndMakeVisible (toggle);
 
@@ -224,6 +229,19 @@ void StepCell::drawAt (juce::Point<int> screenPos)
     slider.setValue (slider.valueAtScreenY (screenPos.y));
 }
 
+void StepCell::setShownOn (bool on)
+{
+    const bool cc = ctx.ui.ccMode;
+    const auto st = stepCopy();
+    if ((cc ? st.ccOn : st.on) == on)
+        return;   // already in that state: unchanged
+    ctx.edit (false, [this, cc, on] (Project& p)
+    {
+        auto& s = ctx.liveTrack (p).steps[(size_t) index];
+        if (cc) s.ccOn = on; else s.on = on;
+    });
+}
+
 Step StepCell::stepCopy() const
 {
     const int t = ctx.ui.track;
@@ -338,7 +356,24 @@ void StepGrid::refreshCells()
     repaint();
 }
 
+void StepGrid::drawToggles (juce::Point<int> screenPos, bool start, int row, bool on)
+{
+    if (start)
+    {
+        drawingToggles = true;
+        toggleValue = on;
+    }
+    stroke (screenPos, start, row);
+}
+
 void StepGrid::drawSliders (juce::Point<int> screenPos, bool start, int row)
+{
+    if (start)
+        drawingToggles = false;
+    stroke (screenPos, start, row);
+}
+
+void StepGrid::stroke (juce::Point<int> screenPos, bool start, int row)
 {
     // follow the whole mouse path, so a fast drag does not skip steps
     if (start)
@@ -363,7 +398,8 @@ void StepGrid::drawOne (juce::Point<int> screenPos)
         const auto b = cellBounds (row * 16 + col);
         if (p.x >= b.getX() - 3 && p.x < b.getRight() + 3)
         {
-            cells[row * 16 + col]->drawAt (screenPos);
+            if (drawingToggles) cells[row * 16 + col]->setShownOn (toggleValue);
+            else                cells[row * 16 + col]->drawAt (screenPos);
             return;
         }
     }
