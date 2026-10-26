@@ -585,7 +585,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Patterns view slot tones, light theme**: the "selected" token (#D9E1EC) is darker than a tile (#EAEFF6) and almost the panel color (#D6DEE9), so the playing slot looks like an empty one. Make light "selected" the brightest of the three, near white (about #F7F9FC), so both themes read the same: **playing brightest, stored = tile, empty = panel (sinks back)**. Check the other uses of "selected" (mode button background and similar highlights) in a mockup. Also write the three slot tones into 7.1 (today it only says the playing slot is brighter).
 
 ### 15.2 Open
 
