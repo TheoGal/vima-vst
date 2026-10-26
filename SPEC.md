@@ -572,7 +572,13 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **FILE menu with three sections**: PRESET, PATTERN, MACROS, one flat menu, each section under its own header. The SAVE / LOAD buttons on the Macros page are removed.
+   - **PRESET**: as now. Header "PRESET: SONG" / "PRESET: UNSAVED"; NEW (asks first), LOAD..., SAVE, SAVE AS...
+   - **PATTERN**: acts on the selected pattern (the PATTERN box; the selected slot in the patterns view). Header shows the slot only ("PATTERN 05"), no file name. Items: NEW (asks first; resets that pattern to the init pattern: 16 steps on), LOAD... (asks before replacing), SAVE AS... No plain SAVE and no file remembered per slot. NEW and LOAD are undoable (one undo entry each).
+   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals; a loaded pattern plays in the current preset's scale. Extension **.vimapattern** (XML), dialogs start in **Documents/VIMA/Patterns**.
+   - **MACROS**: header "MACROS: LIVE SET" / "MACROS: UNSAVED"; NEW (asks first; clears all 128 mappings), LOAD... (asks before replacing), SAVE (overwrites the current mapping file; dimmed when there is none), SAVE AS... The current mapping file is remembered with the DAW project. Preset NEW / LOAD still leave mappings alone.
+   - **Patterns view right-click** on a slot adds LOAD PATTERN... and SAVE PATTERN AS... for that slot (same rules as the menu).
+2. **Init state of the 64 patterns**: on a new instance and on preset NEW, pattern 1 is the init pattern (16 steps on) and patterns 2-64 have all steps off (other settings at init), so the patterns view is not crowded. Pattern NEW gives the init pattern (16 steps on).
 
 ### 15.2 Open
 
