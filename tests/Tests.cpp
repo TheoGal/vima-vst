@@ -895,6 +895,23 @@ void testPresets()
     {
         auto xml = juce::XmlDocument::parse (presetFile);
         check (xml != nullptr && ! xml->toString().contains ("lightTheme"), "presets and projects do not carry the theme");
+        auto* g = xml != nullptr ? xml->getChildByName ("Globals") : nullptr;
+        check (g != nullptr && ! g->hasAttribute ("quantize") && ! g->hasAttribute ("ccSmoothing") && ! g->hasAttribute ("patternCC")
+                   && g->hasAttribute ("userScale") && g->hasAttribute ("root"),
+               "presets leave out the Settings-dialog settings (quantize, CC smoothing, pattern change by CC) but keep the user scale and root");
+    }
+    {
+        proc->edit (-1, [] (Project& p) { p.globals.quantize = Quantize::beat; p.globals.ccSmoothing = true; p.globals.patternCC = true; p.globals.patternCCNumber = 33; });
+        proc->loadPreset (presetFile);
+        auto dialogKept = [&] { return proc->read ([] (const Project& p) { const auto& g = p.globals;
+                                    return g.quantize == Quantize::beat && g.ccSmoothing && g.patternCC && g.patternCCNumber == 33; }); };
+        check (dialogKept(), "loading a preset keeps the Settings-dialog settings");
+        juce::MemoryBlock mb;
+        proc->getStateInformation (mb);
+        auto other = std::make_unique<VimaProcessor>();
+        other->setStateInformation (mb.getData(), (int) mb.getSize());
+        check (other->read ([] (const Project& p) { return p.globals.quantize == Quantize::beat && p.globals.patternCCNumber == 33; }),
+               "the Settings-dialog settings are saved with the DAW project");
     }
 
     // mapping sets
@@ -911,6 +928,7 @@ void testPresets()
                && get ([] (const Project& p) { return p.macros[9].mapped(); })
                && proc->presetFile == juce::File(),
            "NEW resets the music, keeps the mappings and forgets the preset file");
+    check (get ([] (const Project& p) { return p.globals.quantize == Quantize::beat && p.globals.ccSmoothing; }), "preset NEW keeps the Settings-dialog settings");
     check (get ([] (const Project& p) { return p.patterns[3].isEmpty() && ! p.patterns[0].isEmpty(); }), "preset NEW: pattern 1 init, the others blank");
 
     // mapping file link
@@ -985,7 +1003,7 @@ void testInitAndGate()
         const auto& g = p.globals;
         check (g.armNote && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote && ! g.armAllCc
                    && g.rangeGate.max == maxGate && g.rangeVel.min == 1
-                   && g.rangeVel.max == 127 && ! g.ccSmoothing && g.middleC == 3,
+                   && g.rangeVel.max == 127 && ! g.ccSmoothing && userSettings::middleC() == 3,
                "init globals: ON and NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
     }
     {
@@ -1030,9 +1048,20 @@ void testInitAndGate()
         check (balance == 0, "stopping ends all long notes");
     }
     {
-        Globals g3, g4, g5;
-        g4.middleC = 4; g5.middleC = 5;
-        check (g3.octaveOffset() == 0 && g4.octaveOffset() == 1 && g5.octaveOffset() == 2, "middle C shown as C3, C4 or C5");
+        Globals g;
+        const int o3 = g.octaveOffset();
+        userSettings::setMiddleC (4);
+        const int o4 = g.octaveOffset();
+        userSettings::setMiddleC (5);
+        const int o5 = g.octaveOffset();
+        check (o3 == 0 && o4 == 1 && o5 == 2, "middle C shown as C3, C4 or C5");
+        {
+            auto xml = juce::XmlDocument::parse (testSettingsFile());
+            Project p;
+            check (xml != nullptr && xml->getIntAttribute ("middleC") == 5 && ! p.toValueTree().toXmlString().contains ("middleC"),
+                   "middle C is user-wide: saved in the user settings, not in projects or presets");
+        }
+        userSettings::setMiddleC (3);
     }
 }
 

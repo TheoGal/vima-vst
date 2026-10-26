@@ -159,13 +159,25 @@ private:
 // Randomize param ranges (global, shared by all tracks)
 struct ParamRange { int min, max; };
 
+// User-wide preferences (SPEC.md 11): stored once in Settings.xml in the app settings folder and
+// shared by every VIMA instance; not part of projects or presets. revision() changes on every
+// change, so open editors can follow.
+namespace userSettings
+{
+    bool lightTheme();
+    void setLightTheme (bool);
+    int middleC();                 // octave number shown for middle C: 3, 4 or 5 (display only)
+    void setMiddleC (int);
+    int revision();
+    void setFile (const juce::File&);   // tests: use another file
+}
+
 struct Globals
 {
     int scale = 1;                 // MINOR
     int root = 0;                  // C
     std::uint16_t userScale = 0b010110101101;   // natural minor shape by default, root always on
-    int middleC = 3;               // octave number shown for middle C: 3, 4 or 5 (display only)
-    int octaveOffset() const { return middleC - 3; }
+    int octaveOffset() const { return userSettings::middleC() - 3; }   // middle C is user-wide
 
     bool ccSmoothing = false;      // glide over the whole gap between two CC-on steps
 

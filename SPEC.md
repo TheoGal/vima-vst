@@ -82,7 +82,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Steps | all 32 on (note on and CC on), note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
 | Current pattern | 01 |
 | Global scale / root / user scale | minor / C / natural minor shape |
-| Middle C | C3 |
+| Middle C | C3 (user-wide, 11) |
 | CC smoothing | off |
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
@@ -126,7 +126,7 @@ There is no step skip, no chords per step and no drum mode.
 - **Scale**: 13 built-in scales plus 1 user scale, with a root note: Major, Minor, Harmonic minor, Melodic minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Major pentatonic, Minor pentatonic, Blues, Whole tone, plus USER. There is no Chromatic scale: a track with its scale OFF plays all 12 notes. The scale and root are **global** (all tracks, all patterns) and apply to every track whose USE SCALE is on in that pattern.
 - The scale is **selected in the main window** (SCALE tile popover, 12.2), never in the Settings dialog. The root can be set in the SCALE popover and in the Settings user scale editor (the same global value).
 - **User scale**: 12 note toggles. It is **edited only in the Settings dialog**, and **selected** (as "USER") from the main window.
-- **Middle C** (display only): C3, C4 or C5 (11).
+- **Middle C** (display only): C3, C4 or C5 (11). A **user-wide** preference like the theme, not part of projects or presets.
 - **CC smoothing** on/off (10).
 - **Pattern change from incoming CC**: on/off, MIDI channel and CC number (7.3).
 - **Pattern change quantize**: OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
@@ -305,11 +305,11 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same style. Sections, top to bottom:
 
 - **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\VIMA\Settings.xml`, macOS `~/Library/Application Support/VIMA/Settings.xml`; no permission prompts, unlike Documents) and used by every VIMA instance; switching it in one instance switches all open VIMA windows. Projects and presets do not carry it.
-- **PITCH**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. There is no octave range setting: octaves always cover the whole MIDI range.
+- **PITCH**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. Like the theme, middle C is a **user-wide preference**: stored once in Settings.xml and used by every VIMA instance (changing it in one changes all open windows); projects and presets do not carry it. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF (10).
 - **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
-- Footer: **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark, for all instances), middle C, root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE**. A click outside the dialog also closes it.
+- Footer: **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE**. A click outside the dialog also closes it.
 
 ## 12. UI
 
@@ -496,8 +496,8 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 13.3 Presets, patterns and macro mapping sets
 
 - **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens one flat menu with three sections, each under its own header: **PRESET**, **PATTERN**, **MACROS**.
-- **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first; resets the music to the init values (4.1), keeps mappings and theme), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
-  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, middle C, CC smoothing, pattern change by CC, quantize, armed params and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
+- **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first: "Clear all patterns, chain and settings? Macro mappings are kept."; resets what a preset holds to the init values (4.1), keeps the mappings and everything a preset does not hold), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
+  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
   - Dialogs start in **Documents/VIMA/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
 - **PATTERN** (header "PATTERN 05", the slot only, no file name) acts on the **selected pattern**: the one in the PATTERN box, or the selected slot in the patterns view. NEW (asks first; the init pattern, 16 steps on), LOAD... (asks before replacing a pattern that has steps on), SAVE AS... There is no plain SAVE: a file would have to be linked to each of the 64 slots. NEW and LOAD are one undo step each.
   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals: a loaded pattern plays in the current preset's scale.
@@ -530,7 +530,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 250 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 255 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -561,11 +561,11 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
-- Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
+- Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the Settings-dialog properties in `Globals` (ccSmoothing, patternCC, patternCCChannel, patternCCNumber, quantize).
 - Pattern (.vimapattern): root `VIMAPATTERN`, `version` 1, with the 8 `Track` children as above. Loading starts from a blank pattern.
 - Mapping set (.vimamacros): root `VIMAMACROS`, `version` 1, with the `Macro` children.
-- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\VIMA`, macOS `~/Library/Application Support/VIMA`, Linux `~/.config/VIMA`), root `VIMASETTINGS` with `lightTheme` (the user-wide theme). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the theme still switches for the session. Presets, patterns and mapping sets stay in Documents/VIMA (only touched from load / save dialogs).
+- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\VIMA`, macOS `~/Library/Application Support/VIMA`, Linux `~/.config/VIMA`), root `VIMASETTINGS` with `lightTheme` and `middleC` (the user-wide theme and middle C). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the change still holds for the session. Presets, patterns and mapping sets stay in Documents/VIMA (only touched from load / save dialogs).
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
 
@@ -587,9 +587,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Confirmation texts** (FileActions): Pattern NEW: "Reset pattern 05 to the init pattern? You can undo this." Macros NEW: "Clear all 128 macro mappings?" Preset NEW: "Clear all patterns, chain and settings? Macro mappings are kept."
-2. **Settings-dialog settings out of presets**: CC smoothing, pattern change by CC (on/off, channel, CC number) and quantize are no longer part of a preset: preset files do not store them, preset LOAD leaves them as they are, preset NEW does not reset them. They stay in the DAW project state (saved and restored with the project); a new instance starts with their init values. The **user scale notes stay in presets** (a preset can select USER, so it carries its notes); the root stays too (it is also in the SCALE popover).
-3. **Middle C becomes user-wide**, like the theme: stored once in Settings.xml (`middleC`), used by every VIMA instance, changed in one instance changes all open windows. Not in projects or presets. RESET DEFAULTS resets it to C3 for all instances. Update 4.1, 11, 13.3 and 14.7 (state format).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -658,3 +656,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Step view top band: header and parameter row merged, grouped by scope in rounded frames. Track frame (TRACK, NOTES / CC, MIDI CH, NOTE OUT + SLIDER or CC NUM + CC OUT, fixed width), pattern frame (PATTERN tab over LENGTH, DIVISION, DIRECTION, SWING, USE SCALE), global SCALE at the right under SETTINGS (both modes), larger wordmark on the left. The scale ON/OFF became its own USE SCALE tile.
 - 2026-10-27: Dark theme: panels, frames and cells a step brighter (background unchanged); knob arc and slider tracks near-black #090B0E (recessed grooves). LEDs and borders unchanged.
 - 2026-10-27: Patterns view: light theme "selected" is now the brightest (#F7F9FC), so slot tones read playing > stored > empty in both themes. The paste destination uses the solid selection outline (no dashed outline). Slot right-click menu adds COPY PATTERN, COPY TRACK and a one-off PASTE (clears the clipboard, PASTE flashes green).
+- 2026-10-27: Presets leave out the Settings-dialog settings (CC smoothing, pattern change by CC, quantize); they stay in the DAW project. User scale notes stay in presets. Middle C is user-wide (Settings.xml), like the theme. Shorter NEW confirmations.

@@ -56,11 +56,12 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         {
             const Globals d;
             auto& g = p.globals;
-            g.middleC = d.middleC;
             g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
         });
-        Theme::setLight (false);   // the theme default: dark
+        Theme::setLight (false);       // the theme default: dark (all instances)
+        userSettings::setMiddleC (3);  // middle C = C3 (all instances)
+        ctx.changed();
     };
 
     doneBtn = &pill();
@@ -87,8 +88,8 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         auto& p = pill();
         p.text = [i] { return juce::StringArray { "C3 (LOWEST C-2)", "C4 (LOWEST C-1)", "C5 (LOWEST C0)" }[i]; };
         p.font = [] { return Fonts::monoSemi (10.0f); };
-        p.look = [this, i, G] { return choice (ctx.globalsCopy().middleC == 3 + i, G()); };
-        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.middleC = 3 + i; }); };
+        p.look = [i, G] { return choice (userSettings::middleC() == 3 + i, G()); };
+        p.onClick = [this, i] { userSettings::setMiddleC (3 + i); ctx.changed(); };   // user-wide
         midCBtns.add (&p);
     }
 

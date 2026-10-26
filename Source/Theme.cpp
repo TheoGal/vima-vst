@@ -1,5 +1,6 @@
 #include "Theme.h"
 #include "BinaryData.h"
+#include "Model.h"
 #include <atomic>
 
 namespace vima
@@ -36,57 +37,11 @@ const Theme& Theme::light()
 
 // ---------------------------------------------------------------------------------------
 // User-wide theme preference
-namespace
-{
-    std::atomic<int> themeRevision { 0 };
-    bool lightOn = false;
-    bool loaded = false;
-
-    juce::File& settingsFile()
-    {
-        // The app settings folder (no permission prompts or blocks, unlike Documents):
-        // Windows %APPDATA%\VIMA, macOS ~/Library/Application Support/VIMA, Linux ~/.config/VIMA
-        static juce::File f = []
-        {
-            auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
-           #if JUCE_MAC
-            dir = dir.getChildFile ("Application Support");
-           #endif
-            return dir.getChildFile ("VIMA").getChildFile ("Settings.xml");
-        }();
-        return f;
-    }
-
-    void ensureLoaded()
-    {
-        if (loaded) return;
-        loaded = true;
-        if (auto xml = juce::XmlDocument::parse (settingsFile()))
-            lightOn = xml->getBoolAttribute ("lightTheme", false);
-    }
-}
-
-const Theme& Theme::current() { ensureLoaded(); return lightOn ? light() : dark(); }
-bool Theme::isLight() { ensureLoaded(); return lightOn; }
-int Theme::revision() { return themeRevision.load(); }
-
-void Theme::setLight (bool l)
-{
-    ensureLoaded();
-    if (l == lightOn) return;
-    lightOn = l;
-    ++themeRevision;
-    juce::XmlElement xml ("VIMASETTINGS");
-    xml.setAttribute ("lightTheme", l);
-    settingsFile().getParentDirectory().createDirectory();
-    xml.writeTo (settingsFile());
-}
-
-void Theme::setSettingsFile (const juce::File& f)
-{
-    settingsFile() = f;
-    loaded = false;
-}
+const Theme& Theme::current() { return userSettings::lightTheme() ? light() : dark(); }
+bool Theme::isLight() { return userSettings::lightTheme(); }
+int Theme::revision() { return userSettings::revision(); }
+void Theme::setLight (bool l) { userSettings::setLightTheme (l); }
+void Theme::setSettingsFile (const juce::File& f) { userSettings::setFile (f); }
 
 // ---------------------------------------------------------------------------------------
 namespace

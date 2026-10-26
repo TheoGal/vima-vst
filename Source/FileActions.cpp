@@ -76,7 +76,7 @@ void FileActions::choose (bool save, const juce::String& title, const juce::File
 // ---- presets
 void FileActions::newPreset()
 {
-    confirm ("New preset", "Clear all patterns, the chain and the settings? Macro mappings are kept.", [this]
+    confirm ("New preset", "Clear all patterns, chain and settings? Macro mappings are kept.", [this]
     {
         ctx.proc.newPreset();
         ctx.ui.selection = 0;
@@ -113,7 +113,7 @@ void FileActions::savePresetAs()
 // ---- patterns
 void FileActions::newPattern (int index)
 {
-    confirm ("New pattern", "Reset pattern " + patternLabel (index) + " to the init pattern (16 steps on)? You can undo this.", [this, index]
+    confirm ("New pattern", "Reset pattern " + patternLabel (index) + " to the init pattern? You can undo this.", [this, index]
     {
         ctx.proc.newPattern (index);
         ctx.ui.selection = 0;
@@ -151,7 +151,7 @@ void FileActions::savePatternAs (int index)
 // ---- macros
 void FileActions::newMacros()
 {
-    confirm ("New macro mappings", "Clear all 128 macro mappings? The music is kept.", [this]
+    confirm ("New macro mappings", "Clear all 128 macro mappings?", [this]
     {
         ctx.proc.newMacros();
         ctx.changed();

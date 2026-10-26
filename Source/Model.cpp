@@ -1,7 +1,94 @@
 #include "Model.h"
+#include <atomic>
 
 namespace vima
 {
+// ---------------------------------------------------------------------------------------
+namespace userSettings
+{
+namespace
+{
+    std::atomic<int> settingsRevision { 0 };
+    std::atomic<bool> lightOn { false };
+    std::atomic<int> middleCValue { 3 };
+    std::atomic<bool> loaded { false };
+    juce::CriticalSection fileLock;
+
+    juce::File& settingsFile()
+    {
+        // The app settings folder (no permission prompts or blocks, unlike Documents):
+        // Windows %APPDATA%\VIMA, macOS ~/Library/Application Support/VIMA, Linux ~/.config/VIMA
+        static juce::File f = []
+        {
+            auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
+           #if JUCE_MAC
+            dir = dir.getChildFile ("Application Support");
+           #endif
+            return dir.getChildFile ("VIMA").getChildFile ("Settings.xml");
+        }();
+        return f;
+    }
+
+    void ensureLoaded()
+    {
+        if (loaded.load()) return;
+        const juce::ScopedLock sl (fileLock);
+        if (loaded.load()) return;
+        bool light = false;
+        int mc = 3;
+        if (auto xml = juce::XmlDocument::parse (settingsFile()))
+        {
+            light = xml->getBoolAttribute ("lightTheme", false);
+            mc = juce::jlimit (3, 5, xml->getIntAttribute ("middleC", 3));
+        }
+        lightOn = light;
+        middleCValue = mc;
+        loaded = true;
+    }
+
+    void save()
+    {
+        const juce::ScopedLock sl (fileLock);
+        juce::XmlElement xml ("VIMASETTINGS");
+        xml.setAttribute ("lightTheme", lightOn.load());
+        xml.setAttribute ("middleC", middleCValue.load());
+        settingsFile().getParentDirectory().createDirectory();
+        xml.writeTo (settingsFile());   // if it cannot be written, the change still holds for the session
+    }
+}
+
+bool lightTheme() { ensureLoaded(); return lightOn.load(); }
+int middleC() { ensureLoaded(); return middleCValue.load(); }
+int revision() { return settingsRevision.load(); }
+
+void setLightTheme (bool l)
+{
+    ensureLoaded();
+    if (l == lightOn.load()) return;
+    lightOn = l;
+    ++settingsRevision;
+    save();
+}
+
+void setMiddleC (int m)
+{
+    ensureLoaded();
+    m = juce::jlimit (3, 5, m);
+    if (m == middleCValue.load()) return;
+    middleCValue = m;
+    ++settingsRevision;
+    save();
+}
+
+void setFile (const juce::File& f)
+{
+    const juce::ScopedLock sl (fileLock);
+    settingsFile() = f;
+    loaded = false;
+    ++settingsRevision;
+}
+} // namespace userSettings
+
 // ---------------------------------------------------------------------------------------
 static const DivisionInfo divisions[numDivisions] = {
     { "1/1", 4.0 },  { "1/2", 2.0 },        { "1/4", 1.0 },        { "1/8", 0.5 },          { "1/16", 0.25 }, { "1/32", 0.125 },
@@ -268,22 +355,40 @@ juce::ValueTree Project::musicToValueTree() const
     for (int i = root.getNumChildren(); --i >= 0;)
         if (root.getChild (i).hasType ("Macro"))
             root.removeChild (i, nullptr);
+    // Settings that live only in the Settings dialog are not part of a preset (SPEC.md 13.3);
+    // the user scale and the root stay (a preset can select USER)
     auto g = root.getChildWithName ("Globals");
+    for (auto* id : { "ccSmoothing", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
+        g.removeProperty (id, nullptr);
     return root;
+}
+
+// Keep the Settings-dialog-only settings across a preset load or preset NEW
+static void keepDialogSettings (Globals& g, const Globals& old)
+{
+    g.ccSmoothing = old.ccSmoothing;
+    g.patternCC = old.patternCC;
+    g.patternCCChannel = old.patternCCChannel;
+    g.patternCCNumber = old.patternCCNumber;
+    g.quantize = old.quantize;
 }
 
 void Project::loadMusic (const juce::ValueTree& tree)
 {
     const auto keepMacros = macros;
+    const auto keepGlobals = globals;
     fromValueTree (tree);
     macros = keepMacros;
+    keepDialogSettings (globals, keepGlobals);
 }
 
 void Project::resetMusic()
 {
     const auto keepMacros = macros;
+    const auto keepGlobals = globals;
     resetToDefaults();
     macros = keepMacros;
+    keepDialogSettings (globals, keepGlobals);
 }
 
 juce::ValueTree Project::macrosToValueTree() const
@@ -351,7 +456,6 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("scale", g.scale, nullptr);
     gt.setProperty ("root", g.root, nullptr);
     gt.setProperty ("userScale", (int) g.userScale, nullptr);
-    gt.setProperty ("middleC", g.middleC, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
     gt.setProperty ("patternCC", g.patternCC, nullptr);
     gt.setProperty ("patternCCChannel", g.patternCCChannel, nullptr);
@@ -413,7 +517,6 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.scale = juce::jlimit (0, numScales - 1, (int) gt.getProperty ("scale", g.scale));
         g.root = juce::jlimit (0, 11, (int) gt.getProperty ("root", g.root));
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
-        g.middleC = juce::jlimit (3, 5, (int) gt.getProperty ("middleC", g.middleC));
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);
         g.patternCCChannel = juce::jlimit (1, 16, (int) gt.getProperty ("patternCCChannel", g.patternCCChannel));
