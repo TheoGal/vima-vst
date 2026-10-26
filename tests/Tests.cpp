@@ -1706,6 +1706,24 @@ int main (int argc, char** argv)
                 snapshot (ed, outDir.getChildFile ("patterns-view-copied.png"));
                 if (auto* b = findPill (*pv, "COPIED")) click (*b);
                 check (ctx.ui.patternClipKind == 0, "clicking COPIED empties the clipboard");
+
+                // slot menu copy / paste (one-off)
+                proc->edit (-1, [] (Project& p) { p.patterns[21].tracks[2].steps[1].velocity = 55; });
+                const int before22 = proc->read ([] (const Project& p) { return (int) p.patterns[22].tracks[2].steps[1].velocity; });
+                pv->copyPattern (21);
+                check (findPill (*pv, "COPIED") != nullptr, "slot menu COPY PATTERN lights COPIED (one clipboard)");
+                pv->pasteTo (22, true);
+                check (proc->read ([] (const Project& p) { return p.patterns[22].tracks[2].steps[1].velocity == 55; })
+                           && ctx.ui.patternClipKind == 0 && findPill (*pv, "COPY") != nullptr,
+                       "slot menu PASTE pastes once, then clears the clipboard and switches COPIED off");
+                check (paste != nullptr && paste->look && paste->look().fill == Theme::current().green && paste->alpha() == 1.0f,
+                       "PASTE flashes green to confirm the one-off paste");
+                check (proc->canUndo() && proc->performUndo() && proc->read ([] (const Project& p) { return (int) p.patterns[22].tracks[2].steps[1].velocity; }) == before22,
+                       "a slot menu paste is one undo step");
+                pv->copyTrack (21);
+                pv->pasteTo (23, false);
+                check (ctx.ui.patternClipKind == 2, "a bottom-bar paste keeps the clipboard, however the copy was made");
+                pv->cancelClip();
             }
             ctx.ui.viewPage = 0;
             ctx.changed();
@@ -1746,6 +1764,11 @@ int main (int argc, char** argv)
         ctx.ui.viewPage = 0;
         ctx.changed();
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
+        Theme::setLight (true);   // light theme: playing slot brightest, stored = tile, empty = panel
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("patterns-view-light.png"));
+        Theme::setLight (false);
+        ed.refreshAll();
         // a long chain scrolls: wheel over the list, and a scroll bar
         if (auto* pv = findChild<PatternsView> (ed))
         {

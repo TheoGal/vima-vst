@@ -85,29 +85,18 @@ void PatternSlot::paint (juce::Graphics& g)
     bool inChain = false;
     for (const auto& e : chain) inChain = inChain || e.pattern == idx;
 
-    // Cues (SPEC.md 7.1): playing = brighter background; selected = thick white outline;
-    // queued = blinking play button; paste destination = thin dashed outline.
+    // Cues (SPEC.md 7.1): playing = brightest background, stored = tile, empty = panel;
+    // selected (or, while copying, the paste destination) = thick white outline;
+    // queued = blinking play button.
     auto b = getLocalBounds().toFloat();
     const auto fill = playing ? t.selected : (used ? t.tile : t.panel);
-    const auto border = sel ? t.neutral : t.border3;
-    const float bw = sel ? 2.0f : 1.0f;
+    const bool outlined = sel || dest;
+    const auto border = outlined ? t.neutral : t.border3;
+    const float bw = outlined ? 2.0f : 1.0f;
     g.setColour (fill);
     g.fillRoundedRectangle (b, 7.0f);
     g.setColour (border);
     g.drawRoundedRectangle (b.reduced (bw * 0.5f), 7.0f, bw);
-    if (dest)
-    {
-        // ghost preview: where the paste lands
-        juce::Path p, dashed;
-        const auto r = b.reduced (sel ? 4.0f : 1.0f);
-        p.addRoundedRectangle (r, 6.0f);
-        const float dashes[] = { 4.0f, 3.0f };
-        juce::PathStrokeType (1.5f).createDashedStroke (dashed, p, dashes, 2);
-        g.setColour (t.neutral.withAlpha (0.8f));
-        g.fillPath (dashed);
-        g.setColour (t.neutral.withAlpha (0.07f));
-        g.fillRoundedRectangle (r, 6.0f);
-    }
 
     // play button (top center)
     {
@@ -346,55 +335,27 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     // picks the destination; PASTE writes there and stays lit. Clicking the lit button, or
     // CLEAR, empties the clipboard. CLEAR never erases a pattern.
     auto lit = [] { const auto& t = Theme::current(); return Pill::filled (t.neutral, t.onNeutral); };
-    auto cancel = [this]
-    {
-        ctx.ui.patternClipKind = 0;
-        ctx.ui.patternClipSource = ctx.ui.patternClipTrack = ctx.ui.patternPasteDest = -1;
-        ctx.ui.patternClip = Pattern();
-        ctx.ui.trackClip = TrackPattern();
-        ctx.changed();
-    };
+    auto cancel = [this] { cancelClip(); };
     copyBtn.text = [this] { return juce::String (ctx.ui.patternClipKind == 1 ? "COPIED" : "COPY"); };
     copyBtn.font = smallFont;
     copyBtn.look = [this, plain, lit] { return ctx.ui.patternClipKind == 1 ? lit() : plain(); };
     copyBtn.onClick = [this, cancel]
     {
         if (ctx.ui.patternClipKind == 1) { cancel(); return; }
-        const int sel = ctx.ui.selectedPattern;
-        ctx.ui.patternClip = ctx.proc.read ([sel] (const Project& p) { return p.patterns[(size_t) sel]; });
-        ctx.ui.trackClip = TrackPattern();
-        ctx.ui.patternClipKind = 1;
-        ctx.ui.patternClipSource = sel;
-        ctx.ui.patternClipTrack = -1;
-        ctx.ui.patternPasteDest = -1;
-        ctx.changed();
+        copyPattern (ctx.ui.selectedPattern);
     };
     pasteBtn.text = [] { return juce::String ("PASTE"); };
     pasteBtn.font = smallFont;
-    pasteBtn.look = [this]
+    auto flashing = [this] { return juce::Time::getMillisecondCounter() < pasteFlashUntil; };
+    pasteBtn.look = [this, flashing]
     {
         const auto& t = Theme::current();
+        if (flashing()) return Pill::filled (t.green, t.onAccent);   // one-off paste done
         const bool ready = ctx.ui.patternClipKind != 0 && ctx.ui.patternPasteDest >= 0;
         return Pill::outline (ready ? t.neutral : t.border2, t.text2);
     };
-    pasteBtn.alpha = [this] { return (ctx.ui.patternClipKind != 0 && ctx.ui.patternPasteDest >= 0) ? 1.0f : 0.4f; };
-    pasteBtn.onClick = [this]
-    {
-        const int dest = ctx.ui.patternPasteDest;
-        if (ctx.ui.patternClipKind == 0 || dest < 0) return;
-        if (ctx.ui.patternClipKind == 1)
-        {
-            const auto clip = ctx.ui.patternClip;
-            ctx.proc.edit (dest, [dest, &clip] (Project& p) { p.patterns[(size_t) dest] = clip; });
-        }
-        else
-        {
-            const auto clip = ctx.ui.trackClip;
-            const int t = ctx.ui.patternsViewTrack;   // the destination track: the TRACK dropdown
-            ctx.proc.edit (dest, [dest, t, &clip] (Project& p) { p.patterns[(size_t) dest].tracks[(size_t) t] = clip; });
-        }
-        ctx.changed();
-    };
+    pasteBtn.alpha = [this, flashing] { return (flashing() || (ctx.ui.patternClipKind != 0 && ctx.ui.patternPasteDest >= 0)) ? 1.0f : 0.4f; };
+    pasteBtn.onClick = [this] { pasteTo (ctx.ui.patternPasteDest, false); };
     clearBtn.text = [] { return juce::String ("CLEAR"); };
     clearBtn.font = smallFont; clearBtn.look = plain;
     clearBtn.alpha = [this] { return ctx.ui.patternClipKind != 0 ? 1.0f : 0.4f; };
@@ -428,14 +389,7 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     copyTrackBtn.onClick = [this, cancel]
     {
         if (ctx.ui.patternClipKind == 2) { cancel(); return; }
-        ctx.ui.patternClip = Pattern();
-        ctx.ui.patternPasteDest = -1;
-        const int sel = ctx.ui.selectedPattern, t = ctx.ui.patternsViewTrack;
-        ctx.ui.trackClip = ctx.proc.read ([sel, t] (const Project& p) { return p.patterns[(size_t) sel].tracks[(size_t) t]; });
-        ctx.ui.patternClipKind = 2;
-        ctx.ui.patternClipSource = sel;
-        ctx.ui.patternClipTrack = t;
-        ctx.changed();
+        copyTrack (ctx.ui.selectedPattern);
     };
     addAndMakeVisible (copyTrackBtn);
 
@@ -481,10 +435,73 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     addChildComponent (chainScroll);
 }
 
+void PatternsView::copyPattern (int index)
+{
+    ctx.ui.patternClip = ctx.proc.read ([index] (const Project& p) { return p.patterns[(size_t) index]; });
+    ctx.ui.trackClip = TrackPattern();
+    ctx.ui.patternClipKind = 1;
+    ctx.ui.patternClipSource = index;
+    ctx.ui.patternClipTrack = -1;
+    ctx.ui.patternPasteDest = -1;
+    ctx.changed();
+}
+
+void PatternsView::copyTrack (int index)
+{
+    const int t = ctx.ui.patternsViewTrack;
+    ctx.ui.trackClip = ctx.proc.read ([index, t] (const Project& p) { return p.patterns[(size_t) index].tracks[(size_t) t]; });
+    ctx.ui.patternClip = Pattern();
+    ctx.ui.patternClipKind = 2;
+    ctx.ui.patternClipSource = index;
+    ctx.ui.patternClipTrack = t;
+    ctx.ui.patternPasteDest = -1;
+    ctx.changed();
+}
+
+void PatternsView::pasteTo (int dest, bool oneOff)
+{
+    if (ctx.ui.patternClipKind == 0 || dest < 0 || dest >= numPatterns) return;
+    if (ctx.ui.patternClipKind == 1)
+    {
+        const auto clip = ctx.ui.patternClip;
+        ctx.proc.edit (dest, [dest, &clip] (Project& p) { p.patterns[(size_t) dest] = clip; });
+    }
+    else
+    {
+        const auto clip = ctx.ui.trackClip;
+        const int t = ctx.ui.patternsViewTrack;   // the destination track: the TRACK dropdown
+        ctx.proc.edit (dest, [dest, t, &clip] (Project& p) { p.patterns[(size_t) dest].tracks[(size_t) t] = clip; });
+    }
+    if (oneOff)
+    {
+        // slot menu paste: a one-off. Clear the clipboard and flash PASTE to confirm.
+        cancelClip();
+        pasteFlashUntil = juce::Time::getMillisecondCounter() + 350;
+        juce::Component::SafePointer<PatternsView> safe (this);
+        juce::Timer::callAfterDelay (380, [safe] { if (safe != nullptr) safe->pasteBtn.repaint(); });
+        pasteBtn.repaint();
+        return;
+    }
+    ctx.changed();
+}
+
+void PatternsView::cancelClip()
+{
+    ctx.ui.patternClipKind = 0;
+    ctx.ui.patternClipSource = ctx.ui.patternClipTrack = ctx.ui.patternPasteDest = -1;
+    ctx.ui.patternClip = Pattern();
+    ctx.ui.trackClip = TrackPattern();
+    ctx.changed();
+}
+
 void PatternsView::showSlotMenu (int pattern)
 {
     juce::PopupMenu m;
     m.addSectionHeader ("PATTERN " + patternLabel (pattern));
+    m.addItem (3, "COPY PATTERN");
+    m.addItem (4, "COPY TRACK " + pad2 (ctx.ui.patternsViewTrack + 1));
+    m.addItem (5, "PASTE", ctx.ui.patternClipKind != 0);
+    m.addSeparator();
     m.addItem (1, "LOAD PATTERN...");
     m.addItem (2, "SAVE PATTERN AS...");
     juce::Component::SafePointer<PatternsView> safe (this);
@@ -493,6 +510,9 @@ void PatternsView::showSlotMenu (int pattern)
         if (safe == nullptr) return;
         if (r == 1) safe->fileActions.loadPattern (pattern);
         else if (r == 2) safe->fileActions.savePatternAs (pattern);
+        else if (r == 3) safe->copyPattern (pattern);
+        else if (r == 4) safe->copyTrack (pattern);
+        else if (r == 5) safe->pasteTo (pattern, true);
     });
 }
 

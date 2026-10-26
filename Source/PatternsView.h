@@ -55,8 +55,15 @@ public:
     void refreshState();
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
+    // Pattern / track clipboard (SPEC.md 7.1.2), shared by the bottom bar and the slot menu
+    void copyPattern (int index);
+    void copyTrack (int index);          // the track in the TRACK dropdown
+    void pasteTo (int dest, bool oneOff);   // oneOff (slot menu): clear the clipboard after, flash PASTE
+    void cancelClip();
+
 private:
     void showTrackMenu();
+    juce::uint32 pasteFlashUntil = 0;   // PASTE shows green until then (one-off paste confirmation)
     void showSlotMenu (int pattern);
     Context& ctx;
     FileActions fileActions { ctx, *this };

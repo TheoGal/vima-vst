@@ -24,7 +24,7 @@ const Theme& Theme::light()
     static const Theme t {
         // cool greys (blue about 19 above red). A darker frame with brighter tiles, firm lines
         // and saturated accents; knob tracks and idle LEDs stay soft so values read clearly (SPEC.md 12.1)
-        c (0xC3CDDA), c (0xD6DEE9), c (0xEAEFF6), c (0xE1E8F1), c (0xCDD5E0), c (0xC2CCD9), c (0xD9E1EC),
+        c (0xC3CDDA), c (0xD6DEE9), c (0xEAEFF6), c (0xE1E8F1), c (0xCDD5E0), c (0xC2CCD9), c (0xF7F9FC),
         c (0xA3AEBD), c (0x97A2B2), c (0x8C98A8), c (0xA9B3C2), c (0x8A929D), c (0x6F7782),
         c (0x525B68), c (0x2C333D), c (0x11151A),
         c (0x2A313B), c (0x00954D), c (0x0077C8), c (0x6A2CE6), c (0xC26D00),
