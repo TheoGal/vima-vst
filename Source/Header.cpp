@@ -282,65 +282,17 @@ void Header::showTrackMenu()
 
 void Header::showFileMenu()
 {
-    const auto current = ctx.proc.presetFile;
+    // PATTERN acts on the selected pattern: the patterns view's selected slot, else the one shown
+    const int pattern = ctx.ui.patternsView ? ctx.ui.selectedPattern : ctx.currentPattern();
     juce::PopupMenu m;
-    m.addSectionHeader (current == juce::File() ? juce::String ("PRESET: UNSAVED") : "PRESET: " + current.getFileNameWithoutExtension().toUpperCase());
-    m.addItem (1, "NEW");
-    m.addItem (2, "LOAD...");
-    m.addItem (3, "SAVE", current != juce::File());
-    m.addItem (4, "SAVE AS...");
+    fileActions.addMenu (m, pattern);
     juce::Component::SafePointer<Header> safe (this);
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&fileBtn).withMinimumWidth (200),
-                     [safe] (int result)
+                     [safe, pattern] (int result)
                      {
-                         if (safe == nullptr) return;
-                         auto& self = *safe;
-                         if (result == 1)
-                         {
-                             juce::NativeMessageBox::showOkCancelBox (
-                                 juce::MessageBoxIconType::QuestionIcon, "New preset",
-                                 "Clear all patterns, the chain and the settings? Macro mappings are kept.", &self,
-                                 juce::ModalCallbackFunction::create ([safe] (int ok)
-                                 {
-                                     if (ok != 0 && safe != nullptr) { safe->ctx.proc.newPreset(); safe->ctx.ui.selection = 0; safe->ctx.changed(); }
-                                 }));
-                         }
-                         else if (result == 2) self.chooseFile (false);
-                         else if (result == 3)
-                         {
-                             self.ctx.proc.savePreset (self.ctx.proc.presetFile);
-                         }
-                         else if (result == 4) self.chooseFile (true);
+                         if (safe != nullptr && result > 0)
+                             safe->fileActions.perform (result, pattern);
                      });
-}
-
-void Header::chooseFile (bool save)
-{
-    const auto current = ctx.proc.presetFile;
-    const auto start = current != juce::File() ? current : VimaProcessor::presetFolder().getChildFile (juce::String ("Untitled") + VimaProcessor::presetExtension);
-    chooser = std::make_unique<juce::FileChooser> (save ? "Save VIMA preset" : "Load VIMA preset", start,
-                                                   juce::String ("*") + VimaProcessor::presetExtension);
-    const int flags = juce::FileBrowserComponent::canSelectFiles
-                      | (save ? juce::FileBrowserComponent::saveMode | juce::FileBrowserComponent::warnAboutOverwriting
-                              : juce::FileBrowserComponent::openMode);
-    juce::Component::SafePointer<Header> safe (this);
-    chooser->launchAsync (flags, [safe, save] (const juce::FileChooser& fc)
-    {
-        if (safe == nullptr) return;
-        auto file = fc.getResult();
-        if (file == juce::File()) return;
-        if (save)
-        {
-            if (! file.hasFileExtension (VimaProcessor::presetExtension))
-                file = file.withFileExtension (VimaProcessor::presetExtension);
-            safe->ctx.proc.savePreset (file);
-        }
-        else if (safe->ctx.proc.loadPreset (file))
-        {
-            safe->ctx.ui.selection = 0;
-            safe->ctx.changed();
-        }
-    });
 }
 
 void Header::paintOverChildren (juce::Graphics& g)

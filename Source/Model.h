@@ -255,7 +255,16 @@ struct Project
     // Macro mapping sets (SPEC.md 13.3): all 128 mappings
     juce::ValueTree macrosToValueTree() const;
     bool loadMacros (const juce::ValueTree&);   // false if the tree is not a mapping set
+
+    // Pattern files (SPEC.md 13.3): one pattern, its 8 tracks' steps and per-track settings
+    juce::ValueTree patternToValueTree (int index) const;
+    bool loadPattern (int index, const juce::ValueTree&);   // false if the tree is not a pattern file
 };
+
+// The init pattern (16 steps on) is what pattern NEW gives. A new instance and preset NEW
+// start pattern 1 with it and patterns 2-64 blank (all steps off), SPEC.md 4.1.
+Pattern blankPattern();
+const Pattern& defaultPattern (int index);   // the pattern a new instance has in that slot
 
 juce::String patternLabel (int patternIndex);   // "05": patterns are numbered 1-64
 juce::String pageRangeText (int page);          // "17 - 32"

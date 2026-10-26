@@ -70,7 +70,7 @@ Per track parameters:
 
 ### 4.1 Init values (= defaults everywhere)
 
-A new instance, NEW in the FILE menu, and a right-click / Alt + click on any control use these values. All 64 patterns start like this.
+A new instance, NEW in the FILE menu, and a right-click / Alt + click on any control use these values. On a new instance and on preset NEW, **pattern 1** is the init pattern (16 steps on, values below) and **patterns 2-64 are blank**: all steps off, every other value at init, so the patterns view is not crowded. Pattern NEW (13.3) gives the init pattern (16 steps on).
 
 | Setting | Init value |
 |---|---|
@@ -147,6 +147,7 @@ There is no step skip, no chords per step and no drum mode.
 - **Pattern grid**: 4 x 4 slots for the current page. Each slot shows the pattern's own number (page 17 - 32 shows 17 to 32), a small **play button at the top center**, a state on the right (PLAYING with a lit LED, NEXT, STORED, or EMPTY when no track has any step on), and a thumbnail of the 8 tracks (7.1.1). A thin line at the bottom marks patterns used in the chain.
 - **Slot cues**: the **selected** slot has a thick white outline; the **playing** slot has a brighter background; a **queued** slot's play button **blinks** until the switch; while COPIED / TRACK COPIED is lit, the paste destination has a thin dashed outline (7.1.2).
 - **Clicking a slot** anywhere except its play button only **selects** it (for COPY, COPY TRACK and + ADD to the chain). It does not play it.
+- **Right-clicking a slot** selects it and opens a menu for that pattern: LOAD PATTERN... and SAVE PATTERN AS... (same rules as the FILE menu's PATTERN section, 13.3). Not while LEARN is on (there right-click frees mappings).
 - **The play button** selects the slot **and** queues it as the next pattern (7.3).
 - **Bottom bar**: a **PATTERN box** ("PATTERN  19", the selected pattern; styled like the TRACK box but display only), COPY, the TRACK dropdown, COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
 
@@ -171,7 +172,7 @@ Works like step copy / paste (9.1):
 - While a copy button is lit, a click on a slot only picks the **destination pattern**, shown with a dashed outline (the ghost preview). The selection does not change. The slot play buttons still play.
 - For a track copy, the **destination track** is the one in the TRACK dropdown when PASTE is pressed, so track 1 can be pasted into track 2 of the same or another pattern.
 - **PASTE** is dimmed until a destination is picked. It writes there (one undo step), and the button stays lit for more pastes.
-- Clicking the lit button, or **CLEAR**, cancels: the clipboard is emptied and the ghost preview removed. **CLEAR never erases a pattern.** There is no "erase pattern" function; NEW in the FILE menu resets everything.
+- Clicking the lit button, or **CLEAR**, cancels: the clipboard is emptied and the ghost preview removed. **CLEAR never erases a pattern.** To reset a pattern, use PATTERN > NEW in the FILE menu (13.3); preset NEW resets everything.
 
 ### 7.2 Chain
 
@@ -225,7 +226,7 @@ Works like step copy / paste (9.1):
 
 ## 9. Step operations
 
-Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or NEW clears the undo history. Host automation (macros) is not added to undo.
+Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or preset NEW clears the undo history. Pattern NEW and pattern LOAD (13.3) are one undo step each. Macro mapping NEW / LOAD are not undone. Host automation (macros) is not added to undo.
 
 ### 9.1 Copy / Paste (steps)
 
@@ -395,7 +396,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - TRACK: click for the track list. NOTES / CC: click to switch.
 - PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker.
 - Start / stop button: see 3.
-- FILE: presets menu (13.3). UNDO: one step back (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS: settings dialog.
+- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS: settings dialog.
 
 **Patterns view**
 - Pattern slot: click to select it (or, while COPIED / TRACK COPIED is lit, to pick the paste destination). The play button at the top center selects it and queues it.
@@ -455,7 +456,7 @@ Not exposed (set in the plugin only):
 - Chain: LOOP on/off, the chain entries and their repeats.
 - Settings: CC smoothing, pattern change by CC (on/off, channel, CC number), quantize, theme.
 - Editing tools: PARAMS (armed params, ALL), RANGES, SLIDER lane, NOTES / CC view, the selection, the track shown, the patterns view page.
-- Actions: RANDOMIZE, SMOOTH, the curves (shapes, rotate, invert), SHIFT ALL, COPY / PASTE / CLEAR, COPY TRACK, undo, the start / stop button, preset and mapping-set load / save.
+- Actions: RANDOMIZE, SMOOTH, the curves (shapes, rotate, invert), SHIFT ALL, COPY / PASTE / CLEAR, COPY TRACK, undo, the start / stop button, preset, pattern and mapping-set new / load / save.
 
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Full range**: every macro always covers its target's whole range over its whole travel. There is no min / max per mapping.
@@ -471,7 +472,7 @@ Not exposed (set in the plugin only):
 
 Opened with the MACROS button in the header; STEPS goes back.
 
-- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 128 MAPPED" (all pages), SAVE and LOAD (13.3), LEARN. A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
+- **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 128 MAPPED" (all pages), LEARN. Mapping sets are loaded and saved from the FILE menu (13.3). A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
 - **Right**: the mapping editor for the selected macro ("M017", with its host name "MACRO 17"):
   - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro). Outlined buttons, the chosen one filled, like the PARAMETER and TRACK buttons below.
   - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE. A new mapping starts on the track and pattern on screen.
@@ -485,13 +486,18 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
 - Colors follow the params: note step, note, octave and velocity green, gate purple, probability amber, CC step and CC value cyan, track and global targets neutral.
 
-### 13.3 Presets and macro mapping sets
+### 13.3 Presets, patterns and macro mapping sets
 
-- **Presets** hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, middle C, CC smoothing, pattern change by CC, quantize, armed params and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
-- **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens a menu: the current preset's name ("PRESET: SONG", or "PRESET: UNSAVED"), NEW (asks first; resets the music to the init values, keeps mappings and theme), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
-- LOAD and SAVE AS use the system's file dialogs, starting in **Documents/VIMA/Presets**. Files can be saved anywhere. Extension **.vima** (XML).
-- Loading a preset or NEW clears undo. The current preset file is remembered with the DAW project.
-- **Macro mapping sets** hold all 128 mappings. SAVE and LOAD buttons on the Macros page, with file dialogs starting in **Documents/VIMA/Macros**. Extension **.vimamacros** (XML). Loading a set replaces all mappings and leaves the music alone.
+- **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens one flat menu with three sections, each under its own header: **PRESET**, **PATTERN**, **MACROS**.
+- **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first; resets the music to the init values (4.1), keeps mappings and theme), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
+  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale, middle C, CC smoothing, pattern change by CC, quantize, armed params and ranges), plus the current pattern. They do not hold macro mappings, the theme or the window size; those stay as they are when a preset loads.
+  - Dialogs start in **Documents/VIMA/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
+- **PATTERN** (header "PATTERN 05", the slot only, no file name) acts on the **selected pattern**: the one in the PATTERN box, or the selected slot in the patterns view. NEW (asks first; the init pattern, 16 steps on), LOAD... (asks before replacing a pattern that has steps on), SAVE AS... There is no plain SAVE: a file would have to be linked to each of the 64 slots. NEW and LOAD are one undo step each.
+  - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals: a loaded pattern plays in the current preset's scale.
+  - Dialogs start in **Documents/VIMA/Patterns**; extension **.vimapattern** (XML). The patterns view's slot right-click (7.1) offers the same LOAD and SAVE AS for that slot.
+- **MACROS** (header "MACROS", no file name): NEW (asks first; clears all 128 mappings), LOAD... (asks before replacing when any macro is mapped), SAVE (overwrites the linked mapping file, like presets; dimmed when no file is linked), SAVE AS... A mapping set holds all 128 mappings; loading one replaces all mappings and leaves the music alone. The linked file is remembered with the DAW project; NEW unlinks it. Preset NEW / LOAD leave mappings alone.
+  - Dialogs start in **Documents/VIMA/Macros**; extension **.vimamacros** (XML).
+- Files can be saved anywhere; a wrong kind of file (a preset as a pattern, etc.) is refused.
 - DAW preset formats (Live .adv, .vstpreset) also work and store the whole state, mappings included.
 
 ## 14. Build and development notes
@@ -517,7 +523,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 220 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 245 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -528,7 +534,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 - **Engine.h/.cpp**: audio-thread sequencer: host position to steps, notes, CC, smoothing, pattern switching, chain.
 - **Operations.h/.cpp**: step edits, scope, armed params, randomize, smooth, shift, curves, rotate, invert, copy / paste, undo history.
 - **Macros.h/.cpp**: macro targets: info, reading and writing values, value text. **MacroParams.h/.cpp**: the 128 host parameters and two-way sync.
-- **PluginProcessor**: state, locking, transport button, presets, host state. **PluginEditor**: the window, scaling, LEARN overlay.
+- **PluginProcessor**: state, locking, transport button, preset / pattern / mapping files, host state. **FileActions**: the FILE menu and the slot menu actions (dialogs, confirmations). **PluginEditor**: the window, scaling, LEARN overlay.
 - **Context.h**: shared UI state (UiState) and helpers for all components.
 - UI components: **Header**, **ParamRow**, **StepGrid** (step cells, LED bars, sliders), **OpsPanel**, **PatternsView** (slots, chain), **MacrosView**, **SettingsDialog**, **Popovers**, **Widgets** (Pill buttons with optional pressed look, chevron and drawn icon; Knob), **Theme** (colors, fonts, drawing helpers).
 
@@ -548,9 +554,11 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from the init pattern). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack and presetPath.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, middleC, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children.
-- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\VIMA`, macOS `~/Library/Application Support/VIMA`, Linux `~/.config/VIMA`), root `VIMASETTINGS` with `lightTheme` (the user-wide theme). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the theme still switches for the session. Presets and mapping sets stay in Documents/VIMA (only touched from load / save dialogs).
+- Pattern (.vimapattern): root `VIMAPATTERN`, `version` 1, with the 8 `Track` children as above. Loading starts from a blank pattern.
+- Mapping set (.vimamacros): root `VIMAMACROS`, `version` 1, with the `Macro` children.
+- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\VIMA`, macOS `~/Library/Application Support/VIMA`, Linux `~/.config/VIMA`), root `VIMASETTINGS` with `lightTheme` (the user-wide theme). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the theme still switches for the session. Presets, patterns and mapping sets stay in Documents/VIMA (only touched from load / save dialogs).
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
 
@@ -572,13 +580,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **FILE menu with three sections**: PRESET, PATTERN, MACROS, one flat menu, each section under its own header. The SAVE / LOAD buttons on the Macros page are removed.
-   - **PRESET**: as now. Header "PRESET: SONG" / "PRESET: UNSAVED"; NEW (asks first), LOAD..., SAVE, SAVE AS...
-   - **PATTERN**: acts on the selected pattern (the PATTERN box; the selected slot in the patterns view). Header shows the slot only ("PATTERN 05"), no file name. Items: NEW (asks first; resets that pattern to the init pattern: 16 steps on), LOAD... (asks before replacing), SAVE AS... No plain SAVE and no file remembered per slot. NEW and LOAD are undoable (one undo entry each).
-   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals; a loaded pattern plays in the current preset's scale. Extension **.vimapattern** (XML), dialogs start in **Documents/VIMA/Patterns**.
-   - **MACROS**: header "MACROS" only, no file name. Items: NEW (asks first; clears all 128 mappings), LOAD... (asks before replacing), SAVE (overwrites the linked mapping file, like presets; dimmed when no file is linked), SAVE AS... The linked mapping file is remembered with the DAW project; NEW unlinks it. Preset NEW / LOAD still leave mappings alone. (PATTERN has no plain SAVE only because a file would have to be linked per slot.)
-   - **Patterns view right-click** on a slot adds LOAD PATTERN... and SAVE PATTERN AS... for that slot (same rules as the menu).
-2. **Init state of the 64 patterns**: on a new instance and on preset NEW, pattern 1 is the init pattern (16 steps on) and patterns 2-64 have all steps off (other settings at init), so the patterns view is not crowded. Pattern NEW gives the init pattern (16 steps on).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -643,3 +645,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-25: Macros page shows the total mapped count ("40 OF 128 MAPPED"), not the current page's.
 - 2026-10-26: Step buttons can be painted by dragging (the pressed button's new state is applied along the row; one undo step).
 - 2026-10-26: Pattern macro shows the picked (queued) pattern at once; turning it back to the playing pattern cancels the switch. The chain list scrolls (wheel, scroll bar, drag past the edge; + ADD shows the new entry).
+- 2026-10-26: FILE menu in three sections (PRESET, PATTERN, MACROS). Single patterns save / load (.vimapattern, SAVE AS only, undoable NEW / LOAD), also from a slot right-click. Macro mapping sets move to the menu with a linked file and SAVE; the Macros page SAVE / LOAD buttons are gone. New instance and preset NEW: pattern 1 init, patterns 2-64 blank.

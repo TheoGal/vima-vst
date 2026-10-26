@@ -911,6 +911,51 @@ void testPresets()
                && get ([] (const Project& p) { return p.macros[9].mapped(); })
                && proc->presetFile == juce::File(),
            "NEW resets the music, keeps the mappings and forgets the preset file");
+    check (get ([] (const Project& p) { return p.patterns[3].isEmpty() && ! p.patterns[0].isEmpty(); }), "preset NEW: pattern 1 init, the others blank");
+
+    // mapping file link
+    check (proc->macroFile == setFile, "loading a mapping set links its file (SAVE overwrites it)");
+    proc->newMacros();
+    check (proc->macroFile == juce::File() && ! get ([] (const Project& p) { for (auto& m : p.macros) if (m.mapped()) return true; return false; }),
+           "macros NEW clears all mappings and unlinks the file");
+    proc->loadMacros (setFile);
+    {
+        juce::MemoryBlock mb;
+        proc->getStateInformation (mb);
+        auto other = std::make_unique<VimaProcessor>();
+        other->setStateInformation (mb.getData(), (int) mb.getSize());
+        check (other->macroFile == setFile, "the linked mapping file is saved with the DAW project");
+    }
+
+    // single patterns
+    proc->edit (-1, [] (Project& p)
+    {
+        p.patterns[7] = Pattern();
+        p.patterns[7].tracks[1].steps[3].velocity = 33;
+        p.patterns[7].tracks[1].steps[4].on = false;
+        p.patterns[7].tracks[6].length = 9;
+        p.patterns[7].tracks[6].swing = 40;
+        p.globals.scale = 2;
+    });
+    const auto patFile = dir.getChildFile ("Groove.vimapattern");
+    check (proc->savePattern (7, patFile) && patFile.existsAsFile(), "a pattern is saved to a file");
+    {
+        auto xml = juce::XmlDocument::parse (patFile);
+        check (xml != nullptr && xml->hasTagName ("VIMAPATTERN") && xml->getChildByName ("Globals") == nullptr
+                   && xml->getChildByName ("Routing") == nullptr && xml->getNumChildElements() == numTracks,
+               "a pattern file holds only the 8 tracks (no globals, no routing)");
+    }
+    proc->edit (-1, [] (Project& p) { p.globals.scale = 5; });
+    check (proc->loadPattern (20, patFile)
+               && get ([] (const Project& p) { const auto& x = p.patterns[20]; return x.tracks[1].steps[3].velocity == 33 && ! x.tracks[1].steps[4].on
+                                                     && x.tracks[6].length == 9 && x.tracks[6].swing == 40 && p.globals.scale == 5; }),
+           "loading a pattern fills that slot and leaves the scale alone");
+    check (proc->canUndo() && proc->performUndo() && get ([] (const Project& p) { return p.patterns[20].isEmpty(); }), "loading a pattern is undoable");
+    proc->newPattern (7);
+    check (get ([] (const Project& p) { const auto& x = p.patterns[7]; return x.tracks[1].steps[3].velocity == 100 && x.tracks[1].steps[4].on && x.tracks[6].length == 16; }),
+           "pattern NEW gives the init pattern (16 steps on)");
+    check (proc->performUndo() && get ([] (const Project& p) { return p.patterns[7].tracks[1].steps[3].velocity == 33; }), "pattern NEW is undoable");
+    check (! proc->loadPattern (3, presetFile) && ! proc->loadPreset (patFile) && ! proc->loadMacros (patFile), "pattern files and other files are not mixed up");
     dir.deleteRecursively();
 }
 
@@ -919,10 +964,19 @@ void testInitAndGate()
     section ("Init values, long gates, middle C");
     {
         Project p;
-        const auto& s = p.patterns[40].tracks[5].steps[31];
+        const auto& s = p.patterns[0].tracks[5].steps[31];
         check (s.on && s.pitchClass == 5 && s.octave == 3 && s.velocity == 100 && s.gate == 100 && s.probability == 100 && s.cc == 64,
                "init step: on, F in the middle C octave, velocity 100, gate 100 %, probability 100 %, CC 64");
         check (p.patterns[0].tracks[7].length == 16 && p.patterns[0].tracks[7].division == 4 && p.currentPattern == 0, "init track: length 16, 1/16, pattern 1");
+        bool blank = true;
+        for (int i = 1; i < numPatterns; ++i)
+            blank = blank && p.patterns[(size_t) i].isEmpty() && p.patterns[(size_t) i].tracks[3].length == 16
+                    && p.patterns[(size_t) i].tracks[3].steps[2].velocity == 100;
+        check (! p.patterns[0].isEmpty() && blank, "init: pattern 1 has its steps on, patterns 2-64 have all steps off (other values at init)");
+        Project q;
+        q.fromValueTree (p.toValueTree());
+        check (! q.patterns[0].isEmpty() && q.patterns[9].isEmpty() && p.toValueTree().getChildWithName ("Pattern").isValid() == false,
+               "the init state saves no Pattern children and loads back the same");
         bool routing = true;
         for (int t = 0; t < numTracks; ++t)
             routing = routing && p.routing[(size_t) t].midiChannel == t + 1 && p.routing[(size_t) t].noteOut == (t == 0)

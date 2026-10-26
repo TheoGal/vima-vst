@@ -80,13 +80,20 @@ public:
     static juce::File presetFolder();   // Documents/VIMA/Presets
     static juce::File macroFolder();    // Documents/VIMA/Macros
     static constexpr const char* presetExtension = ".vima";
+    static juce::File patternFolder();  // Documents/VIMA/Patterns
     static constexpr const char* macroExtension = ".vimamacros";
+    static constexpr const char* patternExtension = ".vimapattern";
     bool savePreset (const juce::File&);
     bool loadPreset (const juce::File&);
     void newPreset();
     bool saveMacros (const juce::File&);
     bool loadMacros (const juce::File&);
+    void newMacros();                   // clears all 128 mappings and unlinks the mapping file
+    bool savePattern (int index, const juce::File&);
+    bool loadPattern (int index, const juce::File&);   // undoable
+    void newPattern (int index);        // the init pattern (16 steps on); undoable
     juce::File presetFile;              // last saved / loaded preset (saved with the project)
+    juce::File macroFile;               // last saved / loaded mapping set (saved with the project)
 
     bool performUndo();
     bool canUndo() { const Lock sl (lock); return undo.canUndo(); }

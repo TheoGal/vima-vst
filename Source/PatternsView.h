@@ -4,6 +4,7 @@
 
 #include "Context.h"
 #include "Widgets.h"
+#include "FileActions.h"
 
 namespace vima
 {
@@ -16,6 +17,7 @@ public:
     void mouseExit (const juce::MouseEvent&) override;
     void mouseUp (const juce::MouseEvent&) override;
     juce::Rectangle<int> playArea() const;   // the play button at the top center
+    std::function<void (int pattern)> onMenu;   // right-click: LOAD PATTERN... / SAVE PATTERN AS...
 
 private:
     Context& ctx;
@@ -55,7 +57,9 @@ public:
 
 private:
     void showTrackMenu();
+    void showSlotMenu (int pattern);
     Context& ctx;
+    FileActions fileActions { ctx, *this };
     juce::OwnedArray<Pill> pageBtns;
     juce::OwnedArray<PatternSlot> slots;
     Pill copyBtn, pasteBtn, clearBtn, patternBox, trackBox, copyTrackBtn;

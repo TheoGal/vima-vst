@@ -39,8 +39,20 @@ void PatternSlot::mouseExit (const juce::MouseEvent&)
 
 void PatternSlot::mouseUp (const juce::MouseEvent& e)
 {
-    if (! getLocalBounds().contains (e.getPosition()) || e.mods.isPopupMenu()) return;
+    if (! getLocalBounds().contains (e.getPosition())) return;
     const int idx = ctx.ui.viewPage * patternsPerPage + slot;
+    if (e.mods.isPopupMenu())
+    {
+        // right-click: the slot's file menu (not while LEARN is on, where right-click frees mappings)
+        if (! ctx.ui.macroLearn && onMenu != nullptr)
+        {
+            if (ctx.ui.patternClipKind == 0)
+                ctx.ui.selectedPattern = idx;
+            ctx.changed();
+            onMenu (idx);
+        }
+        return;
+    }
     if (playArea().contains (e.getPosition()))
     {
         // play button: select and queue (switches at the quantize point)
@@ -321,7 +333,11 @@ PatternsView::PatternsView (Context& c) : ctx (c)
         addAndMakeVisible (p);
     }
     for (int s = 0; s < patternsPerPage; ++s)
-        addAndMakeVisible (slots.add (new PatternSlot (ctx, s)));
+    {
+        auto* slot = slots.add (new PatternSlot (ctx, s));
+        slot->onMenu = [this] (int pattern) { showSlotMenu (pattern); };
+        addAndMakeVisible (slot);
+    }
 
     auto smallFont = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f); };
     auto plain = [] { const auto& t = Theme::current(); return Pill::outline (t.border2, t.text2); };
@@ -463,6 +479,21 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     chainScroll.setAutoHide (false);
     chainScroll.addListener (this);
     addChildComponent (chainScroll);
+}
+
+void PatternsView::showSlotMenu (int pattern)
+{
+    juce::PopupMenu m;
+    m.addSectionHeader ("PATTERN " + patternLabel (pattern));
+    m.addItem (1, "LOAD PATTERN...");
+    m.addItem (2, "SAVE PATTERN AS...");
+    juce::Component::SafePointer<PatternsView> safe (this);
+    m.showMenuAsync (juce::PopupMenu::Options().withMinimumWidth (180), [safe, pattern] (int r)
+    {
+        if (safe == nullptr) return;
+        if (r == 1) safe->fileActions.loadPattern (pattern);
+        else if (r == 2) safe->fileActions.savePatternAs (pattern);
+    });
 }
 
 void PatternsView::showTrackMenu()

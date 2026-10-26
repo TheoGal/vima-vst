@@ -1,7 +1,7 @@
 #pragma once
 
 // Macros page (SPEC.md 13.1, 13.2): 4 pages of 32 macro knobs, the mapping editor for the
-// selected macro, LEARN, and SAVE / LOAD of mapping sets (13.3).
+// selected macro and LEARN. Mapping sets load / save from the FILE menu (13.3).
 
 #include "Context.h"
 #include "Widgets.h"
@@ -50,9 +50,7 @@ private:
     int conflictMacro = -1;
     juce::OwnedArray<MacroCell> cells;
     std::vector<MacroTarget> shownTargets;
-    Pill learnBtn, clearBtn, saveSetBtn, loadSetBtn;
-    std::unique_ptr<juce::FileChooser> chooser;
-    void chooseSetFile (bool save);
+    Pill learnBtn, clearBtn;
     Knob patternKnob, stepKnob;
     juce::Rectangle<int> left, aside, pagesLabel, gridArea, learnBanner, asideHead, kindLabel, targetLabel, trackLabel,
                          patternLabel_, stepLabel, footer, emptyText, patternText;

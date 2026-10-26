@@ -151,7 +151,7 @@ Project::Project() { resetToDefaults(); }
 
 void Project::resetToDefaults()
 {
-    for (auto& p : patterns) p = Pattern();
+    for (int i = 0; i < numPatterns; ++i) patterns[(size_t) i] = defaultPattern (i);
     for (int t = 0; t < numTracks; ++t)
     {
         routing[(size_t) t] = TrackRouting();
@@ -205,10 +205,19 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
     }
 }
 
-static const Pattern& emptyPattern()
+Pattern blankPattern()
 {
-    static const Pattern p;
+    Pattern p;
+    for (auto& t : p.tracks)
+        for (auto& s : t.steps) { s.on = false; s.ccOn = false; }
     return p;
+}
+
+const Pattern& defaultPattern (int index)
+{
+    static const Pattern init;
+    static const Pattern blank = blankPattern();
+    return index == 0 ? init : blank;
 }
 
 static bool patternEquals (const Pattern& a, const Pattern& b)
@@ -296,6 +305,41 @@ bool Project::loadMacros (const juce::ValueTree& root)
     return true;
 }
 
+// A pattern's 8 tracks as `Track` children (project state, presets and pattern files)
+static void appendTracks (juce::ValueTree& parent, const Pattern& pat)
+{
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto& tr = pat.tracks[(size_t) t];
+        juce::ValueTree tt ("Track");
+        tt.setProperty ("index", t, nullptr);
+        tt.setProperty ("length", (int) tr.length, nullptr);
+        tt.setProperty ("division", (int) tr.division, nullptr);
+        tt.setProperty ("direction", (int) tr.direction, nullptr);
+        tt.setProperty ("swing", (int) tr.swing, nullptr);
+        tt.setProperty ("scaleOn", tr.scaleOn, nullptr);
+        tt.setProperty ("steps", encodeSteps (tr.steps), nullptr);
+        parent.appendChild (tt, nullptr);
+    }
+}
+
+static void readTracks (const juce::ValueTree& parent, Pattern& pat)
+{
+    for (auto tt : parent)
+    {
+        if (! tt.hasType ("Track")) continue;
+        const int t = (int) tt.getProperty ("index", -1);
+        if (t < 0 || t >= numTracks) continue;
+        auto& tr = pat.tracks[(size_t) t];
+        tr.length = (std::uint8_t) juce::jlimit (minLength, maxSteps, (int) tt.getProperty ("length", 16));
+        tr.division = (std::uint8_t) juce::jlimit (0, numDivisions - 1, (int) tt.getProperty ("division", defaultDivision()));
+        tr.direction = (Direction) juce::jlimit (0, 2, (int) tt.getProperty ("direction", 0));
+        tr.swing = (std::uint8_t) juce::jlimit (0, 100, (int) tt.getProperty ("swing", 0));
+        tr.scaleOn = (bool) tt.getProperty ("scaleOn", true);
+        decodeSteps (tt.getProperty ("steps").toString(), tr.steps);
+    }
+}
+
 juce::ValueTree Project::toValueTree() const
 {
     juce::ValueTree root ("VIMA");
@@ -345,23 +389,11 @@ juce::ValueTree Project::toValueTree() const
     for (int p = 0; p < numPatterns; ++p)
     {
         const auto& pat = patterns[(size_t) p];
-        if (patternEquals (pat, emptyPattern()))
+        if (patternEquals (pat, defaultPattern (p)))
             continue;
         juce::ValueTree pt ("Pattern");
         pt.setProperty ("index", p, nullptr);
-        for (int t = 0; t < numTracks; ++t)
-        {
-            const auto& tr = pat.tracks[(size_t) t];
-            juce::ValueTree tt ("Track");
-            tt.setProperty ("index", t, nullptr);
-            tt.setProperty ("length", (int) tr.length, nullptr);
-            tt.setProperty ("division", (int) tr.division, nullptr);
-            tt.setProperty ("direction", (int) tr.direction, nullptr);
-            tt.setProperty ("swing", (int) tr.swing, nullptr);
-            tt.setProperty ("scaleOn", tr.scaleOn, nullptr);
-            tt.setProperty ("steps", encodeSteps (tr.steps), nullptr);
-            pt.appendChild (tt, nullptr);
-        }
+        appendTracks (pt, pat);
         root.appendChild (pt, nullptr);
     }
     return root;
@@ -440,19 +472,26 @@ void Project::fromValueTree (const juce::ValueTree& root)
         {
             const int p = (int) rt.getProperty ("index", -1);
             if (p < 0 || p >= numPatterns) continue;
-            for (auto tt : rt)
-            {
-                const int t = (int) tt.getProperty ("index", -1);
-                if (t < 0 || t >= numTracks) continue;
-                auto& tr = patterns[(size_t) p].tracks[(size_t) t];
-                tr.length = (std::uint8_t) juce::jlimit (minLength, maxSteps, (int) tt.getProperty ("length", 16));
-                tr.division = (std::uint8_t) juce::jlimit (0, numDivisions - 1, (int) tt.getProperty ("division", defaultDivision()));
-                tr.direction = (Direction) juce::jlimit (0, 2, (int) tt.getProperty ("direction", 0));
-                tr.swing = (std::uint8_t) juce::jlimit (0, 100, (int) tt.getProperty ("swing", 0));
-                tr.scaleOn = (bool) tt.getProperty ("scaleOn", true);
-                decodeSteps (tt.getProperty ("steps").toString(), tr.steps);
-            }
+            readTracks (rt, patterns[(size_t) p]);
         }
     }
+}
+
+juce::ValueTree Project::patternToValueTree (int index) const
+{
+    juce::ValueTree root ("VIMAPATTERN");
+    root.setProperty ("version", 1, nullptr);
+    appendTracks (root, patterns[(size_t) juce::jlimit (0, numPatterns - 1, index)]);
+    return root;
+}
+
+bool Project::loadPattern (int index, const juce::ValueTree& root)
+{
+    if (! root.hasType ("VIMAPATTERN") || index < 0 || index >= numPatterns)
+        return false;
+    auto pat = blankPattern();
+    readTracks (root, pat);
+    patterns[(size_t) index] = pat;
+    return true;
 }
 } // namespace vima

@@ -56,6 +56,7 @@ set(VIMA_SOURCES
     Source/Widgets.cpp
     Source/Popovers.cpp
     Source/Header.cpp
+    Source/FileActions.cpp
     Source/ParamRow.cpp
     Source/StepGrid.cpp
     Source/OpsPanel.cpp
