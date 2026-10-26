@@ -177,7 +177,45 @@ VimaEditor::VimaEditor (VimaProcessor& p)
 
     // Everything is laid out at 1200 x 720 inside `content`, which is scaled as a whole
     // when the window is resized (SPEC.md 12.1: resizing)
-    content.paintBackground = [] (juce::Graphics& g) { g.fillAll (Theme::current().bg); };
+    content.paintBackground = [this] (juce::Graphics& g)
+    {
+        const auto& t = Theme::current();
+        g.fillAll (t.bg);
+        if (ctx.ui.patternsView || ctx.ui.macrosView)
+            return;
+        // Step view: the header and the parameter row form one band. The TRACK box and the
+        // PATTERN box each sit in a rounded frame that flows down around their tiles (SPEC.md 12.2).
+        const auto rowPos = paramRow.getPosition();
+        auto frame = [&g, &t] (juce::Rectangle<int> top, juce::Rectangle<int> bottom)
+        {
+            const float pad = 6.0f;
+            auto a = top.toFloat().expanded (pad);
+            auto b = bottom.toFloat().expanded (pad);
+            const float left = juce::jmin (a.getX(), b.getX());
+            float ar = a.getRight(), br = b.getRight();
+            if (std::abs (ar - br) < 24.0f) ar = br = juce::jmax (ar, br);   // no tiny steps
+            const float mid = (a.getBottom() + b.getY()) * 0.5f;
+            juce::Path p;
+            p.startNewSubPath (left, a.getY());
+            p.lineTo (ar, a.getY());
+            p.lineTo (ar, mid);
+            p.lineTo (br, mid);
+            p.lineTo (br, b.getBottom());
+            p.lineTo (left, b.getBottom());
+            p.closeSubPath();
+            p = p.createPathWithRoundedCorners (10.0f);
+            g.setColour (t.panel);
+            g.fillPath (p);
+            g.setColour (t.border);
+            g.strokePath (p, juce::PathStrokeType (1.0f));
+        };
+        // the wordmark, larger, in the column left of the TRACK frame
+        const int frameLeft = header.trackGroupTop().getX() - 6;
+        vima::Header::drawWordmark (g, juce::Rectangle<float> (20.0f, 0.0f, (float) (frameLeft - 20 - 14), (float) paramRow.getBottom())
+                                           .withSizeKeepingCentre ((float) (frameLeft - 20 - 14), 40.0f));
+        frame (header.trackGroupTop(), paramRow.trackTiles + rowPos);
+        frame (header.patternGroupTop(), paramRow.patternTiles + rowPos);
+    };
     addAndMakeVisible (content);
     content.addAndMakeVisible (header);
     content.addAndMakeVisible (paramRow);
@@ -235,9 +273,9 @@ void VimaEditor::layoutContent()
     patterns.setBounds (r);
     macrosView.setBounds (r);
     learnOverlay.setBounds (r);
-    auto body = r.reduced (20, 12);
-    paramRow.setBounds (body.removeFromTop (48));
-    body.removeFromTop (8);
+    auto body = r.reduced (20, 0).withTrimmedBottom (12);
+    paramRow.setBounds (body.removeFromTop (48 + 2 * vima::ParamRow::tileInset));
+    body.removeFromTop (14);
     grid.setBounds (body.removeFromTop (2 * (StepGrid::ledHeight + StepGrid::ledGap + StepGrid::cellHeight) + StepGrid::rowGap));
     ops.setBounds (body.removeFromBottom (146));
     if (settings) settings->setBounds (content.getLocalBounds());
@@ -267,6 +305,7 @@ void VimaEditor::refreshAll()
     patterns.refreshState();
     if (mv) macrosView.refreshState();
     learnOverlay.repaint();
+    content.repaint();
     lastRevision = proc.revision.load();
     lastPattern = ctx.currentPattern();
     repaint();

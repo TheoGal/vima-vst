@@ -1169,6 +1169,28 @@ int main (int argc, char** argv)
         ctx.ui.track = 2;
         ed.refreshAll();
 
+        // Top band (SPEC.md 12.2): the track frame keeps its width in both modes; SCALE shows in both
+        if (auto* row = findChild<ParamRow> (ed))
+        {
+            auto scaleShown = [&]
+            {
+                for (int i = 0; i < row->getNumChildComponents(); ++i)
+                    if (auto* tile = dynamic_cast<LabelledTile*> (row->getChildComponent (i)); tile != nullptr && tile->title == "SCALE")
+                        return tile->isVisible() && tile->getRight() == row->getWidth();
+                return false;
+            };
+            const auto noteTiles = row->trackTiles;
+            const bool scaleNotes = scaleShown();
+            ctx.ui.ccMode = true;
+            ed.refreshAll();
+            check (row->trackTiles == noteTiles && scaleNotes && scaleShown(),
+                   "track frame has the same width in NOTES and CC mode; SCALE shows in both, at the right edge");
+            ctx.ui.ccMode = false;
+            ed.refreshAll();
+        }
+        else
+            check (false, "parameter row exists");
+
         auto* grid = findChild<StepGrid> (ed);
         check (grid != nullptr, "step grid exists");
         if (grid != nullptr)
@@ -1606,7 +1628,7 @@ int main (int argc, char** argv)
         ed.refreshAll();
         Popover::show (ed.contentComponent(), std::make_unique<DivisionPopover> (ctx), { 140, 118, DivisionPopover::size().x, DivisionPopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-division.png"));
-        Popover::show (ed.contentComponent(), std::make_unique<ScalePopover> (ctx), { 616, 118, ScalePopover::size().x, ScalePopover::size().y });
+        Popover::show (ed.contentComponent(), std::make_unique<ScalePopover> (ctx), { 1180 - ScalePopover::size().x, 118, ScalePopover::size().x, ScalePopover::size().y });
         snapshot (ed, outDir.getChildFile ("popover-scale.png"));
         ctx.ui.pickerPage = 1;
         Popover::show (ed.contentComponent(), std::make_unique<PatternPickerPopover> (ctx), { 600, 48, PatternPickerPopover::size().x, PatternPickerPopover::size().y });

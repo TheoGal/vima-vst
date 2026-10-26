@@ -35,8 +35,12 @@ void KnobTile::paint (juce::Graphics& g)
 void LabelledTile::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
-    draw::tile (g, getLocalBounds().toFloat(), t.tile, borderColour ? borderColour() : t.border);
-    auto top = getLocalBounds().reduced (8, 0).withTrimmedTop (6).withHeight (13);
+    const auto border = borderColour ? borderColour() : t.border;
+    if (frameLook)
+        draw::tile (g, getLocalBounds().toFloat().reduced (0.5f), t.panel, border, 10.0f);
+    else
+        draw::tile (g, getLocalBounds().toFloat(), t.tile, border);
+    auto top = getLocalBounds().reduced (8, 0).withTrimmedTop (frameLook ? 12 : 6).withHeight (13);
     draw::label (g, title, top, t.muted);
     if (rightText)
     {
@@ -180,8 +184,10 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     scaleOnBtn.look = [this] { return Pill::toggle (ctx.trackCopy().scaleOn, Theme::current().green); };
     scaleOnBtn.text = [this] { return juce::String (ctx.trackCopy().scaleOn ? "ON" : "OFF"); };
     scaleOnBtn.onClick = [this] { ctx.edit (true, [this] (Project& p) { auto& tp = ctx.liveTrack (p); tp.scaleOn = ! tp.scaleOn; }); };
-    scaleTile.addAndMakeVisible (scaleOnBtn);
-    scaleTile.borderColour = [this] { return Popover::isOpen (*ctx.root, "scale") ? Theme::current().green : Theme::current().border; };
+    useScaleTile.addAndMakeVisible (scaleOnBtn);
+    addAndMakeVisible (useScaleTile);
+    scaleTile.frameLook = true;
+    scaleTile.borderColour = [this] { return Popover::isOpen (*ctx.root, "scale") ? Theme::current().neutral : Theme::current().border; };
     addAndMakeVisible (scaleTile);
 
     // NOTE OUT (note mode)
@@ -248,7 +254,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     setLearnTarget (swingTile, MacroTarget::swing);
     setLearnTarget (divisionTile, MacroTarget::division);
     setLearnTarget (directionTile, MacroTarget::direction);
-    setLearnTarget (scaleTile, MacroTarget::scaleOn);
+    setLearnTarget (useScaleTile, MacroTarget::scaleOn);
     setLearnTarget (noteOutTile, MacroTarget::noteOut);
     setLearnTarget (ccOutTile, MacroTarget::ccOut);
 
@@ -258,7 +264,8 @@ ParamRow::ParamRow (Context& c) : ctx (c)
 void ParamRow::updateVisibility()
 {
     const bool cc = ctx.ui.ccMode;
-    scaleTile.setVisible (! cc);
+    scaleTile.setVisible (true);   // global: shown in both modes
+    useScaleTile.setVisible (! cc);
     noteOutTile.setVisible (! cc);
     sliderTile.setVisible (! cc);
     ccOutTile.setVisible (cc);
@@ -268,38 +275,33 @@ void ParamRow::updateVisibility()
 void ParamRow::resized()
 {
     updateVisibility();
-    auto r = getLocalBounds();
-    auto place = [&r] (juce::Component& c, int w)
+    // Columns line up with the header above (SPEC.md 12.2): SCALE under the wordmark, the track
+    // tiles under the TRACK box, the pattern tiles under the PATTERN box, SLIDER on the right.
+    auto full = getLocalBounds().reduced (0, tileInset);
+    auto put = [&full] (juce::Component& c, int& x, int w)
     {
-        c.setBounds (r.removeFromLeft (w));
-        r.removeFromLeft (8);
+        c.setBounds (x, full.getY(), w, full.getHeight());
+        x += w + 8;
     };
-    // MIDI CH is the same in every pattern, the others are stored per pattern: MIDI CH comes
-    // first, set slightly apart (SPEC.md 12.4)
-    place (channelTile, 106);
-    r.removeFromLeft (14);
-    place (lengthTile, 106);
-    place (divisionTile, 76);   // fits "DIVISION" and "1/32T" with its chevron
-    place (directionTile, 136);
-    place (swingTile, 106);
-    // Mode-specific controls sit on the right, the output ON/OFF always last (SPEC.md 12.4)
-    auto right = r;
-    auto placeRight = [&right] (juce::Component& c, int w)
-    {
-        c.setBounds (right.removeFromRight (w));
-        right.removeFromRight (8);
-    };
-    if (ctx.ui.ccMode)
-    {
-        placeRight (ccOutTile, 88);
-        placeRight (ccNumberTile, 122);
-    }
-    else
-    {
-        placeRight (noteOutTile, 88);
-        placeRight (sliderTile, 150);
-        placeRight (scaleTile, 128);
-    }
+    int x = 0;
+    scaleTile.setBounds (getWidth() - 108, 0, 108, getHeight());   // far right, under SETTINGS; same top and bottom as the frames
+
+    // Track group: MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC NUM and CC OUT. The
+    // group keeps the width of its wider mode, so the frame never changes size.
+    x = trackX;
+    put (channelTile, x, 106);
+    if (ctx.ui.ccMode) { put (ccNumberTile, x, 110); put (ccOutTile, x, 88); }
+    else { put (noteOutTile, x, 88); put (sliderTile, x, 132); }
+    trackTiles = { trackX, tileInset, 106 + 8 + juce::jmax (110 + 8 + 88, 88 + 8 + 132), full.getHeight() };
+
+    x = patternX;
+    put (lengthTile, x, 100);
+    put (divisionTile, x, 76);   // fits "DIVISION" and "1/32T" with its chevron
+    put (directionTile, x, 124);
+    put (swingTile, x, 100);
+    if (! ctx.ui.ccMode) put (useScaleTile, x, 88);
+    patternTiles = { patternX, tileInset, x - 8 - patternX, full.getHeight() };
+
 
     divisionBtn.setBounds (divisionTile.getLocalBounds().withTrimmedTop (18).withTrimmedBottom (4));
     {
@@ -307,12 +309,8 @@ void ParamRow::resized()
         const int w = (b.getWidth() - 6) / 3;
         for (int i = 0; i < 3; ++i) directionBtns[i]->setBounds (b.getX() + i * (w + 3), b.getY(), w, 20);
     }
-    {
-        auto b = scaleTile.getLocalBounds().reduced (6, 0).withTrimmedLeft (2).withTrimmedTop (22).withHeight (20);
-        scaleOnBtn.setBounds (b.removeFromRight (34));
-        b.removeFromRight (4);
-        scaleNameBtn.setBounds (b);
-    }
+    scaleNameBtn.setBounds (scaleTile.getLocalBounds().reduced (8, 0).withTrimmedTop (28).withHeight (20));
+    scaleOnBtn.setBounds (useScaleTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
     noteOutBtn.setBounds (noteOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
     ccOutBtn.setBounds (ccOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
     {
@@ -337,7 +335,7 @@ void ParamRow::openScale()
     if (Popover::isOpen (*ctx.root, "scale")) { Popover::closeAll (*ctx.root); return; }
     const auto sz = ScalePopover::size();
     auto b = ctx.root->getLocalArea (this, scaleTile.getBounds());
-    Popover::show (*ctx.root, std::make_unique<ScalePopover> (ctx), { b.getX(), b.getBottom() + 6, sz.x, sz.y },
+    Popover::show (*ctx.root, std::make_unique<ScalePopover> (ctx), { b.getRight() - sz.x, b.getBottom() + 6, sz.x, sz.y },   // right-aligned
                    [this] { scaleTile.repaint(); });
     scaleTile.repaint();
 }

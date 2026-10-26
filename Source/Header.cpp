@@ -237,6 +237,7 @@ void Header::resized()
     }
     else
     {
+        r = r.withLeft (128);   // over the track tiles; the wordmark column holds SCALE below
         trackBox.setBounds (r.removeFromLeft (100).withSizeKeepingCentre (100, 32));
         r.removeFromLeft (14);
         modeArea = r.removeFromLeft (172).withSizeKeepingCentre (172, 34);
@@ -247,18 +248,20 @@ void Header::resized()
     }
 
     auto right = r;
-    settingsBtn.setBounds (right.removeFromRight (112).withSizeKeepingCentre (112, 32));
-    right.removeFromRight (10);
-    macrosBtn.setBounds (right.removeFromRight (112).withSizeKeepingCentre (112, 32));
-    right.removeFromRight (10);
+    settingsBtn.setBounds (right.removeFromRight (108).withSizeKeepingCentre (108, 32));
+    right.removeFromRight (8);
+    macrosBtn.setBounds (right.removeFromRight (104).withSizeKeepingCentre (104, 32));
+    right.removeFromRight (8);
     undoBtn.setBounds (right.removeFromRight (84).withSizeKeepingCentre (84, 32));
-    right.removeFromRight (10);
+    right.removeFromRight (8);
     fileBtn.setBounds (right.removeFromRight (40).withSizeKeepingCentre (40, 32));
-    right.removeFromRight (10);
-    hostArea = right.removeFromRight (120).withSizeKeepingCentre (120, 32);
+    right.removeFromRight (8);
+    hostArea = right.removeFromRight (116).withSizeKeepingCentre (116, 32);
     transportBtn.setBounds (hostArea.withWidth (30).reduced (4, 4).translated (1, 0));
     right.removeFromRight (10);
     patternArea = right.removeFromRight (162).withSizeKeepingCentre (162, 32);   // sized for two-digit numbers
+    if (! pv)
+        patternArea.setX (496);   // over the pattern tiles
     auto pa = patternArea.reduced (3);
     prevBtn.setBounds (pa.removeFromLeft (24));
     nextBtn.setBounds (pa.removeFromRight (24));
@@ -304,31 +307,43 @@ void Header::paintOverChildren (juce::Graphics& g)
 
 void Header::mouseDown (const juce::MouseEvent&) {}
 
+void Header::drawWordmark (juce::Graphics& g, juce::Rectangle<float> area)
+{
+    const auto& t = Theme::current();
+    static std::unique_ptr<juce::Drawable> logo;
+    static juce::Colour logoColour;
+    if (logo == nullptr || logoColour != t.text)
+    {
+        const auto svgText = juce::String::fromUTF8 (BinaryData::vimawordmarkui_svg, BinaryData::vimawordmarkui_svgSize)
+                                 .replace ("#EEF1F5", "#" + t.text.toDisplayString (false));
+        if (auto xml = juce::XmlDocument::parse (svgText))
+            logo = juce::Drawable::createFromSVG (*xml);
+        logoColour = t.text;
+    }
+    if (logo != nullptr)
+        logo->drawWithin (g, area, juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid, 1.0f);
+}
+
 void Header::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
-    g.fillAll (t.panel);
-    g.setColour (t.border);
-    g.fillRect (0, getHeight() - 1, getWidth(), 1);
-
-    // The header shows the Greek wordmark "βήμα" (SPEC.md 12.1); everywhere else the plugin is "VIMA"
+    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
+    if (! stepView)   // the step view's top band is drawn by the editor, with the group frames
     {
-        static std::unique_ptr<juce::Drawable> logo;
-        static juce::Colour logoColour;
-        if (logo == nullptr || logoColour != t.text)
-        {
-            const auto svgText = juce::String::fromUTF8 (BinaryData::vimawordmarkui_svg, BinaryData::vimawordmarkui_svgSize)
-                                     .replace ("#EEF1F5", "#" + t.text.toDisplayString (false));
-            if (auto xml = juce::XmlDocument::parse (svgText))
-                logo = juce::Drawable::createFromSVG (*xml);
-            logoColour = t.text;
-        }
-        if (logo != nullptr)
-            logo->drawWithin (g, nameArea.toFloat().withSizeKeepingCentre ((float) nameArea.getWidth(), 25.0f),
-                              juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid, 1.0f);
+        g.fillAll (t.panel);
+        g.setColour (t.border);
+        g.fillRect (0, getHeight() - 1, getWidth(), 1);
     }
-    g.setColour (t.border);
-    g.fillRect (nameArea.getRight() + 14, getHeight() / 2 - 11, 1, 22);
+
+    // The header shows the Greek wordmark "βήμα" (SPEC.md 12.1); in the step view the editor draws
+    // it larger, beside the TRACK frame
+    if (! stepView)
+        drawWordmark (g, nameArea.toFloat().withSizeKeepingCentre ((float) nameArea.getWidth(), 25.0f));
+    if (! stepView)
+    {
+        g.setColour (t.border);
+        g.fillRect (nameArea.getRight() + 14, getHeight() / 2 - 11, 1, 22);
+    }
 
     if (! ctx.ui.patternsView && ! ctx.ui.macrosView)
     {

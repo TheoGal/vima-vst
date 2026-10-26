@@ -123,7 +123,7 @@ There is no step skip, no chords per step and no drum mode.
 
 ## 6. Global settings
 
-- **Scale**: 13 built-in scales plus 1 user scale, with a root note: Major, Minor, Harmonic minor, Melodic minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Major pentatonic, Minor pentatonic, Blues, Whole tone, plus USER. There is no Chromatic scale: a track with its scale OFF plays all 12 notes. The scale and root apply to every track whose SCALE is on.
+- **Scale**: 13 built-in scales plus 1 user scale, with a root note: Major, Minor, Harmonic minor, Melodic minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Major pentatonic, Minor pentatonic, Blues, Whole tone, plus USER. There is no Chromatic scale: a track with its scale OFF plays all 12 notes. The scale and root are **global** (all tracks, all patterns) and apply to every track whose USE SCALE is on in that pattern.
 - The scale is **selected in the main window** (SCALE tile popover, 12.2), never in the Settings dialog. The root can be set in the SCALE popover and in the Settings user scale editor (the same global value).
 - **User scale**: 12 note toggles. It is **edited only in the Settings dialog**, and **selected** (as "USER") from the main window.
 - **Middle C** (display only): C3, C4 or C5 (11).
@@ -323,7 +323,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 - Param colors: velocity green (same as note mode), gate purple #B48CFF, probability amber #FFB547, CC cyan. Octave is a note param and is green too (octave knobs, OCT range).
 - Color tells which part a control affects:
   - **Track-wide and global** controls (LENGTH, DIVISION, DIRECTION, SWING, MIDI CH, the patterns view, the Macros page) use a fixed neutral (#DDE2E8 dark) and never change color with the mode.
-  - **Note part** controls (SCALE, NOTE OUT) are green.
+  - **Note part** controls (USE SCALE, NOTE OUT) are green. The global SCALE is neutral.
   - **CC part** controls (CC NUM, CC OUT) are cyan.
 - Amber also marks LEARN (13.2) and a held transport (3).
 - Selection: white #EEF1F5 on the LED bar (dark theme).
@@ -332,10 +332,14 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 
 ### 12.2 Layout (top to bottom)
 
-1. **Header**, left to right: the "βήμα" wordmark (12.1); then in the step view the TRACK dropdown and the NOTES / CC mode switch, or in the patterns view and on the Macros page the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS); then on the right: the PATTERN box (7.4), the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2) and SETTINGS (11).
-2. **Track parameter row** (12.4).
-3. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it. Steps are grouped in fours by alternating tile shades.
-4. **Operations panel** (12.6).
+1. **Top band** (step view): the header row and the track parameter row (12.4) form one taller band, grouped by scope with rounded **frames** (panel fill and border, like the operations panel):
+   - **Left**: the "βήμα" wordmark (12.1), drawn larger, centred on the band's height.
+   - **Track frame**: the TRACK dropdown and the NOTES / CC mode switch on top; below them MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC NUM and CC OUT. The frame keeps the width of its wider mode (note mode), so it never changes size when switching modes. The frame's shape follows its contents (here the lower part is wider than the top, with rounded inner corners).
+   - **Pattern frame**: the PATTERN box (7.4) as a tab on top; below it, wider, LENGTH, DIVISION, DIRECTION, SWING and (note mode) USE SCALE.
+   - **Right**, top row: the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2), SETTINGS (11). Under SETTINGS, the global **SCALE** in its own small frame, its top and bottom aligned with the lower part of the other frames; shown in both modes.
+   - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, BPM, FILE, UNDO, MACROS and SETTINGS.
+2. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it. Steps are grouped in fours by alternating tile shades.
+3. **Operations panel** (12.6).
 
 The NOTES and CC mode buttons each carry an LED showing whether that output is on for the selected track (lit green / cyan when on, dark grey when off), visible in both modes. The selected mode button has a tinted background and an accent outline.
 
@@ -349,12 +353,13 @@ The NOTES and CC mode buttons each carry an LED showing whether that output is o
 
 ### 12.4 Track parameter row
 
-- **Layout**: on the left the track-wide controls: first **MIDI CH** (the same in every pattern), then a small extra gap, then the settings stored per pattern: LENGTH, DIVISION, DIRECTION, SWING. On the right, aligned to the right edge, the mode-specific controls with the output ON/OFF always last: note mode SCALE, SLIDER, NOTE OUT; CC mode CC NUM, CC OUT.
+- **Layout**: grouped by scope, from wide to narrow (12.2): the **track group** (settings the same in every pattern: MIDI CH; note mode NOTE OUT and SLIDER; CC mode CC NUM and CC OUT) inside the track frame, the **pattern group** (stored per track and per pattern: LENGTH, DIVISION, DIRECTION, SWING, and USE SCALE in note mode) inside the pattern frame, and the **global** SCALE at the right edge.
 - Part-specific controls are only shown in their own mode, to avoid accidents. Track-wide controls are shown in both.
 - **Numeric values** (MIDI CH, LENGTH, SWING, CC NUM): small arc knobs with the value inside. LENGTH also shows "steps".
 - **DIVISION**: click opens a popover grid with the straight values on one row and the triplets on a second row. The mouse wheel on the tile steps through the values.
 - **DIRECTION**: three inline icon buttons (forward, backward, ping-pong).
-- **SCALE**: a scale-name button (for example "C MIN") and a separate ON/OFF toggle for the current track (stored per pattern). Clicking the name opens a popover with a "GLOBAL" tag (the choice applies to every track with SCALE on), a ROOT row (C to B) and a grid of the 13 scales plus USER. Picking a scale closes the popover. The mouse wheel over the name steps through the scales.
+- **SCALE** (global): a scale-name button (for example "C MIN"), neutral. Clicking it opens a popover, right-aligned under it, with a "GLOBAL" tag (the choice applies to every track with USE SCALE on), a ROOT row (C to B) and a grid of the 13 scales plus USER. Picking a scale closes the popover. The mouse wheel over the name steps through the scales.
+- **USE SCALE** (note mode, green): ON/OFF for the current track in this pattern: use or bypass the global scale.
 - **SLIDER**: VEL / GATE / PROB (note mode only; it changes the view, not the music).
 - **NOTE OUT** / **CC OUT**: on/off toggles.
 - Only one popover is open at a time.
@@ -481,7 +486,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005" in amber. A banner on the Macros page explains it while listening.
 - While learning: clicks map instead of editing; an amber frame marks the view; the control under the mouse is highlighted; **every mapped control keeps an amber outline with its macro number** (for example "M005"), following the track and pattern on screen.
 - **A mapped control cannot be mapped again**: clicking it does nothing (the outline flashes). **Right-click** a mapped control to free it (unmap its macro).
-- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, SCALE on, NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON.
+- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON.
 - **No duplicates in the editor either**: a change in the mapping editor that would point a second macro at a control that already has one is refused, and the footer shows "ALREADY ON M003".
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
 - Colors follow the params: note step, note, octave and velocity green, gate purple, probability amber, CC step and CC value cyan, track and global targets neutral.
@@ -646,3 +651,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-26: Step buttons can be painted by dragging (the pressed button's new state is applied along the row; one undo step).
 - 2026-10-26: Pattern macro shows the picked (queued) pattern at once; turning it back to the playing pattern cancels the switch. The chain list scrolls (wheel, scroll bar, drag past the edge; + ADD shows the new entry).
 - 2026-10-26: FILE menu in three sections (PRESET, PATTERN, MACROS). Single patterns save / load (.vimapattern, SAVE AS only, undoable NEW / LOAD), also from a slot right-click. Macro mapping sets move to the menu with a linked file and SAVE; the Macros page SAVE / LOAD buttons are gone. New instance and preset NEW: pattern 1 init, patterns 2-64 blank.
+- 2026-10-27: Step view top band: header and parameter row merged, grouped by scope in rounded frames. Track frame (TRACK, NOTES / CC, MIDI CH, NOTE OUT + SLIDER or CC NUM + CC OUT, fixed width), pattern frame (PATTERN tab over LENGTH, DIVISION, DIRECTION, SWING, USE SCALE), global SCALE at the right under SETTINGS (both modes), larger wordmark on the left. The scale ON/OFF became its own USE SCALE tile.

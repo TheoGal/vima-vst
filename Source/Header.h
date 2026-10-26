@@ -17,6 +17,12 @@ public:
     void resized() override;
     void mouseDown (const juce::MouseEvent&) override;
     void paintOverChildren (juce::Graphics&) override;
+    // Step view: the TRACK box with the NOTES / CC switch, and the PATTERN box. Their frames
+    // continue down around the track and pattern tiles of the parameter row (SPEC.md 12.2).
+    juce::Rectangle<int> trackGroupTop() const { return trackBox.getBounds().getUnion (modeArea); }
+    juce::Rectangle<int> patternGroupTop() const { return patternArea; }
+    // The "βήμα" wordmark (SPEC.md 12.1), fitted into `area`, left-aligned and centred vertically
+    static void drawWordmark (juce::Graphics&, juce::Rectangle<float> area);
 
 private:
     void showTrackMenu();
