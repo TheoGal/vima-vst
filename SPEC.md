@@ -570,7 +570,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Drawing on the step buttons** (note mode and CC mode, acting on the part shown): pressing a step button that is **off** turns it on, and dragging over other step buttons turns them **on** too (buttons already on stay on). Pressing a button that is **on** turns it off, and dragging turns the others **off** (buttons already off stay off). The whole stroke is one undo step. Like the step sliders, a stroke stays in the row where it started (open question below).
+1. **Drawing on the step buttons** (note mode and CC mode, acting on the part shown): pressing a step button that is **off** turns it on, and dragging over other step buttons turns them **on** too (buttons already on stay on). Pressing a button that is **on** turns it off, and dragging turns the others **off** (buttons already off stay off). The whole stroke is one undo step. Like the step sliders, a stroke stays in the row where it started (decided).
 
 ### 15.2 Open
 
