@@ -65,7 +65,7 @@ bool sameControl (const MacroMap& a, const MacroMap& b)
 static int macroTrack (const MacroMap& m) { return juce::jlimit (0, numTracks - 1, (int) m.track); }
 static int macroPattern (const MacroMap& m) { return juce::jlimit (0, numPatterns - 1, (int) m.pattern); }
 
-std::optional<int> macroTargetValue (const Project& p, const MacroMap& m)
+std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int queuedPattern)
 {
     if (! m.mapped())
         return std::nullopt;
@@ -76,7 +76,7 @@ std::optional<int> macroTargetValue (const Project& p, const MacroMap& m)
     switch (m.target)
     {
         case MacroTarget::none:        break;
-        case MacroTarget::pattern:     return p.currentPattern;
+        case MacroTarget::pattern:     return queuedPattern >= 0 && queuedPattern < numPatterns ? queuedPattern : p.currentPattern;
         case MacroTarget::chainOn:     return p.globals.chainOn ? 1 : 0;
         case MacroTarget::noteOut:     return r.noteOut ? 1 : 0;
         case MacroTarget::ccOut:       return r.ccOut ? 1 : 0;
@@ -101,7 +101,7 @@ std::optional<int> macroTargetValue (const Project& p, const MacroMap& m)
 
 bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMap& m, int v)
 {
-    const auto current = macroTargetValue (p, m);
+    const auto current = macroTargetValue (p, m, queuedPattern.load());
     if (! current.has_value())
         return false;
     int lo = 0, hi = 1;
@@ -117,7 +117,10 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
     switch (m.target)
     {
         case MacroTarget::none:        return false;
-        case MacroTarget::pattern:     queuedPattern = v; return false;   // switches when quantize allows
+        case MacroTarget::pattern:
+            // queued: switches when quantize allows. Back to the playing pattern = cancel the switch.
+            queuedPattern = v == p.currentPattern ? -1 : v;
+            return false;
         case MacroTarget::chainOn:     p.globals.chainOn = v != 0; break;
         case MacroTarget::noteOut:     r.noteOut = v != 0; break;
         case MacroTarget::ccOut:       r.ccOut = v != 0; break;

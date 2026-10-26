@@ -35,7 +35,9 @@ MacroMap defaultMacroMap (MacroTarget, int track, int pattern, int step, const G
 bool sameControl (const MacroMap&, const MacroMap&);
 
 // Current value of the target (plain units), nothing for an unmapped macro
-std::optional<int> macroTargetValue (const Project&, const MacroMap&);
+// For the Pattern target, the value is the queued pattern while a switch is waiting for its
+// quantize point (`queuedPattern` >= 0), so a macro shows the pattern picked at once.
+std::optional<int> macroTargetValue (const Project&, const MacroMap&, int queuedPattern = -1);
 
 // Write a plain value to the target. Pattern targets queue the pattern (quantize applies).
 // Returns true if the project changed.

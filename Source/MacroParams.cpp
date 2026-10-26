@@ -82,12 +82,12 @@ bool MacroParams::applyFromHost (Project& p, Engine& engine)
     return changed;
 }
 
-void MacroParams::capture (const Project& p)
+void MacroParams::capture (const Project& p, int queuedPattern)
 {
     for (int i = 0; i < numMacros; ++i)
     {
         maps[(size_t) i] = p.macros[(size_t) i];
-        const auto v = macroTargetValue (p, maps[(size_t) i]);
+        const auto v = macroTargetValue (p, maps[(size_t) i], queuedPattern);
         valid[(size_t) i] = v.has_value();
         values[(size_t) i] = v.value_or (0);
         notes[(size_t) i] = macroNotes (p, maps[(size_t) i]);

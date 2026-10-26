@@ -44,13 +44,14 @@ private:
     Pill minus, plus, remove;
 };
 
-class PatternsView : public juce::Component
+class PatternsView : public juce::Component, private juce::ScrollBar::Listener
 {
 public:
     explicit PatternsView (Context&);
     void paint (juce::Graphics&) override;
     void resized() override;
     void refreshState();
+    void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
 
 private:
     void showTrackMenu();
@@ -65,5 +66,11 @@ private:
     int dropIndexAt (int y) const;
     juce::Rectangle<int> left, aside, pagesLabel, slotsLabel, slotsArea, selectedBar, chainHeader, columnHeader, chainList, footer;
     int lastChainSize = -1;
+    // chain list scrolling (by whole entries): the first entry shown, and the scroll bar
+    int chainFirst = 0;
+    juce::ScrollBar chainScroll { true };
+    int chainVisibleCount() const;
+    void scrollChainTo (int first);
+    void scrollBarMoved (juce::ScrollBar*, double newRangeStart) override;
 };
 } // namespace vima

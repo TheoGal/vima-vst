@@ -12,7 +12,7 @@ void VimaProcessor::syncParamsToHost()
 {
     {
         const Lock sl (lock);
-        macros.capture (project);
+        macros.capture (project, engine.queuedPattern.load());
     }
     macros.pushToHost();
 }

@@ -65,11 +65,12 @@ void MacroCell::paint (juce::Graphics& g)
     const auto& t = Theme::current();
     const int i = macroIndex();
     struct Info { MacroMap map; std::optional<int> value; juce::String text; MacroNotes notes; };
-    const auto info = ctx.proc.read ([i] (const Project& p)
+    const int q = ctx.proc.engine.queuedPattern.load();
+    const auto info = ctx.proc.read ([i, q] (const Project& p)
     {
         Info r;
         r.map = p.macros[(size_t) i];
-        r.value = macroTargetValue (p, r.map);
+        r.value = macroTargetValue (p, r.map, q);
         r.notes = macroNotes (p, r.map);
         if (r.value) r.text = macroValueText (p, r.map, *r.value);
         return r;
@@ -132,9 +133,10 @@ void MacroCell::mouseDown (const juce::MouseEvent& e)
     const auto m = ctx.macroCopy (i);
     if (! m.mapped() || e.mods.isPopupMenu())
         return;
-    dragStart = ctx.proc.read ([&m] (const Project& p)
+    const int q = ctx.proc.engine.queuedPattern.load();
+    dragStart = ctx.proc.read ([&m, q] (const Project& p)
     {
-        const auto v = macroTargetValue (p, m);
+        const auto v = macroTargetValue (p, m, q);
         return v ? macroNormalized (m, *v, macroNotes (p, m)) : 0.0f;
     });
     dragStartY = e.getScreenY();
@@ -162,9 +164,10 @@ void MacroCell::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const auto m = ctx.macroCopy (i);
     if (! m.mapped() || juce::exactlyEqual (w.deltaY, 0.0f)) return;
     // one wheel step = the next value the macro can reach (the next in-scale note for notes)
-    const auto pos = ctx.proc.read ([&m] (const Project& p) -> std::optional<std::pair<float, int>>
+    const int q = ctx.proc.engine.queuedPattern.load();
+    const auto pos = ctx.proc.read ([&m, q] (const Project& p) -> std::optional<std::pair<float, int>>
     {
-        const auto v = macroTargetValue (p, m);
+        const auto v = macroTargetValue (p, m, q);
         if (! v) return std::nullopt;
         const auto n = macroNotes (p, m);
         return std::make_pair (macroNormalized (m, *v, n), macroPositions (m, n));
@@ -555,9 +558,10 @@ void MacrosView::paint (juce::Graphics& g)
     }
     if (m.mapped())
     {
-        const auto now = ctx.proc.read ([&m] (const Project& p)
+        const int q = ctx.proc.engine.queuedPattern.load();
+        const auto now = ctx.proc.read ([&m, q] (const Project& p)
         {
-            const auto v = macroTargetValue (p, m);
+            const auto v = macroTargetValue (p, m, q);
             return v ? macroValueText (p, m, *v) : juce::String();
         });
         g.setColour (t.muted);

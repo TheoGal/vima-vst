@@ -40,7 +40,7 @@ public:
     bool applyFromHost (Project&, Engine&);
 
     // Message thread, project lock held: take the mappings and target values.
-    void capture (const Project&);
+    void capture (const Project&, int queuedPattern = -1);   // queued pattern: shown by Pattern macros
     // Message thread, lock NOT held: move macros whose targets changed.
     void pushToHost();
 

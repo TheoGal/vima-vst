@@ -460,6 +460,9 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     clearChainBtn.text = [] { return juce::String ("CLEAR"); };
     clearChainBtn.onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.chain.clear(); }); };
     addAndMakeVisible (clearChainBtn);
+    chainScroll.setAutoHide (false);
+    chainScroll.addListener (this);
+    addChildComponent (chainScroll);
 }
 
 void PatternsView::showTrackMenu()
@@ -478,6 +481,7 @@ void PatternsView::refreshState()
     const int n = ctx.globalsCopy().chain.size();
     if (n != lastChainSize)
     {
+        const bool added = lastChainSize >= 0 && n > lastChainSize;
         lastChainSize = n;
         chainRows.clear();
         for (int i = 0; i < n; ++i)
@@ -485,6 +489,9 @@ void PatternsView::refreshState()
             auto* row = chainRows.add (new ChainRow (ctx, i));
             row->onDrag = [this] (int idx, int y)
             {
+                // dragging past the top or bottom of the list scrolls it
+                if (y > chainList.getBottom()) scrollChainTo (chainFirst + 1);
+                else if (y < chainList.getY()) scrollChainTo (chainFirst - 1);
                 dragIndex = idx;
                 dropIndex = dropIndexAt (y);
                 repaint();
@@ -508,9 +515,38 @@ void PatternsView::refreshState()
             };
             addAndMakeVisible (row);
         }
+        if (added) chainFirst = juce::jmax (0, n - chainVisibleCount());   // + ADD: show the newest entry
         resized();
     }
     repaint();
+}
+
+int PatternsView::chainVisibleCount() const
+{
+    return juce::jmax (1, (chainList.getHeight() + 4) / 40);   // rows of 36 px plus 4 px gaps
+}
+
+void PatternsView::scrollChainTo (int first)
+{
+    const int maxFirst = juce::jmax (0, chainRows.size() - chainVisibleCount());
+    first = juce::jlimit (0, maxFirst, first);
+    if (first == chainFirst) return;
+    chainFirst = first;
+    resized();
+    repaint();
+}
+
+void PatternsView::scrollBarMoved (juce::ScrollBar*, double newRangeStart)
+{
+    scrollChainTo ((int) std::lround (newRangeStart));
+}
+
+void PatternsView::mouseWheelMove (const juce::MouseEvent& e, const juce::MouseWheelDetails& w)
+{
+    // the wheel over the chain list scrolls it (rows pass their wheel events up to here)
+    const auto pos = e.getEventRelativeTo (this).getPosition();
+    if (chainList.contains (pos) && ! juce::exactlyEqual (w.deltaY, 0.0f))
+        scrollChainTo (chainFirst + (w.deltaY > 0 ? -1 : 1));
 }
 
 void PatternsView::resized()
@@ -565,13 +601,28 @@ void PatternsView::resized()
     addBtn.setBounds (buttons);
     a.removeFromBottom (10);
     chainList = a;
+    const int n = chainRows.size(), visible = chainVisibleCount();
+    chainFirst = juce::jlimit (0, juce::jmax (0, n - visible), chainFirst);
     auto list = chainList;
-    for (auto* row : chainRows)
+    const bool scrolling = n > visible;
+    chainScroll.setVisible (scrolling);
+    if (scrolling)
     {
-        if (list.getHeight() < 36) { row->setVisible (false); continue; }
-        row->setVisible (true);
-        row->setBounds (list.removeFromTop (36));
-        list.removeFromTop (4);
+        const auto& t = Theme::current();
+        chainScroll.setBounds (list.removeFromRight (8));
+        list.removeFromRight (6);
+        chainScroll.setColour (juce::ScrollBar::thumbColourId, t.dim2);
+        chainScroll.setColour (juce::ScrollBar::trackColourId, t.tile);
+        chainScroll.setRangeLimits (0.0, (double) n, juce::dontSendNotification);
+        chainScroll.setCurrentRange ((double) chainFirst, (double) visible, juce::dontSendNotification);
+    }
+    for (int i = 0; i < n; ++i)
+    {
+        auto* row = chainRows[i];
+        const bool shown = i >= chainFirst && i < chainFirst + visible;
+        row->setVisible (shown);
+        if (shown)
+            row->setBounds (list.getX(), list.getY() + (i - chainFirst) * 40, list.getWidth(), 36);
     }
 }
 
@@ -579,14 +630,15 @@ int PatternsView::dropIndexAt (int y) const
 {
     const int n = chainRows.size();
     const int pitch = 36 + 4;
-    return juce::jlimit (0, n, (int) std::floor ((y - chainList.getY() + pitch / 2) / (double) pitch));
+    return juce::jlimit (0, n, chainFirst + (int) std::floor ((y - chainList.getY() + pitch / 2) / (double) pitch));
 }
 
 void PatternsView::paintOverChildren (juce::Graphics& g)
 {
     if (dragIndex < 0 || dropIndex < 0) return;
     if (dropIndex == dragIndex || dropIndex == dragIndex + 1) return;   // would not move
-    const int y = chainList.getY() + dropIndex * 40 - 2;
+    if (dropIndex < chainFirst || dropIndex > chainFirst + chainVisibleCount()) return;   // scrolled out of view
+    const int y = chainList.getY() + (dropIndex - chainFirst) * 40 - 2;
     g.setColour (Theme::current().neutral);
     g.fillRoundedRectangle ((float) chainList.getX(), (float) y - 1.0f, (float) chainList.getWidth(), 3.0f, 1.5f);
 }

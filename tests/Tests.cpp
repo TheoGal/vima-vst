@@ -693,6 +693,16 @@ void testMacros()
     block();
     check (proc->engine.queuedPattern.load() == 6 || proc->read ([] (const Project& p) { return p.currentPattern; }) == 6,
            "macro on Pattern queues the pattern");
+    {
+        Project pp;
+        const auto pm = defaultMacroMap (MacroTarget::pattern, 0, 0, 0, pp.globals);
+        std::atomic<int> q { -1 };
+        applyMacroValue (pp, q, pm, 6);
+        check (q.load() == 6 && macroTargetValue (pp, pm, q.load()) == 6 && pp.currentPattern == 0,
+               "a Pattern macro shows the picked pattern at once, while the switch waits for its quantize point");
+        applyMacroValue (pp, q, pm, 0);
+        check (q.load() == -1, "turning a Pattern macro back to the playing pattern cancels the queued switch");
+    }
     proc->edit (-1, [] (Project& p) { p.currentPattern = 0; });
     proc->engine.queuedPattern = -1;
 
@@ -1660,6 +1670,30 @@ int main (int argc, char** argv)
         ctx.ui.viewPage = 0;
         ctx.changed();
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
+        // a long chain scrolls: wheel over the list, and a scroll bar
+        if (auto* pv = findChild<PatternsView> (ed))
+        {
+            const auto keepChain = ctx.globalsCopy().chain;
+            proc->edit (-1, [] (Project& p) { p.globals.chain.clear(); for (int i = 0; i < 20; ++i) p.globals.chain.add ({ (std::uint8_t) i, 1 }); });
+            pv->refreshState();
+            auto visibleRows = [&] { int v = 0; for (auto* c : pv->getChildren()) if (dynamic_cast<ChainRow*> (c) && c->isVisible()) ++v; return v; };
+            auto* bar = findChild<juce::ScrollBar> (*pv);
+            check (bar != nullptr && bar->isVisible() && visibleRows() < 20, "a chain longer than the list shows a scroll bar");
+            const double before = bar ? bar->getCurrentRangeStart() : 0.0;
+            check (before > 0.0, "adding to a long chain scrolls to the newest entry");
+            for (auto* c : pv->getChildren())
+                if (dynamic_cast<ChainRow*> (c) && c->isVisible())
+                {
+                    juce::MouseWheelDetails w {}; w.deltaY = 1.0f;
+                    const auto pt = pv->getLocalPoint (c, c->getLocalBounds().getCentre());
+                    pv->mouseWheelMove (mouseEvent (*pv, pt, pt), w);
+                    break;
+                }
+            check (bar != nullptr && bar->getCurrentRangeStart() < before, "the mouse wheel scrolls the chain list");
+            snapshot (ed, outDir.getChildFile ("patterns-view-long-chain.png"));
+            proc->edit (-1, [keepChain] (Project& p) { p.globals.chain = keepChain; });
+            pv->refreshState();
+        }
         ctx.showPatterns (false);
 
         proc->edit (-1, [] (Project& p)

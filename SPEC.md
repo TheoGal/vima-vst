@@ -183,6 +183,7 @@ Works like step copy / paste (9.1):
 - The chain **does not follow the song position**: when the host starts, the chain always starts from its first entry, wherever the host's playhead is. A jump while playing (locate or host loop) restarts the current entry from there. Steps inside a pattern still follow the song position (3), so timing stays in sync. (Decided to keep it this way: a song-position chain would make editing patterns from the DAW awkward.)
 - Switching the chain on while playing queues its first entry (quantize applies).
 - A pattern picked by hand while the chain plays (play button, header, CC, macro) switches as usual and then plays for the length of the current chain entry; after that the chain goes on with its next entry.
+- **Scrolling**: when the chain has more entries than fit, the list scrolls by whole entries: mouse wheel over the list, or the thin scroll bar on its right. + ADD scrolls to the new entry; dragging an entry past the top or bottom of the list scrolls it.
 - **Reordering**: drag an entry up or down the list (a grip on its left shows it can be dragged). A line shows where it will land. Playback keeps following the entry that is playing, wherever it moves. Removing an entry also keeps playback on the right entry.
 
 ### 7.3 Pattern switching rules
@@ -460,6 +461,7 @@ Not exposed (set in the plugin only):
 - **Full range**: every macro always covers its target's whole range over its whole travel. There is no min / max per mapping.
 - **Note Step** and **CC Step** switch the step's note part and CC part on or off (5).
 - **Note** follows the scale like the step's note knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
+- **Pattern macro**: moving it queues the picked pattern (quantize applies, in the background), and the macro shows the **picked** pattern at once, not the one still playing; turning it back to the playing pattern cancels the queued switch.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
 - **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Note, NoteStep, Oct, Vel, Gate, Prob, CCval, CCStep); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
 - The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
@@ -634,3 +636,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-24: The theme preference moved from Documents/VIMA to the app settings folder (no macOS privacy prompt, no Windows Controlled Folder Access block).
 - 2026-10-25: Macros page shows the total mapped count ("40 OF 128 MAPPED"), not the current page's.
 - 2026-10-26: Step buttons can be painted by dragging (the pressed button's new state is applied along the row; one undo step).
+- 2026-10-26: Pattern macro shows the picked (queued) pattern at once; turning it back to the playing pattern cancels the switch. The chain list scrolls (wheel, scroll bar, drag past the edge; + ADD shows the new entry).
