@@ -75,6 +75,8 @@ jobs:
             Write-Output "::warning title=pluginval Windows::exit code $code"
             exit 1
           }
+          $groups = (Select-String -Path pluginval-out.txt -Pattern "Completed tests in").Count
+          Write-Output "::notice title=pluginval Windows::passed, strictness 10 ($groups test groups completed)"
 
       - name: Package
         shell: pwsh
@@ -132,6 +134,7 @@ jobs:
             echo "::warning title=pluginval macOS::exit code $code"
             exit 1
           fi
+          echo "::notice title=pluginval macOS::passed, strictness 10 ($(grep -c "Completed tests in" pluginval-out.txt) test groups completed)"
 
       - name: Package
         run: |
