@@ -587,7 +587,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Confirmation texts** (FileActions): Pattern NEW: "Reset pattern 05 to the init pattern? You can undo this." Macros NEW: "Clear all 128 macro mappings?" Preset NEW: "Clear all patterns, chain and settings? Macro mappings are kept."
 
 ### 15.2 Open
 
