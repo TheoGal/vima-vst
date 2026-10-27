@@ -164,11 +164,11 @@ public:
     // Save the current pattern for undo (start of a drag gesture), with what it is
     void beginGesture (const juce::String& undoLabel = {}) { proc.editCurrent (true, [] (Project&) {}, undoLabel); }
 
-    // Undo labels (SPEC.md 9): " · T03 · P23" for the track and pattern on screen
+    // Undo labels (SPEC.md 9): " · TR03 · PAT23" for the track and pattern on screen
     juce::String where()
     {
-        return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 T")) + juce::String (ui.track + 1).paddedLeft ('0', 2)
-             + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 P")) + patternLabel (currentPattern());
+        return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 TR")) + juce::String (ui.track + 1).paddedLeft ('0', 2)
+             + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 PAT")) + patternLabel (currentPattern());
     }
     static juce::String dot() { return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")); }
     // the steps in scope: "ALL STEPS", "STEP 05", "STEPS 3-9", "4 STEPS"

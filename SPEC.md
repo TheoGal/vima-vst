@@ -230,7 +230,7 @@ Works like step copy / paste (9.1):
 
 Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or preset NEW clears the undo history. Pattern NEW and pattern LOAD (13.3) are one undo step each. Macro mapping NEW / LOAD are not undone. Host automation (macros) is not added to undo.
 
-**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box naming the **next** undo, for example "UNDO RANDOMIZE · VEL · STEPS 3-9 · T03 · P23", "UNDO STEP 05 NOTE · T03 · P23", "UNDO DRAW VEL · STEPS 3-9 · T02 · P01", "UNDO STEPS 3-5 NOTE ON · T05 · P01", "UNDO LENGTH · T04 · P12", "UNDO PASTE PATTERN 05 > 19", "UNDO PATTERN NEW > P07"; "NOTHING TO UNDO" when the history is empty. Every undoable edit records this label when it happens (a stroke updates it as it grows). The box follows the theme and closes when the mouse leaves.
+**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box naming the **next** undo, for example "UNDO RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23", "UNDO STEP 05 NOTE · TR03 · PAT23", "UNDO DRAW VEL · STEPS 3-9 · TR02 · PAT01", "UNDO STEPS 3-5 NOTE ON · TR05 · PAT01", "UNDO LENGTH · TR04 · PAT12", "UNDO PASTE PATTERN 05 > 19", "UNDO PATTERN NEW > PAT07"; "NOTHING TO UNDO" when the history is empty. Every undoable edit records this label when it happens (a stroke updates it as it grows). The box follows the theme and closes when the mouse leaves.
 
 ### 9.1 Copy / Paste (steps)
 
@@ -590,7 +590,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **UNDO info box wording**: track and pattern written as **TR03** and **PAT23** (not T03 / P23), for example "UNDO RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23", "UNDO PASTE TRACK TR02 · PAT05 > TR03 · PAT19", "UNDO PATTERN NEW > PAT07".
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -661,3 +661,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Patterns view: light theme "selected" is now the brightest (#F7F9FC), so slot tones read playing > stored > empty in both themes. The paste destination uses the solid selection outline (no dashed outline). Slot right-click menu adds COPY PATTERN, COPY TRACK and a one-off PASTE (clears the clipboard, PASTE flashes green).
 - 2026-10-27: Presets leave out the Settings-dialog settings (CC smoothing, pattern change by CC, quantize); they stay in the DAW project. User scale notes stay in presets. Middle C is user-wide (Settings.xml), like the theme. Shorter NEW confirmations.
 - 2026-10-27: Hover highlight on every clickable button (the slot play button look). UNDO info box: hovering UNDO names the next undo after 0.25 s; every undoable edit records a label.
+- 2026-10-27: UNDO info box writes track and pattern as TR03 / PAT23.

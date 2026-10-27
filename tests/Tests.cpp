@@ -1365,7 +1365,7 @@ int main (int argc, char** argv)
                        "a stroke stays in the row where it started");
                 {
                     auto* undoPill = findPill (ed, "UNDO");
-                    check (proc->nextUndoLabel().startsWith ("STEPS 3-5 NOTE ON") && proc->nextUndoLabel().contains ("T05")
+                    check (proc->nextUndoLabel().startsWith ("STEPS 3-5 NOTE ON") && proc->nextUndoLabel().contains ("TR05")
                                && undoPill != nullptr && undoPill->getTooltip().startsWith ("UNDO STEPS 3-5 NOTE ON"),
                            "the UNDO info box names the next undo (a stroke: its steps)");
                 }
