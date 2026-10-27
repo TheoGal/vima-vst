@@ -590,7 +590,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **UNDO info box wording**: track and pattern written as **TR03** and **PAT23** (not T03 / P23), for example "UNDO RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23", "UNDO PASTE TRACK TR02 · PAT05 > TR03 · PAT19", "UNDO PATTERN NEW > PAT07".
 
 ### 15.2 Open
 
