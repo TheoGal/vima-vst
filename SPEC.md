@@ -587,7 +587,8 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Hover highlight on buttons**: the hover look of the patterns view's slot play buttons (a lighter background, the "selected" color) becomes the rule for clickable buttons: TRACK, PATTERN and its ‹ › arrows, start / stop, FILE, UNDO, MACROS, SETTINGS, the Settings dialog's close (×), RESET DEFAULTS and DONE, COPY / PASTE / CLEAR (operations panel and patterns view bottom bar), and for consistency every other clickable button (PARAMS, curve buttons, RANDOMIZE / SMOOTH, page buttons, chain buttons, Macros page buttons, popover options, toggles). Filled buttons (green STEPS, lit toggles, RANDOMIZE) brighten slightly instead. Dimmed (inactive) buttons get no hover. Step buttons, knobs and sliders keep their current behavior.
+2. **UNDO info box**: hovering UNDO opens, after a very short delay (about 0.25 s), a small box under it naming the **next** undo only, for example "RANDOMIZE · VEL · T03 · P23", "STEP 05 NOTE · T03 · P23", "DRAW VEL · STEPS 3-9 · T02 · P01", "LENGTH · T04 · P12", "PASTE PATTERN 05 > 19", "PATTERN NEW · P07"; "NOTHING TO UNDO" when the history is empty. It closes when the mouse leaves. Every undoable edit records a short label when it happens.
 
 ### 15.2 Open
 
