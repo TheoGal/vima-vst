@@ -595,7 +595,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Macro targets Note Step / CC Step renamed Note On / CC On** everywhere they appear: Macros page (PARAMETER buttons and cell names: NOTE ON, CC ON, a cell reads "STEP 05 NOTE ON"), host names (NoteOn St05 Tr03 Pat23, CCOn St05 Tr03 Pat23; automation stays linked by the fixed IDs), 13.1 and 13.2 of this spec, and the macro list in MANUAL.md. Descriptions that already say "note on/off" and "CC on/off" stay as they are.
 
 ### 15.2 Open
 
