@@ -193,6 +193,12 @@ Header::Header (Context& c) : ctx (c)
     undoBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.12f); };
     undoBtn.radius = 6.0f;
     undoBtn.onClick = [this] { if (ctx.proc.performUndo()) ctx.changed(); };
+    undoBtn.tooltip = [this]   // the UNDO info box: the next undo (SPEC.md 9)
+    {
+        if (! ctx.proc.canUndo()) return juce::String ("NOTHING TO UNDO");
+        const auto label = ctx.proc.nextUndoLabel();
+        return "UNDO " + (label.isEmpty() ? juce::String ("LAST EDIT") : label);
+    };
     addAndMakeVisible (undoBtn);
 
     // MACROS page; shows LEARN and the macro being learned while LEARN is on

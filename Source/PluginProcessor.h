@@ -57,21 +57,21 @@ public:
     }
 
     // Change the project; if undoPattern >= 0, that pattern is saved for undo first
-    template <typename Fn> void edit (int undoPattern, Fn&& fn)
+    template <typename Fn> void edit (int undoPattern, Fn&& fn, const juce::String& undoLabel = {})
     {
         const Lock sl (lock);
         if (undoPattern >= 0)
-            undo.push (project, undoPattern);
+            undo.push (project, undoPattern, undoLabel);
         fn (project);
         ++revision;
     }
 
     // Change the project; if withUndo, the current pattern is saved for undo first
-    template <typename Fn> void editCurrent (bool withUndo, Fn&& fn)
+    template <typename Fn> void editCurrent (bool withUndo, Fn&& fn, const juce::String& undoLabel = {})
     {
         const Lock sl (lock);
         if (withUndo)
-            undo.push (project, project.currentPattern);
+            undo.push (project, project.currentPattern, undoLabel);
         fn (project);
         ++revision;
     }
@@ -97,6 +97,8 @@ public:
 
     bool performUndo();
     bool canUndo() { const Lock sl (lock); return undo.canUndo(); }
+    juce::String nextUndoLabel() { const Lock sl (lock); return undo.nextLabel(); }      // UNDO info box
+    void relabelUndo (const juce::String& l) { const Lock sl (lock); undo.relabelLast (l); }   // a stroke that grew
     void queuePattern (int index);   // follows the quantize setting
 
     std::atomic<int> revision { 0 };   // bumped on every edit, for UI refresh

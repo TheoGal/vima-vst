@@ -58,6 +58,7 @@ public:
     void refreshState();
 
 private:
+    juce::String opLabel (const juce::String& op);
     void timerCallback() override;
     void smoothOnce();
 

@@ -208,7 +208,8 @@ bool VimaProcessor::loadPattern (int index, const juce::File& file)
     const auto tree = readTree (file);
     if (! tree.hasType ("VIMAPATTERN") || index < 0 || index >= vima::numPatterns)
         return false;
-    edit (index, [&tree, index] (vima::Project& p) { p.loadPattern (index, tree); });
+    edit (index, [&tree, index] (vima::Project& p) { p.loadPattern (index, tree); },
+          "PATTERN LOAD " + file.getFileNameWithoutExtension().toUpperCase() + " > P" + vima::patternLabel (index));
     return true;
 }
 
@@ -216,7 +217,7 @@ void VimaProcessor::newPattern (int index)
 {
     if (index < 0 || index >= vima::numPatterns)
         return;
-    edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::Pattern(); });
+    edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::Pattern(); }, "PATTERN NEW > P" + vima::patternLabel (index));
 }
 
 bool VimaProcessor::performUndo()

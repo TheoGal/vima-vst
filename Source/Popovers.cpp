@@ -41,7 +41,7 @@ DivisionPopover::DivisionPopover (Context& c) : ctx (c)
         p.look = [this, i] { return choiceLook (ctx.trackCopy().division == i, Theme::current().neutral); };
         p.onClick = [this, i]
         {
-            ctx.edit (true, [this, i] (Project& pr) { ctx.liveTrack (pr).division = (std::uint8_t) i; });
+            ctx.edit (true, [this, i] (Project& pr) { ctx.liveTrack (pr).division = (std::uint8_t) i; }, "DIVISION" + ctx.where());
             Popover::closeAll (*ctx.root);
         };
     }

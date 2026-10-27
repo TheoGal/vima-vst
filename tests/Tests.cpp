@@ -1363,8 +1363,21 @@ int main (int argc, char** argv)
                 stroke (2, 20);   // from step 3 (off) down into the second row: the stroke stays in row 1
                 check (stepOf (4, 2).on && stepOf (4, 3).on && stepOf (4, 4).on && ! stepOf (4, 18).on && ! stepOf (4, 19).on,
                        "a stroke stays in the row where it started");
+                {
+                    auto* undoPill = findPill (ed, "UNDO");
+                    check (proc->nextUndoLabel().startsWith ("STEPS 3-5 NOTE ON") && proc->nextUndoLabel().contains ("T05")
+                               && undoPill != nullptr && undoPill->getTooltip().startsWith ("UNDO STEPS 3-5 NOTE ON"),
+                           "the UNDO info box names the next undo (a stroke: its steps)");
+                }
                 proc->performUndo();
                 check (! stepOf (4, 2).on && ! stepOf (4, 3).on && ! stepOf (4, 4).on && stepOf (4, 0).on, "a whole stroke is one undo step");
+                if (auto* rnd = findPill (ed, "RANDOMIZE"))
+                {
+                    click (*rnd);
+                    check (proc->nextUndoLabel().startsWith ("RANDOMIZE") && proc->nextUndoLabel().contains ("ALL STEPS"),
+                           "a step operation's undo label names it, its params and its steps");
+                    proc->performUndo();
+                }
 
                 auto* pitchKnob = findChild<Knob> (*cell, 0);
                 const int pcBefore = stepOf (4, 0).pitchClass;

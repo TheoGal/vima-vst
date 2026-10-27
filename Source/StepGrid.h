@@ -79,6 +79,8 @@ private:
     bool drawingToggles = false, toggleValue = false;
     void stroke (juce::Point<int> screenPos, bool start, int row);   // follows the mouse path in one row
     void drawOne (juce::Point<int> screenPos);
+    int strokeMin = -1, strokeMax = -1;   // steps touched by the stroke (for its undo label)
+    void relabelStroke();
     std::uint32_t dragBase = 0;   // selection kept while Ctrl-dragging (added to)
 };
 } // namespace vima

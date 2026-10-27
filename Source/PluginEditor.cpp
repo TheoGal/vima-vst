@@ -22,6 +22,25 @@ void LookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int width, int hei
     g.drawRect (0, 0, width, height, 1);
 }
 
+juce::Rectangle<int> LookAndFeel::getTooltipBounds (const juce::String& text, juce::Point<int> screenPos, juce::Rectangle<int> parentArea)
+{
+    const int w = juce::GlyphArrangement::getStringWidthInt (Fonts::monoSemi (11.0f), text) + 24;
+    const int h = 26;
+    return juce::Rectangle<int> (screenPos.x - w / 2, screenPos.y + 22, w, h).constrainedWithin (parentArea);
+}
+
+void LookAndFeel::drawTooltip (juce::Graphics& g, const juce::String& text, int width, int height)
+{
+    const auto& t = Theme::current();
+    const auto b = juce::Rectangle<float> ((float) width, (float) height);
+    g.fillAll (t.panel);   // the tooltip window is opaque: square corners
+    g.setColour (t.border3);
+    g.drawRect (b, 1.0f);
+    g.setColour (t.text);
+    g.setFont (Fonts::monoSemi (11.0f));
+    g.drawText (text, b.toNearestInt(), juce::Justification::centred, false);
+}
+
 // ---------------------------------------------------------------------------------------
 LearnOverlay::Hit LearnOverlay::resolve (juce::Component* c)
 {

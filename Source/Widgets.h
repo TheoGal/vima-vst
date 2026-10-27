@@ -61,7 +61,7 @@ private:
 // ---------------------------------------------------------------------------------------
 // Pill: a clickable rounded box with text. All looks are computed on paint, so it follows
 // state and theme changes automatically.
-class Pill : public juce::Component
+class Pill : public juce::Component, public juce::TooltipClient
 {
 public:
     struct Look
@@ -87,6 +87,13 @@ public:
     std::function<float()> alpha;               // optional opacity
     std::function<Look()> pressedLook;          // look while the mouse button is held down
     bool chevron = false;
+    // Hover (SPEC.md 12.5): clickable, enabled buttons get a lighter background while the mouse is
+    // over them (filled buttons brighten slightly). Off for the step buttons.
+    bool hoverHighlight = true;
+    std::function<juce::String()> tooltip;   // the UNDO info box
+    juce::String getTooltip() override { return tooltip ? tooltip() : juce::String(); }
+    void mouseEnter (const juce::MouseEvent&) override { repaint(); }
+    void mouseExit (const juce::MouseEvent&) override { repaint(); }
     std::function<void (juce::Graphics&, juce::Rectangle<float>, juce::Colour)> icon;   // drawn instead of text                       // a down chevron after the text: opens a menu / popover
     float radius = 5.0f;
     juce::Justification justification = juce::Justification::centred;

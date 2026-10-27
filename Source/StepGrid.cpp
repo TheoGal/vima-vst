@@ -62,6 +62,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
 {
     // On/off button with the step number
     toggle.radius = 4.0f;
+    toggle.hoverHighlight = false;   // step buttons keep their own look (SPEC.md 12.5)
     toggle.font = [] { return Fonts::monoSemi (11.0f).withExtraKerningFactor (0.04f); };
     toggle.text = [i] { return juce::String (i + 1).paddedLeft ('0', 2); };
     toggle.look = [this]
@@ -82,7 +83,8 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     {
         const auto st = stepCopy();
         const bool newValue = ! (ctx.ui.ccMode ? st.ccOn : st.on);
-        ctx.beginGesture();   // the whole stroke is one undo step
+        ctx.beginGesture ("STEP " + juce::String (index + 1).paddedLeft ('0', 2) + (ctx.ui.ccMode ? " CC " : " NOTE ")
+                          + (newValue ? "ON" : "OFF") + ctx.where());   // the whole stroke is one undo step
         if (auto* grid = dynamic_cast<StepGrid*> (getParentComponent()))
             grid->drawToggles (toggle.getScreenBounds().getCentre(), true, index / 16, newValue);
     };
@@ -93,7 +95,13 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     };
     addAndMakeVisible (toggle);
 
-    auto gestureStart = [this] { ctx.beginGesture(); };
+    // undo label per control: "STEP 05 NOTE · T03 · P23"
+    auto stepLabel = [this] (const juce::String& what) { return "STEP " + juce::String (index + 1).paddedLeft ('0', 2) + " " + what + ctx.where(); };
+    auto sliderName = [this]
+    {
+        if (ctx.ui.ccMode) return juce::String ("CC");
+        return juce::String (ctx.ui.slider == SliderParam::velocity ? "VEL" : ctx.ui.slider == SliderParam::gate ? "GATE" : "PROB");
+    };
 
     // Pitch: moves through in-scale notes when the scale is on; shows the note that will sound
     pitch.thickness = 4.0f;
@@ -135,7 +143,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         const int t = ctx.ui.track;
         ctx.edit (false, [t, pc, this] (Project& p) { setPitchClass (p, p.currentPattern, t, index, pc); });
     };
-    pitch.onGestureStart = gestureStart;
+    pitch.onGestureStart = [this, stepLabel] { ctx.beginGesture (stepLabel ("NOTE")); };
     pitch.pixelsPerStep = 8.0f;
     addAndMakeVisible (pitch);
 
@@ -170,7 +178,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
                 = (std::int8_t) juce::jlimit (minOctave, maxOctave, o);
         });
     };
-    octave.onGestureStart = gestureStart;
+    octave.onGestureStart = [this, stepLabel] { ctx.beginGesture (stepLabel ("OCT")); };
     octave.pixelsPerStep = 10.0f;
     addAndMakeVisible (octave);
 
@@ -206,7 +214,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         if (ctx.ui.ccMode) return t.cyan;
         return ctx.ui.slider == SliderParam::velocity ? t.green : ctx.ui.slider == SliderParam::gate ? t.purple : t.amber;
     };
-    slider.onGestureStart = gestureStart;
+    slider.onGestureStart = [this, stepLabel, sliderName] { ctx.beginGesture (stepLabel (sliderName())); };
     slider.onDraw = [this] (juce::Point<int> p, bool start) { if (auto* grid = dynamic_cast<StepGrid*> (getParentComponent())) grid->drawSliders (p, start, index / 16); };
     slider.pixelsPerStep = 1.5f;
     slider.format = [] (int v) { return juce::String (v); };
@@ -377,7 +385,10 @@ void StepGrid::stroke (juce::Point<int> screenPos, bool start, int row)
 {
     // follow the whole mouse path, so a fast drag does not skip steps
     if (start)
+    {
         drawRow = row;
+        strokeMin = strokeMax = -1;
+    }
     else
     {
         const auto from = lastDraw.toFloat(), to = screenPos.toFloat();
@@ -398,11 +409,30 @@ void StepGrid::drawOne (juce::Point<int> screenPos)
         const auto b = cellBounds (row * 16 + col);
         if (p.x >= b.getX() - 3 && p.x < b.getRight() + 3)
         {
-            if (drawingToggles) cells[row * 16 + col]->setShownOn (toggleValue);
-            else                cells[row * 16 + col]->drawAt (screenPos);
+            const int step = row * 16 + col;
+            if (drawingToggles) cells[step]->setShownOn (toggleValue);
+            else                cells[step]->drawAt (screenPos);
+            const bool grew = strokeMin >= 0 && (step < strokeMin || step > strokeMax);
+            strokeMin = strokeMin < 0 ? step : juce::jmin (strokeMin, step);
+            strokeMax = juce::jmax (strokeMax, step);
+            if (grew) relabelStroke();
             return;
         }
     }
+}
+
+void StepGrid::relabelStroke()
+{
+    // a stroke over several steps: "STEPS 3-9 NOTE ON", "DRAW VEL · STEPS 3-9"
+    const auto steps = "STEPS " + juce::String (strokeMin + 1) + "-" + juce::String (strokeMax + 1);
+    juce::String label;
+    if (drawingToggles)
+        label = steps + (ctx.ui.ccMode ? " CC " : " NOTE ") + (toggleValue ? "ON" : "OFF");
+    else
+        label = "DRAW " + juce::String (ctx.ui.ccMode ? "CC" : ctx.ui.slider == SliderParam::velocity ? "VEL"
+                                                         : ctx.ui.slider == SliderParam::gate ? "GATE" : "PROB")
+              + Context::dot() + steps;
+    ctx.proc.relabelUndo (label + ctx.where());
 }
 
 void StepGrid::repaintLeds()

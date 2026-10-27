@@ -155,14 +155,34 @@ public:
     }
     Globals globalsCopy() { return proc.read ([] (const Project& p) { return p.globals; }); }
 
-    template <typename Fn> void edit (bool withUndo, Fn&& fn)
+    template <typename Fn> void edit (bool withUndo, Fn&& fn, const juce::String& undoLabel = {})
     {
-        proc.editCurrent (withUndo, std::forward<Fn> (fn));
+        proc.editCurrent (withUndo, std::forward<Fn> (fn), undoLabel);
         changed();
     }
 
-    // Save the current pattern for undo (start of a drag gesture)
-    void beginGesture() { proc.editCurrent (true, [] (Project&) {}); }
+    // Save the current pattern for undo (start of a drag gesture), with what it is
+    void beginGesture (const juce::String& undoLabel = {}) { proc.editCurrent (true, [] (Project&) {}, undoLabel); }
+
+    // Undo labels (SPEC.md 9): " · T03 · P23" for the track and pattern on screen
+    juce::String where()
+    {
+        return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 T")) + juce::String (ui.track + 1).paddedLeft ('0', 2)
+             + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 P")) + patternLabel (currentPattern());
+    }
+    static juce::String dot() { return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")); }
+    // the steps in scope: "ALL STEPS", "STEP 05", "STEPS 3-9", "4 STEPS"
+    juce::String scopeText()
+    {
+        const auto sel = ui.selection;
+        if (sel == 0) return "ALL STEPS";
+        int first = -1, last = -1, n = 0;
+        for (int i = 0; i < 32; ++i)
+            if ((sel >> i) & 1u) { if (first < 0) first = i; last = i; ++n; }
+        if (n == 1) return "STEP " + juce::String (first + 1).paddedLeft ('0', 2);
+        if (n == last - first + 1) return "STEPS " + juce::String (first + 1) + "-" + juce::String (last + 1);
+        return juce::String (n) + " STEPS";
+    }
 
     Scope scope()
     {

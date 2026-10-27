@@ -19,6 +19,9 @@ public:
     void updateColours();
     juce::Font getPopupMenuFont() override { return Fonts::monoSemi (13.0f); }
     void drawPopupMenuBackground (juce::Graphics&, int width, int height) override;
+    // The info box (UNDO): themed, under the mouse
+    juce::Rectangle<int> getTooltipBounds (const juce::String&, juce::Point<int> screenPos, juce::Rectangle<int> parentArea) override;
+    void drawTooltip (juce::Graphics&, const juce::String&, int width, int height) override;
 };
 
 // While LEARN is on, covers the step and patterns views: a click on a control maps the
@@ -90,6 +93,7 @@ private:
     vima::PatternsView patterns;
     vima::MacrosView macrosView;
     vima::LearnOverlay learnOverlay;
+    juce::TooltipWindow tooltips { &content, 250 };   // the UNDO info box, after a very short delay
     std::unique_ptr<vima::SettingsDialog> settings;
 
     int lastTheme = -1, lastRevision = -1, lastPattern = -1, lastPlayStep = -2, blinkCounter = 0, lastChainPos = -2;

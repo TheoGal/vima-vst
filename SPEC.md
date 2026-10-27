@@ -230,6 +230,8 @@ Works like step copy / paste (9.1):
 
 Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or preset NEW clears the undo history. Pattern NEW and pattern LOAD (13.3) are one undo step each. Macro mapping NEW / LOAD are not undone. Host automation (macros) is not added to undo.
 
+**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box naming the **next** undo, for example "UNDO RANDOMIZE · VEL · STEPS 3-9 · T03 · P23", "UNDO STEP 05 NOTE · T03 · P23", "UNDO DRAW VEL · STEPS 3-9 · T02 · P01", "UNDO STEPS 3-5 NOTE ON · T05 · P01", "UNDO LENGTH · T04 · P12", "UNDO PASTE PATTERN 05 > 19", "UNDO PATTERN NEW > P07"; "NOTHING TO UNDO" when the history is empty. Every undoable edit records this label when it happens (a stroke updates it as it grows). The box follows the theme and closes when the mouse leaves.
+
 ### 9.1 Copy / Paste (steps)
 
 - Copy / paste is the way to move steps between tracks and patterns.
@@ -379,6 +381,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - Defaults are the init values (4.1): MIDI CH = the track number, LENGTH 16, SWING 0%, CC NUM = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
 
 **Buttons** (on/off and choice buttons, PARAMS buttons, tabs)
+- **Hover**: every clickable, enabled button gets a lighter background while the mouse is over it (the "selected" color, like the slot play buttons in the patterns view); filled buttons (green STEPS, lit toggles, RANDOMIZE) brighten slightly instead. Dimmed (inactive) buttons and the step buttons get no hover.
 - **Click**: the action happens when the mouse button is released over the button; releasing elsewhere cancels.
 - **PASTE**, **CLEAR** (operations panel and the patterns view's bottom bar) and the **curve buttons** (shapes, ‹ ›, INV) fill **green while held down** as press feedback (not while dimmed).
 - Buttons that open a menu or a popover show a small **down chevron after their value**: TRACK (header), the PATTERN number, DIVISION, the SCALE name, TRACK (patterns view). FILE and SETTINGS have none.
@@ -530,7 +533,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 255 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 257 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -587,8 +590,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Hover highlight on buttons**: the hover look of the patterns view's slot play buttons (a lighter background, the "selected" color) becomes the rule for clickable buttons: TRACK, PATTERN and its ‹ › arrows, start / stop, FILE, UNDO, MACROS, SETTINGS, the Settings dialog's close (×), RESET DEFAULTS and DONE, COPY / PASTE / CLEAR (operations panel and patterns view bottom bar), and for consistency every other clickable button (PARAMS, curve buttons, RANDOMIZE / SMOOTH, page buttons, chain buttons, Macros page buttons, popover options, toggles). Filled buttons (green STEPS, lit toggles, RANDOMIZE) brighten slightly instead. Dimmed (inactive) buttons get no hover. Step buttons, knobs and sliders keep their current behavior.
-2. **UNDO info box**: hovering UNDO opens, after a very short delay (about 0.25 s), a small box under it naming the **next** undo only, for example "RANDOMIZE · VEL · T03 · P23", "STEP 05 NOTE · T03 · P23", "DRAW VEL · STEPS 3-9 · T02 · P01", "LENGTH · T04 · P12", "PASTE PATTERN 05 > 19", "PATTERN NEW · P07"; "NOTHING TO UNDO" when the history is empty. It closes when the mouse leaves. Every undoable edit records a short label when it happens.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -658,3 +660,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Dark theme: panels, frames and cells a step brighter (background unchanged); knob arc and slider tracks near-black #090B0E (recessed grooves). LEDs and borders unchanged.
 - 2026-10-27: Patterns view: light theme "selected" is now the brightest (#F7F9FC), so slot tones read playing > stored > empty in both themes. The paste destination uses the solid selection outline (no dashed outline). Slot right-click menu adds COPY PATTERN, COPY TRACK and a one-off PASTE (clears the clipboard, PASTE flashes green).
 - 2026-10-27: Presets leave out the Settings-dialog settings (CC smoothing, pattern change by CC, quantize); they stay in the DAW project. User scale notes stay in presets. Middle C is user-wide (Settings.xml), like the theme. Shorter NEW confirmations.
+- 2026-10-27: Hover highlight on every clickable button (the slot play button look). UNDO info box: hovering UNDO names the next undo after 0.25 s; every undoable edit records a label.

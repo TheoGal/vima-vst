@@ -35,6 +35,17 @@ namespace
         return g.rangeVel;
     }
 
+    const char* paramName (Param l);
+
+    // The armed params for an undo label: "ALL", "VEL", "NOTE, OCT"
+    juce::String paramsText (const std::vector<Param>& params, bool all)
+    {
+        if (all) return "ALL";
+        juce::StringArray names;
+        for (auto l : params) names.addIfNotAlreadyThere (paramName (l));
+        return names.joinIntoString (", ");
+    }
+
     const char* paramName (Param l)
     {
         switch (l)
@@ -253,7 +264,7 @@ void ShiftKnob::mouseDown (const juce::MouseEvent& e)
     if (e.mods.isPopupMenu()) return;
     const auto param = ctx.ui.ccMode ? Param::cc : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
-    ctx.beginGesture();   // the whole drag is one undo entry
+    ctx.beginGesture ("SHIFT " + juce::String (paramName (param)) + Context::dot() + ctx.scopeText() + ctx.where());   // the whole drag is one undo entry
     gesture = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
     startY = e.getScreenY();
     active = true;
@@ -285,7 +296,7 @@ void ShiftKnob::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const int k = (d > 0.0f) != w.isReversed ? 1 : -1;
     const auto param = ctx.ui.ccMode ? Param::cc : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
-    ctx.beginGesture();
+    ctx.beginGesture ("SHIFT " + juce::String (paramName (param)) + Context::dot() + ctx.scopeText() + ctx.where());
     const auto g = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
     ctx.edit (false, [&g, k] (Project& p) { applyShift (p, g, k); });
 }
@@ -308,6 +319,14 @@ void ShiftKnob::paint (juce::Graphics& g)
 }
 
 // ---------------------------------------------------------------------------------------
+// Undo label of a step operation: "RANDOMIZE · VEL · STEPS 3-9 · T03 · P23" (SPEC.md 9)
+juce::String OpsPanel::opLabel (const juce::String& op)
+{
+    const auto g = ctx.globalsCopy();
+    const bool cc = ctx.ui.ccMode;
+    return op + Context::dot() + paramsText (armedParams (g, cc), cc ? g.armAllCc : g.armAllNote) + Context::dot() + ctx.scopeText() + ctx.where();
+}
+
 OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
 {
     auto smallFont = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f); };
@@ -358,7 +377,9 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         const int t = ctx.ui.track, start = ctx.ui.pasteStart;
         const auto clip = ctx.ui.clip;
         const auto params = ctx.ui.clipParams;
-        ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, params); });
+        const auto label = "PASTE " + paramsText (params, false) + Context::dot() + juce::String ((int) clip.size()) + " STEPS AT "
+                         + juce::String (start + 1).paddedLeft ('0', 2) + ctx.where();
+        ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, params); }, label);
     };
     pasteBtn.pressedLook = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };   // green while held (SPEC.md 9.1)
     addAndMakeVisible (pasteBtn);
@@ -457,7 +478,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         const auto sc = ctx.scope();
         const bool cc = ctx.ui.ccMode;
         juce::Random r;
-        ctx.edit (true, [&] (Project& p) { randomize (p, sc, cc, r); });
+        ctx.edit (true, [&] (Project& p) { randomize (p, sc, cc, r); }, opLabel ("RANDOMIZE"));
     };
     addAndMakeVisible (randomBtn);
 
@@ -467,7 +488,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     smoothBtn.look = [this] { return Pill::outline (ctx.modeAccent(), ctx.modeAccent()); };
     smoothBtn.onPress = [this]
     {
-        ctx.beginGesture();   // one press or one hold = one undo entry
+        ctx.beginGesture (opLabel ("SMOOTH"));   // one press or one hold = one undo entry
         smoothOnce();
         repeating = false;
         startTimer (400);
@@ -529,12 +550,13 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
             {
                 const auto sc = ctx.scope();
                 const bool cc = ctx.ui.ccMode;
+                static const char* names[] = { "SINE", "TRIANGLE", "RAMP", "SQUARE", "ROTATE <", "ROTATE >", "INVERT" };
                 ctx.edit (true, [&] (Project& pr)
                 {
                     if (i < 4) applyCurve (pr, sc, cc, (CurveShape) i);
                     else if (i < 6) rotateSteps (pr, sc, cc, i == 5 ? 1 : -1);
                     else invertSteps (pr, sc, cc);
-                });
+                }, opLabel (names[i]));
             };
             addAndMakeVisible (p);
         }

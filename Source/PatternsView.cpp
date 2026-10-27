@@ -464,13 +464,16 @@ void PatternsView::pasteTo (int dest, bool oneOff)
     if (ctx.ui.patternClipKind == 1)
     {
         const auto clip = ctx.ui.patternClip;
-        ctx.proc.edit (dest, [dest, &clip] (Project& p) { p.patterns[(size_t) dest] = clip; });
+        ctx.proc.edit (dest, [dest, &clip] (Project& p) { p.patterns[(size_t) dest] = clip; },
+                       "PASTE PATTERN " + patternLabel (ctx.ui.patternClipSource) + " > " + patternLabel (dest));
     }
     else
     {
         const auto clip = ctx.ui.trackClip;
         const int t = ctx.ui.patternsViewTrack;   // the destination track: the TRACK dropdown
-        ctx.proc.edit (dest, [dest, t, &clip] (Project& p) { p.patterns[(size_t) dest].tracks[(size_t) t] = clip; });
+        ctx.proc.edit (dest, [dest, t, &clip] (Project& p) { p.patterns[(size_t) dest].tracks[(size_t) t] = clip; },
+                       "PASTE TRACK T" + pad2 (ctx.ui.patternClipTrack + 1) + Context::dot() + "P" + patternLabel (ctx.ui.patternClipSource)
+                           + " > T" + pad2 (t + 1) + Context::dot() + "P" + patternLabel (dest));
     }
     if (oneOff)
     {

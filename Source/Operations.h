@@ -81,13 +81,17 @@ std::uint32_t pasteSteps (Project&, int pattern, int track, int start, const std
 class UndoHistory
 {
 public:
-    void push (const Project&, int pattern);   // remember a pattern before changing it
+    // remember a pattern before changing it; `label` says what the change is (shown by the
+    // UNDO info box, SPEC.md 9), for example "RANDOMIZE · VEL · T03 · P23"
+    void push (const Project&, int pattern, const juce::String& label = {});
     bool undo (Project&, int& restoredPattern);
     bool canUndo() const { return ! entries.empty(); }
     void clear() { entries.clear(); }
+    juce::String nextLabel() const { return entries.empty() ? juce::String() : entries.back().label; }
+    void relabelLast (const juce::String& l) { if (! entries.empty()) entries.back().label = l; }
 
 private:
-    struct Entry { int pattern; Pattern data; };
+    struct Entry { int pattern; Pattern data; juce::String label; };
     std::deque<Entry> entries;
     static constexpr size_t maxEntries = 64;
 };

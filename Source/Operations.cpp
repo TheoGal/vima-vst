@@ -505,10 +505,10 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
 }
 
 // ---------------------------------------------------------------------------------------
-void UndoHistory::push (const Project& p, int pattern)
+void UndoHistory::push (const Project& p, int pattern, const juce::String& label)
 {
     pattern = juce::jlimit (0, numPatterns - 1, pattern);
-    entries.push_back ({ pattern, p.patterns[(size_t) pattern] });
+    entries.push_back ({ pattern, p.patterns[(size_t) pattern], label });
     while (entries.size() > maxEntries)
         entries.pop_front();
 }

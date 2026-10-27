@@ -100,7 +100,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     lk.colour = neutral;
     lk.getValue = [this] { return (int) ctx.trackCopy().length; };
     lk.setValue = [this] (int v) { ctx.edit (false, [this, v] (Project& p) { ctx.liveTrack (p).length = (std::uint8_t) v; }); };
-    lk.onGestureStart = [this] { ctx.beginGesture(); };
+    lk.onGestureStart = [this] { ctx.beginGesture ("LENGTH" + ctx.where()); };
     addAndMakeVisible (lengthTile);
 
     // SWING
@@ -111,7 +111,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     sk.parse = [] (const juce::String& s) { return s.retainCharacters ("0123456789").getIntValue(); };
     sk.getValue = [this] { return (int) ctx.trackCopy().swing; };
     sk.setValue = [this] (int v) { ctx.edit (false, [this, v] (Project& p) { ctx.liveTrack (p).swing = (std::uint8_t) v; }); };
-    sk.onGestureStart = [this] { ctx.beginGesture(); };
+    sk.onGestureStart = [this] { ctx.beginGesture ("SWING" + ctx.where()); };
     addAndMakeVisible (swingTile);
 
     // MIDI CH (routing: global per track, not undoable)
@@ -138,11 +138,12 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     divisionBtn.onClick = [this] { openDivision(); };
     divisionBtn.onWheel = [this] (int d)
     {
+        const auto label = "DIVISION" + ctx.where();
         ctx.edit (true, [this, d] (Project& p)
         {
             auto& tp = ctx.liveTrack (p);
             tp.division = (std::uint8_t) juce::jlimit (0, numDivisions - 1, tp.division - d);   // wheel up = shorter steps
-        });
+        }, label);
     };
     divisionTile.addAndMakeVisible (divisionBtn);
     addAndMakeVisible (divisionTile);
@@ -154,7 +155,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
         p->kind = i;
         p->radius = 4.0f;
         p->look = [this, i] { return segmentLook ((int) ctx.trackCopy().direction == i, Theme::current().neutral); };
-        p->onClick = [this, i] { ctx.edit (true, [this, i] (Project& pr) { ctx.liveTrack (pr).direction = (Direction) i; }); };
+        p->onClick = [this, i] { ctx.edit (true, [this, i] (Project& pr) { ctx.liveTrack (pr).direction = (Direction) i; }, "DIRECTION" + ctx.where()); };
         p->setTitle (i == 0 ? "Forward" : i == 1 ? "Backward" : "Ping-pong");
         directionBtns.add (p);
         directionTile.addAndMakeVisible (p);
@@ -183,7 +184,7 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     scaleOnBtn.font = [] { return Fonts::monoSemi (10.0f); };
     scaleOnBtn.look = [this] { return Pill::toggle (ctx.trackCopy().scaleOn, Theme::current().green); };
     scaleOnBtn.text = [this] { return juce::String (ctx.trackCopy().scaleOn ? "ON" : "OFF"); };
-    scaleOnBtn.onClick = [this] { ctx.edit (true, [this] (Project& p) { auto& tp = ctx.liveTrack (p); tp.scaleOn = ! tp.scaleOn; }); };
+    scaleOnBtn.onClick = [this] { ctx.edit (true, [this] (Project& p) { auto& tp = ctx.liveTrack (p); tp.scaleOn = ! tp.scaleOn; }, "USE SCALE" + ctx.where()); };
     useScaleTile.addAndMakeVisible (scaleOnBtn);
     addAndMakeVisible (useScaleTile);
     scaleTile.frameLook = true;
