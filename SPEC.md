@@ -4,7 +4,7 @@ Name: **VIMA** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
 
 **Naming rule**: everywhere the plugin is called by its English name, **VIMA** (product name, host plugin list, file names, folders, manual text, README, release notes). The Greek word "βήμα" appears only in two places: when explaining the origin of the name (as above), and as the wordmark in the plugin's header.
 
-Status: **in testing**. Every push is built by GitHub Actions; testers use the CI builds. This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the PDF manual.
+Status: **in testing**. Every push is built by GitHub Actions; testers use the CI builds. This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the user manual, MANUAL.md (written for musicians; keep it in step with this spec).
 
 Last updated: 2026-10-24 (checked against the code at that date).
 
@@ -93,7 +93,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Macros | none mapped |
 | Theme | dark (user-wide, 11) |
 
-Because every step starts on, every pattern holds content from the start (the patterns view shows them as STORED, 7.1).
+Pattern 1 starts with its 16 steps on, so a new instance plays at once; patterns 2-64 start blank and the patterns view shows them as EMPTY (7.1).
 
 ## 5. Steps
 
