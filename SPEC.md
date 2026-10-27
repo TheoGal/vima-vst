@@ -592,8 +592,8 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Window 1200 x 700** (was 720; scaling 75-200% = 900 x 525 to 2400 x 1400) with tighter spacing in the step view: a 6 px top padding above the top band (step view only; the patterns view and Macros page keep the flat header at the top), the gap between the step grid and the operations panel down to about 12 px, the operations panel 140 px tall (inner padding 9 px top and bottom instead of 12), the bottom margin 10 px. Step cells, knobs and sliders keep their size. The patterns view and Macros page get 20 px less height (slots slightly shorter). Mocked up and approved pending.
-2. **GitHub link in Settings**: in the dialog footer, between RESET DEFAULTS and DONE, the text GITHUB with a small generic "open link" icon (box with an outgoing arrow; not GitHub's logo), dim like the footer text, brighter on hover; opens https://github.com/TheoGal/vima-vst in the browser.
+1. **Window 1200 x 700** (was 720; scaling 75-200% = 900 x 525 to 2400 x 1400) with tighter spacing in the step view: a 6 px top padding above the top band (step view only; the patterns view and Macros page keep the flat header at the top), the gap between the step grid and the operations panel down to about 12 px, the operations panel 140 px tall (inner padding 9 px top and bottom instead of 12), the bottom margin 10 px. Step cells, knobs and sliders keep their size. The patterns view and Macros page get 20 px less height (slots slightly shorter). Mocked up.
+2. **Settings footer**: RESET DEFAULTS and DONE side by side on the left; on the right a link reading **VIMA ON GITHUB** with a small generic "open link" icon (box with an outgoing arrow; not GitHub's logo), dim like the footer text, brighter on hover; opens https://github.com/TheoGal/vima-vst in the browser.
 
 ### 15.2 Open
 
