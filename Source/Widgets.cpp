@@ -203,7 +203,7 @@ void Pill::paint (juce::Graphics& g)
     const bool pressed = pressedLook && enabled && isMouseButtonDown() && isMouseOver();
     auto l = pressed ? pressedLook() : (look ? look() : outline (t.border2, t.text2));
     const bool clickable = onClick != nullptr || onPress != nullptr;
-    if (hoverHighlight && clickable && enabled && ! pressed && isEnabled() && isMouseOver (true))
+    if (hoverHighlight && clickable && enabled && ! pressed && isEnabled() && (forceHoverForTests || isMouseOver (true)))
     {
         // a surface-colored button lights up with the "selected" color; a filled one brightens
         const bool surface = l.fill.isTransparent() || l.fill == t.bg || l.fill == t.panel || l.fill == t.tile || l.fill == t.tileAlt;

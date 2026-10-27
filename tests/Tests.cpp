@@ -536,6 +536,7 @@ void testOperations()
 
 void savePng (const juce::Image& img, const juce::File& file)
 {
+    file.getParentDirectory().createDirectory();
     file.deleteFile();
     juce::FileOutputStream out (file);
     juce::PNGImageFormat().writeImageToStream (img, out);
@@ -545,6 +546,11 @@ void savePng (const juce::Image& img, const juce::File& file)
 void snapshot (juce::Component& c, const juce::File& file)
 {
     savePng (c.createComponentSnapshot (c.getLocalBounds(), true, 1.0f), file);
+    // the same screen with every button in its hover state (SPEC.md 12.5), in a "hover" folder,
+    // to check that no button content disappears under the hover fill
+    Pill::forceHoverForTests = true;
+    savePng (c.createComponentSnapshot (c.getLocalBounds(), true, 1.0f), file.getParentDirectory().getChildFile ("hover").getChildFile (file.getFileName()));
+    Pill::forceHoverForTests = false;
 }
 
 // ---- simulated mouse input --------------------------------------------------------------

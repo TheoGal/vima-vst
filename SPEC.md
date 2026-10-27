@@ -533,7 +533,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. About 257 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 257 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -547,6 +547,8 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 - **PluginProcessor**: state, locking, transport button, preset / pattern / mapping files, host state. **FileActions**: the FILE menu and the slot menu actions (dialogs, confirmations). **PluginEditor**: the window, scaling, LEARN overlay.
 - **Context.h**: shared UI state (UiState) and helpers for all components.
 - UI components: **Header**, **ParamRow**, **StepGrid** (step cells, LED bars, sliders), **OpsPanel**, **PatternsView** (slots, chain), **MacrosView**, **SettingsDialog**, **Popovers**, **Widgets** (Pill buttons with optional pressed look, chevron and drawn icon; Knob), **Theme** (colors, fonts, drawing helpers).
+
+- **Hover rule for drawing**: anything shown on a button (text, number, chevron, icon) is drawn by the button itself or by its parent's `paintOverChildren`, never in the parent's `paint` behind it, or the hover fill (12.5) covers it. The header draws its box backgrounds in `paint` and all their contents in `paintOverChildren`.
 
 ### 14.5 Threading
 
@@ -662,3 +664,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Presets leave out the Settings-dialog settings (CC smoothing, pattern change by CC, quantize); they stay in the DAW project. User scale notes stay in presets. Middle C is user-wide (Settings.xml), like the theme. Shorter NEW confirmations.
 - 2026-10-27: Hover highlight on every clickable button (the slot play button look). UNDO info box: hovering UNDO names the next undo after 0.25 s; every undoable edit records a label.
 - 2026-10-27: UNDO info box writes track and pattern as TR03 / PAT23.
+- 2026-10-27: Fix: hovering the PATTERN box, its arrows, UNDO and SETTINGS hid their contents (drawn by the header behind the buttons). Header contents now drawn on top; tests render every screen in a forced hover state.

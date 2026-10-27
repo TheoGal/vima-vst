@@ -90,6 +90,7 @@ public:
     // Hover (SPEC.md 12.5): clickable, enabled buttons get a lighter background while the mouse is
     // over them (filled buttons brighten slightly). Off for the step buttons.
     bool hoverHighlight = true;
+    static inline bool forceHoverForTests = false;   // tests: render every button hovered
     std::function<juce::String()> tooltip;   // the UNDO info box
     juce::String getTooltip() override { return tooltip ? tooltip() : juce::String(); }
     void mouseEnter (const juce::MouseEvent&) override { repaint(); }

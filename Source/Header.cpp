@@ -304,13 +304,6 @@ void Header::showFileMenu()
                      });
 }
 
-void Header::paintOverChildren (juce::Graphics& g)
-{
-    // the STEPS chevron sits on the button's green fill
-    if (stepsBtn.isVisible())
-        chevron (g, stepsBtn.getBounds().toFloat().withWidth (28.0f), Theme::current().onAccent, true);
-}
-
 void Header::mouseDown (const juce::MouseEvent&) {}
 
 void Header::drawWordmark (juce::Graphics& g, juce::Rectangle<float> area)
@@ -332,6 +325,8 @@ void Header::drawWordmark (juce::Graphics& g, juce::Rectangle<float> area)
 
 void Header::paint (juce::Graphics& g)
 {
+    // Backgrounds only. Everything drawn on the buttons (texts, chevrons, icons) is drawn in
+    // paintOverChildren, so a button's hover fill (SPEC.md 12.5) never covers it.
     const auto& t = Theme::current();
     const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
     if (! stepView)   // the step view's top band is drawn by the editor, with the group frames
@@ -344,41 +339,52 @@ void Header::paint (juce::Graphics& g)
     // The header shows the Greek wordmark "βήμα" (SPEC.md 12.1); in the step view the editor draws
     // it larger, beside the TRACK frame
     if (! stepView)
-        drawWordmark (g, nameArea.toFloat().withSizeKeepingCentre ((float) nameArea.getWidth(), 25.0f));
-    if (! stepView)
     {
+        drawWordmark (g, nameArea.toFloat().withSizeKeepingCentre ((float) nameArea.getWidth(), 25.0f));
         g.setColour (t.border);
         g.fillRect (nameArea.getRight() + 14, getHeight() / 2 - 11, 1, 22);
     }
 
-    if (! ctx.ui.patternsView && ! ctx.ui.macrosView)
+    if (stepView)
+    {
+        draw::tile (g, trackBox.getBounds().toFloat(), t.tile, t.border, 6.0f);
+        draw::tile (g, modeArea.toFloat(), t.tile, t.border, 7.0f);   // mode switch frame
+    }
+    else if (ctx.ui.macrosView)
+    {
+        g.setColour (t.text);
+        g.setFont (Fonts::sansSemi (13.0f).withExtraKerningFactor (0.14f));
+        g.drawText ("MACROS", stepsBtn.getBounds().withX (stepsBtn.getRight() + 14).withWidth (120), juce::Justification::centredLeft);
+    }
+
+    const bool pickerOpen = Popover::isOpen (*ctx.root, "patternPicker");
+    draw::tile (g, patternArea.toFloat(), t.tile, (pickerOpen || ctx.ui.patternsView) ? t.neutral : t.border, 6.0f);
+    draw::tile (g, hostArea.toFloat(), juce::Colours::transparentBlack, t.border, 6.0f);
+    draw::tile (g, transportBtn.getBounds().toFloat(), t.tile, t.border2, 4.0f);
+}
+
+void Header::paintOverChildren (juce::Graphics& g)
+{
+    const auto& t = Theme::current();
+    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
+
+    // the STEPS chevron sits on the button's green fill
+    if (stepsBtn.isVisible())
+        chevron (g, stepsBtn.getBounds().toFloat().withWidth (28.0f), t.onAccent, true);
+
+    if (stepView)
     {
         // TRACK dropdown content
         auto tb = trackBox.getBounds();
-        draw::tile (g, tb.toFloat(), t.tile, t.border, 6.0f);
         const int lw = juce::GlyphArrangement::getStringWidthInt (Fonts::label (10.0f), "TRACK") + 4;
         draw::label (g, "TRACK", tb.withTrimmedLeft (12).withWidth (lw), t.muted);
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (14.0f));
         g.drawText (juce::String (ctx.ui.track + 1).paddedLeft ('0', 2), tb.withTrimmedLeft (12 + lw + 6).withWidth (24), juce::Justification::centredLeft);
         draw::chevronDown (g, { (float) tb.getRight() - 14.0f, (float) tb.getCentreY() }, t.text2, 10.0f);
-
-        // mode switch frame
-        draw::tile (g, modeArea.toFloat(), t.tile, t.border, 7.0f);
-    }
-    else
-    {
-        if (ctx.ui.macrosView)
-        {
-            g.setColour (t.text);
-            g.setFont (Fonts::sansSemi (13.0f).withExtraKerningFactor (0.14f));
-            g.drawText ("MACROS", stepsBtn.getBounds().withX (stepsBtn.getRight() + 14).withWidth (120), juce::Justification::centredLeft);
-        }
     }
 
-    // pattern box
-    const bool pickerOpen = Popover::isOpen (*ctx.root, "patternPicker");
-    draw::tile (g, patternArea.toFloat(), t.tile, (pickerOpen || ctx.ui.patternsView) ? t.neutral : t.border, 6.0f);
+    // pattern box content
     chevron (g, prevBtn.getBounds().toFloat(), t.text2, true);
     chevron (g, nextBtn.getBounds().toFloat(), t.text2, false);
     {
@@ -396,10 +402,8 @@ void Header::paint (juce::Graphics& g)
         draw::chevronDown (g, { (float) (nx + nw + 11), (float) pb.getCentreY() }, t.text2, 10.0f);
     }
 
-    // host status (display only)
+    // transport and BPM
     {
-        draw::tile (g, hostArea.toFloat(), juce::Colours::transparentBlack, t.border, 6.0f);
-        draw::tile (g, transportBtn.getBounds().toFloat(), t.tile, t.border2, 4.0f);
         const auto c = transportBtn.getBounds().toFloat().getCentre();
         if (ctx.proc.engine.isPlaying) drawPlay (g, c, ctx.modeAccent());
         else drawStop (g, c, ctx.proc.userStopped.load() ? t.amber : t.muted);   // amber: held, does not follow the host
