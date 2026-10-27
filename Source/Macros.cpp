@@ -14,14 +14,14 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::direction,   MacroKind::track,  "DIRECTION",  "Direction",   true,  0, 2 },
     { MacroTarget::swing,       MacroKind::track,  "SWING",      "Swing",       true,  0, 100 },
     { MacroTarget::scaleOn,     MacroKind::track,  "SCALE ON",   "Scale On",    true,  0, 1 },
-    { MacroTarget::stepOn,      MacroKind::step,   "NOTE STEP",  "Note Step",   true,  0, 1 },
+    { MacroTarget::stepOn,      MacroKind::step,   "NOTE ON",    "Note On",     true,  0, 1 },
     { MacroTarget::note,        MacroKind::step,   "NOTE",       "Note",        true,  0, 11 },
     { MacroTarget::octave,      MacroKind::step,   "OCTAVE",     "Octave",      true,  minOctave, maxOctave },
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
     { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
     { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  1, 100 },
     { MacroTarget::cc,          MacroKind::step,   "CC VALUE",   "CC Value",    true,  0, 127 },
-    { MacroTarget::ccStepOn,    MacroKind::step,   "CC STEP",    "CC Step",     true,  0, 1 },
+    { MacroTarget::ccStepOn,    MacroKind::step,   "CC ON",      "CC On",       true,  0, 1 },
 };
 
 const MacroTargetInfo& macroTargetInfo (MacroTarget t)
@@ -260,8 +260,8 @@ static const char* shortName (MacroTarget t)
 {
     switch (t)
     {
-        case MacroTarget::stepOn:      return "NOTE STEP";
-        case MacroTarget::ccStepOn:    return "CC STEP";
+        case MacroTarget::stepOn:      return "NOTE ON";
+        case MacroTarget::ccStepOn:    return "CC ON";
         case MacroTarget::note:        return "NOTE";
         case MacroTarget::octave:      return "OCT";
         case MacroTarget::velocity:    return "VEL";
@@ -329,14 +329,14 @@ juce::String macroHostName (const MacroMap& m, int index)
         case MacroTarget::direction:   return "Dir" + tr + pat;
         case MacroTarget::swing:       return "Swing" + tr + pat;
         case MacroTarget::scaleOn:     return "Scale" + tr + pat;
-        case MacroTarget::stepOn:      return "NoteStep" + st + tr + pat;
+        case MacroTarget::stepOn:      return "NoteOn" + st + tr + pat;
         case MacroTarget::note:        return "Note" + st + tr + pat;
         case MacroTarget::octave:      return "Oct" + st + tr + pat;
         case MacroTarget::velocity:    return "Vel" + st + tr + pat;
         case MacroTarget::gate:        return "Gate" + st + tr + pat;
         case MacroTarget::probability: return "Prob" + st + tr + pat;
         case MacroTarget::cc:          return "CCval" + st + tr + pat;
-        case MacroTarget::ccStepOn:    return "CCStep" + st + tr + pat;
+        case MacroTarget::ccStepOn:    return "CCOn" + st + tr + pat;
     }
     return "Macro " + juce::String (index + 1);
 }

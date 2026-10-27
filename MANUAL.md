@@ -419,7 +419,7 @@ What can be mapped:
 
 - **Global:** Pattern (which pattern plays), Chain On.
 - **Track:** Notes Out, CC Out; and per pattern: Length, Division, Direction, Swing, Scale On.
-- **Step:** Note Step (note on / off), Note, Octave, Velocity, Gate, Probability, CC Step (CC on / off), CC Value.
+- **Step:** Note On (note on / off), Note, Octave, Velocity, Gate, Probability, CC On (CC on / off), CC Value.
 
 The **Pattern** macro is special: turning it picks the next pattern, and the macro shows that pattern straight away, while the actual switch waits for the quantize point in the background.
 

@@ -451,7 +451,7 @@ Targets:
 | GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
 | TRACK | Notes Out, CC Out | 1-8 | - | - |
 | TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | 01 to 64 | - |
-| STEP | Note Step, Note, Octave, Velocity, Gate, Probability, CC Step, CC Value | 1-8 | 01 to 64 | 1-32 |
+| STEP | Note On, Note, Octave, Velocity, Gate, Probability, CC On, CC Value | 1-8 | 01 to 64 | 1-32 |
 
 **Exposed vs not exposed (checklist)**
 
@@ -460,7 +460,7 @@ Exposed as macro targets (the table above, nothing else):
 - Global: Pattern (which pattern plays), Chain On.
 - Track routing (the same in every pattern): Notes Out, CC Out.
 - Track settings (per pattern): Length, Division, Direction, Swing, Scale On.
-- Step values (per pattern and step): Note Step (note on/off), Note, Octave, Velocity, Gate, Probability, CC Step (CC on/off), CC Value.
+- Step values (per pattern and step): Note On (note on/off), Note, Octave, Velocity, Gate, Probability, CC On (CC on/off), CC Value.
 
 Not exposed (set in the plugin only):
 
@@ -473,11 +473,11 @@ Not exposed (set in the plugin only):
 
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Full range**: every macro always covers its target's whole range over its whole travel. There is no min / max per mapping.
-- **Note Step** and **CC Step** switch the step's note part and CC part on or off (5).
+- **Note On** and **CC On** switch the step's note part and CC part on or off (5).
 - **Note** follows the scale like the step's note knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
 - **Pattern macro**: moving it queues the picked pattern (quantize applies, in the background), and the macro shows the **picked** pattern at once, not the one still playing; turning it back to the playing pattern cancels the queued switch.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
-- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Note, NoteStep, Oct, Vel, Gate, Prob, CCval, CCStep); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
+- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Note, NoteOn, Oct, Vel, Gate, Prob, CCval, CCOn); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
 - The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
 - Host changes are not added to undo.
 
@@ -488,7 +488,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 128 MAPPED" (all pages), LEARN. Mapping sets are loaded and saved from the FILE menu (13.3). A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
 - **Right**: the mapping editor for the selected macro ("M017", with its host name "MACRO 17"):
   - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro). Outlined buttons, the chosen one filled, like the PARAMETER and TRACK buttons below.
-  - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE STEP, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC STEP, CC VALUE. A new mapping starts on the track and pattern on screen.
+  - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE ON, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC ON, CC VALUE. A new mapping starts on the track and pattern on screen.
   - **TRACK** (1-8), **PATTERN** (a knob, 01 to 64, for targets stored per pattern), **STEP** (a knob, 1-32, for step targets).
   - Footer: **CLEAR MAPPING** (unmaps the macro) and the current value ("NOW 16").
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005" in amber. A banner on the Macros page explains it while listening.
@@ -497,7 +497,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON.
 - **No duplicates in the editor either**: a change in the mapping editor that would point a second macro at a control that already has one is refused, and the footer shows "ALREADY ON M003".
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
-- Colors follow the params: note step, note, octave and velocity green, gate purple, probability amber, CC step and CC value cyan, track and global targets neutral.
+- Colors follow the params: note on, note, octave and velocity green, gate purple, probability amber, CC on and CC value cyan, track and global targets neutral.
 
 ### 13.3 Presets, patterns and macro mapping sets
 
@@ -595,7 +595,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Macro targets Note Step / CC Step renamed Note On / CC On** everywhere they appear: Macros page (PARAMETER buttons and cell names: NOTE ON, CC ON, a cell reads "STEP 05 NOTE ON"), host names (NoteOn St05 Tr03 Pat23, CCOn St05 Tr03 Pat23; automation stays linked by the fixed IDs), 13.1 and 13.2 of this spec, and the macro list in MANUAL.md. Descriptions that already say "note on/off" and "CC on/off" stay as they are.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -670,3 +670,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Fix: hovering the PATTERN box, its arrows, UNDO and SETTINGS hid their contents (drawn by the header behind the buttons). Header contents now drawn on top; tests render every screen in a forced hover state.
 - 2026-10-27: CC mode: PARAMS are just ON and CC (no ALL); SHIFT ALL is the knob alone (no CC button).
 - 2026-10-27: Window 1200 x 700 (was 720): top padding over the top band, tighter grid / operations gap and panel padding. Settings: no × button (DONE or a click outside closes); footer RESET DEFAULTS + DONE left, VIMA ON GITHUB link right.
+- 2026-10-27: Step macro targets Note Step / CC Step renamed Note On / CC On (Macros page NOTE ON / CC ON, host names NoteOn / CCOn).

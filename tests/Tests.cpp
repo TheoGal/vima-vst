@@ -654,8 +654,8 @@ void testMacros()
     check (proc->getParameters().size() == numMacros, "the 128 macros are the only host parameters, got " + juce::String (proc->getParameters().size()));
     check (macro (0)->getName (32) == "Macro 1" && macro (127)->getName (32) == "Macro 128", "macros are named Macro 1 to Macro 128");
     check (macro (4)->getCurrentValueAsText() == "-", "an unmapped macro shows -");
-    check (juce::String (macroTargetInfo (MacroTarget::stepOn).name) == "NOTE STEP" && juce::String (macroTargetInfo (MacroTarget::ccStepOn).name) == "CC STEP",
-           "step macros are named NOTE STEP and CC STEP");
+    check (juce::String (macroTargetInfo (MacroTarget::stepOn).name) == "NOTE ON" && juce::String (macroTargetInfo (MacroTarget::ccStepOn).name) == "CC ON",
+           "step on/off macros are named NOTE ON and CC ON");
 
     // map: M1 = velocity of track 4 step 5; M2 = length of track 3 in pattern 10;
     // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2; M6 = probability of track 4 step 1
