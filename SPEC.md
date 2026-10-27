@@ -592,7 +592,8 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **CC mode PARAMS without ALL**: CC mode has only two params, so its PARAMS row is just **ON** and **CC**, toggling one by one (something always armed; both lit = everything). The CC-mode ALL flag goes away (the saved `params` property drops it). Note mode keeps ALL. Update 9.2, 12.6, 4.1 and 14.7.
+2. **CC mode SHIFT ALL without a param button**: in CC mode the shift only moves the CC value, so the lone CC button is removed; the knob stands alone under SHIFT ALL. Note mode keeps its NOTE / OCT / VEL / GATE / PROB buttons. Update 9.4 and 12.6.
 
 ### 15.2 Open
 
