@@ -1685,14 +1685,14 @@ int main (int argc, char** argv)
         juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
 
         // resizing: the whole window scales, 75% to 200%
-        check (ed.getWidth() == 1200 && ed.getHeight() == 720, "a new editor opens at 1200 x 720");
-        ed.setSize (900, 540);
+        check (ed.getWidth() == 1200 && ed.getHeight() == 700, "a new editor opens at 1200 x 700");
+        ed.setSize (900, 525);
         check (std::abs (ed.contentComponent().getTransform().mat00 - 0.75f) < 0.001f && std::abs (proc->uiScale.load() - 0.75f) < 0.001f,
-               "resizing to 900 x 540 scales everything to 75%");
+               "resizing to 900 x 525 scales everything to 75%");
         snapshot (ed, outDir.getChildFile ("main-dark-75.png"));
         if (auto* c = ed.getConstrainer())
-            check (c->getMinimumWidth() == 900 && c->getMaximumWidth() == 2400 && std::abs (c->getFixedAspectRatio() - 1200.0 / 720.0) < 1.0e-6,
-                   "size limits 900 x 540 to 2400 x 1440, fixed proportions");
+            check (c->getMinimumWidth() == 900 && c->getMaximumWidth() == 2400 && std::abs (c->getFixedAspectRatio() - 1200.0 / 700.0) < 1.0e-6,
+                   "size limits 900 x 525 to 2400 x 1400, fixed proportions");
         {
             juce::MemoryBlock state;
             proc->getStateInformation (state);
@@ -1700,9 +1700,9 @@ int main (int argc, char** argv)
             other->setStateInformation (state.getData(), (int) state.getSize());
             check (std::abs (other->uiScale.load() - 0.75f) < 0.001f, "the window size is saved with the project");
             std::unique_ptr<juce::AudioProcessorEditor> reopened (other->createEditor());
-            check (reopened->getWidth() == 900 && reopened->getHeight() == 540, "the editor reopens at the saved size");
+            check (reopened->getWidth() == 900 && reopened->getHeight() == 525, "the editor reopens at the saved size");
         }
-        ed.setSize (1200, 720);
+        ed.setSize (1200, 700);
 
         ctx.showPatterns (true);
         if (auto* pv = findChild<PatternsView> (ed))

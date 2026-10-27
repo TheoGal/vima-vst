@@ -311,7 +311,8 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF (10).
 - **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
-- Footer: **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE**. A click outside the dialog also closes it.
+- No close (×) button: every setting applies the moment it is clicked, so **DONE** or a click outside the dialog closes it.
+- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
 
 ## 12. UI
 
@@ -332,7 +333,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 - Amber also marks LEARN (13.2) and a held transport (3).
 - Selection: white #EEF1F5 on the LED bar (dark theme).
 - No explanatory or help text in the main window.
-- Base window size 1200 x 720. **Resizable**: the window scales as a whole (proportions fixed), from 75% (900 x 540) to 200% (2400 x 1440), by dragging the corner. The size is saved with the project.
+- Base window size **1200 x 700**. **Resizable**: the window scales as a whole (proportions fixed), from 75% (900 x 525) to 200% (2400 x 1400), by dragging the corner. The size is saved with the project (as a scale factor).
 
 ### 12.2 Layout (top to bottom)
 
@@ -344,6 +345,8 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
    - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, BPM, FILE, UNDO, MACROS and SETTINGS.
 2. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it. Steps are grouped in fours by alternating tile shades.
 3. **Operations panel** (12.6).
+
+Vertical spacing of the step view (1200 x 700): a 6 px top padding above the top band (step view only; the patterns view and the Macros page keep their flat header at the very top), the top band (header 52 + parameter row 60), 14 px, the step grid (410), about 12 px, the operations panel (140, inner padding 9 px top and bottom), a 10 px bottom margin.
 
 The NOTES and CC mode buttons each carry an LED showing whether that output is on for the selected track (lit green / cyan when on, dark grey when off), visible in both modes. The selected mode button has a tinted background and an accent outline.
 
@@ -592,9 +595,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Window 1200 x 700** (was 720; scaling 75-200% = 900 x 525 to 2400 x 1400) with tighter spacing in the step view: a 6 px top padding above the top band (step view only; the patterns view and Macros page keep the flat header at the top), the gap between the step grid and the operations panel down to about 12 px, the operations panel 140 px tall (inner padding 9 px top and bottom instead of 12), the bottom margin 10 px. Step cells, knobs and sliders keep their size. The patterns view and Macros page get 20 px less height (slots slightly shorter). Mocked up.
-2. **Settings footer**: RESET DEFAULTS and DONE side by side on the left; on the right a link reading **VIMA ON GITHUB** with a small generic "open link" icon (box with an outgoing arrow; not GitHub's logo), dim like the footer text, brighter on hover; opens https://github.com/TheoGal/vima-vst in the browser.
-3. **Settings dialog without the × button**: DONE (or a click outside the dialog) closes it; the close button in the top right corner is removed. Settings apply the moment they are clicked, so there is nothing to confirm.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -668,3 +669,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: UNDO info box writes track and pattern as TR03 / PAT23.
 - 2026-10-27: Fix: hovering the PATTERN box, its arrows, UNDO and SETTINGS hid their contents (drawn by the header behind the buttons). Header contents now drawn on top; tests render every screen in a forced hover state.
 - 2026-10-27: CC mode: PARAMS are just ON and CC (no ALL); SHIFT ALL is the knob alone (no CC button).
+- 2026-10-27: Window 1200 x 700 (was 720): top padding over the top band, tighter grid / operations gap and panel padding. Settings: no × button (DONE or a click outside closes); footer RESET DEFAULTS + DONE left, VIMA ON GITHUB link right.

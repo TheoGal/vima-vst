@@ -37,14 +37,8 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     auto C = [] { return Theme::current().cyan; };
     auto N = [] { return Theme::current().neutral; };
 
-    // Header close and footer buttons
-    closeBtn = &pill();
-    closeBtn->radius = 6.0f;
-    closeBtn->look = [] { const auto& t = Theme::current(); return Pill::outline (t.border, t.text2); };
-    closeBtn->text = [] { return juce::String (juce::CharPointer_UTF8 ("\xc3\x97")); };
-    closeBtn->font = [] { return Fonts::sans (16.0f); };
-    closeBtn->onClick = [this] { if (onClose) onClose(); };
-
+    // Footer buttons. There is no close (x) button: DONE or a click outside closes the dialog,
+    // and every setting applies the moment it is clicked (SPEC.md 11).
     resetBtn = &pill();
     resetBtn->radius = 6.0f;
     resetBtn->look = [] { const auto& t = Theme::current(); return Pill::outline (t.border2, t.text2); };
@@ -63,6 +57,37 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         userSettings::setMiddleC (3);  // middle C = C3 (all instances)
         ctx.changed();
     };
+
+    // GITHUB: a small link to the repository (a generic "open link" icon, not GitHub's logo)
+    githubBtn = &pill();
+    githubBtn->radius = 6.0f;
+    githubBtn->look = [] { const auto& t = Theme::current(); return Pill::Look { juce::Colours::transparentBlack, juce::Colours::transparentBlack, t.muted, 0.0f, false }; };
+    githubBtn->text = [] { return juce::String ("VIMA ON GITHUB"); };
+    githubBtn->font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f); };
+    githubBtn->justification = juce::Justification::centredLeft;
+    githubBtn->textInset = 30;
+    githubBtn->icon = [] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+    {
+        // open-link icon: a box with an arrow pointing out of its top right corner
+        const auto box = juce::Rectangle<float> (b.getX() + 10.0f, b.getCentreY() - 6.0f, 12.0f, 12.0f);
+        juce::Path p;
+        p.startNewSubPath (box.getX() + 6.0f, box.getY());
+        p.lineTo (box.getX(), box.getY());
+        p.lineTo (box.getX(), box.getBottom());
+        p.lineTo (box.getRight(), box.getBottom());
+        p.lineTo (box.getRight(), box.getY() + 6.0f);
+        p.startNewSubPath (box.getX() + 5.0f, box.getY() + 7.0f);
+        p.lineTo (box.getRight() + 1.0f, box.getY() - 1.0f);
+        p.startNewSubPath (box.getRight() - 4.0f, box.getY() - 1.0f);
+        p.lineTo (box.getRight() + 1.0f, box.getY() - 1.0f);
+        p.lineTo (box.getRight() + 1.0f, box.getY() + 4.0f);
+        g.setColour (c);
+        g.strokePath (p, juce::PathStrokeType (1.4f, juce::PathStrokeType::mitered, juce::PathStrokeType::square));
+        g.setFont (Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f));
+        g.drawText ("VIMA ON GITHUB", b.withTrimmedLeft (30.0f), juce::Justification::centredLeft, false);
+    };
+    githubBtn->onClick = [] { juce::URL ("https://github.com/TheoGal/vima-vst").launchInDefaultBrowser(); };
+    githubBtn->setTitle ("VIMA on GitHub");
 
     doneBtn = &pill();
     doneBtn->radius = 6.0f;
@@ -184,10 +209,12 @@ void SettingsDialog::resized()
     rows.clear();
     dividers.clear();
     const auto panel = panelBounds();
-    closeBtn->setBounds (panel.getRight() - 20 - 32, panel.getY() + 11, 32, 32);
+    // footer: RESET DEFAULTS and DONE on the left, the VIMA ON GITHUB link on the right
     auto footer = panel.withTop (panel.getBottom() - 60).reduced (20, 13);
-    doneBtn->setBounds (footer.removeFromRight (90));
     resetBtn->setBounds (footer.removeFromLeft (140));
+    footer.removeFromLeft (8);
+    doneBtn->setBounds (footer.removeFromLeft (90));
+    githubBtn->setBounds (footer.removeFromRight (150));
 
     auto body = panel.withTrimmedTop (54).withTrimmedBottom (60).reduced (20, 14);
     const int labelW = 150;

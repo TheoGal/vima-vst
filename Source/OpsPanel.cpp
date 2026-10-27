@@ -612,7 +612,7 @@ void OpsPanel::refreshState()
 
 void OpsPanel::resized()
 {
-    auto r = getLocalBounds().reduced (16, 12);
+    auto r = getLocalBounds().reduced (16, 9);
     const float total = (float) r.getWidth() - 4 * 16.0f;
     const float fr = total / (1.05f + 0.95f + 1.25f + 0.62f + 0.95f);
     auto take = [&] (float f)

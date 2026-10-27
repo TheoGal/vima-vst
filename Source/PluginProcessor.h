@@ -111,7 +111,7 @@ public:
     std::atomic<bool> freeRun { false };       // started by the button while the host is stopped
     std::atomic<bool> freeRunRestart { false };
     std::atomic<double> hostBpm { 120.0 };
-    std::atomic<float> uiScale { 1.0f };   // editor size (1.0 = 1200 x 720), saved with the project
+    std::atomic<float> uiScale { 1.0f };   // editor size (1.0 = 1200 x 700), saved with the project
 
     vima::MacroParams macros { *this };      // the 128 automatable macros (SPEC 13.1)
     void syncParamsToHost();                 // message thread; also run by the timer

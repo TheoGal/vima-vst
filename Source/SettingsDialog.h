@@ -25,9 +25,9 @@ private:
     Context& ctx;
     juce::OwnedArray<Pill> pills;
     juce::OwnedArray<Knob> knobs;
-    Pill* closeBtn = nullptr;
     Pill* resetBtn = nullptr;
     Pill* doneBtn = nullptr;
+    Pill* githubBtn = nullptr;   // opens the repository in the browser
     juce::Array<Pill*> themeBtns, midCBtns, rootBtns, userBtns, quantBtns;
     Pill* smoothBtn = nullptr;
     Pill* patternCCBtn = nullptr;

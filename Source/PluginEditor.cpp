@@ -174,7 +174,7 @@ void LearnOverlay::mouseDown (const juce::MouseEvent& e)
 
 using namespace vima;
 
-static constexpr int editorWidth = 1200, editorHeight = 720, headerHeight = 52;
+static constexpr int editorWidth = 1200, editorHeight = 700, headerHeight = 52, topPadding = 6;
 
 VimaEditor::VimaEditor (VimaProcessor& p)
     : AudioProcessorEditor (&p), proc (p), ctx (p),
@@ -194,7 +194,7 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     lastTheme = Theme::revision();
     setLookAndFeel (&lnf);
 
-    // Everything is laid out at 1200 x 720 inside `content`, which is scaled as a whole
+    // Everything is laid out at 1200 x 700 inside `content`, which is scaled as a whole
     // when the window is resized (SPEC.md 12.1: resizing)
     content.paintBackground = [this] (juce::Graphics& g)
     {
@@ -232,8 +232,9 @@ VimaEditor::VimaEditor (VimaProcessor& p)
         const int frameLeft = header.trackGroupTop().getX() - 6;
         vima::Header::drawWordmark (g, juce::Rectangle<float> (20.0f, 0.0f, (float) (frameLeft - 20 - 14), (float) paramRow.getBottom())
                                            .withSizeKeepingCentre ((float) (frameLeft - 20 - 14), 40.0f));
-        frame (header.trackGroupTop(), paramRow.trackTiles + rowPos);
-        frame (header.patternGroupTop(), paramRow.patternTiles + rowPos);
+        const auto headerPos = header.getPosition();
+        frame (header.trackGroupTop() + headerPos, paramRow.trackTiles + rowPos);
+        frame (header.patternGroupTop() + headerPos, paramRow.patternTiles + rowPos);
     };
     addAndMakeVisible (content);
     content.addAndMakeVisible (header);
@@ -287,16 +288,21 @@ void VimaEditor::resized()
 
 void VimaEditor::layoutContent()
 {
+    // Step view (SPEC.md 12.2): a small top padding above the top band; the step grid close to
+    // the operations panel. The patterns view and the Macros page keep a flat header at the top.
+    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
     auto r = content.getLocalBounds();
+    const auto views = r.withTrimmedTop (headerHeight);
+    patterns.setBounds (views);
+    macrosView.setBounds (views);
+    learnOverlay.setBounds (views);
+    if (stepView) r.removeFromTop (topPadding);
     header.setBounds (r.removeFromTop (headerHeight));
-    patterns.setBounds (r);
-    macrosView.setBounds (r);
-    learnOverlay.setBounds (r);
-    auto body = r.reduced (20, 0).withTrimmedBottom (12);
+    auto body = r.reduced (20, 0).withTrimmedBottom (10);
     paramRow.setBounds (body.removeFromTop (48 + 2 * vima::ParamRow::tileInset));
     body.removeFromTop (14);
     grid.setBounds (body.removeFromTop (2 * (StepGrid::ledHeight + StepGrid::ledGap + StepGrid::cellHeight) + StepGrid::rowGap));
-    ops.setBounds (body.removeFromBottom (146));
+    ops.setBounds (body.removeFromBottom (140));
     if (settings) settings->setBounds (content.getLocalBounds());
 }
 
@@ -317,6 +323,7 @@ void VimaEditor::refreshAll()
     learnOverlay.setVisible (ctx.ui.macroLearn && ! mv);
     if (learnOverlay.isVisible()) learnOverlay.toFront (false);
     proc.uiTrack = ctx.ui.track;
+    layoutContent();   // the header moves with the view (top padding in the step view only)
     header.resized();
     paramRow.resized();
     grid.refreshCells();
