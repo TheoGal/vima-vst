@@ -592,7 +592,8 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Vertical spacing of the step view** (window stays 1200 x 720): the top band gets a small top padding (about 6 px; today the frames nearly touch the top edge); the operations panel's inner top and bottom padding shrink (about 3 px each); the gap between the step grid and the operations panel shrinks (from about 17 px to about 8 px). Any space left over is shared out evenly, so nothing looks cramped. Mock up first.
+2. **GitHub link in Settings**: in the dialog footer, between RESET DEFAULTS and DONE, the text GITHUB with a small generic "open link" icon (box with an outgoing arrow; not GitHub's logo), dim like the footer text, brighter on hover; opens https://github.com/TheoGal/vima-vst in the browser.
 
 ### 15.2 Open
 
