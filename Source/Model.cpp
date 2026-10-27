@@ -467,7 +467,7 @@ juce::ValueTree Project::toValueTree() const
     for (const auto& e : g.chain) chainText.add (juce::String (e.pattern) + ":" + juce::String (e.repeats));
     gt.setProperty ("chain", chainText.joinIntoString (","), nullptr);
     juce::String params;
-    for (bool b : { g.armOn, g.armNote, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote, g.armAllCc })
+    for (bool b : { g.armOn, g.armNote, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote })
         params << (b ? "1" : "0");
     gt.setProperty ("params", params, nullptr);
     juce::StringArray ranges;
@@ -534,15 +534,14 @@ void Project::fromValueTree (const juce::ValueTree& root)
                                (std::uint8_t) juce::jlimit (1, 99, parts[1].getIntValue()) });
         }
         const auto params = gt.getProperty ("params").toString();
-        if (params.length() == 10)
+        if (params.length() == 9)
         {
-            bool* flags[] = { &g.armOn, &g.armNote, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn,
-                              &g.armAllNote, &g.armAllCc };
-            for (int i = 0; i < 10; ++i) *flags[i] = params[i] == '1';
+            bool* flags[] = { &g.armOn, &g.armNote, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn, &g.armAllNote };
+            for (int i = 0; i < 9; ++i) *flags[i] = params[i] == '1';
         }
         // something is always armed
         if (! g.armAllNote && ! (g.armOn || g.armNote || g.armOct || g.armVel || g.armGate || g.armProb)) g.armNote = true;
-        if (! g.armAllCc && ! (g.armCcOn || g.armCC)) g.armCC = true;
+        if (! (g.armCcOn || g.armCC)) g.armCC = true;
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
         ParamRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
         if (rangeParts.size() == 6)

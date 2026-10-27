@@ -87,7 +87,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
-| PARAMS | ON and NOTE armed in note mode, CC armed in CC mode (ALL off) |
+| PARAMS | ON and NOTE armed in note mode (ALL off), CC armed in CC mode (CC mode has no ALL) |
 | RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 1-100%, CC 0-127) |
 | SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
@@ -245,13 +245,13 @@ Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers eve
 
 ### 9.2 Randomize
 
-- Which values change is chosen with the **PARAMS** buttons (shared with Smooth and Copy): ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or ALL, ON, CC in CC mode (ON = CC on/off). The LED bar chooses which steps; the PARAMS buttons choose which values of those steps.
+- Which values change is chosen with the **PARAMS** buttons (shared with Smooth and Copy): ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or just ON and CC in CC mode (ON = CC on/off; with only two params there is no ALL: both lit is everything). The LED bar chooses which steps; the PARAMS buttons choose which values of those steps.
 - **Arming params**:
-  - Clicking **ALL** lights only ALL: every param of the mode is armed, but the single buttons stay unlit.
+  - Note mode: clicking **ALL** lights only ALL: every param of the mode is armed, but the single buttons stay unlit. (CC mode has no ALL.)
   - While ALL is lit, clicking a param turns ALL off and arms **only that param**.
   - Outside ALL, the param buttons toggle one by one.
   - **Something is always armed**: clicking the only lit button (ALL, or the last armed param) does nothing.
-  - Note mode and CC mode each keep their own ALL and params. Init: ON and NOTE in note mode, CC in CC mode.
+  - Note mode and CC mode each keep their own armed params. Init: ON and NOTE in note mode, CC in CC mode.
 - Each param except ON has a min / max range (RANGES, 12.6). Random values stay inside it.
 - **ON**: each step is switched on with a 70% chance.
 - **NOTE**: a random note from the NOTE range, which is a pitch-class range (the same for every octave). With the track's scale on, only in-scale notes within the range (the NOTE bar then shows only in-scale notes, 12.6); if none is in range, any note.
@@ -282,7 +282,7 @@ A relative shift of all steps in scope.
   - **VEL**: ±1 per detent.
   - **GATE**: ±1% per detent.
   - **PROB**: ±1% per detent.
-  - **CC** (CC mode, the only param there): ±1 CC value per detent.
+  - **CC** (CC mode): ±1 CC value per detent. In CC mode the shift can only move the CC value, so there are **no param buttons**: the knob stands alone.
 - Controlled by an **endless knob**. While turning, it shows the running offset (for example "+3"). It returns to 0 when released, because it is a one-time action, not a stored setting.
 - **Capping**: each step moves relative to its own value. A step that reaches its limit stays at the limit while the others keep moving.
 - **Gesture snapshot**: during one drag, every step is calculated from its value at the moment the knob was grabbed. Turning back within the same drag restores the original shape exactly. Steps update live while dragging (so the change can be heard), and the whole drag is one undo entry.
@@ -423,10 +423,10 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 ### 12.6 Operations panel (bottom, left to right)
 
 1. **SELECTION**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
-2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ALL, ON, CC in CC mode. ALL is its own state and something is always armed (9.2).
+2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode (no ALL there). In note mode ALL is its own state; something is always armed (9.2).
 3. **RANGES**: a min / max bar per param, in that param's color: NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent), and under them the curve buttons (9.5): a row of four shape icons (sine, triangle, ramp up, square), then a row with ‹, › and INV. Outlined in the mode accent; green while pressed.
-5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB in note mode; CC only in CC mode).
+5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB) in note mode; in CC mode the knob alone (it shifts the CC value).
 
 ### 12.7 Mockups
 
@@ -566,7 +566,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 10 flags in the `params` property (note-mode and CC-mode params, ALL for each mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 9 flags in the `params` property (note-mode and CC-mode params, and ALL for note mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the Settings-dialog properties in `Globals` (ccSmoothing, patternCC, patternCCChannel, patternCCNumber, quantize).
 - Pattern (.vimapattern): root `VIMAPATTERN`, `version` 1, with the 8 `Track` children as above. Loading starts from a blank pattern.
 - Mapping set (.vimamacros): root `VIMAMACROS`, `version` 1, with the `Macro` children.
@@ -592,8 +592,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **CC mode PARAMS without ALL**: CC mode has only two params, so its PARAMS row is just **ON** and **CC**, toggling one by one (something always armed; both lit = everything). The CC-mode ALL flag goes away (the saved `params` property drops it). Note mode keeps ALL. Update 9.2, 12.6, 4.1 and 14.7.
-2. **CC mode SHIFT ALL without a param button**: in CC mode the shift only moves the CC value, so the lone CC button is removed; the knob stands alone under SHIFT ALL. Note mode keeps its NOTE / OCT / VEL / GATE / PROB buttons. Update 9.4 and 12.6.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -666,3 +665,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Hover highlight on every clickable button (the slot play button look). UNDO info box: hovering UNDO names the next undo after 0.25 s; every undoable edit records a label.
 - 2026-10-27: UNDO info box writes track and pattern as TR03 / PAT23.
 - 2026-10-27: Fix: hovering the PATTERN box, its arrows, UNDO and SETTINGS hid their contents (drawn by the header behind the buttons). Header contents now drawn on top; tests render every screen in a forced hover state.
+- 2026-10-27: CC mode: PARAMS are just ON and CC (no ALL); SHIFT ALL is the knob alone (no CC button).

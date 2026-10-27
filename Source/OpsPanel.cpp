@@ -324,7 +324,7 @@ juce::String OpsPanel::opLabel (const juce::String& op)
 {
     const auto g = ctx.globalsCopy();
     const bool cc = ctx.ui.ccMode;
-    return op + Context::dot() + paramsText (armedParams (g, cc), cc ? g.armAllCc : g.armAllNote) + Context::dot() + ctx.scopeText() + ctx.where();
+    return op + Context::dot() + paramsText (armedParams (g, cc), ! cc && g.armAllNote) + Context::dot() + ctx.scopeText() + ctx.where();
 }
 
 OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
@@ -399,7 +399,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     };
     addAndMakeVisible (clearBtn);
 
-    // PARAMS buttons (ALL first). Built for note mode; CC mode shows ALL, ON, CC.
+    // PARAMS buttons (ALL first). Note mode: ALL, ON, NOTE, OCT, VEL, GATE, PROB; CC mode: ON, CC.
     std::vector<Param> all { Param::on, Param::ccOn, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc };
     {
         auto* p = paramBtns.add (new Pill());
@@ -410,17 +410,16 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         p->look = [this]
         {
             const auto g = ctx.globalsCopy();
-            return chipLook (ctx.ui.ccMode ? g.armAllCc : g.armAllNote, ctx.modeAccent());
+            return chipLook (g.armAllNote, ctx.modeAccent());
         };
         p->onClick = [this]
         {
-            const bool cc = ctx.ui.ccMode;
-            ctx.edit (false, [cc] (Project& pr)
+            ctx.edit (false, [] (Project& pr)
             {
-                auto& all = cc ? pr.globals.armAllCc : pr.globals.armAllNote;
+                auto& all = pr.globals.armAllNote;   // note mode only
                 if (all) return;
                 all = true;
-                for (auto l : cc ? ccParams() : noteParams()) armFlag (pr.globals, l) = false;
+                for (auto l : noteParams()) armFlag (pr.globals, l) = false;
             });
         };
         addAndMakeVisible (p);
@@ -433,7 +432,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         p->look = [this, l]
         {
             auto g = ctx.globalsCopy();
-            const bool all = ctx.ui.ccMode ? g.armAllCc : g.armAllNote;
+            const bool all = ! ctx.ui.ccMode && g.armAllNote;
             return chipLook (! all && armFlag (g, l), ctx.modeAccent());
         };
         p->onClick = [this, l]
@@ -442,7 +441,8 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
             ctx.edit (false, [l, cc] (Project& pr)
             {
                 auto& g = pr.globals;
-                auto& all = cc ? g.armAllCc : g.armAllNote;
+                bool noAll = false;
+                auto& all = cc ? noAll : g.armAllNote;   // CC mode has no ALL
                 const auto& modeParams = cc ? ccParams() : noteParams();
                 if (all)
                 {
@@ -563,15 +563,15 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     }
 
     addAndMakeVisible (shiftKnob);
-    for (auto l : { Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc })
+    for (auto l : { Param::note, Param::octave, Param::velocity, Param::gate, Param::probability })   // note mode only
     {
         auto* p = shiftChips.add (new Pill());
         p->getProperties().set ("param", (int) l);
         p->radius = 4.0f;
         p->font = [] { return Fonts::monoSemi (10.0f); };
         p->text = [l] { return juce::String (paramName (l)); };
-        p->look = [this, l] { return chipLook (ctx.ui.ccMode ? l == Param::cc : ctx.ui.shiftParam == l, ctx.modeAccent()); };
-        p->onClick = [this, l] { if (! ctx.ui.ccMode) { ctx.ui.shiftParam = l; ctx.changed(); } };
+        p->look = [this, l] { return chipLook (ctx.ui.shiftParam == l, ctx.modeAccent()); };
+        p->onClick = [this, l] { ctx.ui.shiftParam = l; ctx.changed(); };
         addAndMakeVisible (p);
     }
 }
@@ -599,15 +599,13 @@ void OpsPanel::refreshState()
     for (auto* p : paramBtns)
     {
         const int l = p->getProperties()["param"];
-        p->setVisible (l < 0 || (cc ? (l == (int) Param::ccOn || l == (int) Param::cc) : (l != (int) Param::cc && l != (int) Param::ccOn)));
+        // CC mode has only ON and CC: no ALL there (SPEC.md 9.2)
+        p->setVisible (l < 0 ? ! cc : (cc ? (l == (int) Param::ccOn || l == (int) Param::cc) : (l != (int) Param::cc && l != (int) Param::ccOn)));
     }
     for (int i = 0; i < ranges.size(); ++i)
         ranges[i]->setVisible (cc ? i == 5 : i < 5);
     for (auto* p : shiftChips)
-    {
-        const int l = p->getProperties()["param"];
-        p->setVisible (cc ? l == (int) Param::cc : l != (int) Param::cc);
-    }
+        p->setVisible (! cc);   // CC mode: the knob alone shifts the CC value (SPEC.md 9.4)
     resized();
     repaint();
 }
@@ -680,7 +678,7 @@ void OpsPanel::resized()
         const int cols = 3;
         const int w = (row.getWidth() - 4 * (cols - 1)) / cols;
         int i = 0;
-        const int visibleCount = ctx.ui.ccMode ? 1 : 5;
+        const int visibleCount = ctx.ui.ccMode ? 0 : 5;
         const int rows = (visibleCount + cols - 1) / cols;
         int y = row.getCentreY() - (rows * 22 + (rows - 1) * 4) / 2;
         for (auto* p : shiftChips)

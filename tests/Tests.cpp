@@ -1007,7 +1007,7 @@ void testInitAndGate()
                       && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
-        check (g.armNote && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote && ! g.armAllCc
+        check (g.armNote && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote
                    && g.rangeGate.max == maxGate && g.rangeVel.min == 1
                    && g.rangeVel.max == 127 && ! g.ccSmoothing && userSettings::middleC() == 3,
                "init globals: ON and NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
@@ -1114,7 +1114,7 @@ void testCurves()
     auto& tp = p->patterns[0].tracks[0];   // length 16, C minor, scale on
     auto only = [&] (std::initializer_list<Param> params)
     {
-        g.armAllNote = g.armAllCc = false;
+        g.armAllNote = false;
         g.armOn = g.armNote = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = g.armCcOn = false;
         for (auto l : params)
             switch (l)

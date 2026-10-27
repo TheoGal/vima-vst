@@ -192,7 +192,7 @@ struct Globals
 
     // PARAMS armed for copy / randomize / smooth (SPEC.md 9.2), and the ranges.
     // ALL is its own state per mode; something is always armed.
-    bool armAllNote = false, armAllCc = false;
+    bool armAllNote = false;   // ALL in note mode (CC mode has only ON and CC, no ALL)
     bool armCcOn = false;         // the ON param in CC mode (CC on/off)
     bool armOn = true, armNote = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
     ParamRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },

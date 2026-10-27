@@ -52,7 +52,6 @@ Scope makeScope (const Project& p, int pattern, int track, int selFirst, int sel
 std::vector<Param> armedParams (const Globals& g, bool ccMode)
 {
     std::vector<Param> params;
-    if (ccMode && g.armAllCc) return { Param::ccOn, Param::cc };
     if (! ccMode && g.armAllNote) return { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability };
     if (ccMode)
     {
