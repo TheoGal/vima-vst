@@ -228,10 +228,11 @@ VimaEditor::VimaEditor (VimaProcessor& p)
             g.setColour (t.border);
             g.strokePath (p, juce::PathStrokeType (1.0f));
         };
-        // the wordmark, larger, in the column left of the TRACK frame
         const int frameLeft = header.trackGroupTop().getX() - 6;
-        vima::Header::drawWordmark (g, juce::Rectangle<float> (20.0f, 0.0f, (float) (frameLeft - 20 - 14), (float) paramRow.getBottom())
-                                           .withSizeKeepingCentre ((float) (frameLeft - 20 - 14), 40.0f));
+        // the square "β" logo, centred between the top and bottom of the frames
+        const float colW = (float) (frameLeft - 20 - 14);
+        const float top = (float) header.getY() + 4.0f, bottom = (float) paramRow.getBottom();
+        vima::Header::drawIcon (g, juce::Rectangle<float> (20.0f, top, colW, bottom - top).withSizeKeepingCentre (colW, 78.0f));
         const auto headerPos = header.getPosition();
         frame (header.trackGroupTop() + headerPos, paramRow.trackTiles + rowPos);
         frame (header.patternGroupTop() + headerPos, paramRow.patternTiles + rowPos);

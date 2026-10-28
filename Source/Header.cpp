@@ -351,6 +351,25 @@ void Header::drawWordmark (juce::Graphics& g, juce::Rectangle<float> area)
         logo->drawWithin (g, area, juce::RectanglePlacement::xLeft | juce::RectanglePlacement::yMid, 1.0f);
 }
 
+void Header::drawIcon (juce::Graphics& g, juce::Rectangle<float> area)
+{
+    const auto& t = Theme::current();
+    static std::unique_ptr<juce::Drawable> icon;
+    static juce::Colour iconText, iconBar;
+    if (icon == nullptr || iconText != t.text || iconBar != t.green)
+    {
+        const auto svgText = juce::String::fromUTF8 (BinaryData::vimaiconui_svg, BinaryData::vimaiconui_svgSize)
+                                 .replace ("#EEF1F5", "#" + t.text.toDisplayString (false))
+                                 .replace ("#4FD98A", "#" + t.green.toDisplayString (false));
+        if (auto xml = juce::XmlDocument::parse (svgText))
+            icon = juce::Drawable::createFromSVG (*xml);
+        iconText = t.text;
+        iconBar = t.green;
+    }
+    if (icon != nullptr)
+        icon->drawWithin (g, area, juce::RectanglePlacement::centred, 1.0f);
+}
+
 void Header::paint (juce::Graphics& g)
 {
     // Backgrounds only. Everything drawn on the buttons (texts, chevrons, icons) is drawn in

@@ -43,7 +43,8 @@ juce_add_binary_data(VimaData SOURCES
     Resources/fonts/IBMPlexSans-Bold.ttf
     Resources/fonts/VIMAMono-Regular.ttf
     Resources/fonts/VIMAMono-SemiBold.ttf
-    Resources/logo/vima-wordmark-ui.svg)
+    Resources/logo/vima-wordmark-ui.svg
+    Resources/logo/vima-icon-ui.svg)
 
 set(VIMA_SOURCES
     Source/Model.cpp
