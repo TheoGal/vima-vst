@@ -230,6 +230,16 @@ bool VimaProcessor::performUndo()
     return true;
 }
 
+bool VimaProcessor::performRedo()
+{
+    const Lock sl (lock);
+    int restored = -1;
+    if (! undo.redo (project, restored))
+        return false;
+    ++revision;
+    return true;
+}
+
 void VimaProcessor::queuePattern (int index)
 {
     engine.queuedPattern = juce::jlimit (0, vima::numPatterns - 1, index);

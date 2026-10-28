@@ -228,9 +228,9 @@ Works like step copy / paste (9.1):
 
 ## 9. Step operations
 
-Undo: the UNDO button in the header steps back, up to 64 levels. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or preset NEW clears the undo history. Pattern NEW and pattern LOAD (13.3) are one undo step each. Macro mapping NEW / LOAD are not undone. Host automation (macros) is not added to undo.
+Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right-click UNDO (Ctrl-click on Mac) steps forward again through what was undone, as many steps as were undone; a new edit clears the redo steps, and loading a preset or preset NEW clears both undo and redo. UNDO looks dimmed only when there is nothing to undo and nothing to redo. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or preset NEW clears the undo history. Pattern NEW and pattern LOAD (13.3) are one undo step each. Macro mapping NEW / LOAD are not undone. Host automation (macros) is not added to undo.
 
-**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box naming the **next** undo, for example "UNDO RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23", "UNDO STEP 05 NOTE · TR03 · PAT23", "UNDO DRAW VEL · STEPS 3-9 · TR02 · PAT01", "UNDO STEPS 3-5 NOTE ON · TR05 · PAT01", "UNDO LENGTH · TR04 · PAT12", "UNDO PASTE PATTERN 05 > 19", "UNDO PATTERN NEW > PAT07"; "NOTHING TO UNDO" when the history is empty. Every undoable edit records this label when it happens (a stroke updates it as it grows). The box follows the theme and closes when the mouse leaves.
+**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box with two rows: the **next undo** and the **next redo**, for example "UNDO  RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23" and "REDO  STEP 05 NOTE · TR03 · PAT23". Other undo labels: "STEP 05 NOTE · TR03 · PAT23", "DRAW VEL · STEPS 3-9 · TR02 · PAT01", "STEPS 3-5 NOTE ON · TR05 · PAT01", "LENGTH · TR04 · PAT12", "PASTE PATTERN 05 > 19", "PATTERN NEW > PAT07". An empty row reads "NOTHING TO UNDO" / "NOTHING TO REDO", dimmed (the redo row is always shown, so people learn that right-click redoes). Every undoable edit records its label when it happens (a stroke updates it as it grows); a redo step keeps the label. The box follows the theme and closes when the mouse leaves.
 
 ### 9.1 Copy / Paste (steps)
 
@@ -388,7 +388,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - **Click**: the action happens when the mouse button is released over the button; releasing elsewhere cancels.
 - **PASTE**, **CLEAR** (operations panel and the patterns view's bottom bar) and the **curve buttons** (shapes, ‹ ›, INV) fill **green while held down** as press feedback (not while dimmed).
 - Buttons that open a menu or a popover show a small **down chevron after their value**: TRACK (header), the PATTERN number, DIVISION, the SCALE name, TRACK (patterns view). FILE and SETTINGS (icon-only buttons) have none.
-- **Right-click**: does nothing (except on mapped controls while LEARN is on, 13.2).
+- **Right-click**: does nothing, except on UNDO (redo, 9) and on mapped controls while LEARN is on (13.2).
 - **Mouse wheel** on the DIVISION tile: next / previous division (wheel up = shorter steps). On the scale name: next / previous scale.
 - **SMOOTH**: click for one smoothing step; **press and hold** to repeat (9.3).
 - **Curve buttons**: a click applies the shape, rotates by one step, or inverts (9.5); one undo step per click.
@@ -409,7 +409,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - TRACK: click for the track list. NOTES / CC: click to switch.
 - PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker. CHAIN: click to switch chain playback on / off.
 - Start / stop button: see 3.
-- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings dialog.
+- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back; right-click: one step forward (redo) (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings dialog.
 
 **Patterns view**
 - Pattern slot: click to select it (or, while COPIED / TRACK COPIED is lit, to pick the paste destination). The play button at the top center selects it and queues it.
@@ -536,7 +536,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 258 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 262 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -675,3 +675,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-28: CHAIN toggle next to the PATTERN box (pattern frame tab in the step view; also on the Macros page). SETTINGS becomes an icon-only gear button.
 - 2026-10-28: Step view shows the square β logo (theme text color, green bar) left of the TRACK frame; the βήμα wordmark stays in the patterns view and Macros page header.
 - 2026-10-28: CC mode track frame order MIDI CH, CC OUT, CC NUM (output toggle where NOTE OUT is in note mode).
+- 2026-10-29: Redo: right-click UNDO; a new edit clears the redo steps. The UNDO info box shows two rows, next undo and next redo.

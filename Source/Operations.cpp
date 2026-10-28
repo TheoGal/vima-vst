@@ -510,6 +510,7 @@ void UndoHistory::push (const Project& p, int pattern, const juce::String& label
     entries.push_back ({ pattern, p.patterns[(size_t) pattern], label });
     while (entries.size() > maxEntries)
         entries.pop_front();
+    redoEntries.clear();   // a new edit: the undone steps can no longer be redone
 }
 
 bool UndoHistory::undo (Project& p, int& restoredPattern)
@@ -518,6 +519,23 @@ bool UndoHistory::undo (Project& p, int& restoredPattern)
         return false;
     auto e = entries.back();
     entries.pop_back();
+    redoEntries.push_back ({ e.pattern, p.patterns[(size_t) e.pattern], e.label });   // the state undo leaves
+    while (redoEntries.size() > maxEntries)
+        redoEntries.pop_front();
+    p.patterns[(size_t) e.pattern] = e.data;
+    restoredPattern = e.pattern;
+    return true;
+}
+
+bool UndoHistory::redo (Project& p, int& restoredPattern)
+{
+    if (redoEntries.empty())
+        return false;
+    auto e = redoEntries.back();
+    redoEntries.pop_back();
+    entries.push_back ({ e.pattern, p.patterns[(size_t) e.pattern], e.label });   // undoable again
+    while (entries.size() > maxEntries)
+        entries.pop_front();
     p.patterns[(size_t) e.pattern] = e.data;
     restoredPattern = e.pattern;
     return true;

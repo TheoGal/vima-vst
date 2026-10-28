@@ -188,7 +188,7 @@ Header::Header (Context& c) : ctx (c)
     {
         const auto& t = Theme::current();
         auto l = Pill::outline (t.border, t.text2);
-        if (! ctx.proc.canUndo()) l.text = t.dim;
+        if (! ctx.proc.canUndo() && ! ctx.proc.canRedo()) l.text = t.dim;
         return l;
     };
     undoBtn.text = [] { return juce::String ("UNDO"); };
@@ -197,11 +197,16 @@ Header::Header (Context& c) : ctx (c)
     undoBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.12f); };
     undoBtn.radius = 6.0f;
     undoBtn.onClick = [this] { if (ctx.proc.performUndo()) ctx.changed(); };
-    undoBtn.tooltip = [this]   // the UNDO info box: the next undo (SPEC.md 9)
+    undoBtn.onRightClick = [this] { if (ctx.proc.performRedo()) ctx.changed(); };   // right-click = redo
+    undoBtn.tooltip = [this]   // the UNDO info box: the next undo and the next redo (SPEC.md 9)
     {
-        if (! ctx.proc.canUndo()) return juce::String ("NOTHING TO UNDO");
-        const auto label = ctx.proc.nextUndoLabel();
-        return "UNDO " + (label.isEmpty() ? juce::String ("LAST EDIT") : label);
+        auto row = [] (const char* what, bool can, const juce::String& label)
+        {
+            if (! can) return "NOTHING TO " + juce::String (what);
+            return juce::String (what) + "  " + (label.isEmpty() ? juce::String ("LAST EDIT") : label);
+        };
+        return row ("UNDO", ctx.proc.canUndo(), ctx.proc.nextUndoLabel()) + "\n"
+             + row ("REDO", ctx.proc.canRedo(), ctx.proc.nextRedoLabel());
     };
     addAndMakeVisible (undoBtn);
 
@@ -459,7 +464,7 @@ void Header::paintOverChildren (juce::Graphics& g)
         g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
     }
 
-    undoIcon (g, undoBtn.getBounds().toFloat(), ctx.proc.canUndo() ? t.text2 : t.dim);
+    undoIcon (g, undoBtn.getBounds().toFloat(), (ctx.proc.canUndo() || ctx.proc.canRedo()) ? t.text2 : t.dim);
     fileIcon (g, fileBtn.getBounds().toFloat(), t.text2);
     settingsIcon (g, settingsBtn.getBounds().toFloat(), t.text2);
 }

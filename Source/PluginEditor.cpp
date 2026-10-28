@@ -24,8 +24,12 @@ void LookAndFeel::drawPopupMenuBackground (juce::Graphics& g, int width, int hei
 
 juce::Rectangle<int> LookAndFeel::getTooltipBounds (const juce::String& text, juce::Point<int> screenPos, juce::Rectangle<int> parentArea)
 {
-    const int w = juce::GlyphArrangement::getStringWidthInt (Fonts::monoSemi (11.0f), text) + 24;
-    const int h = 26;
+    int w = 0;
+    const auto lines = juce::StringArray::fromLines (text);
+    for (const auto& l : lines)
+        w = juce::jmax (w, juce::GlyphArrangement::getStringWidthInt (Fonts::monoSemi (11.0f), l));
+    w += 24;
+    const int h = 10 + 18 * lines.size();
     return juce::Rectangle<int> (screenPos.x - w / 2, screenPos.y + 22, w, h).constrainedWithin (parentArea);
 }
 
@@ -36,9 +40,14 @@ void LookAndFeel::drawTooltip (juce::Graphics& g, const juce::String& text, int 
     g.fillAll (t.panel);   // the tooltip window is opaque: square corners
     g.setColour (t.border3);
     g.drawRect (b, 1.0f);
-    g.setColour (t.text);
     g.setFont (Fonts::monoSemi (11.0f));
-    g.drawText (text, b.toNearestInt(), juce::Justification::centred, false);
+    // one row per line; "NOTHING TO ..." rows are dimmed
+    auto r = b.toNearestInt().reduced (12, 5);
+    for (const auto& l : juce::StringArray::fromLines (text))
+    {
+        g.setColour (l.startsWith ("NOTHING") ? t.muted : t.text);
+        g.drawText (l, r.removeFromTop (18), juce::Justification::centredLeft, false);
+    }
 }
 
 // ---------------------------------------------------------------------------------------

@@ -202,7 +202,7 @@ void Pill::paint (juce::Graphics& g)
     const bool enabled = ! alpha || alpha() >= 0.999f;
     const bool pressed = pressedLook && enabled && isMouseButtonDown() && isMouseOver();
     auto l = pressed ? pressedLook() : (look ? look() : outline (t.border2, t.text2));
-    const bool clickable = onClick != nullptr || onPress != nullptr;
+    const bool clickable = onClick != nullptr || onPress != nullptr || onRightClick != nullptr;
     if (hoverHighlight && clickable && enabled && ! pressed && isEnabled() && (forceHoverForTests || isMouseOver (true)))
     {
         // a surface-colored button lights up with the "selected" color; a filled one brightens
@@ -308,8 +308,9 @@ void Pill::mouseUp (const juce::MouseEvent& e)
 {
     if (pressedLook) repaint();
     if (onRelease) onRelease();
-    if (onClick && ! e.mods.isPopupMenu() && getLocalBounds().contains (e.getPosition()))
-        onClick();
+    if (! getLocalBounds().contains (e.getPosition())) return;
+    if (e.mods.isPopupMenu()) { if (onRightClick) onRightClick(); }
+    else if (onClick) onClick();
 }
 
 // ---------------------------------------------------------------------------------------

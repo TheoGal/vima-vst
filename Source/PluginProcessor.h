@@ -96,7 +96,10 @@ public:
     juce::File macroFile;               // last saved / loaded mapping set (saved with the project)
 
     bool performUndo();
+    bool performRedo();
     bool canUndo() { const Lock sl (lock); return undo.canUndo(); }
+    bool canRedo() { const Lock sl (lock); return undo.canRedo(); }
+    juce::String nextRedoLabel() { const Lock sl (lock); return undo.nextRedoLabel(); }
     juce::String nextUndoLabel() { const Lock sl (lock); return undo.nextLabel(); }      // UNDO info box
     void relabelUndo (const juce::String& l) { const Lock sl (lock); undo.relabelLast (l); }   // a stroke that grew
     void queuePattern (int index);   // follows the quantize setting

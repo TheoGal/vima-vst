@@ -531,6 +531,10 @@ void testOperations()
         int restored = -1;
         check (u.undo (*p, restored) && restored == 0 && tp.steps[0].velocity == 5, "undo restores the pattern");
         check (! u.undo (*p, restored), "nothing left to undo");
+        check (u.canRedo() && u.redo (*p, restored) && tp.steps[0].velocity == 99 && u.canUndo(), "redo brings the undone change back");
+        u.undo (*p, restored);
+        u.push (*p, 0);
+        check (! u.canRedo(), "a new edit clears the redo steps");
     }
 }
 
@@ -1372,11 +1376,19 @@ int main (int argc, char** argv)
                 {
                     auto* undoPill = findPill (ed, "UNDO");
                     check (proc->nextUndoLabel().startsWith ("STEPS 3-5 NOTE ON") && proc->nextUndoLabel().contains ("TR05")
-                               && undoPill != nullptr && undoPill->getTooltip().startsWith ("UNDO STEPS 3-5 NOTE ON"),
+                               && undoPill != nullptr && undoPill->getTooltip().startsWith ("UNDO  STEPS 3-5 NOTE ON") && undoPill->getTooltip().contains ("NOTHING TO REDO"),
                            "the UNDO info box names the next undo (a stroke: its steps)");
                 }
                 proc->performUndo();
                 check (! stepOf (4, 2).on && ! stepOf (4, 3).on && ! stepOf (4, 4).on && stepOf (4, 0).on, "a whole stroke is one undo step");
+                if (auto* undoPill = findPill (ed, "UNDO"))
+                {
+                    check (proc->canRedo() && undoPill->getTooltip().contains ("REDO  STEPS 3-5 NOTE ON"), "the info box names the next redo");
+                    undoPill->mouseUp (mouseEvent (*undoPill, undoPill->getLocalBounds().getCentre(), undoPill->getLocalBounds().getCentre(), false,
+                                                   juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
+                    check (stepOf (4, 2).on && stepOf (4, 3).on && stepOf (4, 4).on && ! proc->canRedo(), "right-click on UNDO redoes the stroke");
+                    proc->performUndo();
+                }
                 if (auto* rnd = findPill (ed, "RANDOMIZE"))
                 {
                     click (*rnd);

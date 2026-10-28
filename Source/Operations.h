@@ -85,14 +85,17 @@ public:
     // UNDO info box, SPEC.md 9), for example "RANDOMIZE · VEL · T03 · P23"
     void push (const Project&, int pattern, const juce::String& label = {});
     bool undo (Project&, int& restoredPattern);
+    bool redo (Project&, int& restoredPattern);   // steps undone can be redone until a new edit
     bool canUndo() const { return ! entries.empty(); }
-    void clear() { entries.clear(); }
+    bool canRedo() const { return ! redoEntries.empty(); }
+    void clear() { entries.clear(); redoEntries.clear(); }
     juce::String nextLabel() const { return entries.empty() ? juce::String() : entries.back().label; }
+    juce::String nextRedoLabel() const { return redoEntries.empty() ? juce::String() : redoEntries.back().label; }
     void relabelLast (const juce::String& l) { if (! entries.empty()) entries.back().label = l; }
 
 private:
     struct Entry { int pattern; Pattern data; juce::String label; };
-    std::deque<Entry> entries;
+    std::deque<Entry> entries, redoEntries;
     static constexpr size_t maxEntries = 64;
 };
 } // namespace vima
