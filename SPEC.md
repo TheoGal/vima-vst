@@ -79,7 +79,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | MIDI channel | track number (1-8) |
 | CC number | 102 + track index: tracks 1-8 = CC 102-109 (undefined CCs in the MIDI spec) |
 | Length / division / direction / swing / scale | 16 / 1/16 / forward / 0% / on |
-| Steps | all 32 on (note on and CC on), note F (the middle of the note knob's travel), octave of middle C (so F above middle C, MIDI 65), velocity 100, gate 100%, probability 100%, CC value 64 |
+| Steps | all 32 on (note on and CC on), note C, octave of middle C (so middle C itself, MIDI 60), velocity 100, gate 100%, probability 100%, CC value 64 |
 | Current pattern | 01 |
 | Global scale / root / user scale | minor / C / natural minor shape |
 | Middle C | C3 (user-wide, 11) |
@@ -381,7 +381,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - **Mouse wheel**: one value per notch (the NOTE knob: one in-scale note when the scale is on).
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
 - **Right-click or Alt + click**: reset to the default.
-- Defaults are the init values (4.1): MIDI CH = the track number, LENGTH 16, SWING 0%, CC NUM = 102 + track index, NOTE F, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
+- Defaults are the init values (4.1): MIDI CH = the track number, LENGTH 16, SWING 0%, CC NUM = 102 + track index, NOTE C, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
 
 **Buttons** (on/off and choice buttons, PARAMS buttons, tabs)
 - **Hover**: every clickable, enabled button gets a lighter background while the mouse is over it (the "selected" color, like the slot play buttons in the patterns view); filled buttons (green STEPS, lit toggles, RANDOMIZE) brighten slightly instead. Dimmed (inactive) buttons and the step buttons get no hover.
@@ -596,7 +596,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Default note C** (was F): the init step note is C in the octave of middle C (MIDI 60, middle C itself); right-click / Alt + click on a NOTE knob resets to C. Update 4.1, 12.5 and the tests.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -677,3 +677,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-28: CC mode track frame order MIDI CH, CC OUT, CC NUM (output toggle where NOTE OUT is in note mode).
 - 2026-10-29: Redo: right-click UNDO; a new edit clears the redo steps. The UNDO info box shows two rows, next undo and next redo.
 - 2026-10-29: UNDO info box rows read "UNDO: ..." and "REDO: ...".
+- 2026-10-29: Default note C (middle C) instead of F, for new steps and the NOTE knob reset.

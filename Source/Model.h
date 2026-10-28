@@ -29,13 +29,12 @@ constexpr int maxGate = 400;   // gate: 1-400 % of one step
 inline int midiNote (int octave, int pitchClass) { return 12 * (octave + 2) + pitchClass; }
 
 // ---------------------------------------------------------------------------------------
-// Defaults = the init values (SPEC.md 4.1): every step on, F (the middle of the note knob)
-// in the octave of middle C, velocity 100, gate 100 %, probability 100 %, CC 64.
+// Defaults = the init values (SPEC.md 4.1): every step on, C in the octave of middle C (middle C), velocity 100, gate 100 %, probability 100 %, CC 64.
 struct Step
 {
     bool on = true;               // note on/off
     bool ccOn = true;             // CC on/off: the CC part has its own on/off (SPEC.md 5)
-    std::int8_t pitchClass = 5;   // 0-11 (C to B)
+    std::int8_t pitchClass = 0;   // 0-11 (C to B); init C, so with octave 3 the step plays middle C (MIDI 60)
     std::int8_t octave = 3;       // minOctave..maxOctave; 3 = the octave starting at middle C (MIDI 60)
     std::uint8_t velocity = 100;  // 1-127 (never 0: velocity 0 is a note-off in MIDI)
     std::uint16_t gate = 100;     // 1-400 % of one step

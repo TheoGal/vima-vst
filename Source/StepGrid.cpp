@@ -137,7 +137,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
                 return pc;
         return 0;
     };
-    pitch.minValue = 0; pitch.maxValue = 11; pitch.defaultValue = 5;   // F, the middle of the knob (init value)
+    pitch.minValue = 0; pitch.maxValue = 11; pitch.defaultValue = 0;   // C (init value: middle C)
     pitch.setValue = [this] (int pc)
     {
         const int t = ctx.ui.track;

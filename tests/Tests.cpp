@@ -993,8 +993,8 @@ void testInitAndGate()
     {
         Project p;
         const auto& s = p.patterns[0].tracks[5].steps[31];
-        check (s.on && s.pitchClass == 5 && s.octave == 3 && s.velocity == 100 && s.gate == 100 && s.probability == 100 && s.cc == 64,
-               "init step: on, F in the middle C octave, velocity 100, gate 100 %, probability 100 %, CC 64");
+        check (s.on && s.pitchClass == 0 && s.octave == 3 && s.velocity == 100 && s.gate == 100 && s.probability == 100 && s.cc == 64,
+               "init step: on, C in the middle C octave (middle C), velocity 100, gate 100 %, probability 100 %, CC 64");
         check (p.patterns[0].tracks[7].length == 16 && p.patterns[0].tracks[7].division == 4 && p.currentPattern == 0, "init track: length 16, 1/16, pattern 1");
         bool blank = true;
         for (int i = 1; i < numPatterns; ++i)
