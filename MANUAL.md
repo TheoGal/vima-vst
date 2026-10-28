@@ -38,10 +38,10 @@ VIMA is a VST3 plugin only. There is no Audio Unit version, because an AU plugin
 
 Your DAW lists VIMA as an **instrument**. Put it on its own track, then route that track's MIDI output to the instruments you want to play.
 
->**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible >format to be able to get MIDI data out of a VST plugin and "midi plugins" are not recognised as such by any current DAWs. 
+>**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "midi plugins" are not recognised as such by any current DAWs. 
 
-- **Ableton Live:** on the instrument track, set "MIDI From" to the VIMA track, choose VIMA in the lower chooser, and set monitoring to "In".
-- Other DAWs have a similar "MIDI input from another track" option.
+**Ableton Live:** on the instrument track, set "MIDI From" to the VIMA track, choose VIMA in the lower chooser, and set monitoring to "In".
+Other DAWs have a similar "MIDI input from another track" option.
 
 **Note for Ableton Live users.** Live strips the MIDI channel from MIDI data internally. All 8 tracks of one VIMA arrive mixed together on the receiving track, whatever their MIDI channels. So in Live, use **one VIMA per instrument track**: its 8 tracks can still play several drum voices or layers of that one instrument. (Hosts such as Bitwig and Reaper keep the channels, so there one VIMA can feed several instruments by channel. In Live, that would need a Max for Live device.)
 
@@ -51,23 +51,103 @@ Your DAW lists VIMA as an **instrument**. Put it on its own track, then route th
 
 ## 4. The main window
 
-The main window (the **step view**) shows one track of one pattern at a time. From top to bottom:
-
-1. the **top band**: track and pattern controls, transport and menus,
-2. the **step grid**: 32 steps in two rows of 16,
-3. the **operations panel**: selection, params, ranges, randomize and the other tools.
+The main window (the **step view**) shows one track of one pattern at a time. 
 
 The window can be resized by dragging its bottom right corner, from 75% to 200%. The size is remembered with your project.
 
 > **[Screenshot]** The full step view with the three areas labeled. *(main-dark-notes.png)*
 
-### 4.1 Colors tell you what a control affects
+The step sequencer consists of two rows of 16 steps, each row with a thin **LED bar** above it which serves as a "playhead" - its the sequencer's "running light".
 
-- **White / neutral**: settings for the whole track or the whole instance (length, division, direction, swing, MIDI channel, scale).
+> **[Screenshot]** Close-up of a few step cells in note mode, with one step off and the last steps beyond the track length.
+
+There are two modes available: **Note Mode** and **CC Mode** which share the same length, time division and direction. 
+
+- In **note mode** the steps show note, octave and one slider (velocity, gate or probability).
+- In **CC mode** each step shows one tall slider for its CC value.
+
+Each of the modes can be set to output MIDI messages or not - so a seqeunce (a track) can output only notes, only CC values or both.
+
+### Steps in detail
+
+**[screenshot]** two step cells, one note mode, one cc mode
+
+**note mode:**
+
+- **The step button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
+- **The note knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
+- **The octave knob**.
+- **The slider**: velocity, gate or probability, as chosen with SLIDER, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
+
+**CC mode:** the cell shows the step button (CC on / off for that step) and one tall cyan slider for the CC value.
+
+Steps whose shown part is off are dimmed. Steps beyond the track length are faded out and are not played.
+
+**What a step holds.**
+
+| Value | Range | What it does |
+|---|---|---|
+| Note on / off | | Whether the step triggers a note. |
+| CC on / off | | Whether the step sends its CC value. Independent of the note on / off. |
+| Note | C to B | The note name. With the scale on, only notes in the scale. |
+| Octave | C-2 to 8 (with middle C = C3) | The whole MIDI range. |
+| Velocity | 1-127 | How hard the note is played. |
+| Gate | 1-400% | How long the note lasts, in steps: 100% is one step, 50% half a step, 400% four steps (legato and long notes). |
+| Probability | 1-100% | The chance that the note plays each time the step comes round. Notes only, never CC. |
+| CC value | 0-127 | The value sent when the step's CC is on. |
+
+>**design choice** You might have noticed that velocity and probability ranges do not include a 0 value. A Midi note on message with velocity 0 is actually a Note off and a 0 probability is actually "never" hence the design choices here.
+
+**Mouse tips for knobs and sliders:**
+
+- Drag up / down to change a value. Hold **Shift** for fine control.
+- The **mouse wheel** changes one value per notch.
+- **Double-click** to type a value. Notes can be typed by name (C, D#, A#).
+- **Right-click** (or Alt + click) resets to the default.
+
+### Tracks and patterns
+
+You can create up to 8 completely individual sequences by using Vima's **tracks**. Furthermore you can "progress" sequences or chain them into longer sequences by using **patterns**. You can think of it like this: a track can be set (via its Midi channel output) to control a specific instrument in your DAW while patterns can be used to provide variations of what each instrument plays and build long sequences. 
+
+#### Tracks
+
+VIMA has **8 tracks**, shown as 01 to 08. Each one has its own midi channel assigned and its **note** and **cc** modes. Its related parameters can be controlled at the top of the plugin 
+
+**[screenshot]** the track selection frame
+
+**TRACK**: pick which of the 8 tracks you see and edit.
+**NOTES / CC**: switch between note mode and CC mode (4.3). Each button has a small light showing whether that output (notes or CC) is on for this track.
+**MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.
+**In note mode:** 
+- **NOTE OUT** (on / off): whether the track's notes are sent.
+- **SLIDER**: which value the step sliders show: VELocity, GATE or PROBability.
+**In CC mode:**
+- **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
+- **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
+
+>**design choice**A new VIMA starts with track 1 sending notes on channel 1 (so you can quickly check if midi routing in your DAW is set correctly and an instrument is receiving notes), CC mode off and CC numbers 102-109 assigned to all 8 tracks (numbers that are unassigned in the MIDI standard). So loading Vima won't accidentally mess up your carefully designed synth sound.
+
+#### Patterns
+
+**[screenshot]** the pattern selection frame
+
+VIMA holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and these per-track settings:
+
+- **LENGTH** (4-32 steps): where the track loops. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms for free.
+- **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
+- **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once.
+- **SWING** (0-100%): delays every second step. 0% is straight; 100% delays it by half a step.
+- **USE SCALE** (on / off): whether this track follows the global scale in this pattern.
+
+>A new VIMA starts with **pattern 1** ready to play (16 steps on, every step an F above middle C at velocity 100) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used.
+
+>**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
+
+>**design choice:** Controls are visually grouped and color coded according to their scope
+>- **White / neutral**: settings for the whole track, pattern or the whole instance (length, division, direction, swing, MIDI channel, scale).
 - **Green**: the note part (note steps, notes, octaves, velocity, NOTE OUT, USE SCALE).
 - **Cyan**: the CC part (CC steps, CC values, CC NUM, CC OUT).
 - **Purple**: gate. **Amber**: probability.
-- **Amber** also marks two special states: LEARN (mapping macros, section 9) and a held transport (4.2).
 
 ### 4.2 The top band
 
@@ -77,11 +157,7 @@ The top band groups controls by what they belong to, inside rounded frames.
 
 **The track frame** (left) holds everything about the current track that is the same in every pattern:
 
-- **TRACK**: pick which of the 8 tracks you see and edit.
-- **NOTES / CC**: switch between note mode and CC mode (4.3). Each button has a small light showing whether that output (notes or CC) is on for this track.
-- **MIDI CH**: the track's MIDI channel.
-- In note mode: **NOTE OUT** and **SLIDER** (which value the step sliders show: VEL, GATE or PROB).
-- In CC mode: **CC NUM** and **CC OUT**.
+
 
 **The pattern frame** (middle) holds everything that belongs to this track **in this pattern**:
 
@@ -107,51 +183,13 @@ The top band groups controls by what they belong to, inside rounded frames.
 
 ### 4.3 Note mode and CC mode
 
-Every track always has both a note part and a CC part. **NOTES / CC only changes what you see and edit**; it does not change what the track sends. That is set by NOTE OUT and CC OUT.
 
-- In **note mode** the steps show note, octave and one slider (velocity, gate or probability).
-- In **CC mode** each step shows one tall slider for its CC value.
 
 The step buttons, the PARAMS buttons, RANDOMIZE, COPY and the other tools always work on the part you are looking at.
 
 > **[Screenshot]** The same track in note mode and in CC mode, side by side. *(main-dark-notes.png, main-dark-cc.png)*
 
-### 4.4 The step grid
 
-Two rows of 16 steps, each row with a thin **LED bar** above it.
-
-> **[Screenshot]** Close-up of a few step cells in note mode, with one step off and the last steps beyond the track length.
-
-**Each step cell, in note mode:**
-
-- **The step button** (the number at the top): click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
-- **The note knob**: the note name. With the scale on, it only lands on notes in the scale, and its arc is spread over the scale (in C minor, C is fully left and A# fully right).
-- **The octave knob**.
-- **The slider**: velocity, gate or probability, as chosen with SLIDER, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
-
-**In CC mode** the cell shows the step button (CC on / off for that step) and one tall cyan slider for the CC value.
-
-Steps whose shown part is off are dimmed. Steps beyond the track length are faded out and are not played.
-
-**What a step holds.** Every track has **32 steps**. Each step holds:
-
-| Value | Range | What it does |
-|---|---|---|
-| Note on / off | | Whether the step plays its note. An off step still takes its time; it is not skipped. |
-| CC on / off | | Whether the step sends its CC value. Independent of the note on / off. |
-| Note | C to B | The note name. With the scale on, only notes in the scale. |
-| Octave | C-2 to 8 (with middle C = C3) | The whole MIDI range. |
-| Velocity | 1-127 | How hard the note is played. Never 0 (in MIDI, velocity 0 means "note off"). |
-| Gate | 1-400% | How long the note lasts, in steps: 100% is one step, 50% half a step, 400% four steps (legato and long notes). |
-| Probability | 1-100% | The chance that the note plays each time the step comes round. Notes only, never CC. |
-| CC value | 0-127 | The value sent when the step's CC is on. |
-
-**Mouse tips for knobs and sliders:**
-
-- Drag up / down to change a value. Hold **Shift** for fine control.
-- The **mouse wheel** changes one value per notch.
-- **Double-click** to type a value. Notes can be typed by name (C, D#, A#).
-- **Right-click** (or Alt + click) resets to the default.
 
 ### 4.5 The LED bar: playhead and selection
 
@@ -256,34 +294,7 @@ Routing (channel, outputs, CC number), global settings, the chain and macro mapp
 
 ---
 
-## 6. Tracks and patterns
 
-Some settings belong to a **track** and stay the same in every pattern: where the track sends its MIDI (channel, outputs, CC number). Others belong to a **pattern** and can be different in each one: the steps and how the track plays them (length, division, direction, swing, use scale). So switching patterns changes the music, but never sends your bassline to the drum machine.
-
-### 6.1 Tracks
-
-VIMA has **8 tracks**, shown as 01 to 08. Each has:
-
-- **MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.
-- **NOTE OUT** (on / off): whether the track's notes are sent.
-- **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
-- **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
-
-A new VIMA starts with track 1 sending notes on channel 1, tracks 2-8 silent on channels 2-8, CC output off everywhere, and CC numbers 102-109 (numbers that are unassigned in the MIDI standard, so nothing reacts to them by accident).
-
-**Tip:** want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
-
-### 6.2 Patterns
-
-VIMA holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and these per-track settings:
-
-- **LENGTH** (4-32 steps): where the track loops. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms for free.
-- **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
-- **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once (1 2 3 4 3 2 1 2 ...).
-- **SWING** (0-100%): delays every second step. 0% is straight; 100% delays it by half a step.
-- **USE SCALE** (on / off): whether this track follows the global scale in this pattern.
-
-A new VIMA starts with **pattern 1** ready to play (16 steps on, every step an F above middle C at velocity 100) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used.
 
 ---
 
