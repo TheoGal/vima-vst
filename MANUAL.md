@@ -49,49 +49,7 @@ Your DAW lists VIMA as an **instrument**. Put it on its own track, then route th
 
 ---
 
-### 4. Tracks
-
-VIMA has **8 tracks**, shown as 01 to 08. Each has:
-
-- **MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.
-- **NOTE OUT** (on / off): whether the track's notes are sent.
-- **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
-- **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
-
-A new VIMA starts with track 1 sending notes on channel 1, tracks 2-8 silent on channels 2-8, CC output off everywhere, and CC numbers 102-109 (numbers that are unassigned in the MIDI standard, so nothing reacts to them by accident).
-
-**Tip:** want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
-
-### 4.2 Patterns
-
-VIMA holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and these per-track settings:
-
-- **LENGTH** (4-32 steps): where the track loops. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms for free.
-- **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
-- **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once (1 2 3 4 3 2 1 2 ...).
-- **SWING** (0-100%): delays every second step. 0% is straight; 100% delays it by half a step.
-- **USE SCALE** (on / off): whether this track follows the global scale in this pattern.
-
-A new VIMA starts with **pattern 1** ready to play (16 steps on, every step an F above middle C at velocity 100) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used.
-
-### 4.3 Steps
-
-Every track has **32 steps**. Each step holds:
-
-| Value | Range | What it does |
-|---|---|---|
-| Note on / off | | Whether the step plays its note. An off step still takes its time; it is not skipped. |
-| CC on / off | | Whether the step sends its CC value. Independent of the note on / off. |
-| Note | C to B | The note name. With the scale on, only notes in the scale. |
-| Octave | C-2 to 8 (with middle C = C3) | The whole MIDI range. |
-| Velocity | 1-127 | How hard the note is played. Never 0 (in MIDI, velocity 0 means "note off"). |
-| Gate | 1-400% | How long the note lasts, in steps: 100% is one step, 50% half a step, 400% four steps (legato and long notes). |
-| Probability | 1-100% | The chance that the note plays each time the step comes round. Notes only, never CC. |
-| CC value | 0-127 | The value sent when the step's CC is on. |
-
----
-
-## 5. The main window
+## 4. The main window
 
 The main window (the **step view**) shows one track of one pattern at a time. From top to bottom:
 
@@ -103,15 +61,15 @@ The window can be resized by dragging its bottom right corner, from 75% to 200%.
 
 > **[Screenshot]** The full step view with the three areas labeled. *(main-dark-notes.png)*
 
-### 5.1 Colors tell you what a control affects
+### 4.1 Colors tell you what a control affects
 
 - **White / neutral**: settings for the whole track or the whole instance (length, division, direction, swing, MIDI channel, scale).
 - **Green**: the note part (note steps, notes, octaves, velocity, NOTE OUT, USE SCALE).
 - **Cyan**: the CC part (CC steps, CC values, CC NUM, CC OUT).
 - **Purple**: gate. **Amber**: probability.
-- **Amber** also marks two special states: LEARN (mapping macros, section 9) and a held transport (5.2).
+- **Amber** also marks two special states: LEARN (mapping macros, section 9) and a held transport (4.2).
 
-### 5.2 The top band
+### 4.2 The top band
 
 The top band groups controls by what they belong to, inside rounded frames.
 
@@ -120,7 +78,7 @@ The top band groups controls by what they belong to, inside rounded frames.
 **The track frame** (left) holds everything about the current track that is the same in every pattern:
 
 - **TRACK**: pick which of the 8 tracks you see and edit.
-- **NOTES / CC**: switch between note mode and CC mode (5.3). Each button has a small light showing whether that output (notes or CC) is on for this track.
+- **NOTES / CC**: switch between note mode and CC mode (4.3). Each button has a small light showing whether that output (notes or CC) is on for this track.
 - **MIDI CH**: the track's MIDI channel.
 - In note mode: **NOTE OUT** and **SLIDER** (which value the step sliders show: VEL, GATE or PROB).
 - In CC mode: **CC NUM** and **CC OUT**.
@@ -147,7 +105,7 @@ The top band groups controls by what they belong to, inside rounded frames.
 
 **Why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. Tracks that should ignore it (drums, effects) just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
 
-### 5.3 Note mode and CC mode
+### 4.3 Note mode and CC mode
 
 Every track always has both a note part and a CC part. **NOTES / CC only changes what you see and edit**; it does not change what the track sends. That is set by NOTE OUT and CC OUT.
 
@@ -158,7 +116,7 @@ The step buttons, the PARAMS buttons, RANDOMIZE, COPY and the other tools always
 
 > **[Screenshot]** The same track in note mode and in CC mode, side by side. *(main-dark-notes.png, main-dark-cc.png)*
 
-### 5.4 The step grid
+### 4.4 The step grid
 
 Two rows of 16 steps, each row with a thin **LED bar** above it.
 
@@ -175,6 +133,19 @@ Two rows of 16 steps, each row with a thin **LED bar** above it.
 
 Steps whose shown part is off are dimmed. Steps beyond the track length are faded out and are not played.
 
+**What a step holds.** Every track has **32 steps**. Each step holds:
+
+| Value | Range | What it does |
+|---|---|---|
+| Note on / off | | Whether the step plays its note. An off step still takes its time; it is not skipped. |
+| CC on / off | | Whether the step sends its CC value. Independent of the note on / off. |
+| Note | C to B | The note name. With the scale on, only notes in the scale. |
+| Octave | C-2 to 8 (with middle C = C3) | The whole MIDI range. |
+| Velocity | 1-127 | How hard the note is played. Never 0 (in MIDI, velocity 0 means "note off"). |
+| Gate | 1-400% | How long the note lasts, in steps: 100% is one step, 50% half a step, 400% four steps (legato and long notes). |
+| Probability | 1-100% | The chance that the note plays each time the step comes round. Notes only, never CC. |
+| CC value | 0-127 | The value sent when the step's CC is on. |
+
 **Mouse tips for knobs and sliders:**
 
 - Drag up / down to change a value. Hold **Shift** for fine control.
@@ -182,7 +153,7 @@ Steps whose shown part is off are dimmed. Steps beyond the track length are fade
 - **Double-click** to type a value. Notes can be typed by name (C, D#, A#).
 - **Right-click** (or Alt + click) resets to the default.
 
-### 5.5 The LED bar: playhead and selection
+### 4.5 The LED bar: playhead and selection
 
 The LED bar above each row shows the **playhead** (the playing step lights up in green or cyan) and is also where you **select steps**:
 
@@ -197,7 +168,7 @@ The LED bar above each row shows the **playhead** (the playing step lights up in
 
 ---
 
-## 6. Step operations
+## 5. Step operations
 
 The operations panel at the bottom holds the tools that change many steps at once.
 
@@ -205,14 +176,14 @@ The operations panel at the bottom holds the tools that change many steps at onc
 
 Two things decide what every tool changes:
 
-- **Which steps**: the selection (or all steps), see 5.5.
+- **Which steps**: the selection (or all steps), see 4.5.
 - **Which values**: the **PARAMS** buttons.
 
-### 6.1 PARAMS: choosing which values change
+### 5.1 PARAMS: choosing which values change
 
-In note mode: **ALL, ON, NOTE, OCT, VEL, GATE, PROB**. In CC mode: **ALL, ON, CC**. (ON means the step's on / off.)
+In note mode: **ALL, ON, NOTE, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC** (with only two, there is no ALL: both lit is everything). ON means the step's note on / off in note mode, its CC on / off in CC mode.
 
-- Click **ALL** to arm everything.
+- Click **ALL** to arm everything (note mode).
 - While ALL is lit, clicking a single param arms **only that one**.
 - Otherwise the buttons toggle one by one.
 - Something is always armed: you cannot switch the last one off.
@@ -220,13 +191,13 @@ In note mode: **ALL, ON, NOTE, OCT, VEL, GATE, PROB**. In CC mode: **ALL, ON, CC
 
 PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the curves.
 
-### 6.2 RANGES: setting the limits
+### 5.2 RANGES: setting the limits
 
 One min / max bar for each value, in its color: NOTE, OCT, VEL, GATE, PROB in note mode, CC in CC mode. Drag the handles to set the limits random values and curves stay within. Ranges of values that are not armed are dimmed.
 
 The **NOTE** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, E, F, G in any octave (in C minor: D, D#, F, G).
 
-### 6.3 RANDOMIZE
+### 5.3 RANDOMIZE
 
 Gives the armed values of the steps in scope new random values, within their ranges.
 
@@ -238,7 +209,7 @@ Each press is one undo step, so you can press, listen, undo, press again.
 
 **Guided randomization in practice:** select steps 9-16, arm only VEL, set the VEL range to 60-110, press RANDOMIZE. Only the velocities of the second half change, and only within a musical range.
 
-### 6.4 SMOOTH
+### 5.4 SMOOTH
 
 Pulls the armed values one step closer to their average. Press once for a small nudge; **press and hold** to keep smoothing until the values meet. Great for taming a wild randomize result without losing its character.
 
@@ -246,7 +217,7 @@ Pulls the armed values one step closer to their average. Press once for a small 
 - Notes are smoothed in scale steps, across octave boundaries.
 - Smooth never goes outside the values you already have.
 
-### 6.5 Curves, rotate and invert
+### 5.5 Curves, rotate and invert
 
 Under RANDOMIZE and SMOOTH:
 
@@ -258,15 +229,15 @@ Each press is one undo step.
 
 > **[Screenshot]** A row of CC values before and after SINE.
 
-### 6.6 SHIFT ALL
+### 5.6 SHIFT ALL
 
-An endless knob that moves one value of all steps in scope up or down together, keeping the shape: NOTE (in scale steps), OCT, VEL, GATE or PROB in note mode, CC in CC mode. Pick the value with the buttons next to the knob.
+An endless knob that moves one value of all steps in scope up or down together, keeping the shape: NOTE (in scale steps), OCT, VEL, GATE or PROB in note mode, picked with the buttons next to the knob. In CC mode it always moves the CC value, so the knob stands alone.
 
 - While you turn, the knob shows the running offset ("+3"); it springs back to 0 when you let go.
 - A step that hits its limit stays there while the others keep moving, and turning back in the same move brings the original shape back exactly.
 - You hear the change live while turning; the whole move is one undo step.
 
-### 6.7 COPY and PASTE (steps)
+### 5.7 COPY and PASTE (steps)
 
 Copy is how you move steps between tracks and patterns.
 
@@ -277,11 +248,42 @@ Copy is how you move steps between tracks and patterns.
 
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (NOTE), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
-### 6.8 UNDO
+### 5.8 UNDO
 
 UNDO (in the top band) steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH).
 
 Routing (channel, outputs, CC number), global settings, the chain and macro mappings are not part of undo.
+
+---
+
+## 6. Tracks and patterns
+
+Some settings belong to a **track** and stay the same in every pattern: where the track sends its MIDI (channel, outputs, CC number). Others belong to a **pattern** and can be different in each one: the steps and how the track plays them (length, division, direction, swing, use scale). So switching patterns changes the music, but never sends your bassline to the drum machine.
+
+### 6.1 Tracks
+
+VIMA has **8 tracks**, shown as 01 to 08. Each has:
+
+- **MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.
+- **NOTE OUT** (on / off): whether the track's notes are sent.
+- **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
+- **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
+
+A new VIMA starts with track 1 sending notes on channel 1, tracks 2-8 silent on channels 2-8, CC output off everywhere, and CC numbers 102-109 (numbers that are unassigned in the MIDI standard, so nothing reacts to them by accident).
+
+**Tip:** want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
+
+### 6.2 Patterns
+
+VIMA holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and these per-track settings:
+
+- **LENGTH** (4-32 steps): where the track loops. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms for free.
+- **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
+- **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once (1 2 3 4 3 2 1 2 ...).
+- **SWING** (0-100%): delays every second step. 0% is straight; 100% delays it by half a step.
+- **USE SCALE** (on / off): whether this track follows the global scale in this pattern.
+
+A new VIMA starts with **pattern 1** ready to play (16 steps on, every step an F above middle C at velocity 100) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used.
 
 ---
 
