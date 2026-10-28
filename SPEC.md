@@ -596,7 +596,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **CC mode track frame order**: MIDI CH, **CC OUT**, CC NUM (the output toggle right after MIDI CH, where NOTE OUT sits in note mode; was MIDI CH, CC NUM, CC OUT). Update 12.2 and 12.4.
 
 ### 15.2 Open
 
