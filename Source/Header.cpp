@@ -203,7 +203,7 @@ Header::Header (Context& c) : ctx (c)
         auto row = [] (const char* what, bool can, const juce::String& label)
         {
             if (! can) return "NOTHING TO " + juce::String (what);
-            return juce::String (what) + "  " + (label.isEmpty() ? juce::String ("LAST EDIT") : label);
+            return juce::String (what) + ": " + (label.isEmpty() ? juce::String ("LAST EDIT") : label);
         };
         return row ("UNDO", ctx.proc.canUndo(), ctx.proc.nextUndoLabel()) + "\n"
              + row ("REDO", ctx.proc.canRedo(), ctx.proc.nextRedoLabel());

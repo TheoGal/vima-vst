@@ -1376,14 +1376,14 @@ int main (int argc, char** argv)
                 {
                     auto* undoPill = findPill (ed, "UNDO");
                     check (proc->nextUndoLabel().startsWith ("STEPS 3-5 NOTE ON") && proc->nextUndoLabel().contains ("TR05")
-                               && undoPill != nullptr && undoPill->getTooltip().startsWith ("UNDO  STEPS 3-5 NOTE ON") && undoPill->getTooltip().contains ("NOTHING TO REDO"),
+                               && undoPill != nullptr && undoPill->getTooltip().startsWith ("UNDO: STEPS 3-5 NOTE ON") && undoPill->getTooltip().contains ("NOTHING TO REDO"),
                            "the UNDO info box names the next undo (a stroke: its steps)");
                 }
                 proc->performUndo();
                 check (! stepOf (4, 2).on && ! stepOf (4, 3).on && ! stepOf (4, 4).on && stepOf (4, 0).on, "a whole stroke is one undo step");
                 if (auto* undoPill = findPill (ed, "UNDO"))
                 {
-                    check (proc->canRedo() && undoPill->getTooltip().contains ("REDO  STEPS 3-5 NOTE ON"), "the info box names the next redo");
+                    check (proc->canRedo() && undoPill->getTooltip().contains ("REDO: STEPS 3-5 NOTE ON"), "the info box names the next redo");
                     undoPill->mouseUp (mouseEvent (*undoPill, undoPill->getLocalBounds().getCentre(), undoPill->getLocalBounds().getCentre(), false,
                                                    juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
                     check (stepOf (4, 2).on && stepOf (4, 3).on && stepOf (4, 4).on && ! proc->canRedo(), "right-click on UNDO redoes the stroke");
