@@ -38,7 +38,7 @@ VIMA is a VST3 plugin only. There is no Audio Unit version, because an AU plugin
 
 Your DAW lists VIMA as an **instrument**. Put it on its own track, then route that track's MIDI output to the instruments you want to play.
 
-**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "midi plugins" are not recognised as such by any current DAWs. 
+>**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible >format to be able to get MIDI data out of a VST plugin and "midi plugins" are not recognised as such by any current DAWs. 
 
 - **Ableton Live:** on the instrument track, set "MIDI From" to the VIMA track, choose VIMA in the lower chooser, and set monitoring to "In".
 - Other DAWs have a similar "MIDI input from another track" option.
