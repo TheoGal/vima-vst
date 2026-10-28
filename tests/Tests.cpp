@@ -1647,6 +1647,20 @@ int main (int argc, char** argv)
         ctx.ui.selection = rangeMask (4, 11);
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-dark-notes.png"));
+        proc->edit (-1, [] (Project& p) { p.globals.chainOn = true; });
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("main-chain-on.png"));
+        proc->edit (-1, [] (Project& p) { p.globals.chainOn = false; });
+        ed.refreshAll();
+        if (auto* chain = findPill (ed, "CHAIN"))
+        {
+            click (*chain);
+            const bool on = proc->read ([] (const Project& p) { return p.globals.chainOn; });
+            click (*chain);
+            check (on && ! proc->read ([] (const Project& p) { return p.globals.chainOn; }), "the header CHAIN toggle switches chain playback on and off");
+        }
+        else
+            check (false, "the header has a CHAIN toggle");
         {
             const auto sc = ctx.scope();
             ctx.ui.clip = proc->read ([&] (const Project& p) { return copySteps (p, sc); });

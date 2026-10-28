@@ -39,19 +39,23 @@ static void undoIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour 
 
 static void settingsIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
 {
-    const float x = b.getX() + 12.0f, y = b.getCentreY() - 7.0f;
-    g.setColour (c);
-    for (int i = 0; i < 3; ++i)
-        g.drawLine (x, y + 3.0f + i * 4.0f, x + 12.0f, y + 3.0f + i * 4.0f, 1.3f);
-    const float knobX[] = { 8.0f, 3.5f, 9.0f };
-    for (int i = 0; i < 3; ++i)
+    // a gear: 8 teeth around a ring, a hole in the middle
+    const auto ctr = b.getCentre();
+    const int teeth = 8;
+    const float rOut = 8.0f, rIn = 6.2f;
+    juce::Path p;
+    for (int i = 0; i < teeth * 4; ++i)
     {
-        auto r = juce::Rectangle<float> (3.6f, 3.6f).withCentre ({ x + knobX[i], y + 3.0f + i * 4.0f });
-        g.setColour (Theme::current().panel);
-        g.fillEllipse (r);
-        g.setColour (c);
-        g.drawEllipse (r, 1.3f);
+        // each tooth: two points on the outer radius, two on the inner radius
+        const float a = juce::MathConstants<float>::twoPi * ((float) i / (float) (teeth * 4)) - juce::MathConstants<float>::halfPi;
+        const float r = (i % 4 == 0 || i % 4 == 1) ? rOut : rIn;
+        const auto pt = ctr + juce::Point<float> (std::cos (a), std::sin (a)) * r;
+        if (i == 0) p.startNewSubPath (pt); else p.lineTo (pt);
     }
+    p.closeSubPath();
+    g.setColour (c);
+    g.strokePath (p, juce::PathStrokeType (1.3f, juce::PathStrokeType::mitered));
+    g.drawEllipse (juce::Rectangle<float> (5.6f, 5.6f).withCentre (ctr), 1.3f);
 }
 
 static void fileIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
@@ -215,12 +219,24 @@ Header::Header (Context& c) : ctx (c)
     addAndMakeVisible (macrosBtn);
 
     settingsBtn.look = plainOutline;
-    settingsBtn.text = [] { return juce::String ("SETTINGS"); };
-    settingsBtn.justification = juce::Justification::centredLeft;
-    settingsBtn.textInset = 34;
-    settingsBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.12f); };
+    // SETTINGS: icon only (a gear), like FILE
     settingsBtn.radius = 6.0f;
     settingsBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (ctx.openSettings) ctx.openSettings(); };
+    settingsBtn.setTitle ("Settings");
+
+    // CHAIN: chain playback on / off, next to the PATTERN box (SPEC.md 7.2); lit when on
+    chainBtn.radius = 5.0f;
+    chainBtn.font = [] { return Fonts::monoSemi (10.0f).withExtraKerningFactor (0.06f); };
+    chainBtn.text = [] { return juce::String ("CHAIN"); };
+    chainBtn.look = [this]
+    {
+        const auto& t = Theme::current();
+        return ctx.globalsCopy().chainOn ? Pill::Look { t.neutral, t.neutral, t.onNeutral, 1.5f, false }
+                                         : Pill::Look { t.tile, t.border, t.text2, 1.0f, false };
+    };
+    chainBtn.onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.chainOn = ! p.globals.chainOn; }); };
+    setLearnTarget (chainBtn, MacroTarget::chainOn);
+    addAndMakeVisible (chainBtn);
     addAndMakeVisible (settingsBtn);
 }
 
@@ -254,7 +270,7 @@ void Header::resized()
     }
 
     auto right = r;
-    settingsBtn.setBounds (right.removeFromRight (108).withSizeKeepingCentre (108, 32));
+    settingsBtn.setBounds (right.removeFromRight (40).withSizeKeepingCentre (40, 32));
     right.removeFromRight (8);
     macrosBtn.setBounds (right.removeFromRight (104).withSizeKeepingCentre (104, 32));
     right.removeFromRight (8);
@@ -265,9 +281,21 @@ void Header::resized()
     hostArea = right.removeFromRight (116).withSizeKeepingCentre (116, 32);
     transportBtn.setBounds (hostArea.withWidth (30).reduced (4, 4).translated (1, 0));
     right.removeFromRight (10);
+    // CHAIN next to the PATTERN box (not in the patterns view, which has its own chain controls)
+    chainBtn.setVisible (! ctx.ui.patternsView);
+    juce::Rectangle<int> chainArea;
+    if (chainBtn.isVisible())
+    {
+        chainArea = right.removeFromRight (64).withSizeKeepingCentre (64, 32);
+        right.removeFromRight (4);
+    }
     patternArea = right.removeFromRight (162).withSizeKeepingCentre (162, 32);   // sized for two-digit numbers
     if (! pv)
+    {
         patternArea.setX (496);   // over the pattern tiles
+        chainArea.setX (patternArea.getRight() + 4);
+    }
+    chainBtn.setBounds (chainArea.reduced (0, 3));
     auto pa = patternArea.reduced (3);
     prevBtn.setBounds (pa.removeFromLeft (24));
     nextBtn.setBounds (pa.removeFromRight (24));

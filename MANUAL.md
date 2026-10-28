@@ -162,6 +162,7 @@ The top band groups controls by what they belong to, inside rounded frames.
 **The pattern frame** (middle) holds everything that belongs to this track **in this pattern**:
 
 - **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view (section 7).
+- **CHAIN**, next to it: switches chain playback on and off (7.4). It lights up while the chain is on, so you can always see whether the patterns are changing by themselves.
 - **LENGTH**, **DIVISION**, **DIRECTION**, **SWING**, and in note mode **USE SCALE**.
 
 **On the right:**
@@ -173,8 +174,8 @@ The top band groups controls by what they belong to, inside rounded frames.
 - **FILE** (folder icon): presets, single patterns and macro sets (section 10).
 - **UNDO**: one step back, up to 64 steps.
 - **MACROS**: the Macros page (section 9).
-- **SETTINGS**: the Settings dialog (section 11).
-- **SCALE** (under SETTINGS): the global scale and root, for example "C MIN". Click it to pick a root and one of 13 scales or your own USER scale. The mouse wheel over it steps through the scales.
+- **SETTINGS** (gear icon): the Settings dialog (section 11).
+- **SCALE** (on the right, under the buttons): the global scale and root, for example "C MIN". Click it to pick a root and one of 13 scales or your own USER scale. The mouse wheel over it steps through the scales.
 
 > **[Screenshot]** The scale popover open. *(popover-scale.png)*
 
@@ -372,7 +373,7 @@ The chain on the right is a song list: patterns played one after the other.
 - **+ ADD** adds the selected pattern at the end. The same pattern can appear many times.
 - Each entry shows the pattern, its length in bars and a **repeat** count (- / +, up to 99). The playing entry has a lit LED and a progress bar.
 - **Drag** an entry by its grip to reorder; **x** removes it; **CLEAR** empties the chain.
-- **CHAIN ON / OFF** starts and stops chain playback. **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
+- **CHAIN ON / OFF** starts and stops chain playback (the same as the CHAIN button next to the PATTERN box in the main window). **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
 - Long chains scroll with the mouse wheel or the scroll bar.
 
 When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do. This was a deliberate choice: it keeps editing patterns from the DAW simple.) Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
@@ -495,7 +496,7 @@ Your DAW's own preset system (for example Live's .adv or .vstpreset files) also 
 
 ## 11. The Settings dialog
 
-Open it with **SETTINGS**. Click **DONE** or anywhere outside it to close.
+Open it with **SETTINGS** (the gear icon). Click **DONE** or anywhere outside it to close.
 
 > **[Screenshot]** The Settings dialog, dark and light. *(settings.png, settings-light.png)*
 

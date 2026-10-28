@@ -181,7 +181,7 @@ Works like step copy / paste (9.1):
 - An ordered list (song list) of up to 64 entries, shown on the right of the patterns view.
 - Each entry: playing LED, position number, pattern number, length in bars (one play of the pattern times its repeats, in 4/4 bars) with a progress bar while playing, a repeat count (- / +, 1 to 99) and a remove button (x).
 - **+ ADD 05** appends the selected pattern. **CLEAR** (under the chain) empties the chain. Entries can repeat the same pattern. The footer shows the number of entries and the total length.
-- **CHAIN ON/OFF** turns chain playback on. **LOOP ON/OFF**: at the end of the chain, LOOP ON goes back to the first entry; LOOP OFF plays the chain once, then keeps playing (repeating) its last pattern until the transport stops or another pattern is picked.
+- **CHAIN ON/OFF** turns chain playback on. The **CHAIN** toggle next to the PATTERN box in the step view and on the Macros page (12.2) does the same. **LOOP ON/OFF**: at the end of the chain, LOOP ON goes back to the first entry; LOOP OFF plays the chain once, then keeps playing (repeating) its last pattern until the transport stops or another pattern is picked.
 - One play of a pattern lasts as long as its longest track (length x division).
 - The chain **does not follow the song position**: when the host starts, the chain always starts from its first entry, wherever the host's playhead is. A jump while playing (locate or host loop) restarts the current entry from there. Steps inside a pattern still follow the song position (3), so timing stays in sync. (Decided to keep it this way: a song-position chain would make editing patterns from the DAW awkward.)
 - Switching the chain on while playing queues its first entry (quantize applies).
@@ -340,9 +340,9 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 1. **Top band** (step view): the header row and the track parameter row (12.4) form one taller band, grouped by scope with rounded **frames** (panel fill and border, like the operations panel):
    - **Left**: the "βήμα" wordmark (12.1), drawn larger, centred on the band's height.
    - **Track frame**: the TRACK dropdown and the NOTES / CC mode switch on top; below them MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC NUM and CC OUT. The frame keeps the width of its wider mode (note mode), so it never changes size when switching modes. The frame's shape follows its contents (here the lower part is wider than the top, with rounded inner corners).
-   - **Pattern frame**: the PATTERN box (7.4) as a tab on top; below it, wider, LENGTH, DIVISION, DIRECTION, SWING and (note mode) USE SCALE.
-   - **Right**, top row: the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2), SETTINGS (11). Under SETTINGS, the global **SCALE** in its own small frame, its top and bottom aligned with the lower part of the other frames; shown in both modes.
-   - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, BPM, FILE, UNDO, MACROS and SETTINGS.
+   - **Pattern frame**: the PATTERN box (7.4) and the **CHAIN** toggle (chain playback on / off, the same as CHAIN ON/OFF in the patterns view, 7.2; lit white when on, outlined when off; LEARN maps it to the Chain On macro) as a tab on top; below it, wider, LENGTH, DIVISION, DIRECTION, SWING and (note mode) USE SCALE.
+   - **Right**, top row: the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2), SETTINGS (gear icon only, 11). Under the right end of that row, the global **SCALE** in its own small frame, its top and bottom aligned with the lower part of the other frames; shown in both modes.
+   - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, CHAIN (Macros page only; the patterns view has its own chain controls), BPM, FILE, UNDO, MACROS and SETTINGS.
 2. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it. Steps are grouped in fours by alternating tile shades.
 3. **Operations panel** (12.6).
 
@@ -387,7 +387,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - **Hover**: every clickable, enabled button gets a lighter background while the mouse is over it (the "selected" color, like the slot play buttons in the patterns view); filled buttons (green STEPS, lit toggles, RANDOMIZE) brighten slightly instead. Dimmed (inactive) buttons and the step buttons get no hover.
 - **Click**: the action happens when the mouse button is released over the button; releasing elsewhere cancels.
 - **PASTE**, **CLEAR** (operations panel and the patterns view's bottom bar) and the **curve buttons** (shapes, ‹ ›, INV) fill **green while held down** as press feedback (not while dimmed).
-- Buttons that open a menu or a popover show a small **down chevron after their value**: TRACK (header), the PATTERN number, DIVISION, the SCALE name, TRACK (patterns view). FILE and SETTINGS have none.
+- Buttons that open a menu or a popover show a small **down chevron after their value**: TRACK (header), the PATTERN number, DIVISION, the SCALE name, TRACK (patterns view). FILE and SETTINGS (icon-only buttons) have none.
 - **Right-click**: does nothing (except on mapped controls while LEARN is on, 13.2).
 - **Mouse wheel** on the DIVISION tile: next / previous division (wheel up = shorter steps). On the scale name: next / previous scale.
 - **SMOOTH**: click for one smoothing step; **press and hold** to repeat (9.3).
@@ -407,9 +407,9 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Header**
 - TRACK: click for the track list. NOTES / CC: click to switch.
-- PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker.
+- PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker. CHAIN: click to switch chain playback on / off.
 - Start / stop button: see 3.
-- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS: settings dialog.
+- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings dialog.
 
 **Patterns view**
 - Pattern slot: click to select it (or, while COPIED / TRACK COPIED is lit, to pick the paste destination). The play button at the top center selects it and queues it.
@@ -494,7 +494,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005" in amber. A banner on the Macros page explains it while listening.
 - While learning: clicks map instead of editing; an amber frame marks the view; the control under the mouse is highlighted; **every mapped control keeps an amber outline with its macro number** (for example "M005"), following the track and pattern on screen.
 - **A mapped control cannot be mapped again**: clicking it does nothing (the outline flashes). **Right-click** a mapped control to free it (unmap its macro).
-- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON.
+- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON (the patterns view button or the header CHAIN toggle).
 - **No duplicates in the editor either**: a change in the mapping editor that would point a second macro at a control that already has one is refused, and the footer shows "ALREADY ON M003".
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
 - Colors follow the params: note on, note, octave and velocity green, gate purple, probability amber, CC on and CC value cyan, track and global targets neutral.
@@ -536,7 +536,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 257 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 258 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -671,3 +671,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: CC mode: PARAMS are just ON and CC (no ALL); SHIFT ALL is the knob alone (no CC button).
 - 2026-10-27: Window 1200 x 700 (was 720): top padding over the top band, tighter grid / operations gap and panel padding. Settings: no × button (DONE or a click outside closes); footer RESET DEFAULTS + DONE left, VIMA ON GITHUB link right.
 - 2026-10-27: Step macro targets Note Step / CC Step renamed Note On / CC On (Macros page NOTE ON / CC ON, host names NoteOn / CCOn).
+- 2026-10-28: CHAIN toggle next to the PATTERN box (pattern frame tab in the step view; also on the Macros page). SETTINGS becomes an icon-only gear button.
