@@ -115,12 +115,12 @@ VIMA has **8 tracks**, shown as 01 to 08. Each one has its own midi channel assi
 
 **[screenshot]** the track selection frame
 
-**TRACK**: pick which of the 8 tracks you see and edit.<br />
-**NOTES / CC**: switch between note mode and CC mode (4.3). Each button has a small light showing whether that output (notes or CC) is on for this track.<br />
-**MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.<br />
+- **TRACK**: pick which of the 8 tracks you see and edit.<br />
+- **NOTES / CC**: switch between note mode and CC mode (4.3). Each button has a small light showing whether that output (notes or CC) is on for this track.<br />
+- **MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.<br />
 **In note mode:** 
 - **NOTE OUT** (on / off): whether the track's notes are sent.
-- **SLIDER**: which value the step sliders show: VELocity, GATE or PROBability.
+- **SLIDER**: which value the step sliders show: VELocity, GATE or PROBability.<br />
 **In CC mode:**
 - **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
 - **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
