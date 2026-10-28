@@ -590,6 +590,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
   > VIMA was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
 
 - Name origin: VIMA comes from the Greek "βήμα" (step); see the naming rule at the top.
+- **Plan (to revisit when MANUAL.md is finished): manual inside the plugin.** A PDF made from the finished manual is committed as `docs/VIMA Manual.pdf` (checked before it ships) and the CI build copies it into the bundle's `Contents/Resources` folder (Windows and macOS). A **MANUAL** link in the Settings footer, next to VIMA ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
 - **Plan (to revisit when MANUAL.md is finished):** the finished manual becomes the repo's `README.md`. On top, a short block: one screenshot, a Download line (latest CI build), a one-line "in testing" status. At the end, a short "For developers / license" section pointing to SPEC.md (build, CI, tests). The current README's install steps move into the manual's "Before you start". Screenshots in `docs/images/`. A PDF can be made from the same file.
 
 ## 15. Open questions
