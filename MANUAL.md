@@ -1,89 +1,55 @@
 # VIMA User Manual
 
-*Draft. Screenshot suggestions are marked with **[Screenshot]**. The file names in brackets refer to the screenshots the test build renders (the "Vima-test-screenshots" download of every CI run), which can be used as a starting point.*
+**[Screenshot]** The full window in the dark theme, note mode, with a busy pattern. *(main-dark-notes.png)*
 
----
+## 1. Vima - the VST step sequencer to kill all VST step sequencers
 
-## 1. What VIMA is
+**VIMA** (from the Greek word "βήμα", which means **step**) is an **8-track MIDI step sequencer** that runs as a plugin (VST3) inside your DAW. It makes no sound of its own: it plays notes and CC (controller) messages into the instruments and effects you already use. Its focused on being easy to use while still providing extensive capabilities in an unclutttered UI.
 
-VIMA is an **8-track MIDI step sequencer** that runs as a plugin (VST3) inside your DAW. It makes no sound of its own: it plays notes and CC (controller) messages into the instruments and effects you already use.
+Each of its 8 tracks has up to 32 steps, its own length, timing and direction, and can play notes, send a CC value, or both at once. You can store 64 patterns, chain them into a song, switch between them live, and automate almost everything from your DAW.
 
-Each of its 8 tracks has up to 32 steps, its own length, timing and direction, and can play notes, send a controller, or both at once. You can store 64 patterns, chain them into a song, switch between them live, and automate almost everything from your DAW.
-
-The heart of VIMA is what we call **guided randomization**. Randomness is a great way to find ideas you would never have played yourself, but pure chance is rarely musical. In VIMA you steer it:
+The heart of VIMA is what I like to call **guided randomization**. Randomness is a great way to find ideas you would never have played yourself, but pure chance is rarely musical. In VIMA you steer it:
 
 - you choose **which steps** change (the selection),
 - you choose **which values** change (note, octave, velocity, gate, probability, CC),
 - you choose **the limits** they move within (the ranges),
-- and you shape the result afterwards: smooth it, draw a curve over it, rotate it, flip it.
+- you can shape the parameters: apply pre-defined shapes smooth them, draw a curve over them, etc.
 
 Editing is quick and direct. Nothing asks "are you sure?" when you randomize: you try, you listen, and if you do not like it, UNDO is one click away.
 
-The name comes from the Greek word "βήμα", which means **step**.
+---
+## 2. Who am I
 
-> **[Screenshot]** The full window in the dark theme, note mode, with a busy pattern. *(main-dark-notes.png)*
+I have been a MIDI freak for a long time. Under the name Softcore I wrote electronic music and built a lot of software little helpers (M4L, Lemur templates): Microtonic Lemurized (2013), was a Lemur template which turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing" (https://soniccharge.com/forum/topic/383-microtonic-lemuriized). I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
+
+So, even though I've tipped my toes into coding I am not a C++ developer.
+VIMA was vibe-coded:  I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in Vima was made on purpose. Throughout this manual I'll be explaining various design choices and the reasoning behind them.
 
 ---
 
-## 2. Where VIMA comes from
-
-> I have been a MIDI freak for a long time. Under the name Softcore I wrote music and built control surfaces: a lot of Lemur templates for the iPad, some of them a bit out of this world. One of them, Microtonic Lemuriized (2013), turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing". I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
->
-> VIMA comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Guided randomization: chance that you steer, on the steps you pick, for the parameters you choose, within the ranges you set. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
->
-> VIMA was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
->
-> *Ted (Softcore)*
-
-### 2.1 Design choices, in plain words
-
-A few decisions shape how VIMA feels. Knowing them makes the rest of the manual easier to follow.
-
-- **VIMA follows your DAW.** It plays when the DAW plays, at the DAW's tempo, and every step lands where the song position says it should. Jump around the timeline, loop a section, start in the middle of a bar: VIMA is always on the right step. There is no separate clock to keep in sync.
-- **The scale is the boss.** Pick a scale once, and every note control, every random note, every smoothing and every curve stays in it. You can still switch the scale off for a single track (a drum track, for example).
-- **Notes and CC live side by side.** Every track has a note part and a CC part sharing the same steps. A step can play a note, send a controller value, or both, independently.
-- **Destructive, fast, with a safety net.** Operations change your steps right away. You undo, you do not "apply". Up to 64 steps of undo.
-- **Automation you can trust.** Everything your DAW automates goes through 128 macros, each pointing at one fixed thing (for example "velocity of step 5, track 3, pattern 23"). What you record is exactly what plays back, whatever is on screen at the time.
-- **No clutter.** No help text in the main window, no hidden pages. Colors tell you what a control affects (more on that in 5.1).
-- **Things VIMA deliberately does not do:** chords per step, step skipping and a drum-machine mode. Probability only affects notes, never CC. These were left out to keep the instrument focused.
-
----
-
-## 3. Before you start
-
-### 3.1 Installing
+## 3. Installing and setting up
 
 - **Windows:** copy the `Vima.vst3` folder to `C:\Program Files\Common Files\VST3\`.
 - **macOS:** copy `Vima.vst3` to `/Library/Audio/Plug-Ins/VST3/`. Test builds are not notarized by Apple, so the first time you may need to remove the quarantine flag (see INSTALL-macOS.txt in the download).
 
 VIMA is a VST3 plugin only. There is no Audio Unit version, because an AU plugin cannot send MIDI out.
 
-### 3.2 Getting MIDI out of VIMA
+### Getting MIDI out of VIMA
 
 Your DAW lists VIMA as an **instrument**. Put it on its own track, then route that track's MIDI output to the instruments you want to play.
+
+**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "midi plugins" are not recognised as such by any current DAWs. 
 
 - **Ableton Live:** on the instrument track, set "MIDI From" to the VIMA track, choose VIMA in the lower chooser, and set monitoring to "In".
 - Other DAWs have a similar "MIDI input from another track" option.
 
-> **Note for Ableton Live users.** Live strips the MIDI channel from MIDI data internally. All 8 tracks of one VIMA arrive mixed together on the receiving track, whatever their MIDI channels. So in Live, use **one VIMA per instrument track**: its 8 tracks can still play several drum voices or layers of that one instrument. (Hosts such as Bitwig and Reaper keep the channels, so there one VIMA can feed several instruments by channel. In Live, that would need a Max for Live device.)
+**Note for Ableton Live users.** Live strips the MIDI channel from MIDI data internally. All 8 tracks of one VIMA arrive mixed together on the receiving track, whatever their MIDI channels. So in Live, use **one VIMA per instrument track**: its 8 tracks can still play several drum voices or layers of that one instrument. (Hosts such as Bitwig and Reaper keep the channels, so there one VIMA can feed several instruments by channel. In Live, that would need a Max for Live device.)
 
-> **[Screenshot]** Ableton Live with VIMA on one track and an instrument track receiving "MIDI From: VIMA".
+**[Screenshot]** Ableton Live with VIMA on one track and an instrument track receiving "MIDI From: VIMA".
 
 ---
 
-## 4. Tracks and patterns: how VIMA thinks
-
-Before looking at the screen, it helps to know where each setting lives. VIMA has three levels:
-
-| Level | What lives there |
-|---|---|
-| **Global** (the whole instance) | The scale and root, the chain, and the settings in the Settings dialog |
-| **Track** (the same in every pattern) | MIDI channel, NOTE OUT, CC OUT, CC number |
-| **Track in a pattern** (can differ per pattern) | Length, division, direction, swing, use scale, and all 32 steps |
-
-So when you switch patterns, the **music** changes (steps, lengths, timing), but a track keeps going to the **same place** (channel, outputs, CC number). That way a pattern switch never suddenly sends your bassline to the drum machine.
-
-### 4.1 Tracks
+### 4. Tracks
 
 VIMA has **8 tracks**, shown as 01 to 08. Each has:
 
