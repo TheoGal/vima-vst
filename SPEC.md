@@ -596,7 +596,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Default note C** (was F): the init step note is C in the octave of middle C (MIDI 60, middle C itself); right-click / Alt + click on a NOTE knob resets to C. Update 4.1, 12.5 and the tests.
 
 ### 15.2 Open
 
