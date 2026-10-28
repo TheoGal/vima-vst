@@ -1,7 +1,7 @@
 #pragma once
 
 // Track parameter row (SPEC.md 12.4), the lower half of the step view's top band (12.2):
-// track group (MIDI CH; note mode NOTE OUT and SLIDER, CC mode CC NUM and CC OUT), pattern group
+// track group (MIDI CH; note mode NOTE OUT and SLIDER, CC mode CC OUT and CC NUM), pattern group
 // (LENGTH, DIVISION, DIRECTION, SWING, USE SCALE in note mode) and the global SCALE on the right.
 
 #include "Context.h"

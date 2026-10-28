@@ -339,7 +339,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 
 1. **Top band** (step view): the header row and the track parameter row (12.4) form one taller band, grouped by scope with rounded **frames** (panel fill and border, like the operations panel):
    - **Left**: the square **β** logo (12.1) with its short green bar, centred between the top and bottom of the frames (the wordmark appears in the other views' header).
-   - **Track frame**: the TRACK dropdown and the NOTES / CC mode switch on top; below them MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC NUM and CC OUT. The frame keeps the width of its wider mode (note mode), so it never changes size when switching modes. The frame's shape follows its contents (here the lower part is wider than the top, with rounded inner corners).
+   - **Track frame**: the TRACK dropdown and the NOTES / CC mode switch on top; below them MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC OUT and CC NUM (the output toggle always right after MIDI CH). The frame keeps the width of its wider mode (note mode), so it never changes size when switching modes. The frame's shape follows its contents (here the lower part is wider than the top, with rounded inner corners).
    - **Pattern frame**: the PATTERN box (7.4) and the **CHAIN** toggle (chain playback on / off, the same as CHAIN ON/OFF in the patterns view, 7.2; lit white when on, outlined when off; LEARN maps it to the Chain On macro) as a tab on top; below it, wider, LENGTH, DIVISION, DIRECTION, SWING and (note mode) USE SCALE.
    - **Right**, top row: the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2), SETTINGS (gear icon only, 11). Under the right end of that row, the global **SCALE** in its own small frame, its top and bottom aligned with the lower part of the other frames; shown in both modes.
    - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, CHAIN (Macros page only; the patterns view has its own chain controls), BPM, FILE, UNDO, MACROS and SETTINGS.
@@ -360,7 +360,7 @@ The NOTES and CC mode buttons each carry an LED showing whether that output is o
 
 ### 12.4 Track parameter row
 
-- **Layout**: grouped by scope, from wide to narrow (12.2): the **track group** (settings the same in every pattern: MIDI CH; note mode NOTE OUT and SLIDER; CC mode CC NUM and CC OUT) inside the track frame, the **pattern group** (stored per track and per pattern: LENGTH, DIVISION, DIRECTION, SWING, and USE SCALE in note mode) inside the pattern frame, and the **global** SCALE at the right edge.
+- **Layout**: grouped by scope, from wide to narrow (12.2): the **track group** (settings the same in every pattern: MIDI CH; note mode NOTE OUT and SLIDER; CC mode CC OUT and CC NUM) inside the track frame, the **pattern group** (stored per track and per pattern: LENGTH, DIVISION, DIRECTION, SWING, and USE SCALE in note mode) inside the pattern frame, and the **global** SCALE at the right edge.
 - Part-specific controls are only shown in their own mode, to avoid accidents. Track-wide controls are shown in both.
 - **Numeric values** (MIDI CH, LENGTH, SWING, CC NUM): small arc knobs with the value inside. LENGTH also shows "steps".
 - **DIVISION**: click opens a popover grid with the straight values on one row and the triplets on a second row. The mouse wheel on the tile steps through the values.
@@ -596,7 +596,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **CC mode track frame order**: MIDI CH, **CC OUT**, CC NUM (the output toggle right after MIDI CH, where NOTE OUT sits in note mode; was MIDI CH, CC NUM, CC OUT). Update 12.2 and 12.4.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -674,3 +674,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-27: Step macro targets Note Step / CC Step renamed Note On / CC On (Macros page NOTE ON / CC ON, host names NoteOn / CCOn).
 - 2026-10-28: CHAIN toggle next to the PATTERN box (pattern frame tab in the step view; also on the Macros page). SETTINGS becomes an icon-only gear button.
 - 2026-10-28: Step view shows the square β logo (theme text color, green bar) left of the TRACK frame; the βήμα wordmark stays in the patterns view and Macros page header.
+- 2026-10-28: CC mode track frame order MIDI CH, CC OUT, CC NUM (output toggle where NOTE OUT is in note mode).

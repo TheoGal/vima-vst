@@ -287,11 +287,11 @@ void ParamRow::resized()
     int x = 0;
     scaleTile.setBounds (getWidth() - 108, 0, 108, getHeight());   // far right, under SETTINGS; same top and bottom as the frames
 
-    // Track group: MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC NUM and CC OUT. The
+    // Track group: MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC OUT and CC NUM. The
     // group keeps the width of its wider mode, so the frame never changes size.
     x = trackX;
     put (channelTile, x, 106);
-    if (ctx.ui.ccMode) { put (ccNumberTile, x, 110); put (ccOutTile, x, 88); }
+    if (ctx.ui.ccMode) { put (ccOutTile, x, 88); put (ccNumberTile, x, 110); }   // the output toggle right after MIDI CH, as in note mode
     else { put (noteOutTile, x, 88); put (sliderTile, x, 132); }
     trackTiles = { trackX, tileInset, 106 + 8 + juce::jmax (110 + 8 + 88, 88 + 8 + 132), full.getHeight() };
 
