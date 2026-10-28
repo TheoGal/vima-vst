@@ -601,7 +601,13 @@ Nothing at the moment.
 
 ### 15.2 Open
 
-Nothing at the moment.
+- **Alternate macro configuration: VIMA as a hands-on instrument (idea, not decided).** A second macro configuration, next to today's fixed mappings (13.1), where macros follow what is on screen:
+  - **Sets of 32 macros** mapped to whatever mode (note or CC), track and pattern is visible, one set each for: steps on / off, note value, CC value, octave, velocity, gate (32 macros = the 32 steps).
+  - **Dedicated macro controls** for selecting: track, pattern, mode (NOTES / CC), length, division.
+  - **A configurable output for playhead "feedback"** into a MIDI controller (for example step LEDs), separate from the MIDI going to the instruments.
+  - Such a configuration would let a MIDI controller (like a Behringer BCR2000) act as a control surface for VIMA and actually make it a "playable", hands-on instrument.
+  - Unlike today's macros it cannot serve DAW automation (a recorded move would land on whatever is visible at playback), so it would be a separate mode, not a replacement.
+  - It remains to be seen if anyone would ever use it, or even ask for such a thing.
 
 ## 16. Decision log
 
