@@ -597,7 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **SMOOTH moves off steps too**: the average is still taken from the real values of the steps that are **on** (in scope; the CC param follows CC on), but every step in scope moves one step toward it, **off steps included**, so a step switched on later already fits. With no step on there is no average and nothing moves. Update 9.3 (today off steps are excluded from both the average and the change).
+1. **SMOOTH moves off steps too**: the average is still taken from the real values of the steps that are **on** (in scope; the CC param follows CC on), but every step in scope moves one step toward it, **off steps included**, so a step switched on later already fits. With no step on there is no average and nothing moves. **Exception: the ON param** (note on / CC on) is not averaged: it keeps following the on chance (one step toward chance x steps in scope, rounded half up). Update 9.3 (today off steps are excluded from both the average and the change).
 
 ### 15.2 Open
 
