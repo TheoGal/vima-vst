@@ -597,7 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **SMOOTH with ON: target rounded half up**: the target number of on steps is chance x steps in scope **rounded half up** to a whole number (5 steps at 50% = 2.5 = 3; 7 steps at 30% = 2.1 = 2; 16 at 50% = 8), and each press moves the on count one step toward it (replaces "only when strictly closer", where 2 and 3 both stayed). Update 9.3 and 15.2 history line.
 
 ### 15.2 Open
 
