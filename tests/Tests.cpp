@@ -549,10 +549,22 @@ void testOperations()
         int restored = -1;
         check (u.undo (*p, restored) && restored == 0 && tp.steps[0].velocity == 5, "undo restores the pattern");
         check (! u.undo (*p, restored), "nothing left to undo");
-        check (u.canRedo() && u.redo (*p, restored) && tp.steps[0].velocity == 99 && u.canUndo(), "redo brings the undone change back");
+        check (u.canRedo() && u.redo (*p, restored) && tp.steps[0].velocity == 99 && u.canUndo (*p), "redo brings the undone change back");
         u.undo (*p, restored);
         u.push (*p, 0);
         check (! u.canRedo(), "a new edit clears the redo steps");
+        {
+            // a step that changed nothing is skipped
+            UndoHistory h;
+            int rp = -1;
+            tp.steps[0].velocity = 10;
+            h.push (*p, 0, "A");
+            tp.steps[0].velocity = 20;   // a real change
+            h.push (*p, 0, "B");         // e.g. SMOOTH pressed after it had converged: no change
+            check (h.canUndo (*p) && h.nextLabel (*p) == "A", "an undo step that changed nothing is not shown");
+            check (h.undo (*p, rp) && tp.steps[0].velocity == 10 && ! h.canUndo (*p), "UNDO skips it and undoes the real change");
+            check (h.canRedo() && h.nextRedoLabel() == "A", "and REDO holds only the real change");
+        }
     }
 }
 

@@ -97,10 +97,10 @@ public:
 
     bool performUndo();
     bool performRedo();
-    bool canUndo() { const Lock sl (lock); return undo.canUndo(); }
+    bool canUndo() { const Lock sl (lock); return undo.canUndo (project); }
     bool canRedo() { const Lock sl (lock); return undo.canRedo(); }
     juce::String nextRedoLabel() { const Lock sl (lock); return undo.nextRedoLabel(); }
-    juce::String nextUndoLabel() { const Lock sl (lock); return undo.nextLabel(); }      // UNDO info box
+    juce::String nextUndoLabel() { const Lock sl (lock); return undo.nextLabel (project); }      // UNDO info box
     void relabelUndo (const juce::String& l) { const Lock sl (lock); undo.relabelLast (l); }   // a stroke that grew
     void queuePattern (int index);   // follows the quantize setting
 

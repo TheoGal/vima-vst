@@ -528,8 +528,40 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
 }
 
 // ---------------------------------------------------------------------------------------
+static bool samePattern (const Pattern& a, const Pattern& b)
+{
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto& x = a.tracks[(size_t) t];
+        const auto& y = b.tracks[(size_t) t];
+        if (x.length != y.length || x.division != y.division || x.direction != y.direction || x.swing != y.swing
+            || x.scaleOn != y.scaleOn || x.steps != y.steps)
+            return false;
+    }
+    return true;
+}
+
+bool UndoHistory::isNoop (const Entry& e, const Project& p) const
+{
+    return samePattern (e.data, p.patterns[(size_t) e.pattern]);
+}
+
+const UndoHistory::Entry* UndoHistory::topChange (const Project& p) const
+{
+    for (auto it = entries.rbegin(); it != entries.rend(); ++it)
+        if (! isNoop (*it, p)) return &*it;
+    return nullptr;
+}
+
+void UndoHistory::dropNoops (const Project& p)
+{
+    while (! entries.empty() && isNoop (entries.back(), p))
+        entries.pop_back();
+}
+
 void UndoHistory::push (const Project& p, int pattern, const juce::String& label)
 {
+    dropNoops (p);   // the previous step is finished: forget it if it changed nothing
     pattern = juce::jlimit (0, numPatterns - 1, pattern);
     entries.push_back ({ pattern, p.patterns[(size_t) pattern], label });
     while (entries.size() > maxEntries)
@@ -539,6 +571,7 @@ void UndoHistory::push (const Project& p, int pattern, const juce::String& label
 
 bool UndoHistory::undo (Project& p, int& restoredPattern)
 {
+    dropNoops (p);
     if (entries.empty())
         return false;
     auto e = entries.back();

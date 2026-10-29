@@ -87,16 +87,21 @@ public:
     void push (const Project&, int pattern, const juce::String& label = {});
     bool undo (Project&, int& restoredPattern);
     bool redo (Project&, int& restoredPattern);   // steps undone can be redone until a new edit
-    bool canUndo() const { return ! entries.empty(); }
+    // Steps that changed nothing (a SMOOTH that had already converged, the same curve twice, a
+    // knob clicked without moving) are skipped: UNDO never "does nothing" (SPEC.md 9).
+    bool canUndo (const Project& p) const { return topChange (p) != nullptr; }
     bool canRedo() const { return ! redoEntries.empty(); }
     void clear() { entries.clear(); redoEntries.clear(); }
-    juce::String nextLabel() const { return entries.empty() ? juce::String() : entries.back().label; }
+    juce::String nextLabel (const Project& p) const { const auto* e = topChange (p); return e != nullptr ? e->label : juce::String(); }
     juce::String nextRedoLabel() const { return redoEntries.empty() ? juce::String() : redoEntries.back().label; }
     void relabelLast (const juce::String& l) { if (! entries.empty()) entries.back().label = l; }
 
 private:
     struct Entry { int pattern; Pattern data; juce::String label; };
     std::deque<Entry> entries, redoEntries;
+    bool isNoop (const Entry&, const Project&) const;   // the step's pattern is unchanged since it was saved
+    const Entry* topChange (const Project&) const;      // the newest step that changed something
+    void dropNoops (const Project&);
     static constexpr size_t maxEntries = 64;
 };
 } // namespace vima
