@@ -267,10 +267,10 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
 - The average is recalculated on every press.
 - Units of "one step" per param: NOTE 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
 - NOTE and octave are treated as one combined pitch for NOTE smoothing, so notes converge across octave boundaries.
-- The ON param is ignored by Smooth (on/off has no average).
+- **ON** (with ON armed; CC ON in CC mode): each press moves the number of on steps in scope **one step closer to the on chance** (chance x steps in scope, 9.2): fewer on than that, a random off step is switched on; more, a random on step is switched off. It only moves when that gets strictly closer (5 steps at 50% = 2.5: 2 and 3 both stay). Press and hold converges, then stops changing.
 - Off steps are **excluded** from Smooth: they are not counted in the average and their values are not changed. (Randomize, by contrast, includes off steps.)
 - Smooth ignores the Randomize ranges (it only moves values toward the average, never outside the current spread).
-- Press once for one step. **Press and hold** repeats (after 0.4 s, about 14 times per second). One press or one hold is one undo entry.
+- Press once for one step. **Press and hold** repeats (after 0.4 s, about 10 times per second). One press or one hold is one undo entry.
 
 ### 9.4 Shift (SHIFT ALL)
 
@@ -291,7 +291,7 @@ A relative shift of all steps in scope.
 
 Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the armed PARAMS, like Randomize; each press is one undo step; off steps are included (like Randomize).
 
-- **Shapes**: SINE, TRIANGLE, RAMP (up) and SQUARE write one cycle of the shape from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. SINE starts at the middle and goes up first; TRIANGLE peaks in the middle; RAMP runs from min at the first step to max at the last; SQUARE is high for the first half, low for the second. NOTE uses the notes of the NOTE range, in-scale only when the track's scale is on (5); octaves are not changed unless OCT is armed. ON: a step is on where the curve is in its upper half. A ramp down is RAMP then INV.
+- **Shapes**: SINE, TRIANGLE, RAMP (up) and SQUARE write one cycle of the shape from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. SINE starts at the middle and goes up first; TRIANGLE peaks in the middle; RAMP runs from min at the first step to max at the last; SQUARE is high for the first half, low for the second. NOTE uses the notes of the NOTE range, in-scale only when the track's scale is on (5); octaves are not changed unless OCT is armed. ON: a step is on where the curve is above **100% minus the on chance** of its height (chance 50% = the upper half, 70% = above 30%, 25% = only the top quarter; 0% = all off, 100% = all on). A ramp down is RAMP then INV.
 - **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = the last value goes first, ‹ = the first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: NOTE moves pitch classes only, OCT only when OCT is armed; with only some params armed, only those move (for example ON alone shifts the rhythm under fixed notes).
 - **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 1%, GATE 100% becomes 301%. With CC range 0-100: 30 becomes 70. NOTE mirrors the notes of the NOTE range (in-scale when the scale is on; octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
 
@@ -536,7 +536,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 265 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 269 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -597,12 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **SMOOTH press and hold slower**: repeats about 10 times per second (was about 14), still starting after 0.4 s. Update 9.3.
-2. **The ON chance across the operations** (note mode ON with its chance, CC mode CC ON with its own):
-   - **RANDOMIZE**: unchanged: a flipped coin per step with the on chance, so the number of steps that end up on varies around the chance (wanted).
-   - **Curves** (SINE, TRIANGLE, RAMP, SQUARE) with ON armed: a step is on where the curve is above **100% minus the on chance** of its height: chance 50% = on above the middle (as before), chance 70% = on above 30%, chance 25% = only the top quarter.
-   - **SMOOTH** with ON armed: each press moves the number of on steps in scope **one step closer to the on chance** (chance x steps in scope): fewer on than that, a random off step is switched on; more, a random on step is switched off; only when the change gets strictly closer (5 steps at 50% = 2.5: both 2 and 3 stay). Press and hold converges and then stops changing. (Today SMOOTH ignores ON.)
-   - **ROTATE ‹ ›** and **INV**: unchanged (rotate cycles the on / offs like the other params, INV swaps on and off).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -691,3 +686,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: UNDO info box rows read "UNDO: ..." and "REDO: ...".
 - 2026-10-29: Default note C (middle C) instead of F, for new steps and the NOTE knob reset.
 - 2026-10-29: RANDOMIZE ON uses an on chance set by a new ON bar in RANGES (0-100%, default 50%, separate for note and CC mode), replacing a fixed 70% that had been chosen without being decided.
+- 2026-10-29: The ON chance also sets the curves' on threshold (on above 100% minus the chance) and SMOOTH with ON moves the on count one step toward it. SMOOTH hold repeats about 10 times per second.

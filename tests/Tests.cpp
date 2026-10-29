@@ -1162,6 +1162,45 @@ void testCurves()
     applyCurve (*p, all, true, CurveShape::ramp);
     check (tp.steps[0].cc == 20 && tp.steps[15].cc == 60, "a curve stays inside the param's RANGE");
 
+    // the ON chance sets the curves' on threshold, and SMOOTH moves the on count toward it
+    {
+        only ({ Param::on });
+        auto onCount = [&] { int n = 0; for (int i = 0; i < 16; ++i) n += tp.steps[(size_t) i].on ? 1 : 0; return n; };
+        g.onChance = 50;
+        applyCurve (*p, all, false, CurveShape::ramp);
+        const int at50 = onCount();
+        g.onChance = 75;
+        applyCurve (*p, all, false, CurveShape::ramp);
+        const int at75 = onCount();
+        g.onChance = 25;
+        applyCurve (*p, all, false, CurveShape::ramp);
+        check (at50 == 8 && at75 == 12 && onCount() == 4 && tp.steps[15].on && ! tp.steps[11].on,
+               "curves: ON where the curve is above 100 % minus the on chance (50 % = upper half, 75 % = top three quarters)");
+        g.onChance = 0;
+        applyCurve (*p, all, false, CurveShape::ramp);
+        const int at0 = onCount();
+        g.onChance = 100;
+        applyCurve (*p, all, false, CurveShape::ramp);
+        check (at0 == 0 && onCount() == 16, "curves: ON chance 0 % = all off, 100 % = all on");
+
+        juce::Random r (5);
+        g.onChance = 50;
+        for (int i = 0; i < 16; ++i) tp.steps[(size_t) i].on = i < 3;   // 3 on, target 8
+        smooth (*p, all, false, &r);
+        const int after1 = onCount();
+        for (int k = 0; k < 20; ++k) smooth (*p, all, false, &r);
+        const int settled = onCount();
+        for (int i = 0; i < 16; ++i) tp.steps[(size_t) i].on = i < 14;  // 14 on, target 8
+        smooth (*p, all, false, &r);
+        check (after1 == 4 && settled == 8 && onCount() == 13,
+               "SMOOTH with ON: one step closer to the on chance per press (adds or removes a random step), then stays");
+        const auto five = makeScope (*p, 0, 0, 0x1Fu);
+        for (int i = 0; i < 16; ++i) tp.steps[(size_t) i].on = i < 2;   // 2 of 5 on, target 2.5
+        smooth (*p, five, false, &r);
+        check (onCount() == 2, "SMOOTH with ON only moves when it gets strictly closer (2 of 5 at 50 % stays)");
+    }
+    only ({ Param::cc });
+
     rotateSteps (*p, all, true, 1);
     check (tp.steps[0].cc == 60 && tp.steps[1].cc == 20, "ROTATE >: the last value goes first");
     rotateSteps (*p, all, true, -1);

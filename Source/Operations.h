@@ -44,7 +44,8 @@ int soundingNote (const Project&, int pattern, int track, int step);
 
 // ---- operations on a scope ----------------------------------------------------------
 void randomize (Project&, const Scope&, bool ccMode, juce::Random&);
-void smooth (Project&, const Scope&, bool ccMode);
+// Smooth: values one step toward their average; ON: the on count one step toward the on chance
+void smooth (Project&, const Scope&, bool ccMode, juce::Random* rnd = nullptr);
 
 // Curves (SPEC.md 9.5): write one cycle of a shape over the scope (first to last step), for every
 // armed param, between the param's RANGE min and max

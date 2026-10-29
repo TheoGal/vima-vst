@@ -602,7 +602,7 @@ void OpsPanel::timerCallback()
     if (! repeating)
     {
         repeating = true;
-        startTimer (70);
+        startTimer (100);   // about 10 repeats per second (SPEC.md 9.3)
     }
     smoothOnce();
 }

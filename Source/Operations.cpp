@@ -255,13 +255,33 @@ static void setParamValue (const Project& p, const TrackPattern& tp, Step& s, Pa
     }
 }
 
-void smooth (Project& p, const Scope& sc, bool ccMode)
+void smooth (Project& p, const Scope& sc, bool ccMode, juce::Random* rnd)
 {
     auto& tp = trackOf (p, sc.pattern, sc.track);
+    auto& r = rnd != nullptr ? *rnd : juce::Random::getSystemRandom();
     for (auto param : armedParams (p.globals, ccMode))
     {
         if (param == Param::on || param == Param::ccOn)
-            continue;   // on/off has no average
+        {
+            // ON (SPEC.md 9.3): the number of on steps moves one step toward the on chance
+            // (chance x steps in scope), switching a random step, only when that gets strictly closer
+            const bool cc = param == Param::ccOn;
+            const double target = (cc ? p.globals.ccOnChance : p.globals.onChance) / 100.0 * sc.count();
+            std::vector<int> onSteps, offSteps;
+            for (int i = 0; i < maxSteps; ++i)
+                if (sc.contains (i))
+                    ((cc ? tp.steps[(size_t) i].ccOn : tp.steps[(size_t) i].on) ? onSteps : offSteps).push_back (i);
+            const double now = (double) onSteps.size();
+            auto flip = [&] (std::vector<int>& from, bool value)
+            {
+                if (from.empty()) return;
+                auto& s = tp.steps[(size_t) from[(size_t) r.nextInt ((int) from.size())]];
+                (cc ? s.ccOn : s.on) = value;
+            };
+            if (std::abs (now + 1.0 - target) < std::abs (now - target) - 1.0e-9) flip (offSteps, true);
+            else if (std::abs (now - 1.0 - target) < std::abs (now - target) - 1.0e-9) flip (onSteps, false);
+            continue;
+        }
         // the CC param follows the CC on/off, the note params the note on/off
         auto active = [param] (const Step& st) { return param == Param::cc ? st.ccOn : st.on; };
         long long sum = 0;
@@ -379,7 +399,11 @@ void applyCurve (Project& p, const Scope& sc, bool ccMode, CurveShape shape)
             const double f = shapeAt (shape, i - first, span);
             auto& s = tp.steps[(size_t) i];
             if (param == Param::on || param == Param::ccOn)
-                setRaw (s, param, f >= 0.5 ? 1 : 0);
+            {
+                // on where the curve is above 100 % minus the on chance (chance 50 % = the upper half)
+                const int chance = param == Param::ccOn ? g.ccOnChance : g.onChance;
+                setRaw (s, param, chance > 0 && f >= 1.0 - chance / 100.0 - 1.0e-9 ? 1 : 0);
+            }
             else if (param == Param::note)
                 s.pitchClass = (std::int8_t) pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, (int) std::lround (f * (double) (pcs.size() - 1)))];
             else
