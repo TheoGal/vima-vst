@@ -88,7 +88,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
 | PARAMS | ON and NOTE armed in note mode (ALL off), CC armed in CC mode (CC mode has no ALL) |
-| RANGES | full range of every param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 1-100%, CC 0-127) |
+| RANGES | ON chance 50% (note mode and CC mode); full range of every other param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 1-100%, CC 0-127) |
 | SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
 | Theme | dark (user-wide, 11) |
@@ -252,8 +252,8 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
   - Outside ALL, the param buttons toggle one by one.
   - **Something is always armed**: clicking the only lit button (ALL, or the last armed param) does nothing.
   - Note mode and CC mode each keep their own armed params. Init: ON and NOTE in note mode, CC in CC mode.
-- Each param except ON has a min / max range (RANGES, 12.6). Random values stay inside it.
-- **ON**: each step is switched on with a 70% chance.
+- Each param except ON has a min / max range (RANGES, 12.6). Random values stay inside it. ON has a single value instead: its **on chance**.
+- **ON**: each step is switched on with the **on chance** set by the ON bar in RANGES (0-100%, default 50%; note mode and CC mode each have their own). 0% switches every step off, 100% every step on.
 - **NOTE**: a random note from the NOTE range, which is a pitch-class range (the same for every octave). With the track's scale on, only in-scale notes within the range (the NOTE bar then shows only in-scale notes, 12.6); if none is in range, any note.
 - Applies to the steps in scope (8.2), including off steps.
 
@@ -403,7 +403,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **SHIFT ALL knob**: drag up / down to shift the chosen param (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
-**RANGES bars**: click or drag; the nearest handle (min or max) follows the mouse. The handles cannot cross. No wheel, double-click or reset.
+**RANGES bars**: click or drag; the nearest handle (min or max) follows the mouse. The handles cannot cross. The ON bar has one handle (the on chance). No wheel, double-click or reset.
 
 **Header**
 - TRACK: click for the track list. NOTES / CC: click to switch.
@@ -427,7 +427,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 1. **SELECTION**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
 2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode (no ALL there). In note mode ALL is its own state; something is always armed (9.2).
-3. **RANGES**: a min / max bar per param, in that param's color: NOTE, OCT, VEL, GATE, PROB in note mode; CC in CC mode. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
+3. **RANGES**: a bar per param, in that param's color: ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode. ON has one handle and shows the **on chance** (0-100%, default 50%; green in note mode, cyan in CC mode; each mode keeps its own); the others are min / max bars. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent), and under them the curve buttons (9.5): a row of four shape icons (sine, triangle, ramp up, square), then a row with ‹, › and INV. Outlined in the mode accent; green while pressed.
 5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB) in note mode; in CC mode the knob alone (it shifts the CC value).
 
@@ -536,7 +536,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 ### 14.3 Tests
 
 - `tests/Tests.cpp`, built with `-DVIMA_BUILD_TESTS=ON` as the console app `VimaTests`. Run: `VimaTests <output folder>` (under `xvfb-run -a` on Linux).
-- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 262 checks; all must pass.
+- It checks the model, engine (timing, gate, swing, CC, smoothing, transport hold with a simulated host), operations, macros, presets, and drives the real editor with simulated mouse clicks (step buttons, sliders, copy / paste, PARAMS, patterns view, LEARN, Macros page). Curves, rotate and invert have their own section. It also renders screenshots of every screen into the output folder, with demo patterns that show every thumbnail case. Every screenshot is rendered a second time with **all buttons forced into their hover state**, into a `hover` subfolder, to check that no button content disappears under the hover fill. About 265 checks; all must pass.
 
 ### 14.4 Source map (Source/)
 
@@ -569,7 +569,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...)
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 9 flags in the `params` property (note-mode and CC-mode params, and ALL for note mode), ranges as "min:max,..."), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 9 flags in the `params` property (note-mode and CC-mode params, and ALL for note mode), ranges as "min:max,...", onChance and ccOnChance), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the Settings-dialog properties in `Globals` (ccSmoothing, patternCC, patternCCChannel, patternCCNumber, quantize).
 - Pattern (.vimapattern): root `VIMAPATTERN`, `version` 1, with the 8 `Track` children as above. Loading starts from a blank pattern.
 - Mapping set (.vimamacros): root `VIMAMACROS`, `version` 1, with the `Macro` children.
@@ -685,3 +685,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: Redo: right-click UNDO; a new edit clears the redo steps. The UNDO info box shows two rows, next undo and next redo.
 - 2026-10-29: UNDO info box rows read "UNDO: ..." and "REDO: ...".
 - 2026-10-29: Default note C (middle C) instead of F, for new steps and the NOTE knob reset.
+- 2026-10-29: RANDOMIZE ON uses an on chance set by a new ON bar in RANGES (0-100%, default 50%, separate for note and CC mode), replacing a fixed 70% that had been chosen without being decided.

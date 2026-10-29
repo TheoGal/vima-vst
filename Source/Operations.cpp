@@ -161,8 +161,8 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
         {
             switch (param)
             {
-                case Param::on:          s.on = r.nextFloat() < 0.7f; break;
-                case Param::ccOn:        s.ccOn = r.nextFloat() < 0.7f; break;
+                case Param::on:          s.on = r.nextInt (100) < g.onChance; break;       // the ON range bar
+                case Param::ccOn:        s.ccOn = r.nextInt (100) < g.ccOnChance; break;
                 case Param::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
                 case Param::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : minOctave); break;
                 case Param::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;

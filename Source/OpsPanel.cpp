@@ -70,8 +70,8 @@ namespace
             case Param::note: case Param::octave: case Param::velocity: return t.green;
             case Param::gate:        return t.purple;
             case Param::probability: return t.amber;
-            case Param::cc:          return t.cyan;
-            case Param::on: case Param::ccOn: break;
+            case Param::cc: case Param::ccOn: return t.cyan;
+            case Param::on:          return t.green;
         }
         return t.text2;
     }
@@ -118,6 +118,7 @@ std::vector<int> RangeBar::notePositions() const
 ParamRange RangeBar::get() const
 {
     auto g = ctx.globalsCopy();
+    if (single()) return { 0, param == Param::on ? g.onChance : g.ccOnChance };
     const auto r = paramRange (g, param);
     if (param != Param::note)
         return r;
@@ -133,6 +134,13 @@ ParamRange RangeBar::get() const
 
 void RangeBar::set (ParamRange r)
 {
+    if (single())
+    {
+        const int v = juce::jlimit (0, 100, r.max);
+        const bool cc = param == Param::ccOn;
+        ctx.edit (false, [v, cc] (Project& p) { (cc ? p.globals.ccOnChance : p.globals.onChance) = v; });
+        return;
+    }
     if (param == Param::note)
     {
         const auto pcs = notePositions();
@@ -158,7 +166,7 @@ void RangeBar::axis (int& lo, int& hi) const
         case Param::gate:        lo = 1; hi = maxGate; return;
         case Param::probability: lo = 1; hi = 100; return;
         case Param::cc:          lo = 0; hi = 127; return;
-        case Param::on: case Param::ccOn: lo = 0; hi = 1; return;
+        case Param::on: case Param::ccOn: lo = 0; hi = 100; return;   // on chance, %
     }
 }
 
@@ -172,8 +180,8 @@ juce::String RangeBar::valueText (int v) const
             return pitchClassName (pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, v)]);
         }
         case Param::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
-        case Param::gate: case Param::probability: return juce::String (v) + "%";
-        case Param::on: case Param::ccOn: case Param::velocity: case Param::cc: break;
+        case Param::gate: case Param::probability: case Param::on: case Param::ccOn: return juce::String (v) + "%";
+        case Param::velocity: case Param::cc: break;
     }
     return juce::String (v);
 }
@@ -202,6 +210,7 @@ void RangeBar::mouseDown (const juce::MouseEvent& e)
     const float x = (float) e.x;
     dragging = std::abs (x - xOf (r.min)) <= std::abs (x - xOf (r.max)) ? 1 : 2;
     if (r.min == r.max) dragging = x < xOf (r.min) ? 1 : 2;
+    if (single()) dragging = 2;   // one handle
     mouseDrag (e);
 }
 
@@ -235,7 +244,10 @@ void RangeBar::paintBar (juce::Graphics& g)
     area.removeFromLeft (10);
     g.setColour (t.text);
     g.setFont (Fonts::mono (11.0f));
-    g.drawText (valueText (juce::jlimit (lo, hi, r.min)), area.removeFromLeft (32), juce::Justification::centredRight);
+    if (! single())   // ON shows only its chance, on the right
+        g.drawText (valueText (juce::jlimit (lo, hi, r.min)), area.removeFromLeft (32), juce::Justification::centredRight);
+    else
+        area.removeFromLeft (32);
     area.removeFromLeft (10);
     g.drawText (valueText (juce::jlimit (lo, hi, r.max)), area.removeFromRight (32), juce::Justification::centredLeft);
 
@@ -248,7 +260,8 @@ void RangeBar::paintBar (juce::Graphics& g)
     g.setColour (paramColour (param));
     g.fillRoundedRectangle (track.withLeft (x0).withRight (juce::jmax (x0 + 1.0f, x1)), 2.0f);
     g.setColour (t.text);
-    g.fillEllipse (juce::Rectangle<float> (10.0f, 10.0f).withCentre ({ x0, track.getCentreY() }));
+    if (! single())
+        g.fillEllipse (juce::Rectangle<float> (10.0f, 10.0f).withCentre ({ x0, track.getCentreY() }));
     g.fillEllipse (juce::Rectangle<float> (10.0f, 10.0f).withCentre ({ x1, track.getCentreY() }));
 }
 
@@ -466,7 +479,8 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     }
     for (auto* p : paramBtns) { p->font = [] { return Fonts::monoSemi (11.0f); }; p->radius = 5.0f; }
 
-    for (auto l : { Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc })
+    // RANGES: note mode ON, NOTE, OCT, VEL, GATE, PROB; CC mode ON, CC (ON = the chance a step is switched on)
+    for (auto l : { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::ccOn, Param::cc })
         addAndMakeVisible (ranges.add (new RangeBar (ctx, l)));
 
     randomBtn.text = [] { return juce::String ("RANDOMIZE"); };
@@ -603,7 +617,7 @@ void OpsPanel::refreshState()
         p->setVisible (l < 0 ? ! cc : (cc ? (l == (int) Param::ccOn || l == (int) Param::cc) : (l != (int) Param::cc && l != (int) Param::ccOn)));
     }
     for (int i = 0; i < ranges.size(); ++i)
-        ranges[i]->setVisible (cc ? i == 5 : i < 5);
+        ranges[i]->setVisible (cc ? i >= 6 : i < 6);
     for (auto* p : shiftChips)
         p->setVisible (! cc);   // CC mode: the knob alone shifts the CC value (SPEC.md 9.4)
     resized();
@@ -650,8 +664,8 @@ void OpsPanel::resized()
         for (auto* rb : ranges)
         {
             if (! rb->isVisible()) continue;
-            rb->setBounds (c.removeFromTop (14));
-            c.removeFromTop (6);
+            rb->setBounds (c.removeFromTop (13));
+            c.removeFromTop (4);
         }
     }
     {

@@ -473,6 +473,8 @@ juce::ValueTree Project::toValueTree() const
     juce::StringArray ranges;
     for (const auto* r : { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
         ranges.add (juce::String (r->min) + ":" + juce::String (r->max));
+    gt.setProperty ("onChance", g.onChance, nullptr);
+    gt.setProperty ("ccOnChance", g.ccOnChance, nullptr);
     gt.setProperty ("ranges", ranges.joinIntoString (","), nullptr);
     root.appendChild (gt, nullptr);
 
@@ -542,6 +544,8 @@ void Project::fromValueTree (const juce::ValueTree& root)
         // something is always armed
         if (! g.armAllNote && ! (g.armOn || g.armNote || g.armOct || g.armVel || g.armGate || g.armProb)) g.armNote = true;
         if (! (g.armCcOn || g.armCC)) g.armCC = true;
+        g.onChance = juce::jlimit (0, 100, (int) gt.getProperty ("onChance", g.onChance));
+        g.ccOnChance = juce::jlimit (0, 100, (int) gt.getProperty ("ccOnChance", g.ccOnChance));
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
         ParamRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
         if (rangeParts.size() == 6)

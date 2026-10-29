@@ -22,6 +22,7 @@ private:
     void axis (int& lo, int& hi) const;
     juce::String valueText (int) const;
     juce::Rectangle<float> barArea() const;
+    bool single() const { return param == Param::on || param == Param::ccOn; }   // ON: one handle, the on chance
     int valueAt (float x) const;
     std::vector<int> notePositions() const;
     bool armed() const;

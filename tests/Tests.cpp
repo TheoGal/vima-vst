@@ -447,6 +447,24 @@ void testOperations()
                  && inScale (p->globals.scaleMask(), p->globals.root, s.pitchClass);
         }
         check (ok, "randomize stays in the ranges and in the scale");
+        {
+            // the ON range bar: the chance a step is switched on
+            auto q = std::make_unique<Project>();
+            q->globals.armAllNote = false; q->globals.armNote = false; q->globals.armOn = true;
+            check (q->globals.onChance == 50 && q->globals.ccOnChance == 50, "ON chance starts at 50 % in both modes");
+            auto onCount = [&] (int chance)
+            {
+                q->globals.onChance = chance;
+                randomize (*q, makeScope (*q, 0, 0, -1, -1), false, rnd);
+                int n = 0;
+                for (int i = 0; i < 16; ++i) n += q->patterns[0].tracks[0].steps[(size_t) i].on ? 1 : 0;
+                return n;
+            };
+            check (onCount (0) == 0 && onCount (100) == 16, "ON chance 0 % switches every step off, 100 % every step on");
+            q->globals.armCC = false; q->globals.armCcOn = true; q->globals.ccOnChance = 0;
+            randomize (*q, makeScope (*q, 0, 0, -1, -1), true, rnd);
+            check (! q->patterns[0].tracks[0].steps[3].ccOn, "CC mode uses its own ON chance");
+        }
         bool untouched = true;
         for (int i = 16; i < 32; ++i) untouched = untouched && tp.steps[(size_t) i] == blankStep();
         check (untouched, "randomize does not touch steps beyond the length");

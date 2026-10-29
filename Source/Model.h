@@ -196,6 +196,7 @@ struct Globals
     bool armOn = true, armNote = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
     ParamRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
               rangeProb { 1, 100 }, rangeCC { 0, 127 };
+    int onChance = 50, ccOnChance = 50;   // RANDOMIZE: chance (0-100 %) that a step is switched on (ON range bar)
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)
 };
