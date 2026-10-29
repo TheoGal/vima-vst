@@ -264,22 +264,22 @@ void smooth (Project& p, const Scope& sc, bool ccMode, juce::Random* rnd)
         if (param == Param::on || param == Param::ccOn)
         {
             // ON (SPEC.md 9.3): the number of on steps moves one step toward the on chance
-            // (chance x steps in scope), switching a random step, only when that gets strictly closer
+            // (chance x steps in scope, rounded half up), switching a random step
             const bool cc = param == Param::ccOn;
-            const double target = (cc ? p.globals.ccOnChance : p.globals.onChance) / 100.0 * sc.count();
+            const int target = (int) std::floor ((cc ? p.globals.ccOnChance : p.globals.onChance) / 100.0 * sc.count() + 0.5);
             std::vector<int> onSteps, offSteps;
             for (int i = 0; i < maxSteps; ++i)
                 if (sc.contains (i))
                     ((cc ? tp.steps[(size_t) i].ccOn : tp.steps[(size_t) i].on) ? onSteps : offSteps).push_back (i);
-            const double now = (double) onSteps.size();
+            const int now = (int) onSteps.size();
             auto flip = [&] (std::vector<int>& from, bool value)
             {
                 if (from.empty()) return;
                 auto& s = tp.steps[(size_t) from[(size_t) r.nextInt ((int) from.size())]];
                 (cc ? s.ccOn : s.on) = value;
             };
-            if (std::abs (now + 1.0 - target) < std::abs (now - target) - 1.0e-9) flip (offSteps, true);
-            else if (std::abs (now - 1.0 - target) < std::abs (now - target) - 1.0e-9) flip (onSteps, false);
+            if (now < target) flip (offSteps, true);
+            else if (now > target) flip (onSteps, false);
             continue;
         }
         // the CC param follows the CC on/off, the note params the note on/off

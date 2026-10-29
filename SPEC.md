@@ -267,7 +267,7 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
 - The average is recalculated on every press.
 - Units of "one step" per param: NOTE 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
 - NOTE and octave are treated as one combined pitch for NOTE smoothing, so notes converge across octave boundaries.
-- **ON** (with ON armed; CC ON in CC mode): each press moves the number of on steps in scope **one step closer to the on chance** (chance x steps in scope, 9.2): fewer on than that, a random off step is switched on; more, a random on step is switched off. It only moves when that gets strictly closer (5 steps at 50% = 2.5: 2 and 3 both stay). Press and hold converges, then stops changing.
+- **ON** (with ON armed; CC ON in CC mode): each press moves the number of on steps in scope **one step closer to the on chance**: the target is chance x steps in scope, **rounded half up** to a whole number (5 steps at 50% = 2.5 = 3; 7 steps at 30% = 2.1 = 2; 16 at 50% = 8). Fewer on than the target, a random off step is switched on; more, a random on step is switched off. Press and hold converges, then stops changing.
 - Off steps are **excluded** from Smooth: they are not counted in the average and their values are not changed. (Randomize, by contrast, includes off steps.)
 - Smooth ignores the Randomize ranges (it only moves values toward the average, never outside the current spread).
 - Press once for one step. **Press and hold** repeats (after 0.4 s, about 10 times per second). One press or one hold is one undo entry.
@@ -597,7 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **SMOOTH with ON: target rounded half up**: the target number of on steps is chance x steps in scope **rounded half up** to a whole number (5 steps at 50% = 2.5 = 3; 7 steps at 30% = 2.1 = 2; 16 at 50% = 8), and each press moves the on count one step toward it (replaces "only when strictly closer", where 2 and 3 both stayed). Update 9.3 and 15.2 history line.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -688,3 +688,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: RANDOMIZE ON uses an on chance set by a new ON bar in RANGES (0-100%, default 50%, separate for note and CC mode), replacing a fixed 70% that had been chosen without being decided.
 - 2026-10-29: The ON chance also sets the curves' on threshold (on above 100% minus the chance) and SMOOTH with ON moves the on count one step toward it. SMOOTH hold repeats about 10 times per second.
 - 2026-10-29: RANGES bars spread evenly down to near the operations panel's bottom edge.
+- 2026-10-29: SMOOTH with ON: the target number of on steps is rounded half up (2.5 = 3).

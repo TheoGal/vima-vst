@@ -1195,9 +1195,11 @@ void testCurves()
         check (after1 == 4 && settled == 8 && onCount() == 13,
                "SMOOTH with ON: one step closer to the on chance per press (adds or removes a random step), then stays");
         const auto five = makeScope (*p, 0, 0, 0x1Fu);
-        for (int i = 0; i < 16; ++i) tp.steps[(size_t) i].on = i < 2;   // 2 of 5 on, target 2.5
+        for (int i = 0; i < 16; ++i) tp.steps[(size_t) i].on = i < 2;   // 2 of 5 on, 2.5 rounds half up to 3
         smooth (*p, five, false, &r);
-        check (onCount() == 2, "SMOOTH with ON only moves when it gets strictly closer (2 of 5 at 50 % stays)");
+        const int fromTwo = onCount();
+        smooth (*p, five, false, &r);
+        check (fromTwo == 3 && onCount() == 3, "SMOOTH with ON: the target rounds half up (5 steps at 50 % = 3), then stays");
     }
     only ({ Param::cc });
 
