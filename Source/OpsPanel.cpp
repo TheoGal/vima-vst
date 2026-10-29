@@ -660,13 +660,15 @@ void OpsPanel::resized()
         }
     }
     {
-        auto c = rangesCol.withTrimmedTop (20);
-        for (auto* rb : ranges)
-        {
-            if (! rb->isVisible()) continue;
-            rb->setBounds (c.removeFromTop (13));
-            c.removeFromTop (4);
-        }
+        // the bars spread evenly from under the title down to near the panel's bottom edge
+        // (into the bottom padding, SPEC.md 12.6); in CC mode the two bars keep a natural spacing
+        const auto c = rangesCol.withTrimmedTop (19).withBottom (getHeight() - 5);
+        std::vector<RangeBar*> shown;
+        for (auto* rb : ranges) if (rb->isVisible()) shown.push_back (rb);
+        const int n = (int) shown.size(), barH = 14;
+        const float step = n > 1 ? juce::jmin ((float) (barH + 10), (float) (c.getHeight() - barH) / (float) (n - 1)) : 0.0f;
+        for (int i = 0; i < n; ++i)
+            shown[(size_t) i]->setBounds (c.getX(), c.getY() + juce::roundToInt ((float) i * step), c.getWidth(), barH);
     }
     {
         auto c = buttonsCol;
