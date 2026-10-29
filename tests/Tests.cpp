@@ -478,7 +478,7 @@ void testOperations()
         p->globals.armCC = true;
         smooth (*p, makeScope (*p, 0, 0, 0, 3), true);
         check (tp.steps[0].cc == 1 && tp.steps[1].cc == 64 && tp.steps[2].cc == 126, "smooth: 0, 64, 127 -> 1, 64, 126");
-        check (tp.steps[3].cc == 0, "smooth leaves off steps alone");
+        check (tp.steps[3].cc == 1, "smooth: the average comes from the on steps (64), but the off step moves toward it too (0 -> 1)");
     }
     {
         for (auto& s : tp.steps) s = blankStep();

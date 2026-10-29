@@ -294,7 +294,7 @@ void smooth (Project& p, const Scope& sc, bool ccMode, juce::Random* rnd)
         for (int i = 0; i < maxSteps; ++i)
         {
             auto& s = tp.steps[(size_t) i];
-            if (! sc.contains (i) || ! active (s)) continue;   // off steps are not smoothed
+            if (! sc.contains (i)) continue;   // the average comes from the on steps, but off steps move too
             const int v = paramValue (p, tp, s, param);
             if (v != avg)
                 setParamValue (p, tp, s, param, v + (v < avg ? 1 : -1));

@@ -261,14 +261,14 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
 
 - A SMOOTH button pulls the values of the steps in scope one step closer to their average.
 - For each armed param (same PARAMS buttons as Randomize):
-  1. Calculate the average of that param's values over the steps in scope, **rounded to the nearest whole number**.
-  2. Every value below the average goes up by 1, every value above it goes down by 1. Values equal to the average do not move.
+  1. Calculate the average of that param's values over the **on** steps in scope, **rounded to the nearest whole number**.
+  2. Every value in scope (off steps too) below the average goes up by 1, every value above it goes down by 1. Values equal to the average do not move.
 - Example: CC values 0, 64, 127 give an average of 63.67, rounded to 64. One press gives 1, 64, 126.
 - The average is recalculated on every press.
 - Units of "one step" per param: NOTE 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
 - NOTE and octave are treated as one combined pitch for NOTE smoothing, so notes converge across octave boundaries.
 - **ON** (with ON armed; CC ON in CC mode): each press moves the number of on steps in scope **one step closer to the on chance**: the target is chance x steps in scope, **rounded half up** to a whole number (5 steps at 50% = 2.5 = 3; 7 steps at 30% = 2.1 = 2; 16 at 50% = 8). Fewer on than the target, a random off step is switched on; more, a random on step is switched off. Press and hold converges, then stops changing.
-- Off steps are **excluded** from Smooth: they are not counted in the average and their values are not changed. (Randomize, by contrast, includes off steps.)
+- **Off steps**: the average is taken only from the steps that are **on** (for the CC param: CC on), but **every step in scope moves** toward it, off steps included, so a step switched on later already fits. With no step on there is no average and nothing moves. (Randomize, too, includes off steps.) **Exception: ON** is not averaged; it follows the on chance (above).
 - Smooth ignores the Randomize ranges (it only moves values toward the average, never outside the current spread).
 - Press once for one step. **Press and hold** repeats (after 0.4 s, about 10 times per second). One press or one hold is one undo entry.
 
@@ -597,7 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **SMOOTH moves off steps too**: the average is still taken from the real values of the steps that are **on** (in scope; the CC param follows CC on), but every step in scope moves one step toward it, **off steps included**, so a step switched on later already fits. With no step on there is no average and nothing moves. **Exception: the ON param** (note on / CC on) is not averaged: it keeps following the on chance (one step toward chance x steps in scope, rounded half up). Update 9.3 (today off steps are excluded from both the average and the change).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -690,3 +690,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: RANGES bars spread evenly down to near the operations panel's bottom edge.
 - 2026-10-29: SMOOTH with ON: the target number of on steps is rounded half up (2.5 = 3).
 - 2026-10-29: Undo steps that changed nothing (for example SMOOTH after convergence) are skipped by UNDO, REDO and the UNDO box.
+- 2026-10-29: SMOOTH moves off steps too (average still from the on steps); ON keeps following the on chance.
