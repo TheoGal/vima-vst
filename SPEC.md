@@ -597,7 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **SMOOTH press and hold slower**: repeats about 10 times per second (was about 14), still starting after 0.4 s. Update 9.3.
 
 ### 15.2 Open
 
