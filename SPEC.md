@@ -89,7 +89,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Chain | off, loop on, empty |
 | PARAMS | ON and NOTE armed in note mode (ALL off), CC armed in CC mode (CC mode has no ALL) |
 | RANGES | ON chance 50% (note mode and CC mode); full range of every other param (NOTE C-B, OCT = all octaves, C-2 to 8 with middle C = C3, VEL 1-127, GATE 1-400%, PROB 1-100%, CC 0-127) |
-| SHIFT ALL param / SLIDER / view | NOTE / VEL / NOTES |
+| SHIFT param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
 | Theme | dark (user-wide, 11) |
 
@@ -272,7 +272,7 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
 - Smooth ignores the Randomize ranges (it only moves values toward the average, never outside the current spread).
 - Press once for one step. **Press and hold** repeats (after 0.4 s, about 10 times per second). One press or one hold is one undo entry.
 
-### 9.4 Shift (SHIFT ALL)
+### 9.4 SHIFT
 
 A relative shift of all steps in scope.
 
@@ -401,7 +401,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Step button** (step number): click toggles the shown part of the step on / off (note on/off in note mode, CC on/off in CC mode). **Click and drag across neighbouring step buttons** to paint: pressing an off step turns it on and every step the drag passes turns on too (steps already on stay on); pressing an on step turns it off and the drag turns the others off (steps already off stay off). Like the sliders, a stroke stays in the row where it started, and the whole stroke is one undo step.
 
-**SHIFT ALL knob**: drag up / down to shift the chosen param (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
+**SHIFT knob**: drag up / down to shift the chosen param (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
 **RANGES bars**: click or drag; the nearest handle (min or max) follows the mouse. The handles cannot cross. The ON bar has one handle (the on chance). No wheel, double-click or reset.
 
@@ -429,7 +429,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode (no ALL there). In note mode ALL is its own state; something is always armed (9.2).
 3. **RANGES**: a bar per param, in that param's color: ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode. ON has one handle and shows the **on chance** (0-100%, default 50%; green in note mode, cyan in CC mode; each mode keeps its own); the others are min / max bars. The bars are spread evenly from under the RANGES title down to near the panel's bottom edge (the last one lines up with the bottom row of buttons beside it); CC mode's two bars keep a natural spacing near the top. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent), and under them the curve buttons (9.5): a row of four shape icons (sine, triangle, ramp up, square), then a row with ‹, › and INV. Outlined in the mode accent; green while pressed.
-5. **SHIFT ALL**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB) in note mode; in CC mode the knob alone (it shifts the CC value).
+5. **SHIFT**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB) in note mode; in CC mode the knob alone (it shifts the CC value).
 
 ### 12.7 Mockups
 
@@ -469,7 +469,7 @@ Not exposed (set in the plugin only):
 - Chain: LOOP on/off, the chain entries and their repeats.
 - Settings: CC smoothing, pattern change by CC (on/off, channel, CC number), quantize, theme.
 - Editing tools: PARAMS (armed params, ALL), RANGES, SLIDER lane, NOTES / CC view, the selection, the track shown, the patterns view page.
-- Actions: RANDOMIZE, SMOOTH, the curves (shapes, rotate, invert), SHIFT ALL, COPY / PASTE / CLEAR, COPY TRACK, undo, the start / stop button, preset, pattern and mapping-set new / load / save.
+- Actions: RANDOMIZE, SMOOTH, the curves (shapes, rotate, invert), SHIFT, COPY / PASTE / CLEAR, COPY TRACK, undo, the start / stop button, preset, pattern and mapping-set new / load / save.
 
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Full range**: every macro always covers its target's whole range over its whole travel. There is no min / max per mapping.
@@ -691,3 +691,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: SMOOTH with ON: the target number of on steps is rounded half up (2.5 = 3).
 - 2026-10-29: Undo steps that changed nothing (for example SMOOTH after convergence) are skipped by UNDO, REDO and the UNDO box.
 - 2026-10-29: SMOOTH moves off steps too (average still from the on steps); ON keeps following the on chance.
+- 2026-10-29: SHIFT ALL renamed SHIFT (ALL could be confused with ALL in PARAMS).

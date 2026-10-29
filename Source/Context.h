@@ -38,7 +38,7 @@ struct UiState
     TrackPattern trackClip;
     int patternsViewTrack = 0;   // track for COPY TRACK
 
-    Param shiftParam = Param::note;   // SHIFT ALL param in note mode (CC mode always shifts CC)
+    Param shiftParam = Param::note;   // SHIFT param in note mode (CC mode always shifts CC)
     int shiftAmount = 0;           // running offset while the shift knob is dragged
 
     bool macrosView = false;

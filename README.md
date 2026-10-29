@@ -14,7 +14,7 @@ The full design is in [SPEC.md](SPEC.md).
 - LED bar per row: playhead and drag selection
 - Selection by drag, plus Ctrl-click / Ctrl-drag for non-adjacent steps
 - Step operations on the selection (or all steps): copy / paste across tracks (keeps spacing), randomize with
-  param ranges, smooth, shift all (with capping)
+  param ranges, smooth, shift (with capping)
 - 64 patterns (pages of 16), quick picker in the header, patterns view with thumbnails,
   copy / paste of patterns and tracks, chain with repeats and drag-to-reorder, quantized pattern changes, pattern change by incoming CC
 - CC smoothing between steps, undo, dark and light themes, resizable window (75% to 200%)

@@ -1,7 +1,7 @@
 #pragma once
 
 // Operations panel (SPEC.md 12.6): selection with COPY / PASTE / CLEAR, param chips, ranges,
-// RANDOMIZE and SMOOTH, SHIFT ALL.
+// RANDOMIZE and SMOOTH, SHIFT.
 
 #include "Context.h"
 #include "Widgets.h"

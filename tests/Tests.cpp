@@ -1536,21 +1536,21 @@ int main (int argc, char** argv)
             if (auto* rnd = findPill (ed, "RANDOMIZE")) { click (*rnd); click (*rnd); }
             check (stepOf (3, 5) == keep, "RANDOMIZE leaves steps outside the selection alone");
 
-            // SHIFT ALL on velocity over the whole track
+            // SHIFT on velocity over the whole track
             ctx.ui.selection = 0;
             ctx.ui.shiftParam = Param::velocity;
             ed.refreshAll();
             proc->edit (-1, [] (Project& p) { for (auto& s : p.patterns[(size_t) p.currentPattern].tracks[3].steps) s.velocity = 120; });
             proc->edit (-1, [] (Project& p) { p.patterns[(size_t) p.currentPattern].tracks[3].steps[0].velocity = 60; });
             if (auto* shift = findChild<ShiftKnob> (ed)) dragY (*shift, -90);   // +10
-            check (stepOf (3, 0).velocity == 70 && stepOf (3, 1).velocity == 127, "SHIFT ALL +10: 60 -> 70, 120 capped at 127, got " + juce::String ((int) stepOf (3, 0).velocity) + " " + juce::String ((int) stepOf (3, 1).velocity));
+            check (stepOf (3, 0).velocity == 70 && stepOf (3, 1).velocity == 127, "SHIFT +10: 60 -> 70, 120 capped at 127, got " + juce::String ((int) stepOf (3, 0).velocity) + " " + juce::String ((int) stepOf (3, 1).velocity));
 
             if (auto* shift = findChild<ShiftKnob> (ed))
             {
                 juce::MouseWheelDetails w {};
                 w.deltaY = 1.0f;
                 shift->mouseWheelMove (mouseEvent (*shift, { 5, 5 }, { 5, 5 }), w);
-                check (stepOf (3, 0).velocity == 71, "SHIFT ALL: one wheel notch up shifts by +1");
+                check (stepOf (3, 0).velocity == 71, "SHIFT: one wheel notch up shifts by +1");
             }
 
             // PARAMS: ALL is its own state; something is always armed

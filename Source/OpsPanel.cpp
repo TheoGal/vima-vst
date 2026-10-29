@@ -269,7 +269,7 @@ void RangeBar::paintBar (juce::Graphics& g)
 ShiftKnob::ShiftKnob (Context& c) : ctx (c)
 {
     setMouseCursor (juce::MouseCursor::UpDownResizeCursor);
-    setTitle ("Shift all");
+    setTitle ("Shift");
 }
 
 void ShiftKnob::mouseDown (const juce::MouseEvent& e)
@@ -738,6 +738,6 @@ void OpsPanel::paint (juce::Graphics& g)
     draw::label (g, "RANGES", rangesCol.withHeight (12), t.muted);
     g.setColour (t.border);
     g.fillRect (shiftCol.getX(), shiftCol.getY(), 1, shiftCol.getHeight());
-    draw::label (g, "SHIFT ALL", shiftCol.withTrimmedLeft (16).withHeight (12), t.muted);
+    draw::label (g, "SHIFT", shiftCol.withTrimmedLeft (16).withHeight (12), t.muted);
 }
 } // namespace vima
