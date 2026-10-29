@@ -598,6 +598,11 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 ### 15.1 Decided, not built yet
 
 1. **SMOOTH press and hold slower**: repeats about 10 times per second (was about 14), still starting after 0.4 s. Update 9.3.
+2. **The ON chance across the operations** (note mode ON with its chance, CC mode CC ON with its own):
+   - **RANDOMIZE**: unchanged: a flipped coin per step with the on chance, so the number of steps that end up on varies around the chance (wanted).
+   - **Curves** (SINE, TRIANGLE, RAMP, SQUARE) with ON armed: a step is on where the curve is above **100% minus the on chance** of its height: chance 50% = on above the middle (as before), chance 70% = on above 30%, chance 25% = only the top quarter.
+   - **SMOOTH** with ON armed: each press moves the number of on steps in scope **one step closer to the on chance** (chance x steps in scope): fewer on than that, a random off step is switched on; more, a random on step is switched off; only when the change gets strictly closer (5 steps at 50% = 2.5: both 2 and 3 stay). Press and hold converges and then stops changing. (Today SMOOTH ignores ON.)
+   - **ROTATE ‹ ›** and **INV**: unchanged (rotate cycles the on / offs like the other params, INV swaps on and off).
 
 ### 15.2 Open
 
