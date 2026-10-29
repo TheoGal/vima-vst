@@ -401,7 +401,12 @@ void VimaEditor::timerCallback()
 
     const int rev = proc.revision.load();
     const int pat = ctx.currentPattern();
-    if (rev != lastRevision || pat != lastPattern || Theme::revision() != lastTheme)
+    const int queuedPattern = proc.engine.queuedPattern.load();
+    // a queued pattern (picked while quantize waits) changes no data, but what is shown: the Pattern
+    // macro's knob, the NEXT slot. Refresh on it too, so a macro drag shows every pattern it passes.
+    const bool queueChanged = queuedPattern != lastQueuedPattern;
+    lastQueuedPattern = queuedPattern;
+    if (rev != lastRevision || pat != lastPattern || Theme::revision() != lastTheme || queueChanged)
     {
         if (pat != lastPattern && ! ctx.ui.patternsView)
             ctx.ui.selection = 0;

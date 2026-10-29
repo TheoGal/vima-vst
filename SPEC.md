@@ -692,3 +692,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: Undo steps that changed nothing (for example SMOOTH after convergence) are skipped by UNDO, REDO and the UNDO box.
 - 2026-10-29: SMOOTH moves off steps too (average still from the on steps); ON keeps following the on chance.
 - 2026-10-29: SHIFT ALL renamed SHIFT (ALL could be confused with ALL in PARAMS).
+- 2026-10-29: Fix: dragging the Pattern macro on the Macros page while the host plays with quantize on updated the shown pattern only every half second (the queued pattern changed no data, so the screen did not refresh); the views now refresh whenever the queued pattern changes.

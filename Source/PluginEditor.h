@@ -98,6 +98,7 @@ private:
 
     int lastTheme = -1, lastRevision = -1, lastPattern = -1, lastPlayStep = -2, blinkCounter = 0, lastChainPos = -2;
     bool lastPlaying = false, lastQueued = false;
+    int lastQueuedPattern = -1;   // a new queued pattern refreshes the views (Pattern macro knob, slots)
     double lastBpm = 0.0;
     float lastProgress = -1.0f;
 
