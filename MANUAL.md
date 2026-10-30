@@ -185,7 +185,7 @@ PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the CURVES. By default, note on
 
 The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed.  Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, i.e. with a 50% chance, it's pure random if a step is on or off -  with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesn't necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
 
-The **PITCH** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, E, F, G in any octave (in C minor: D, D#, F, G).
+The **PITCH** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, D#, E, F, F#, G in any octave (in C minor: D, D#, F, G).
 
 >**design choice:** Velocity and probability ranges do not include a 0 value. A MIDI note on message with velocity 0 is actually a Note off and a 0 probability is actually "never" hence the design choices here.
 
@@ -220,7 +220,7 @@ Meet **Smooth:** it pulls the armed values one step closer to their average. In 
 Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with pre-fixed curves to apply to parameters.
 
 - **Shapes**: **SINE**, **TRIANGLE**, **RAMP** and **SQUARE** draw one cycle of that shape over the steps in scope, between each armed value's range limits. Want a ramp down? RAMP, then INV.
-- **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only NOTE to move the melody over a fixed rhythm.
+- **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only PITCH to move the melody over a fixed rhythm.
 - **INV** (invert): flips the armed values around the middle of their range. With a CC range of 0-100, 30 becomes 70.
 
 Each press is one undo step.
@@ -247,7 +247,7 @@ You can copy - paste selected parameters of steps with the **copy** and **paste*
 3. Press **PASTE**. COPIED stays lit, so you can switch track or pattern and paste again.
 4. Click **COPIED** or **CLEAR** to finish.
 
-Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (NOTE), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
+Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
 
 ## Patterns
@@ -344,11 +344,11 @@ What can be mapped:
 
 - **Global:** Pattern (which pattern plays), Chain On.
 - **Track:** Notes Out, CC Out; and per pattern: Length, Division, Direction, Swing, Scale On.
-- **Step:** Note On (note on / off), Note, Octave, Velocity, Gate, Probability, CC On (CC on / off), CC Value.
+- **Step:** Note On (note on / off), Pitch, Octave, Velocity, Gate, Probability, CC On (CC on / off), CC Value.
 
 The **Pattern** macro is special: turning it picks the next pattern, and the macro shows that pattern straight away, while the actual switch waits for the quantize point in the background.
 
-A **Note** macro follows the scale like the note knob: in C minor it moves through the 7 notes of the scale.
+A **Pitch** macro follows the scale like the pitch knob: in C minor it moves through the 7 notes of the scale.
 
 ### The Macros view
 
@@ -490,7 +490,7 @@ Except for the theme and middle C, these settings belong to each Vima in your pr
 | Pattern slot | click / play button | select / select and switch |
 | Pattern slot | right-click | copy, paste, load, save menu |
 | Chain entry | drag the grip | reorder |
-| UNDO | right-click or Alt + click | REDO the last UNDO |
+| UNDO | right-click | REDO the last UNDO |
 | While LEARN is on | click / right-click a control | map it / free it |
 
 On a Mac, Alt is Option, and Ctrl + click for selecting steps is Cmd + click.
