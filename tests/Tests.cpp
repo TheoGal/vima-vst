@@ -413,6 +413,48 @@ void testPatterns()
                "chain: pattern 3 twice (2 bars), then pattern 4 for its length (1 bar), then loops");
         r.project->globals.chainLoop = false;
     }
+    {
+        // the last-beat blink before a switch (SPEC.md 7.5)
+        Runner r;
+        fillOn (r.track (0, 2), 2);
+        fillOn (r.track (0, 3), 5);
+        r.project->globals.chain.add ({ 2, 1 });   // 1 bar
+        r.project->globals.chain.add ({ 3, 1 });
+        r.project->globals.chainOn = true;
+        r.run (2.5);
+        const double far = r.engine.beatsToSwitch.load();
+        r.run (1.0);
+        const double close = r.engine.beatsToSwitch.load();
+        check (far > 1.0 && close > 0.0 && close <= 1.0, "chain: the switch is announced on the last beat only");
+    }
+    {
+        Runner r;
+        fillOn (r.track (0, 2), 2);
+        r.project->globals.chain.add ({ 2, 1 });
+        r.project->globals.chain.add ({ 2, 1 });   // the same pattern again: nothing changes
+        r.project->globals.chainOn = true;
+        r.run (3.5);
+        check (r.engine.beatsToSwitch.load() < 0.0, "chain: no blink when the next entry is the same pattern");
+    }
+    {
+        Runner r;
+        for (int p : { 2, 3 }) { fillOn (r.track (0, p), 2); for (auto& t : r.project->patterns[(size_t) p].tracks) t.length = 4; }   // 1 beat
+        r.project->globals.chain.add ({ 2, 1 });
+        r.project->globals.chain.add ({ 3, 1 });
+        r.project->globals.chainOn = true;
+        r.run (0.7);
+        check (r.engine.beatsToSwitch.load() < 0.0, "chain: no blink for patterns of 1 beat or less");
+    }
+    {
+        Runner r;   // quantize 1 bar: a picked pattern is announced on the last beat before the bar
+        r.run (0.5);
+        r.engine.queuedPattern = 4;
+        r.run (1.0);
+        const double far = r.engine.beatsToSwitch.load();
+        r.run (1.6);
+        const double close = r.engine.beatsToSwitch.load();
+        check (far > 1.0 && close > 0.0 && close <= 1.0, "queued pattern: announced on the last beat before the switch");
+    }
 }
 
 void testOperations()
@@ -620,6 +662,18 @@ Pill* findPill (juce::Component& root, const juce::String& text)
         if (auto* p = dynamic_cast<Pill*> (child); p != nullptr && p->isVisible() && p->text && p->text() == text)
             return p;
         if (auto* found = findPill (*child, text))
+            return found;
+    }
+    return nullptr;
+}
+
+Pill* findByTitle (juce::Component& root, const juce::String& title)
+{
+    for (auto* child : root.getChildren())
+    {
+        if (auto* p = dynamic_cast<Pill*> (child); p != nullptr && p->isVisible() && p->getTitle() == title)
+            return p;
+        if (auto* found = findByTitle (*child, title))
             return found;
     }
     return nullptr;
@@ -1736,6 +1790,38 @@ int main (int argc, char** argv)
         proc->edit (-1, [] (Project& p) { p.globals.chainOn = true; });
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-chain-on.png"));
+        {
+            // Pattern edit mode (SPEC.md 7.5): edit pattern 01 while 23 plays
+            auto* pencil = findByTitle (ed, "Pattern edit mode");
+            check (pencil != nullptr, "edit mode: the pencil button is in the step view");
+            if (pencil != nullptr) click (*pencil);
+            check (ctx.ui.editMode && ctx.ui.editPattern == 22, "edit mode: starts on the playing pattern");
+            ctx.editPatternTo (0);
+            check (proc->engine.queuedPattern.load() < 0 && ctx.currentPattern() == 22, "edit mode: choosing a pattern to edit does not touch playback");
+            const auto before22 = proc->read ([] (const Project& p) { return p.patterns[22].tracks[2].length; });
+            ctx.edit (true, [&] (Project& p) { ctx.liveTrack (p).length = 5; }, "LENGTH");
+            const auto after = proc->read ([] (const Project& p) { return std::make_pair ((int) p.patterns[0].tracks[2].length, (int) p.patterns[22].tracks[2].length); });
+            check (after.first == 5 && after.second == before22, "edit mode: edits go to the edited pattern, not the playing one");
+            proc->performUndo();
+            check (proc->read ([] (const Project& p) { return (int) p.patterns[0].tracks[2].length; }) != 5, "edit mode: undo restores the edited pattern");
+            ed.refreshAll();
+            snapshot (ed, outDir.getChildFile ("main-edit-mode.png"));
+            if (auto* pb = findByTitle (ed, "Edit the playing pattern")) click (*pb);
+            check (ctx.ui.editPattern == 22, "edit mode: clicking PLAYING edits the playing pattern");
+            ctx.editPatternTo (0);
+            ctx.showPatterns (true);
+            check (ctx.ui.selectedPattern == 0, "edit mode: the patterns view opens on the edited pattern");
+            ctx.ui.selectedPattern = 5;
+            ctx.showPatterns (false);
+            check (ctx.ui.editPattern == 5, "edit mode: STEPS opens the selected slot");
+            Theme::setLight (true);
+            ed.refreshAll();
+            snapshot (ed, outDir.getChildFile ("main-edit-mode-light.png"));
+            Theme::setLight (false);
+            if (pencil != nullptr) click (*pencil);
+            check (! ctx.ui.editMode && ctx.shown() == 22, "edit mode off: back to the playing pattern");
+            ed.refreshAll();
+        }
         proc->edit (-1, [] (Project& p) { p.globals.chainOn = false; });
         ed.refreshAll();
         if (auto* chain = findPill (ed, "CHAIN"))
@@ -1991,7 +2077,7 @@ int main (int argc, char** argv)
         Theme::setLight (true);
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("settings-light.png"));
-        ed.context().proc.editCurrent (false, [] (Project&) {});
+        ed.context().proc.editShown (-1, false, [] (Project&) {});
         juce::MessageManager::getInstance()->runDispatchLoopUntil (50);
         ed.refreshAll();
         base.reset();

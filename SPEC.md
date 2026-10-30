@@ -203,8 +203,23 @@ Works like step copy / paste (9.1):
 
 - The PATTERN box in the header has **‹ and › arrows** for the previous / next pattern (crossing pages, wrapping from 64 to 01 and back). Each click queues that pattern (quantize applies).
 - The box is sized for two-digit numbers; the number has a chevron after it. Clicking the number opens a **popover** (styled like the DIVISION and SCALE popovers): a PAGE row (1 - 16 to 49 - 64; a dot marks the page with the playing or queued pattern), the 16 slots of that page with the patterns' own numbers (playing = outlined with a lit LED, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button.
-- Picking a slot queues it (quantize applies) and closes the popover.
+- Picking a slot queues it (quantize applies) and closes the popover. In pattern edit mode (7.5), the arrows and the popover only choose the pattern to edit, at once.
 - While a pattern is queued, the PATTERN box keeps showing the current pattern and **blinks** until the switch happens. It does not show the next pattern's number. The same applies in the patterns view and on the Macros page.
+
+### 7.5 Pattern edit mode
+
+Edit one pattern while another plays (for example, edit pattern 01 while the chain plays 02).
+
+- A small **pencil button** right after CHAIN (the pattern controls tab in the step view, and next to CHAIN on the Macros page). Edit mode has its **own color, pink** (dark theme `#FF6BAE`, light theme `#D6267A`). Off: plain outline, grey pencil. On: **filled pink**.
+- **Edit mode off**: the view follows the playing pattern; the header arrows and picker play the picked pattern (7.4); the PATTERN box number blinks while a picked pattern waits for quantize, and also during the **last beat before a chain switch** (see the last-beat blink below).
+- **Edit mode on**: the header PATTERN arrows and picker only choose the **pattern to edit**. The change is **instant, never quantized**, and playback is not touched. The PATTERN box gets a **pink stroke** and its number is the edited pattern (steady, no blink). Playing is left to the patterns view play buttons, the chain, the Pattern macro and incoming CC.
+- **Edit mode on, BPM box**: the "120.00 BPM" text is replaced by **PLAYING nn** (the playing pattern), always, also when it is the edited one; the start / stop button stays. No NEXT readout. **Clicking PLAYING** makes the playing pattern the edited one (edit mode stays on).
+- **Last-beat blink**: during the last beat before a scheduled switch to a different pattern (a chain switch, or a picked pattern waiting for quantize), the PATTERN box number (edit mode off, chain switches) or the PLAYING label (edit mode on) blinks: a plain blink (dims and comes back, no color change), twice, on the 8th notes of that beat. No blink when the playing pattern (a chain entry: with its repeats) lasts 1 beat or less, when the next pattern is the same one, or for a switch that happens at once (quantize off). Nothing happens after the switch.
+- The grid's **running step light** only shows when the edited pattern is the playing one.
+- **Switching edit mode off** jumps the view back to the playing pattern.
+- **Patterns view**: opens with the edited pattern selected; STEPS returns to the playing pattern with edit mode off, to the **selected slot** with edit mode on. Picking a pattern in the header while in the patterns view (edit mode on) also selects that slot.
+- Everything on screen acts on the edited pattern: step edits, operations, undo (the undo step records the edited pattern), the FILE menu's PATTERN section, the Macros page and LEARN.
+- Edit mode is a working state: **not saved** with the project or presets, **always off** when the plugin opens. Not a macro target.
 
 ## 8. Selection and the scope rule
 
@@ -331,6 +346,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
   - **Note part** controls (USE SCALE, NOTE OUT) are green. The global SCALE is neutral.
   - **CC part** controls (CC NUM, CC OUT) are cyan.
 - Amber also marks LEARN (13.2) and a held transport (3).
+- **Pink** (#FF6BAE dark, #D6267A light) is used only for pattern edit mode (7.5): the filled pencil and the PATTERN box stroke.
 - Selection: white #EEF1F5 on the LED bar (dark theme).
 - No explanatory or help text in the main window.
 - Base window size **1200 x 700**. **Resizable**: the window scales as a whole (proportions fixed), from 75% (900 x 525) to 200% (2400 x 1400), by dragging the corner. The size is saved with the project (as a scale factor).
@@ -340,9 +356,9 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 1. **Top band** (step view): the header row and the track parameter row (12.4) form one taller band, grouped by scope with rounded **frames** (panel fill and border, like the operations panel):
    - **Left**: the square **β** logo (12.1) with its short green bar, centred between the top and bottom of the frames (the wordmark appears in the other views' header).
    - **Track frame**: the TRACK dropdown and the NOTES / CC mode switch on top; below them MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC OUT and CC NUM (the output toggle always right after MIDI CH). The frame keeps the width of its wider mode (note mode), so it never changes size when switching modes. The frame's shape follows its contents (here the lower part is wider than the top, with rounded inner corners).
-   - **Pattern frame**: the PATTERN box (7.4) and the **CHAIN** toggle (chain playback on / off, the same as CHAIN ON/OFF in the patterns view, 7.2; lit white when on, outlined when off; LEARN maps it to the Chain On macro) as a tab on top; below it, wider, LENGTH, DIVISION, DIRECTION, SWING and (note mode) USE SCALE.
-   - **Right**, top row: the BPM box with the start / stop button (3), FILE (folder icon, 13.3), UNDO, MACROS (13.2), SETTINGS (gear icon only, 11). Under the right end of that row, the global **SCALE** in its own small frame, its top and bottom aligned with the lower part of the other frames; shown in both modes.
-   - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, CHAIN (Macros page only; the patterns view has its own chain controls), BPM, FILE, UNDO, MACROS and SETTINGS.
+   - **Pattern frame**: the PATTERN box (7.4), the **CHAIN** toggle (chain playback on / off, the same as CHAIN ON/OFF in the patterns view, 7.2; lit white when on, outlined when off; LEARN maps it to the Chain On macro) and the **pencil** (pattern edit mode, 7.5) as a tab on top; below it, wider, LENGTH, DIVISION, DIRECTION, SWING and (note mode) USE SCALE.
+   - **Right**, top row: the BPM box with the start / stop button (3; in edit mode it shows PLAYING nn, 7.5), FILE (folder icon, 13.3), UNDO, MACROS (13.2), SETTINGS (gear icon only, 11). Under the right end of that row, the global **SCALE** in its own small frame, its top and bottom aligned with the lower part of the other frames; shown in both modes.
+   - In the patterns view and on the Macros page the header is a flat bar: the wordmark at its usual size, the green **STEPS** button (back to the step view; the Macros page also shows the title MACROS), and on the right the PATTERN box, CHAIN and the pencil (Macros page only; the patterns view has its own chain controls), BPM, FILE, UNDO, MACROS and SETTINGS.
 2. **Step grid**: 2 rows of 16 steps, each row with its LED bar above it. Steps are grouped in fours by alternating tile shades.
 3. **Operations panel** (12.6).
 
@@ -597,17 +613,6 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-- **Pattern edit mode (edit one pattern while another plays).** Today the step view always shows the playing pattern, so a pattern cannot be edited while the chain (or anything else) plays a different one. Decided:
-  - A small **pencil button** right after CHAIN in the pattern controls tab (step view only). Edit mode has its **own color, pink** (dark theme `#FF6BAE`, a darker pink in the light theme). Off: plain outline, grey pencil. On: **filled pink**.
-  - **Edit mode off**: everything works as today (the view follows the playing pattern; the header arrows and picker play the picked pattern; the PATTERN box number blinks while a picked pattern waits for quantize). New: **chain switches** also blink the PATTERN box number, during the **last beat** before the switch, two pulses on the 8th notes of that beat (same rules as the edit mode blink below: none for patterns of 1 beat or less, or when the next entry is the same pattern).
-  - **Edit mode on**: the header PATTERN arrows and picker only choose the **pattern to edit**. The switch is **instant, never quantized**, and the playing pattern is not touched. The PATTERN box gets a **pink stroke** to show this. Playing is left to the patterns view play buttons, the chain, the Pattern macro and incoming CC.
-  - **Edit mode on, BPM box**: the "120.00 BPM" text is replaced by **PLAYING nn**, always (also when the edited pattern is the playing one); the transport button stays. No NEXT readout. **The PLAYING label blinks during the last beat before a scheduled switch** to a different pattern (a chain switch, or a hand pick waiting for quantize): a plain blink like the PATTERN box number (dims and comes back, no color change), twice, on the 8th notes of that beat. The number stays steady. No blink when the playing pattern lasts 1 beat or less, when the next pattern is the same one (a chain entry followed by the same pattern, repeats), or for a switch that happens at once (quantize off). No flash after the switch. **Clicking the box** makes the playing pattern the edited one (edit mode stays on).
-  - The grid's **running step light** only shows when the edited pattern is the playing one.
-  - **Switching edit mode off** jumps the view back to the playing pattern.
-  - **Patterns view**: STEPS returns to the playing pattern with edit mode off, to the **selected slot** with edit mode on.
-  - The **Macros page and LEARN** act on the edited pattern (what is on screen).
-  - Edit mode is a working state: **not saved** with the project or presets, **always off** when the plugin opens. Not a macro target.
-  - Header layout: CHAIN a bit narrower, the BPM box a bit wider, the right-hand buttons slightly closer together (mockup 2026-10-30).
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
@@ -709,3 +714,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: Settings section PITCH renamed MIDDLE C (PITCH is now the step knob).
 - 2026-10-30: Naming: the plugin is written **Vima** (not VIMA) everywhere: manual, README, spec, dialog titles. Folders renamed: Documents/Vima (Presets, Patterns, Macros) and the app settings folder Vima. All-caps UI labels (for example VIMA ON GITHUB) stay in the UI's capitals style; file format roots (`VIMA`, `VIMAPATTERN`...) and the VIMA Mono font name are internal and unchanged.
 - 2026-10-30: During testing only the Windows VST3 is built. The macOS job is disabled and the Linux build is postponed; both come back when the Windows version is final and a release is called.
+- 2026-10-30: Built: pattern edit mode (7.5): a pink pencil next to CHAIN; the header picker then only chooses the pattern to edit (instant, no quantize), the BPM box shows PLAYING nn (click: edit the playing pattern), STEPS opens the selected slot; off on open, not saved. Last-beat blink before a switch (two 8th-note pulses): the PATTERN box number for chain switches, PLAYING in edit mode.

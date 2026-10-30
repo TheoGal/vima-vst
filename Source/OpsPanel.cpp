@@ -416,7 +416,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
         const auto params = ctx.ui.clipParams;
         const auto label = "PASTE " + paramsText (params, false) + Context::dot() + juce::String ((int) clip.size()) + " STEPS AT "
                          + juce::String (start + 1).paddedLeft ('0', 2) + ctx.where();
-        ctx.edit (true, [&] (Project& p) { pasteSteps (p, p.currentPattern, t, start, clip, params); }, label);
+        ctx.edit (true, [&] (Project& p) { pasteSteps (p, ctx.shownIn (p), t, start, clip, params); }, label);
     };
     pasteBtn.pressedLook = [] { const auto& t = Theme::current(); return Pill::filled (t.green, t.onAccent); };   // green while held (SPEC.md 9.1)
     addAndMakeVisible (pasteBtn);

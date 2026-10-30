@@ -343,7 +343,7 @@ void MacrosView::pickKind (MacroKind kind)
 void MacrosView::pickTarget (MacroTarget target)
 {
     // a new mapping starts on the track and pattern on screen; a changed one keeps its place
-    const int track = ctx.ui.track, pattern = ctx.currentPattern();
+    const int track = ctx.ui.track, pattern = ctx.shown();
     editMap ([target, track, pattern] (MacroMap& m, const Globals& g)
     {
         const auto keep = m;

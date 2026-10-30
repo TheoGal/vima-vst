@@ -42,6 +42,10 @@ public:
     std::atomic<int> chainPosition { 0 };
     std::atomic<float> chainEntryProgress { 0.0f };
     std::atomic<int> chainRepeat { 0 };
+    // Beats until the next scheduled switch to a different pattern (a chain switch, or a picked
+    // pattern waiting for quantize); -1 when none, or when the playing pattern lasts 1 beat or less
+    // (SPEC.md 7.5: the last-beat blink)
+    std::atomic<double> beatsToSwitch { -1.0 };
 
     // Position of step n on the track's timeline (in steps), for a given length and direction
     static int stepIndexFor (long long n, int length, Direction dir);

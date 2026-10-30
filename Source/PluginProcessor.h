@@ -66,12 +66,13 @@ public:
         ++revision;
     }
 
-    // Change the project; if withUndo, the current pattern is saved for undo first
-    template <typename Fn> void editCurrent (bool withUndo, Fn&& fn, const juce::String& undoLabel = {})
+    // Change the pattern on screen; if withUndo, that pattern is saved for undo first.
+    // pattern < 0: the playing pattern (edit mode off), else the edited pattern (SPEC.md 7.5)
+    template <typename Fn> void editShown (int pattern, bool withUndo, Fn&& fn, const juce::String& undoLabel = {})
     {
         const Lock sl (lock);
         if (withUndo)
-            undo.push (project, project.currentPattern, undoLabel);
+            undo.push (project, pattern >= 0 ? pattern : project.currentPattern, undoLabel);
         fn (project);
         ++revision;
     }

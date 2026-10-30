@@ -15,7 +15,8 @@ const Theme& Theme::dark()
         c (0x8A94A3), c (0xC5CBD4), c (0xEEF1F5),
         c (0xDDE2E8), c (0x4FD98A), c (0x5CC8FF), c (0xB48CFF), c (0xFFB547),
         c (0x0B1410), c (0x0E1114), c (0xEEF1F5), juce::Colour (0x80000000),
-        c (0x090B0E), c (0x2A313B), c (0x101317)
+        c (0x090B0E), c (0x2A313B), c (0x101317),
+        c (0xFF6BAE)
     };
     return t;
 }
@@ -30,7 +31,8 @@ const Theme& Theme::light()
         c (0x525B68), c (0x2C333D), c (0x11151A),
         c (0x2A313B), c (0x00954D), c (0x0077C8), c (0x6A2CE6), c (0xC26D00),
         c (0xF5F7FA), c (0xC3CDDA), c (0x11151A), juce::Colour (0x38141E2D),
-        c (0xBFC7D2), c (0xADB5C0), c (0xC7CFDA)
+        c (0xBFC7D2), c (0xADB5C0), c (0xC7CFDA),
+        c (0xD6267A)
     };
     return t;
 }

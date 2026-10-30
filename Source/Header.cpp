@@ -58,6 +58,21 @@ static void settingsIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Col
     g.drawEllipse (juce::Rectangle<float> (5.6f, 5.6f).withCentre (ctr), 1.3f);
 }
 
+static void pencilIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour col)
+{
+    const auto c = b.getCentre();
+    juce::Path p;
+    p.startNewSubPath (c.x - 5.0f, c.y + 5.0f);
+    p.lineTo (c.x - 4.2f, c.y + 1.8f);
+    p.lineTo (c.x + 2.8f, c.y - 5.2f);
+    p.lineTo (c.x + 5.2f, c.y - 2.8f);
+    p.lineTo (c.x - 1.8f, c.y + 4.2f);
+    p.closeSubPath();
+    g.setColour (col);
+    g.strokePath (p, juce::PathStrokeType (1.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+    g.drawLine (c.x + 1.2f, c.y - 3.6f, c.x + 3.6f, c.y - 1.2f, 1.2f);
+}
+
 static void fileIcon (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
 {
     // a folder outline
@@ -140,27 +155,24 @@ Header::Header (Context& c) : ctx (c)
     auto arrowLook = [] { const auto& t = Theme::current(); return Pill::Look { juce::Colours::transparentBlack, juce::Colours::transparentBlack, t.text2, 0.0f, false }; };
     prevBtn.look = nextBtn.look = arrowLook;
     prevBtn.radius = nextBtn.radius = 4.0f;
-    prevBtn.onClick = [this]
+    // Edit mode off: the arrows play the previous / next pattern (quantize applies).
+    // Edit mode on: they only choose the pattern to edit, at once (SPEC.md 7.5).
+    auto step = [this] (int d)
     {
-        int i = ctx.currentPattern() - 1;
-        if (i < 0) i = numPatterns - 1;
-        ctx.proc.queuePattern (i);
+        const int i = ((ctx.ui.editMode ? ctx.shown() : ctx.currentPattern()) + d + numPatterns) % numPatterns;
+        if (ctx.ui.editMode) pickToEdit (i);
+        else ctx.proc.queuePattern (i);
         ctx.changed();
     };
-    nextBtn.onClick = [this]
-    {
-        int i = ctx.currentPattern() + 1;
-        if (i >= numPatterns) i = 0;
-        ctx.proc.queuePattern (i);
-        ctx.changed();
-    };
+    prevBtn.onClick = [step] { step (-1); };
+    nextBtn.onClick = [step] { step (1); };
     addAndMakeVisible (prevBtn);
     addAndMakeVisible (nextBtn);
     patternBtn.look = arrowLook;
     patternBtn.onClick = [this]
     {
         if (Popover::isOpen (*ctx.root, "patternPicker")) { Popover::closeAll (*ctx.root); return; }
-        ctx.ui.pickerPage = ctx.currentPattern() / patternsPerPage;
+        ctx.ui.pickerPage = ctx.shown() / patternsPerPage;
         const auto sz = PatternPickerPopover::size();
         auto area = patternArea.translated (getX(), getY());
         Popover::show (*ctx.root, std::make_unique<PatternPickerPopover> (ctx),
@@ -242,6 +254,25 @@ Header::Header (Context& c) : ctx (c)
     chainBtn.onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.chainOn = ! p.globals.chainOn; }); };
     setLearnTarget (chainBtn, MacroTarget::chainOn);
     addAndMakeVisible (chainBtn);
+
+    // Pattern edit mode (SPEC.md 7.5): a pencil after CHAIN, filled pink when on
+    editBtn.radius = 5.0f;
+    editBtn.look = [this]
+    {
+        const auto& t = Theme::current();
+        return ctx.ui.editMode ? Pill::Look { t.editMode, t.editMode, t.onAccent, 1.5f, false }
+                               : Pill::Look { t.tile, t.border, t.text2, 1.0f, false };
+    };
+    editBtn.onClick = [this] { ctx.setEditMode (! ctx.ui.editMode); };
+    editBtn.setTitle ("Pattern edit mode");
+    addAndMakeVisible (editBtn);
+
+    // Edit mode: the PLAYING readout in the BPM box; a click edits the playing pattern
+    playingBtn.look = [] { return Pill::Look { juce::Colours::transparentBlack, juce::Colours::transparentBlack, juce::Colours::transparentBlack, 0.0f, false }; };
+    playingBtn.radius = 4.0f;
+    playingBtn.onClick = [this] { pickToEdit (ctx.currentPattern()); };
+    playingBtn.setTitle ("Edit the playing pattern");
+    addChildComponent (playingBtn);
     addAndMakeVisible (settingsBtn);
 }
 
@@ -276,22 +307,27 @@ void Header::resized()
 
     auto right = r;
     settingsBtn.setBounds (right.removeFromRight (40).withSizeKeepingCentre (40, 32));
-    right.removeFromRight (8);
+    right.removeFromRight (6);
     macrosBtn.setBounds (right.removeFromRight (104).withSizeKeepingCentre (104, 32));
-    right.removeFromRight (8);
+    right.removeFromRight (6);
     undoBtn.setBounds (right.removeFromRight (84).withSizeKeepingCentre (84, 32));
-    right.removeFromRight (8);
+    right.removeFromRight (6);
     fileBtn.setBounds (right.removeFromRight (40).withSizeKeepingCentre (40, 32));
-    right.removeFromRight (8);
-    hostArea = right.removeFromRight (116).withSizeKeepingCentre (116, 32);
+    right.removeFromRight (6);
+    hostArea = right.removeFromRight (120).withSizeKeepingCentre (120, 32);
     transportBtn.setBounds (hostArea.withWidth (30).reduced (4, 4).translated (1, 0));
+    playingBtn.setVisible (ctx.ui.editMode);
+    playingBtn.setBounds (hostArea.withTrimmedLeft (34).reduced (2, 4));
     right.removeFromRight (10);
     // CHAIN next to the PATTERN box (not in the patterns view, which has its own chain controls)
     chainBtn.setVisible (! ctx.ui.patternsView);
-    juce::Rectangle<int> chainArea;
+    editBtn.setVisible (! ctx.ui.patternsView);
+    juce::Rectangle<int> chainArea, editArea;
     if (chainBtn.isVisible())
     {
-        chainArea = right.removeFromRight (64).withSizeKeepingCentre (64, 32);
+        editArea = right.removeFromRight (30).withSizeKeepingCentre (30, 32);
+        right.removeFromRight (4);
+        chainArea = right.removeFromRight (58).withSizeKeepingCentre (58, 32);
         right.removeFromRight (4);
     }
     patternArea = right.removeFromRight (162).withSizeKeepingCentre (162, 32);   // sized for two-digit numbers
@@ -299,8 +335,10 @@ void Header::resized()
     {
         patternArea.setX (496);   // over the pattern tiles
         chainArea.setX (patternArea.getRight() + 4);
+        editArea.setX (chainArea.getRight() + 4);
     }
     chainBtn.setBounds (chainArea.reduced (0, 3));
+    editBtn.setBounds (editArea.reduced (0, 3));
     auto pa = patternArea.reduced (3);
     prevBtn.setBounds (pa.removeFromLeft (24));
     nextBtn.setBounds (pa.removeFromRight (24));
@@ -322,10 +360,17 @@ void Header::showTrackMenu()
                      });
 }
 
+// Edit mode: choose the pattern to edit, at once; in the patterns view the selection follows
+void Header::pickToEdit (int index)
+{
+    if (ctx.ui.patternsView) ctx.ui.selectedPattern = index;
+    ctx.editPatternTo (index);
+}
+
 void Header::showFileMenu()
 {
     // PATTERN acts on the selected pattern: the patterns view's selected slot, else the one shown
-    const int pattern = ctx.ui.patternsView ? ctx.ui.selectedPattern : ctx.currentPattern();
+    const int pattern = ctx.ui.patternsView ? ctx.ui.selectedPattern : ctx.shown();
     juce::PopupMenu m;
     fileActions.addMenu (m, pattern);
     juce::Component::SafePointer<Header> safe (this);
@@ -411,6 +456,12 @@ void Header::paint (juce::Graphics& g)
 
     const bool pickerOpen = Popover::isOpen (*ctx.root, "patternPicker");
     draw::tile (g, patternArea.toFloat(), t.tile, (pickerOpen || ctx.ui.patternsView) ? t.neutral : t.border, 6.0f);
+    if (ctx.ui.editMode)
+    {
+        // edit mode: the PATTERN box chooses the pattern to edit (SPEC.md 7.5)
+        g.setColour (t.editMode);
+        g.drawRoundedRectangle (patternArea.toFloat().reduced (0.75f), 6.0f, 1.5f);
+    }
     draw::tile (g, hostArea.toFloat(), juce::Colours::transparentBlack, t.border, 6.0f);
     draw::tile (g, transportBtn.getBounds().toFloat(), t.tile, t.border2, 4.0f);
 }
@@ -443,10 +494,13 @@ void Header::paintOverChildren (juce::Graphics& g)
         auto pb = patternBtn.getBounds();
         const int lw = juce::GlyphArrangement::getStringWidthInt (Fonts::label (10.0f), "PATTERN") + 4;
         draw::label (g, "PATTERN", pb.withTrimmedLeft (8).withWidth (lw), t.muted);
+        // Edit mode off: the number blinks while a picked pattern waits for quantize, and on the
+        // last beat before a chain switch. Edit mode on: the number is the edited pattern, steady.
         const bool queued = ctx.proc.engine.queuedPattern.load() >= 0;
-        g.setColour (t.text.withAlpha (queued && ctx.ui.blink ? 0.2f : 1.0f));
+        const bool dim = ! ctx.ui.editMode && (queued ? ctx.ui.blink : ctx.switchPulseDim());
+        g.setColour (t.text.withAlpha (dim ? 0.2f : 1.0f));
         g.setFont (Fonts::monoSemi (13.0f));
-        const auto num = patternLabel (ctx.currentPattern());
+        const auto num = patternLabel (ctx.shown());
         const int nx = pb.getX() + 8 + lw + 6;
         const int nw = juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), num);
         g.drawText (num, pb.withX (nx).withWidth (nw + 2), juce::Justification::centredLeft);
@@ -461,11 +515,26 @@ void Header::paintOverChildren (juce::Graphics& g)
         else drawStop (g, c, ctx.proc.userStopped.load() ? t.amber : t.muted);   // amber: held, does not follow the host
         g.setColour (t.text);
         g.setFont (Fonts::monoSemi (12.0f));
-        g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
+        if (ctx.ui.editMode)
+        {
+            // edit mode: PLAYING nn instead of the BPM; PLAYING blinks on the last beat before a switch
+            const auto ha = hostArea.withTrimmedLeft (36);
+            const int lw = juce::GlyphArrangement::getStringWidthInt (Fonts::label (10.0f), "PLAYING") + 10;
+            draw::label (g, "PLAYING", ha.withWidth (lw), t.muted.withAlpha (ctx.switchPulseDim() ? 0.2f : 1.0f));
+            g.setColour (t.text);
+            g.setFont (Fonts::monoSemi (13.0f));
+            g.drawText (patternLabel (ctx.currentPattern()), ha.withTrimmedRight (12), juce::Justification::centredRight);
+        }
+        else
+        {
+            g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
+        }
     }
 
     undoIcon (g, undoBtn.getBounds().toFloat(), (ctx.proc.canUndo() || ctx.proc.canRedo()) ? t.text2 : t.dim);
     fileIcon (g, fileBtn.getBounds().toFloat(), t.text2);
     settingsIcon (g, settingsBtn.getBounds().toFloat(), t.text2);
+    if (editBtn.isVisible())
+        pencilIcon (g, editBtn.getBounds().toFloat(), ctx.ui.editMode ? (Theme::isLight() ? juce::Colours::white : t.onAccent) : t.text2);
 }
 } // namespace vima

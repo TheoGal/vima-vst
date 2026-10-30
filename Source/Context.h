@@ -46,6 +46,11 @@ struct UiState
     int selectedMacro = 0;
     bool macroLearn = false;       // LEARN: the next touched control is mapped to selectedMacro
 
+    // Pattern edit mode (SPEC.md 7.5): the step view shows editPattern instead of the playing
+    // pattern; the header picker only chooses it. A working state: not saved, off on open.
+    bool editMode = false;
+    int editPattern = 0;
+
     bool settingsOpen = false;
     bool blink = false;
 };
@@ -73,7 +78,7 @@ public:
     MacroMap controlMap (MacroTarget target, int step)
     {
         const int t = ui.track;
-        return proc.read ([target, step, t] (const Project& p) { return defaultMacroMap (target, t, p.currentPattern, step, p.globals); });
+        return proc.read ([this, target, step, t] (const Project& p) { return defaultMacroMap (target, t, shownIn (p), step, p.globals); });
     }
 
     // The macro mapped to a control on screen, or -1
@@ -141,12 +146,40 @@ public:
     }
     MacroMap macroCopy (int i) { return proc.read ([i] (const Project& p) { return p.macros[(size_t) i]; }); }
 
-    int currentPattern() { return proc.read ([] (const Project& p) { return p.currentPattern; }); }
+    int currentPattern() { return proc.read ([] (const Project& p) { return p.currentPattern; }); }   // the playing pattern
+
+    // The pattern on screen: the playing one, or the edited one in edit mode (SPEC.md 7.5)
+    int shownIn (const Project& p) const { return ui.editMode ? juce::jlimit (0, numPatterns - 1, ui.editPattern) : p.currentPattern; }
+    int shown() { return proc.read ([this] (const Project& p) { return shownIn (p); }); }
+    bool showsPlaying() { return proc.read ([this] (const Project& p) { return shownIn (p) == p.currentPattern; }); }
+
+    // Edit mode on / off. Off: the view goes back to the playing pattern.
+    void setEditMode (bool on)
+    {
+        ui.editMode = on;
+        if (on) ui.editPattern = currentPattern();
+        changed();
+    }
+    void editPatternTo (int index)
+    {
+        ui.editPattern = juce::jlimit (0, numPatterns - 1, index);
+        changed();
+    }
+
+    // The last beat before a scheduled switch (SPEC.md 7.5): two pulses on the 8th notes.
+    // True while the blinking text is dimmed.
+    bool switchPulseDim()
+    {
+        const double b = proc.engine.beatsToSwitch.load();
+        if (b <= 0.0 || b > 1.0) return false;
+        const double e = 1.0 - b;
+        return std::fmod (e * 2.0, 1.0) < 0.5;
+    }
 
     TrackPattern trackCopy (int track = -1)
     {
         const int t = track < 0 ? ui.track : track;
-        return proc.read ([t] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[(size_t) t]; });
+        return proc.read ([this, t] (const Project& p) { return p.patterns[(size_t) shownIn (p)].tracks[(size_t) t]; });
     }
     TrackRouting routingCopy (int track = -1)
     {
@@ -157,18 +190,18 @@ public:
 
     template <typename Fn> void edit (bool withUndo, Fn&& fn, const juce::String& undoLabel = {})
     {
-        proc.editCurrent (withUndo, std::forward<Fn> (fn), undoLabel);
+        proc.editShown (ui.editMode ? ui.editPattern : -1, withUndo, std::forward<Fn> (fn), undoLabel);
         changed();
     }
 
     // Save the current pattern for undo (start of a drag gesture), with what it is
-    void beginGesture (const juce::String& undoLabel = {}) { proc.editCurrent (true, [] (Project&) {}, undoLabel); }
+    void beginGesture (const juce::String& undoLabel = {}) { proc.editShown (ui.editMode ? ui.editPattern : -1, true, [] (Project&) {}, undoLabel); }
 
     // Undo labels (SPEC.md 9): " · TR03 · PAT23" for the track and pattern on screen
     juce::String where()
     {
         return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 TR")) + juce::String (ui.track + 1).paddedLeft ('0', 2)
-             + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 PAT")) + patternLabel (currentPattern());
+             + juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 PAT")) + patternLabel (shown());
     }
     static juce::String dot() { return juce::String (juce::CharPointer_UTF8 (" \xc2\xb7 ")); }
     // the steps in scope: "ALL STEPS", "STEP 05", "STEPS 3-9", "4 STEPS"
@@ -188,7 +221,7 @@ public:
     {
         const int t = ui.track;
         const auto sel = ui.selection;
-        return proc.read ([=] (const Project& p) { return makeScope (p, p.currentPattern, t, sel); });
+        return proc.read ([=] (const Project& p) { return makeScope (p, shownIn (p), t, sel); });
     }
     bool hasSelection()
     {
@@ -196,7 +229,7 @@ public:
         return (ui.selection & rangeMask (0, len - 1)) != 0;
     }
 
-    TrackPattern& liveTrack (Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[(size_t) ui.track]; }
+    TrackPattern& liveTrack (Project& p) { return p.patterns[(size_t) shownIn (p)].tracks[(size_t) ui.track]; }
 
     void changed() { if (refresh) refresh(); }
 

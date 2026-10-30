@@ -55,7 +55,7 @@ int StepSlider::valueAtScreenY (int screenY) const
 static int soundingPitch (Context& ctx, int index)
 {
     const int t = ctx.ui.track;
-    return ctx.proc.read ([t, index] (const Project& p) { return soundingNote (p, p.currentPattern, t, index); });
+    return ctx.proc.read ([&ctx, t, index] (const Project& p) { return soundingNote (p, ctx.shownIn (p), t, index); });
 }
 
 StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
@@ -127,7 +127,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     pitch.nudge = [this] (int d)
     {
         const int t = ctx.ui.track;
-        ctx.edit (false, [t, d, this] (Project& p) { nudgePitchClass (p, p.currentPattern, t, index, d); });
+        ctx.edit (false, [t, d, this] (Project& p) { nudgePitchClass (p, ctx.shownIn (p), t, index, d); });
     };
     pitch.parse = [] (const juce::String& s)
     {
@@ -141,7 +141,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     pitch.setValue = [this] (int pc)
     {
         const int t = ctx.ui.track;
-        ctx.edit (false, [t, pc, this] (Project& p) { setPitchClass (p, p.currentPattern, t, index, pc); });
+        ctx.edit (false, [t, pc, this] (Project& p) { setPitchClass (p, ctx.shownIn (p), t, index, pc); });
     };
     pitch.onGestureStart = [this, stepLabel] { ctx.beginGesture (stepLabel ("PITCH")); };
     pitch.pixelsPerStep = 8.0f;
@@ -165,7 +165,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     octave.nudge = [this] (int d)
     {
         const int t = ctx.ui.track;
-        ctx.edit (false, [t, d, this] (Project& p) { nudgeOctave (p, p.currentPattern, t, index, d); });
+        ctx.edit (false, [t, d, this] (Project& p) { nudgeOctave (p, ctx.shownIn (p), t, index, d); });
     };
     octave.minValue = minOctave; octave.maxValue = maxOctave + 2; octave.defaultValue = 3;
     octave.setValue = [this] (int shown)
@@ -174,7 +174,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         ctx.edit (false, [t, shown, this] (Project& p)
         {
             const int o = shown - p.globals.octaveOffset();
-            p.patterns[(size_t) p.currentPattern].tracks[(size_t) t].steps[(size_t) index].octave
+            p.patterns[(size_t) ctx.shownIn (p)].tracks[(size_t) t].steps[(size_t) index].octave
                 = (std::int8_t) juce::jlimit (minOctave, maxOctave, o);
         });
     };
@@ -253,7 +253,7 @@ void StepCell::setShownOn (bool on)
 Step StepCell::stepCopy() const
 {
     const int t = ctx.ui.track;
-    return ctx.proc.read ([t, this] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[(size_t) t].steps[(size_t) index]; });
+    return ctx.proc.read ([t, this] (const Project& p) { return p.patterns[(size_t) ctx.shownIn (p)].tracks[(size_t) t].steps[(size_t) index]; });
 }
 
 void StepCell::refreshState()
@@ -521,7 +521,8 @@ void StepGrid::paint (juce::Graphics& g)
     const auto& t = Theme::current();
     const int len = ctx.trackCopy().length;
     const auto accent = ctx.modeAccent();
-    const bool playing = ctx.proc.engine.isPlaying;
+    // the running step light only on the playing pattern (edit mode may show another, SPEC.md 7.5)
+    const bool playing = ctx.proc.engine.isPlaying && ctx.showsPlaying();
     const int play = playing ? ctx.proc.engine.playStep[(size_t) ctx.ui.track].load() : -1;
     const bool copied = ! ctx.ui.clip.empty();
     const auto sel = copied ? 0u : ctx.ui.selection & rangeMask (0, len - 1);

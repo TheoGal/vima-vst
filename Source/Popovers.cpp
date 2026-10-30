@@ -131,7 +131,7 @@ PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
         p.cornerDot = [this, b]
         {
             const int q = ctx.proc.engine.queuedPattern.load();
-            return ctx.currentPattern() / patternsPerPage == b || (q >= 0 && q / patternsPerPage == b);
+            return ctx.shown() / patternsPerPage == b || (q >= 0 && q / patternsPerPage == b);
         };
     }
     for (int s = 0; s < patternsPerPage; ++s)
@@ -146,7 +146,7 @@ PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
         {
             const auto& t = Theme::current();
             const int idx = ctx.ui.pickerPage * patternsPerPage + s;
-            const int cur = ctx.currentPattern();
+            const int cur = ctx.shown();   // edit mode: the edited pattern (SPEC.md 7.5)
             const int q = ctx.proc.engine.queuedPattern.load();
             const bool used = ! ctx.proc.read ([idx] (const Project& pr) { return pr.patterns[(size_t) idx].isEmpty(); });
             Pill::Look l { used ? t.tile : t.panel, t.border2, used ? t.text : t.muted, 1.0f, false };
@@ -164,7 +164,13 @@ PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
         p.onClick = [this, s]
         {
             const int idx = ctx.ui.pickerPage * patternsPerPage + s;
-            if (idx != ctx.currentPattern())
+            if (ctx.ui.editMode)
+            {
+                // edit mode: only choose the pattern to edit, at once (SPEC.md 7.5)
+                if (ctx.ui.patternsView) ctx.ui.selectedPattern = idx;
+                ctx.ui.editPattern = idx;
+            }
+            else if (idx != ctx.currentPattern())
                 ctx.proc.queuePattern (idx);
             Popover::closeAll (*ctx.root);
             ctx.changed();

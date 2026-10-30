@@ -22,6 +22,7 @@ struct Theme
     juce::Colour knobTrack;   // inactive part of knob arcs
     juce::Colour ledIdle;     // LED bar: unlit step within the length
     juce::Colour ledBeyond;   // LED bar: step beyond the length
+    juce::Colour editMode;    // pattern edit mode (pencil, PATTERN box stroke)
 
     static const Theme& dark();
     static const Theme& light();

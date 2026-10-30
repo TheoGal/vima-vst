@@ -26,6 +26,7 @@ void Engine::reset()
     lastChainOnState = -1;
     for (auto& s : playStep) s = -1;
     isPlaying = false;
+    beatsToSwitch = -1.0;
 }
 
 int Engine::stepIndexFor (long long n, int length, Direction dir)
@@ -277,6 +278,7 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
         lastCCSent.fill (-1);
         for (auto& s : playStep) s = -1;
         isPlaying = false;
+        beatsToSwitch = -1.0;
         // While stopped, a queued pattern switches immediately (nothing is playing)
         const int q = queuedPattern.exchange (-1);
         if (q >= 0 && q < numPatterns)
@@ -429,6 +431,39 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
     {
         chainPosition = -1;
         chainEntryProgress = 0.0f;
+    }
+
+    // Next scheduled switch, for the last-beat blink (SPEC.md 7.5)
+    {
+        const double beat = 4.0 / juce::jmax (1, host.timeSigDenominator);
+        const double curLen = project.patterns[(size_t) project.currentPattern].lengthPpq();
+        double at = -1.0, playLen = 0.0;
+        int next = -1;
+        const int q = queuedPattern.load();
+        if (q >= 0 && q < numPatterns)
+        {
+            if (g.quantize != Quantize::off)
+            {
+                at = nextQuantizePoint (project, host, ppqEnd);
+                next = q;
+                playLen = curLen;
+            }
+        }
+        else if (chainActive && ! g.chain.isEmpty())
+        {
+            int ni = chainIndex + 1;
+            if (ni >= g.chain.size()) ni = g.chainLoop ? 0 : -1;
+            if (ni >= 0)
+            {
+                at = chainEntryEnd (project);
+                next = (int) g.chain.getReference (ni).pattern;
+                playLen = curLen * juce::jmax (1, (int) g.chain.getReference (chainIndex).repeats);
+            }
+        }
+        if (next >= 0 && next != project.currentPattern && playLen > beat + 1.0e-9 && at >= ppqEnd)
+            beatsToSwitch = (at - ppqEnd) / beat;
+        else
+            beatsToSwitch = -1.0;
     }
 
     wasPlaying = true;

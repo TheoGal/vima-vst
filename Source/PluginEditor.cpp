@@ -343,7 +343,7 @@ void VimaEditor::refreshAll()
     learnOverlay.repaint();
     content.repaint();
     lastRevision = proc.revision.load();
-    lastPattern = ctx.currentPattern();
+    lastPattern = ctx.shown();
     repaint();
     if (settings) settings->repaint();
 }
@@ -354,8 +354,12 @@ void VimaEditor::setPatternsView (bool show)
     if (show) ctx.ui.macrosView = false;
     if (show)
     {
-        ctx.ui.selectedPattern = ctx.currentPattern();
+        ctx.ui.selectedPattern = ctx.shown();
         ctx.ui.viewPage = ctx.ui.selectedPattern / patternsPerPage;
+    }
+    else if (ctx.ui.editMode)
+    {
+        ctx.ui.editPattern = ctx.ui.selectedPattern;   // STEPS opens the selected slot (SPEC.md 7.5)
     }
     Popover::closeAll (content);
     refreshAll();
@@ -400,13 +404,15 @@ void VimaEditor::timerCallback()
     }
 
     const int rev = proc.revision.load();
-    const int pat = ctx.currentPattern();
+    const int pat = ctx.shown();
     const int queuedPattern = proc.engine.queuedPattern.load();
     // a queued pattern (picked while quantize waits) changes no data, but what is shown: the Pattern
     // macro's knob, the NEXT slot. Refresh on it too, so a macro drag shows every pattern it passes.
     const bool queueChanged = queuedPattern != lastQueuedPattern;
     lastQueuedPattern = queuedPattern;
-    if (rev != lastRevision || pat != lastPattern || Theme::revision() != lastTheme || queueChanged)
+    // edit mode: the playing pattern can change without the view changing (slots, PLAYING readout)
+    const bool playingChanged = ctx.ui.editMode && ctx.currentPattern() != lastPlayingPattern;
+    if (rev != lastRevision || pat != lastPattern || Theme::revision() != lastTheme || queueChanged || playingChanged)
     {
         if (pat != lastPattern && ! ctx.ui.patternsView)
             ctx.ui.selection = 0;
@@ -416,8 +422,14 @@ void VimaEditor::timerCallback()
     const bool queued = proc.engine.queuedPattern.load() >= 0;
     const bool playing = proc.engine.isPlaying;
     const double bpm = proc.hostBpm.load();
-    if (queued || queued != lastQueued || playing != lastPlaying || ! juce::exactlyEqual (bpm, lastBpm))
+    const int playingPattern = ctx.currentPattern();
+    // the last-beat blink before a switch (SPEC.md 7.5), and the PLAYING readout in edit mode
+    const bool warn = proc.engine.beatsToSwitch.load() > 0.0;
+    if (queued || warn || warn != lastWarn || queued != lastQueued || playing != lastPlaying
+        || playingPattern != lastPlayingPattern || ! juce::exactlyEqual (bpm, lastBpm))
         header.repaint();
+    lastWarn = warn;
+    lastPlayingPattern = playingPattern;
     lastQueued = queued;
     lastBpm = bpm;
 

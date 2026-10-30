@@ -132,6 +132,7 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 
 - **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view 
 - **CHAIN**, switches chain playback on and off. It lights up while the chain is on, so you can always see whether the patterns are changing by themselves.
+- **Pencil** (pattern edit mode): lets you edit one pattern while another one plays. See **Editing a pattern while another plays**.
 - **LENGTH** (4-32 steps): How many steps a pattern has. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms.
 - **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
 - **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once.
@@ -267,7 +268,7 @@ When switching patterns manually the **Quantize** setting (found in Settings win
 - **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
 - **PATTERN END**: when the playing pattern reaches its end.
 
-While a switch is waiting, the PATTERN box blinks. Picking another pattern before the switch replaces the waiting one. When the DAW is stopped, patterns switch at once.
+While a switch is waiting, the PATTERN box blinks. Picking another pattern before the switch replaces the waiting one. When the DAW is stopped, patterns switch at once. When the chain is about to move to another pattern, the PATTERN box number blinks twice during the last beat before the switch.
 
 > **[Screenshot]** The patterns pop-up
 
@@ -333,6 +334,22 @@ Using the chain allows to chain patterns played one after the other to create lo
 >**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
 > **[Screenshot]** A long chain with the scroll bar. *(patterns-view-long-chain.png)*
+
+### Editing a pattern while another plays
+
+Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button next to CHAIN. It turns pink when on.
+
+> **[Screenshot]** Pattern edit mode on: the pink pencil, the pink outline around the PATTERN box and PLAYING in place of the BPM. *(main-edit-mode.png)*
+
+While edit mode is on:
+
+- The **PATTERN** box (pink outline) chooses the pattern you edit. The arrows and the quick picker change it **at once**, whatever the Quantize setting, and the music is not touched. To change what plays, use the play buttons in the patterns view, the chain, the Pattern macro or a pattern change CC.
+- The BPM display shows **PLAYING** and the number of the pattern that is playing. Its PLAYING label blinks twice during the last beat before a switch to another pattern. **Click it** to jump to the playing pattern and edit that one.
+- The running step light only shows when you are editing the pattern that is playing.
+- Everything on screen works on the pattern you edit: steps, operations, undo, the FILE menu's PATTERN section, the Macros page and LEARN.
+- In the patterns view, **STEPS** takes you to the selected slot, so you can pick a pattern there and go straight to editing it.
+
+Switch the pencil off and the main window goes back to the pattern that is playing. Edit mode always starts off when you open a project: it is a way of working, not a setting.
 
 
 ## Macros: automating Vima from your DAW
@@ -498,6 +515,7 @@ Except for the theme and middle C, these settings belong to each Vima in your pr
 | Pattern slot | click / play button | select / select and switch |
 | Pattern slot | right-click | copy, paste, load, save menu |
 | Chain entry | drag the grip | reorder |
+| PLAYING (edit mode) | click | edit the playing pattern |
 | UNDO | right-click | REDO the last UNDO |
 | While LEARN is on | click / right-click a control | map it / free it |
 
