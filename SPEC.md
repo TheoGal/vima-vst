@@ -625,6 +625,9 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
+- **Slot menu (patterns view right-click) additions.**
+  - The PASTE item names what it pastes: nothing copied = **PASTE** (dimmed); a pattern copied = **PASTE PATTERN** (source number: still to decide); a track copied = **PASTE ON TRACK nn** (the selected track in the TRACK dropdown).
+  - Bottom section, with LOAD PATTERN... and SAVE PATTERN AS...: **NEW PATTERN** (the same as FILE > PATTERN > NEW: the init pattern, 16 steps on, with the same confirmation "Reset pattern 05 to the init pattern? You can undo this.") and **CLEAR PATTERN** (makes the slot empty: a blank pattern, like a fresh slot 2-64; one undo step; asks first like NEW).
 - **One shared track for the step view and the patterns view.** The patterns view's TRACK dropdown (COPY TRACK, track paste) and the step view's TRACK become the same value: picking a track in either view picks it in both. COPY TRACK and track paste use it; it is the track saved with the project (uiTrack).
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
