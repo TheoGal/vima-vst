@@ -770,6 +770,10 @@ void PatternsView::slotDropped (int pattern, juce::Point<int> pos, bool copy)
         if (copy ? ctx.proc.copyPatternTo (pattern, target) : ctx.proc.movePattern (pattern, target))
             ctx.ui.selectedPattern = target;
     }
+    else if (pattern >= 0 && insertAt < 0 && slotIndexAt (pos) == pattern && ctx.ui.patternClipKind == 0)
+    {
+        ctx.ui.selectedPattern = pattern;   // released on its own slot: a click that slipped, select it
+    }
     else if (pattern >= 0 && insertAt >= 0)
     {
         ctx.edit (false, [this, pattern, insertAt] (Project& p)

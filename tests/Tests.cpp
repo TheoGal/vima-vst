@@ -2029,6 +2029,23 @@ int main (int argc, char** argv)
         }
         if (auto* pv = findChild<PatternsView> (ed))
         {
+            auto* hd = findChild<Header> (ed);
+            auto* s2 = findChild<PatternSlot> (*pv, 2);
+            if (hd && s2)
+            {
+                click (*s2, { 20, s2->getHeight() - 20 });
+                check (ctx.ui.selectedPattern == 2 && hd->fileMenuPattern() == 2, "patterns view: FILE acts on the selected slot");
+                // a click that moves a little (a drag released on its own slot) still selects
+                auto* s5 = findChild<PatternSlot> (*pv, 5);
+                const juce::Point<int> a { 30, 60 }, b { 40, 64 };
+                s5->mouseDown (mouseEvent (*s5, a, a));
+                s5->mouseDrag (mouseEvent (*s5, b, a, true));
+                s5->mouseUp (mouseEvent (*s5, b, a, true));
+                check (ctx.ui.selectedPattern == 5 && hd->fileMenuPattern() == 5, "a click with a small slip on a slot still selects it");
+            }
+        }
+        if (auto* pv = findChild<PatternsView> (ed))
+        {
             // Slot drag and drop (SPEC.md 7.1.3)
             const auto keep = proc->read ([] (const Project& p) { return p; });
             proc->edit (-1, [] (Project& p) { p.patterns[14] = blankPattern(); p.patterns[13] = blankPattern(); });

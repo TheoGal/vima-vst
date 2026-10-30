@@ -29,6 +29,9 @@ public:
 private:
     void showTrackMenu();
     void showFileMenu();
+public:
+    int fileMenuPattern();   // the pattern the FILE menu's PATTERN section acts on
+private:
     void pickToEdit (int index);
     Context& ctx;
     FileActions fileActions { ctx, *this };

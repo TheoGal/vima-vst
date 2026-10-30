@@ -368,10 +368,15 @@ void Header::pickToEdit (int index)
     ctx.editPatternTo (index);
 }
 
+int Header::fileMenuPattern()
+{
+    return ctx.ui.patternsView ? ctx.ui.selectedPattern : ctx.shown();
+}
+
 void Header::showFileMenu()
 {
     // PATTERN acts on the selected pattern: the patterns view's selected slot, else the one shown
-    const int pattern = ctx.ui.patternsView ? ctx.ui.selectedPattern : ctx.shown();
+    const int pattern = fileMenuPattern();
     juce::PopupMenu m;
     fileActions.addMenu (m, pattern);
     juce::Component::SafePointer<Header> safe (this);
