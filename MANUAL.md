@@ -82,7 +82,7 @@ Steps which are off are dimmed. Steps beyond the track length are faded out and 
 | Mode | Value | Range | What it does |
 |---|---|---|---|
 | Note mode | Note on / off | | Whether the step triggers a note. |
-| CC mode | CC on / off | (in CC mode) | Whether the step sends its CC value. Independent of the note on-off. |
+| CC mode | CC on / off | | Whether the step sends its CC value. Independent of the note on-off. |
 | Note mode | Pitch | C to B | The note name. With the scale on, only notes in the scale. |
 | Note mode | Octave | C-2 to 8 (with middle C = C3) | The whole MIDI range. |
 | Note mode | Velocity | 1-127 | How hard the note is played *(actually it's how fast a key travelled when played on a physical piano keyboard, but let's not get into that)*. |
@@ -253,7 +253,7 @@ You can copy - paste selected parameters of steps with the **copy** and **paste*
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
 
-## Patterns
+## Switching patterns
 
 At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. 
 
@@ -326,7 +326,7 @@ Using the chain allows to chain patterns played one after the other to create lo
 - **CHAIN ON / OFF** starts and stops chain playback (the same as the CHAIN button next to the PATTERN box in the main window). **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
 - Long chains scroll with the mouse wheel or the scroll bar.
 
->**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do. This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
+>**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
 > **[Screenshot]** A long chain with the scroll bar. *(patterns-view-long-chain.png)*
 
