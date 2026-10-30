@@ -446,7 +446,7 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     addBtn.radius = 6.0f;
     addBtn.font = [] { return Fonts::sansBold (11.0f).withExtraKerningFactor (0.12f); };
     addBtn.look = [] { const auto& t = Theme::current(); return Pill::outline (t.neutral, t.text); };
-    addBtn.text = [this] { return "+ ADD " + patternLabel (ctx.ui.selectedPattern); };
+    addBtn.text = [this] { return "+ ADD PATTERN " + patternLabel (ctx.ui.selectedPattern); };
     addBtn.onClick = [this]
     {
         const int sel = ctx.ui.selectedPattern;
