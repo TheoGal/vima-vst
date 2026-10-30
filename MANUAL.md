@@ -142,10 +142,11 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 >**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain -  you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
 
 >**design choice:** Controls are visually grouped and color coded according to their scope
+>
 >- **White / neutral**: settings for the whole track, pattern or the whole instance (length, division, direction, swing, MIDI channel, scale).
-- **Green**: the note part (note steps, notes, octaves, velocity, NOTE OUT, USE SCALE).
-- **Cyan**: the CC part (CC steps, CC values, CC NUM, CC OUT).
-- **Purple**: gate. **Amber**: probability.
+>- **Green**: the note part (note steps, notes, octaves, velocity, NOTE OUT, USE SCALE).
+>- **Cyan**: the CC part (CC steps, CC values, CC NUM, CC OUT).
+>- **Purple**: gate. **Amber**: probability.
 
 
 ## Step operations
