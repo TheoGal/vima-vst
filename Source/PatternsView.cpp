@@ -37,8 +37,33 @@ void PatternSlot::mouseExit (const juce::MouseEvent&)
     if (hoverPlay) { hoverPlay = false; repaint(); }
 }
 
+void PatternSlot::mouseDown (const juce::MouseEvent&)
+{
+    slotDragging = false;
+}
+
+void PatternSlot::mouseDrag (const juce::MouseEvent& e)
+{
+    // drag and drop (SPEC.md 7.1.3): starts after a few pixels; not while COPIED / LEARN
+    if (e.mods.isPopupMenu() || ctx.ui.patternClipKind != 0 || ctx.ui.macroLearn) return;
+    if (! slotDragging && e.getDistanceFromDragStart() < 5) return;
+    if (! slotDragging) dragSource = ctx.ui.viewPage * patternsPerPage + slot;   // the page may change while dragging
+    slotDragging = true;
+    const int idx = dragSource;
+    const bool copy = e.mods.isCommandDown();
+    setMouseCursor (copy ? juce::MouseCursor::CopyingCursor : juce::MouseCursor::DraggingHandCursor);
+    if (onSlotDrag) onSlotDrag (idx, e.getEventRelativeTo (getParentComponent()).getPosition(), copy);
+}
+
 void PatternSlot::mouseUp (const juce::MouseEvent& e)
 {
+    if (slotDragging)
+    {
+        slotDragging = false;
+        setMouseCursor (juce::MouseCursor::PointingHandCursor);
+        if (onSlotDrop) onSlotDrop (dragSource, e.getEventRelativeTo (getParentComponent()).getPosition(), e.mods.isCommandDown());
+        return;
+    }
     if (! getLocalBounds().contains (e.getPosition())) return;
     const int idx = ctx.ui.viewPage * patternsPerPage + slot;
     if (e.mods.isPopupMenu())
@@ -90,9 +115,14 @@ void PatternSlot::paint (juce::Graphics& g)
     // queued = blinking play button.
     auto b = getLocalBounds().toFloat();
     const auto fill = playing ? t.selected : (used ? t.tile : t.panel);
-    const bool outlined = sel || dest;
-    const auto border = outlined ? t.neutral : t.border3;
-    const float bw = outlined ? 2.0f : 1.0f;
+    // Drag and drop (SPEC.md 7.1.3): empty slots are drop targets (a mid outline), the one under
+    // the mouse gets the selected outline; stored slots get none. The selection outline is hidden.
+    const bool slotDrag = ctx.ui.slotDragSource >= 0;
+    const bool target = slotDrag && idx == ctx.ui.slotDropTarget;
+    const bool allowed = slotDrag && ! used && idx != ctx.ui.slotDragSource;
+    const bool outlined = slotDrag ? target : (sel || dest);
+    const auto border = outlined ? t.neutral : (allowed ? t.muted : t.border3);
+    const float bw = outlined ? 2.0f : (allowed ? 1.5f : 1.0f);
     g.setColour (fill);
     g.fillRoundedRectangle (b, 7.0f);
     g.setColour (border);
@@ -337,6 +367,8 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     for (int s = 0; s < patternsPerPage; ++s)
     {
         auto* slot = slots.add (new PatternSlot (ctx, s));
+        slot->onSlotDrag = [this] (int pat, juce::Point<int> pos, bool copy) { slotDragMoved (pat, pos, copy); };
+        slot->onSlotDrop = [this] (int pat, juce::Point<int> pos, bool copy) { slotDropped (pat, pos, copy); };
         slot->onMenu = [this] (int pattern) { showSlotMenu (pattern); };
         addAndMakeVisible (slot);
     }
@@ -686,6 +718,70 @@ void PatternsView::resized()
     }
 }
 
+// ---------------------------------------------------------------------------------------
+// Slot drag and drop (SPEC.md 7.1.3)
+int PatternsView::slotIndexAt (juce::Point<int> pos) const
+{
+    for (int i = 0; i < slots.size(); ++i)
+        if (slots[i]->getBounds().contains (pos))
+            return ctx.ui.viewPage * patternsPerPage + i;
+    return -1;
+}
+
+void PatternsView::slotDragMoved (int pattern, juce::Point<int> pos, bool copy)
+{
+    ctx.ui.slotDragSource = pattern;
+    slotDragPos = pos;
+    slotDragCopy = copy;
+
+    // hovering a PAGE button switches to that page
+    for (int b = 0; b < pageBtns.size(); ++b)
+        if (pageBtns[b]->getBounds().contains (pos) && ctx.ui.viewPage != b)
+            ctx.ui.viewPage = b;
+
+    // a drop target: an empty slot other than the source
+    ctx.ui.slotDropTarget = -1;
+    const int over = slotIndexAt (pos);
+    if (over >= 0 && over != pattern && ctx.proc.read ([over] (const Project& p) { return p.patterns[(size_t) over].isEmpty(); }))
+        ctx.ui.slotDropTarget = over;
+
+    // over the chain panel: where the pattern would be added
+    chainInsertIndex = -1;
+    if (aside.contains (pos) && ctx.globalsCopy().chain.size() < maxChainEntries)
+    {
+        // near the top or bottom edge of the list: scroll it
+        if (pos.y > chainList.getBottom() && pos.y < chainList.getBottom() + 24) scrollChainTo (chainFirst + 1);
+        else if (pos.y < chainList.getY() && pos.y > chainList.getY() - 24) scrollChainTo (chainFirst - 1);
+        chainInsertIndex = dropIndexAt (pos.y);
+    }
+    for (auto* sl : slots) sl->repaint();
+    repaint();
+}
+
+void PatternsView::slotDropped (int pattern, juce::Point<int> pos, bool copy)
+{
+    slotDragMoved (pattern, pos, copy);
+    const int target = ctx.ui.slotDropTarget;
+    const int insertAt = chainInsertIndex;
+    ctx.ui.slotDragSource = ctx.ui.slotDropTarget = -1;
+    chainInsertIndex = -1;
+    if (pattern >= 0 && target >= 0)
+    {
+        if (copy ? ctx.proc.copyPatternTo (pattern, target) : ctx.proc.movePattern (pattern, target))
+            ctx.ui.selectedPattern = target;
+    }
+    else if (pattern >= 0 && insertAt >= 0)
+    {
+        ctx.edit (false, [this, pattern, insertAt] (Project& p)
+        {
+            if (p.globals.chain.size() >= maxChainEntries) return;
+            p.globals.chain.insert (insertAt, { (std::uint8_t) pattern, 1 });
+            ctx.proc.engine.chainEntryInserted (insertAt);
+        });
+    }
+    ctx.changed();
+}
+
 int PatternsView::dropIndexAt (int y) const
 {
     const int n = chainRows.size();
@@ -695,6 +791,27 @@ int PatternsView::dropIndexAt (int y) const
 
 void PatternsView::paintOverChildren (juce::Graphics& g)
 {
+    if (ctx.ui.slotDragSource >= 0)
+    {
+        const auto& t = Theme::current();
+        // where the dragged pattern would be added to the chain
+        if (chainInsertIndex >= 0 && chainInsertIndex >= chainFirst && chainInsertIndex <= chainFirst + chainVisibleCount())
+        {
+            const int y = chainList.getY() + (chainInsertIndex - chainFirst) * 40 - 2;
+            g.setColour (t.neutral);
+            g.fillRoundedRectangle ((float) chainList.getX(), (float) y - 1.0f, (float) chainList.getWidth(), 3.0f, 1.5f);
+        }
+        // a small ghost of the dragged slot follows the mouse ("+" when copying)
+        auto ghost = juce::Rectangle<float> (64.0f, 30.0f).withCentre (slotDragPos.toFloat()).translated (14.0f, 12.0f);
+        g.setColour (t.selected.withAlpha (0.92f));
+        g.fillRoundedRectangle (ghost, 6.0f);
+        g.setColour (t.neutral);
+        g.drawRoundedRectangle (ghost.reduced (0.75f), 6.0f, 1.5f);
+        g.setColour (t.text);
+        g.setFont (Fonts::monoSemi (13.0f));
+        g.drawText ((slotDragCopy ? "+ " : "") + patternLabel (ctx.ui.slotDragSource), ghost.toNearestInt(), juce::Justification::centred);
+        return;
+    }
     if (dragIndex < 0 || dropIndex < 0) return;
     if (dropIndex == dragIndex || dropIndex == dragIndex + 1) return;   // would not move
     if (dropIndex < chainFirst || dropIndex > chainFirst + chainVisibleCount()) return;   // scrolled out of view

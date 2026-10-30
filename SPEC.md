@@ -176,6 +176,17 @@ Works like step copy / paste (9.1):
 - **Slot menu** (right-click, 7.1): COPY PATTERN / COPY TRACK use the **same clipboard** and light the same buttons. Its **PASTE is a one-off**: it writes straight into the right-clicked slot (a track copy goes into the track in the TRACK dropdown), one undo step, then clears the clipboard (COPIED / TRACK COPIED switches off) and the bottom-bar **PASTE flashes green** briefly to confirm. The bottom-bar PASTE keeps the clipboard as above, whichever way the copy was made.
 - Clicking the lit button, or **CLEAR**, cancels: the clipboard is emptied and the ghost preview removed. **CLEAR never erases a pattern.** To reset a pattern, use PATTERN > NEW in the FILE menu (13.3); preset NEW resets everything.
 
+#### 7.1.3 Drag and drop
+
+- A slot can be dragged. The drag starts after the mouse moves a few pixels, so a click still selects and the play button still plays. No dragging while COPIED / TRACK COPIED is lit or LEARN is on.
+- **Drag** onto another slot: **move** the pattern there (it is copied, then the source becomes a blank pattern, like a fresh slot 2-64).
+- **Ctrl + drag** (Cmd + drag on Mac, the same keys as step selection): **copy** the pattern there; the source stays.
+- **Drops land only on empty slots** (EMPTY: no step on in any track), for move and copy. A stored slot is refused: no outline, releasing there does nothing. The empty target's settings (length, division...) are overwritten. After a drop the target is selected.
+- While dragging: every allowed (empty) slot has an outline lighter than the default border and darker than the selected outline; the allowed slot under the mouse has the selected (thick white) outline; the selection outline is hidden. A small ghost with the pattern number follows the mouse ("+ 05" while copying). Hovering a PAGE button switches to that page.
+- **Nothing follows a moved pattern**: the chain, the playing pattern and macro mappings keep pointing at pattern numbers. A move changes the arrangement: the chain then plays the now blank source number.
+- **Drag onto the chain list**: inserts the pattern where the insertion line shows (the same line as reordering), 1 repeat. Any pattern can be added this way (not when the chain is full). Dragging near the list's top or bottom edge scrolls it.
+- **Undo**: a move is one step that restores both patterns ("MOVE PATTERN 01 > 15"); a copy is one step ("COPY PATTERN 02 > 14"). Adding to the chain is not undoable (the chain is not part of undo). Undo steps can hold several patterns.
+
 ### 7.2 Chain
 
 - An ordered list (song list) of up to 64 entries, shown on the right of the patterns view.
@@ -614,14 +625,6 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-- **Drag and drop in the patterns view.** Slots can be dragged (a drag starts after the mouse moves a few pixels, so a click still selects and the play button still plays; no dragging while COPIED / TRACK COPIED is lit):
-  - **Drag** a slot onto another slot: **move** the pattern there (copy it, then reset the source to a blank pattern, like a fresh slot 2-64).
-  - **Ctrl + drag** (Cmd + drag on Mac, the same keys as step selection): **copy** the pattern there; the source stays.
-  - **Drops land only on empty slots** (EMPTY: no step on in any track), for move and copy. A stored slot is refused: no outline, releasing there does nothing. The empty target's settings (length, division...) are overwritten.
-  - While dragging, every allowed (empty) slot gets an outline lighter than the default border and darker than the selected outline; the slot under the mouse, if allowed, gets the selected (thick white) outline. A small ghost of the dragged slot follows the mouse. Hovering a PAGE button while dragging switches to that page.
-  - **Nothing follows a moved pattern**: the chain, the playing pattern and macro mappings keep pointing at pattern numbers (a move changes the arrangement: the chain then plays the now blank source number).
-  - **Drag a slot onto the chain list**: insert the pattern at the insertion line (the same line as reordering), 1 repeat. Any pattern can be added this way.
-  - **Undo**: a move is one undo step that restores both patterns ("MOVE PATTERN 05 > 12"); a copy is one step like PASTE ("COPY PATTERN 05 > 12"); adding to the chain is not undoable (the chain is not part of undo). The undo history gets steps that hold several patterns.
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
@@ -725,3 +728,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: During testing only the Windows VST3 is built. The macOS job is disabled and the Linux build is postponed; both come back when the Windows version is final and a release is called.
 - 2026-10-30: Built: pattern edit mode (7.5): a pink pencil next to CHAIN; the header picker then only chooses the pattern to edit (instant, no quantize), the BPM box shows PLAYING nn (click: edit the playing pattern), STEPS opens the selected slot; off on open, not saved. Last-beat blink before a switch (two 8th-note pulses): the PATTERN box number for chain switches, PLAYING in edit mode.
 - 2026-10-30: Patterns view: no LED on the PLAYING slot; chain entries cue like the slots (playing = bright background and a play icon, entries of the selected pattern = white outline); CHAIN and the pencil in the header on every screen; the chain panel's CHAIN ON/OFF button removed, its title shows CHAIN OFF (grey) / CHAIN ON (white).
+- 2026-10-30: Built: patterns view drag and drop (7.1.3): drag moves a pattern to an empty slot, Ctrl / Cmd + drag copies it, dragging onto the chain list inserts it; drops only on empty slots; nothing follows a moved pattern; undo steps can hold several patterns (a move is one step).

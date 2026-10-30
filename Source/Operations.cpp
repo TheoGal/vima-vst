@@ -528,7 +528,7 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
 }
 
 // ---------------------------------------------------------------------------------------
-static bool samePattern (const Pattern& a, const Pattern& b)
+bool samePattern (const Pattern& a, const Pattern& b)
 {
     for (int t = 0; t < numTracks; ++t)
     {
@@ -543,7 +543,17 @@ static bool samePattern (const Pattern& a, const Pattern& b)
 
 bool UndoHistory::isNoop (const Entry& e, const Project& p) const
 {
-    return samePattern (e.data, p.patterns[(size_t) e.pattern]);
+    for (const auto& sv : e.saved)
+        if (! samePattern (sv.data, p.patterns[(size_t) sv.pattern])) return false;
+    return true;
+}
+
+UndoHistory::Entry UndoHistory::snapshot (const Project& p, const Entry& like)
+{
+    Entry e { {}, like.label };
+    for (const auto& sv : like.saved)
+        e.saved.push_back ({ sv.pattern, p.patterns[(size_t) sv.pattern] });
+    return e;
 }
 
 const UndoHistory::Entry* UndoHistory::topChange (const Project& p) const
@@ -561,9 +571,19 @@ void UndoHistory::dropNoops (const Project& p)
 
 void UndoHistory::push (const Project& p, int pattern, const juce::String& label)
 {
+    push (p, std::vector<int> { pattern }, label);
+}
+
+void UndoHistory::push (const Project& p, const std::vector<int>& patterns, const juce::String& label)
+{
     dropNoops (p);   // the previous step is finished: forget it if it changed nothing
-    pattern = juce::jlimit (0, numPatterns - 1, pattern);
-    entries.push_back ({ pattern, p.patterns[(size_t) pattern], label });
+    Entry e { {}, label };
+    for (int pattern : patterns)
+    {
+        pattern = juce::jlimit (0, numPatterns - 1, pattern);
+        e.saved.push_back ({ pattern, p.patterns[(size_t) pattern] });
+    }
+    entries.push_back (std::move (e));
     while (entries.size() > maxEntries)
         entries.pop_front();
     redoEntries.clear();   // a new edit: the undone steps can no longer be redone
@@ -576,11 +596,12 @@ bool UndoHistory::undo (Project& p, int& restoredPattern)
         return false;
     auto e = entries.back();
     entries.pop_back();
-    redoEntries.push_back ({ e.pattern, p.patterns[(size_t) e.pattern], e.label });   // the state undo leaves
+    redoEntries.push_back (snapshot (p, e));   // the state undo leaves
     while (redoEntries.size() > maxEntries)
         redoEntries.pop_front();
-    p.patterns[(size_t) e.pattern] = e.data;
-    restoredPattern = e.pattern;
+    for (const auto& sv : e.saved)
+        p.patterns[(size_t) sv.pattern] = sv.data;
+    restoredPattern = e.saved.empty() ? -1 : e.saved.front().pattern;
     return true;
 }
 
@@ -590,11 +611,12 @@ bool UndoHistory::redo (Project& p, int& restoredPattern)
         return false;
     auto e = redoEntries.back();
     redoEntries.pop_back();
-    entries.push_back ({ e.pattern, p.patterns[(size_t) e.pattern], e.label });   // undoable again
+    entries.push_back (snapshot (p, e));   // undoable again
     while (entries.size() > maxEntries)
         entries.pop_front();
-    p.patterns[(size_t) e.pattern] = e.data;
-    restoredPattern = e.pattern;
+    for (const auto& sv : e.saved)
+        p.patterns[(size_t) sv.pattern] = sv.data;
+    restoredPattern = e.saved.empty() ? -1 : e.saved.front().pattern;
     return true;
 }
 } // namespace vima

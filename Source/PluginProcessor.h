@@ -96,6 +96,9 @@ public:
     juce::File presetFile;              // last saved / loaded preset (saved with the project)
     juce::File macroFile;               // last saved / loaded mapping set (saved with the project)
 
+    // Patterns view drag and drop (SPEC.md 7.1.3): only onto an empty pattern. One undo step each.
+    bool movePattern (int from, int to);
+    bool copyPatternTo (int from, int to);
     bool performUndo();
     bool performRedo();
     bool canUndo() { const Lock sl (lock); return undo.canUndo (project); }

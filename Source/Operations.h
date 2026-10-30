@@ -79,12 +79,16 @@ std::uint32_t pasteSteps (Project&, int pattern, int track, int start, const std
                           const std::vector<Param>& params = {});
 
 // ---- undo ---------------------------------------------------------------------------
+bool samePattern (const Pattern& a, const Pattern& b);   // every step and setting equal
+
 class UndoHistory
 {
 public:
     // remember a pattern before changing it; `label` says what the change is (shown by the
     // UNDO info box, SPEC.md 9), for example "RANDOMIZE · VEL · T03 · P23"
     void push (const Project&, int pattern, const juce::String& label = {});
+    // one step holding several patterns, restored together (a pattern move, SPEC.md 7.1.3)
+    void push (const Project&, const std::vector<int>& patterns, const juce::String& label = {});
     bool undo (Project&, int& restoredPattern);
     bool redo (Project&, int& restoredPattern);   // steps undone can be redone until a new edit
     // Steps that changed nothing (a SMOOTH that had already converged, the same curve twice, a
@@ -97,7 +101,9 @@ public:
     void relabelLast (const juce::String& l) { if (! entries.empty()) entries.back().label = l; }
 
 private:
-    struct Entry { int pattern; Pattern data; juce::String label; };
+    struct Saved { int pattern; Pattern data; };
+    struct Entry { std::vector<Saved> saved; juce::String label; };
+    static Entry snapshot (const Project&, const Entry& like);   // the same patterns as they are now
     std::deque<Entry> entries, redoEntries;
     bool isNoop (const Entry&, const Project&) const;   // the step's pattern is unchanged since it was saved
     const Entry* topChange (const Project&) const;      // the newest step that changed something

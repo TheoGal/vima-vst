@@ -65,6 +65,12 @@ public:
         if (index < chainIndex) --chainIndex;
     }
 
+    // Call with the project lock held after inserting a chain entry (drag from the patterns view)
+    void chainEntryInserted (int index)
+    {
+        if (chainActive && index <= chainIndex) ++chainIndex;
+    }
+
     // Testing hook: deterministic probability rolls
     void setRandomSeed (juce::int64 seed) { random.setSeed (seed); }
 

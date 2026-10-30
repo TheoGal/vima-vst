@@ -38,6 +38,10 @@ struct UiState
     TrackPattern trackClip;
     int patternsViewTrack = 0;   // track for COPY TRACK
 
+    // Slot drag and drop (SPEC.md 7.1.3)
+    int slotDragSource = -1;     // pattern being dragged, -1 = none
+    int slotDropTarget = -1;     // allowed (empty) slot under the mouse, -1 = none
+
     Param shiftParam = Param::pitch;   // SHIFT param in note mode (CC mode always shifts CC)
     int shiftAmount = 0;           // running offset while the shift knob is dragged
 

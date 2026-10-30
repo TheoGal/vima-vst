@@ -2027,6 +2027,66 @@ int main (int argc, char** argv)
             ctx.ui.selectedPattern = 18;
             ctx.changed();
         }
+        if (auto* pv = findChild<PatternsView> (ed))
+        {
+            // Slot drag and drop (SPEC.md 7.1.3)
+            const auto keep = proc->read ([] (const Project& p) { return p; });
+            proc->edit (-1, [] (Project& p) { p.patterns[14] = blankPattern(); p.patterns[13] = blankPattern(); });
+            ctx.ui.viewPage = 0;
+            ctx.changed();
+            auto* s0 = findChild<PatternSlot> (*pv, 0);
+            auto* s1 = findChild<PatternSlot> (*pv, 1);
+            auto* s14 = findChild<PatternSlot> (*pv, 14);
+            auto* s13 = findChild<PatternSlot> (*pv, 13);
+            auto dragTo = [&] (PatternSlot& from, juce::Point<int> pvPoint, juce::ModifierKeys mods, const char* shot)
+            {
+                const auto start = from.getLocalBounds().getCentre();
+                const auto end = from.getLocalPoint (pv, pvPoint);
+                from.mouseDown (mouseEvent (from, start, start, false, mods));
+                from.mouseDrag (mouseEvent (from, end, start, true, mods));
+                if (shot != nullptr) snapshot (ed, outDir.getChildFile (shot));
+                from.mouseUp (mouseEvent (from, end, start, true, mods));
+            };
+            const juce::ModifierKeys left (juce::ModifierKeys::leftButtonModifier);
+            const juce::ModifierKeys copyKey (juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::commandModifier);
+            if (s0 && s1 && s14 && s13)
+            {
+                const auto p1 = proc->read ([] (const Project& p) { return p.patterns[0]; });
+                const auto p2 = proc->read ([] (const Project& p) { return p.patterns[1]; });
+                dragTo (*s0, s14->getBounds().getCentre(), left, "patterns-view-drag.png");
+                bool moved = proc->read ([&] (const Project& p) { return samePattern (p.patterns[14], p1) && p.patterns[0].isEmpty(); });
+                check (moved, "drag a slot onto an empty slot moves the pattern (the source becomes blank)");
+                check (proc->nextUndoLabel() == "MOVE PATTERN 01 > 15", "a move is one undo step");
+                proc->performUndo();
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[0], p1) && p.patterns[14].isEmpty(); }),
+                       "UNDO restores both patterns of a move");
+                proc->performRedo();
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[14], p1) && p.patterns[0].isEmpty(); }), "REDO moves it again");
+                proc->performUndo();
+                dragTo (*s1, s13->getBounds().getCentre(), copyKey, nullptr);
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[13], p2) && samePattern (p.patterns[1], p2); }),
+                       "Ctrl / Cmd + drag copies the pattern (the source stays)");
+                const auto before = proc->read ([] (const Project& p) { return p.patterns[2]; });
+                dragTo (*s1, findChild<PatternSlot> (*pv, 2)->getBounds().getCentre(), left, nullptr);
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[2], before) && samePattern (p.patterns[1], p2); }),
+                       "a drop on a stored slot is refused");
+                proc->edit (-1, [] (Project& p) { p.globals.chain.clear(); p.globals.chain.add ({ 22, 1 }); p.globals.chain.add ({ 23, 1 }); });
+                pv->refreshState();
+                ChainRow* row0 = nullptr;
+                for (auto* c : pv->getChildren()) if (auto* r = dynamic_cast<ChainRow*> (c)) { row0 = r; break; }
+                if (row0 != nullptr)
+                {
+                    dragTo (*s1, row0->getBounds().getBottomLeft().translated (20, 1), left, "patterns-view-drag-chain.png");
+                    const auto chain = ctx.globalsCopy().chain;
+                    check (chain.size() == 3 && chain[1].pattern == 1 && chain[1].repeats == 1 && chain[2].pattern == 23,
+                           "drag a slot onto the chain list inserts it at the line");
+                }
+            }
+            proc->edit (-1, [&keep] (Project& p) { p = keep; });
+            ctx.ui.slotDragSource = ctx.ui.slotDropTarget = -1;
+            pv->refreshState();
+            ctx.changed();
+        }
         Theme::setLight (true);   // light theme: playing slot brightest, stored = tile, empty = panel
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("patterns-view-light.png"));
