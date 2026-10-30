@@ -2013,6 +2013,20 @@ int main (int argc, char** argv)
         ctx.ui.viewPage = 0;
         ctx.changed();
         snapshot (ed, outDir.getChildFile ("patterns-view.png"));
+        {
+            // chain playing (SPEC.md 7.2): entry 2 plays (bright, play icon), pattern 23 selected (outlined)
+            proc->edit (-1, [] (Project& p) { p.globals.chainOn = true; });
+            proc->engine.isPlaying = true;
+            proc->engine.chainPosition = 1;
+            ctx.ui.selectedPattern = 22;
+            ctx.changed();
+            snapshot (ed, outDir.getChildFile ("patterns-view-chain-playing.png"));
+            proc->engine.isPlaying = false;
+            proc->engine.chainPosition = -1;
+            proc->edit (-1, [] (Project& p) { p.globals.chainOn = false; });
+            ctx.ui.selectedPattern = 18;
+            ctx.changed();
+        }
         Theme::setLight (true);   // light theme: playing slot brightest, stored = tile, empty = panel
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("patterns-view-light.png"));

@@ -126,8 +126,6 @@ void PatternSlot::paint (juce::Graphics& g)
     const int tw = juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), tag) + 2;
     g.setColour (playing || queued ? t.text : t.muted);
     g.drawText (tag, top.removeFromRight (tw), juce::Justification::centredRight);
-    if (playing)
-        draw::led (g, { (float) top.getRight() - 7.0f, (float) top.getCentreY() }, 6.0f, t.neutral, true);
 
     // Thumbnail (7.1.1): one horizontal row per track, track 01 at the top, using the cell's
     // width and height. Each row has two thin lines, notes (green) above and CC (cyan) below:
@@ -256,8 +254,16 @@ void ChainRow::paint (juce::Graphics& g)
     const auto gl = ctx.globalsCopy();
     if (index >= gl.chain.size()) return;
     const auto e = gl.chain[index];
+    // Cues like the slots (SPEC.md 7.2): the playing entry = brightest background and a play icon;
+    // entries of the selected pattern = thick white outline
     const bool cur = gl.chainOn && ctx.proc.engine.isPlaying && ctx.proc.engine.chainPosition.load() == index;
-    draw::tile (g, getLocalBounds().toFloat(), cur || dragging ? t.selected : t.tile, cur ? t.neutral : (dragging ? t.dim2 : t.border), 6.0f);
+    const bool sel = ctx.ui.patternClipKind == 0 && (int) e.pattern == ctx.ui.selectedPattern;
+    draw::tile (g, getLocalBounds().toFloat(), cur || dragging ? t.selected : t.tile, dragging ? t.dim2 : t.border, 6.0f);
+    if (sel && ! dragging)
+    {
+        g.setColour (t.neutral);
+        g.drawRoundedRectangle (getLocalBounds().toFloat().reduced (1.0f), 6.0f, 2.0f);
+    }
 
     auto r = getLocalBounds().reduced (4, 0);
     // grip: shows the entry can be dragged
@@ -266,7 +272,14 @@ void ChainRow::paint (juce::Graphics& g)
         for (int gx = 0; gx < 2; ++gx)
             g.fillEllipse ((float) r.getX() + 3.0f + gx * 4.0f, (float) r.getCentreY() - 5.0f + gy * 4.0f, 2.0f, 2.0f);
     r.removeFromLeft (12);
-    draw::led (g, { (float) r.getX() + 9.0f, (float) r.getCentreY() }, 7.0f, cur ? t.neutral : t.ledOff, cur);
+    if (cur)
+    {
+        const juce::Point<float> c ((float) r.getX() + 9.0f, (float) r.getCentreY());
+        juce::Path tri;
+        tri.addTriangle (c.x - 3.0f, c.y - 4.0f, c.x - 3.0f, c.y + 4.0f, c.x + 4.0f, c.y);
+        g.setColour (t.neutral);
+        g.fillPath (tri);
+    }
     r.removeFromLeft (18 + 6);
     g.setColour (t.muted);
     g.setFont (Fonts::mono (10.0f));
@@ -398,16 +411,11 @@ PatternsView::PatternsView (Context& c) : ctx (c)
         const auto& t = Theme::current();
         return on ? Pill::Look { t.neutral, t.neutral, t.onNeutral, 1.5f, false } : Pill::Look { juce::Colours::transparentBlack, t.dim, t.muted, 1.5f, false };
     };
-    setLearnTarget (chainOnBtn, MacroTarget::chainOn);
-    chainOnBtn.radius = loopBtn.radius = 4.0f;
-    chainOnBtn.font = loopBtn.font = [] { return Fonts::monoSemi (10.0f); };
-    chainOnBtn.look = [this, toggleLook] { return toggleLook (ctx.globalsCopy().chainOn); };
-    chainOnBtn.text = [this] { return juce::String (ctx.globalsCopy().chainOn ? "CHAIN ON" : "CHAIN OFF"); };
-    chainOnBtn.onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.chainOn = ! p.globals.chainOn; }); };
+    loopBtn.radius = 4.0f;
+    loopBtn.font = [] { return Fonts::monoSemi (10.0f); };
     loopBtn.look = [this, toggleLook] { return toggleLook (ctx.globalsCopy().chainLoop); };
     loopBtn.text = [this] { return juce::String (ctx.globalsCopy().chainLoop ? "LOOP ON" : "LOOP OFF"); };
     loopBtn.onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.chainLoop = ! p.globals.chainLoop; }); };
-    addAndMakeVisible (chainOnBtn);
     addAndMakeVisible (loopBtn);
 
     addBtn.radius = 6.0f;
@@ -641,8 +649,6 @@ void PatternsView::resized()
     {
         auto h = chainHeader;
         loopBtn.setBounds (h.removeFromRight (78));
-        h.removeFromRight (8);
-        chainOnBtn.setBounds (h.removeFromRight (86));
     }
     a.removeFromTop (10);
     columnHeader = a.removeFromTop (12);
@@ -715,7 +721,11 @@ void PatternsView::paint (juce::Graphics& g)
     }
 
     draw::tile (g, aside.toFloat(), t.panel, t.border, 8.0f);
-    draw::label (g, "CHAIN", chainHeader, t.muted);
+    // the chain state as a title (the switch is the header CHAIN): grey CHAIN OFF, white CHAIN ON
+    {
+        const bool on = ctx.globalsCopy().chainOn;
+        draw::label (g, on ? "CHAIN ON" : "CHAIN OFF", chainHeader, on ? t.text : t.muted);
+    }
     {
         auto h = columnHeader.reduced (4, 0);
         g.setColour (t.muted);

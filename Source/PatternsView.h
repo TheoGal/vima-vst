@@ -70,7 +70,7 @@ private:
     juce::OwnedArray<Pill> pageBtns;
     juce::OwnedArray<PatternSlot> slots;
     Pill copyBtn, pasteBtn, clearBtn, patternBox, trackBox, copyTrackBtn;
-    Pill chainOnBtn, loopBtn, addBtn, clearChainBtn;
+    Pill loopBtn, addBtn, clearChainBtn;
     juce::OwnedArray<ChainRow> chainRows;
     int dragIndex = -1, dropIndex = -1;   // chain reordering
     void paintOverChildren (juce::Graphics&) override;

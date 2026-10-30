@@ -319,9 +319,10 @@ void Header::resized()
     playingBtn.setVisible (ctx.ui.editMode);
     playingBtn.setBounds (hostArea.withTrimmedLeft (34).reduced (2, 4));
     right.removeFromRight (10);
-    // CHAIN next to the PATTERN box (not in the patterns view, which has its own chain controls)
-    chainBtn.setVisible (! ctx.ui.patternsView);
-    editBtn.setVisible (! ctx.ui.patternsView);
+    // CHAIN and the pencil next to the PATTERN box, on every screen
+    // CHAIN and the pencil on every screen (SPEC.md 12.1)
+    chainBtn.setVisible (true);
+    editBtn.setVisible (true);
     juce::Rectangle<int> chainArea, editArea;
     if (chainBtn.isVisible())
     {
