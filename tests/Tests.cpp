@@ -1929,13 +1929,13 @@ int main (int argc, char** argv)
                 proc->engine.queuedPattern = -1;
 
                 proc->edit (-1, [] (Project& p) { p.patterns[18].tracks[0].steps[0].velocity = 77; p.patterns[18].tracks[0].swing = 33; });
-                ctx.ui.patternsViewTrack = 0;
+                ctx.ui.track = 0;
                 if (auto* b = findPill (*pv, "COPY TRACK")) click (*b);
                 auto* paste = findPill (*pv, "PASTE");
                 check (findPill (*pv, "TRACK COPIED") != nullptr && paste != nullptr && paste->alpha && paste->alpha() < 1.0f
                            && ctx.ui.selectedPattern == 18,
                        "COPY TRACK lights up as TRACK COPIED; the selection stays; PASTE is dimmed on the copied track itself");
-                ctx.ui.patternsViewTrack = 1;   // paste into track 2
+                ctx.ui.track = 1;   // paste into track 2
                 click (*s3, body);
                 check (ctx.ui.selectedPattern == 19 && paste->alpha() == 1.0f, "while copied, a slot click selects it: the paste destination");
                 if (paste) click (*paste);
@@ -2044,6 +2044,19 @@ int main (int argc, char** argv)
                 s5->mouseDrag (mouseEvent (*s5, b, a, true));
                 s5->mouseUp (mouseEvent (*s5, b, a, true));
                 check (ctx.ui.selectedPattern == 5 && hd->fileMenuPattern() == 5, "a click with a small slip on a slot still selects it");
+                // one shared track for the step view and the patterns view
+                ctx.ui.track = 4;
+                ctx.changed();
+                check (findPill (*pv, "TRACK  05") != nullptr, "the patterns view TRACK is the step view's track");
+                // CLEAR PATTERN (slot menu): an empty slot, one undo step
+                const auto before5 = proc->read ([] (const Project& p) { return p.patterns[5]; });
+                proc->clearPattern (5);
+                check (proc->read ([] (const Project& p) { return p.patterns[5].isEmpty(); }) && proc->nextUndoLabel() == "CLEAR PATTERN 06",
+                       "CLEAR PATTERN makes the slot empty (one undo step)");
+                proc->performUndo();
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[5], before5); }), "UNDO brings a cleared pattern back");
+                ctx.ui.track = 2;
+                ctx.changed();
             }
         }
         if (auto* pv = findChild<PatternsView> (ed))

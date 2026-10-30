@@ -22,6 +22,7 @@ public:
     void savePresetAs();
 
     void newPattern (int index);      // asks first; undoable
+    void clearPattern (int index);    // asks first; undoable
     void loadPattern (int index);     // asks before replacing a pattern that has steps on; undoable
     void savePatternAs (int index);
 

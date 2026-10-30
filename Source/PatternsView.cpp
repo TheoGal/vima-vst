@@ -406,7 +406,7 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     trackBox.justification = juce::Justification::centredLeft;
     trackBox.textInset = 10;
     trackBox.font = [] { return Fonts::monoSemi (12.0f); };
-    trackBox.text = [this] { return "TRACK  " + pad2 (ctx.ui.patternsViewTrack + 1); };
+    trackBox.text = [this] { return "TRACK  " + pad2 (ctx.ui.track + 1); };
     trackBox.onClick = [this] { showTrackMenu(); };
     trackBox.chevron = true;
     addAndMakeVisible (trackBox);
@@ -474,7 +474,7 @@ bool PatternsView::canPasteOnSelection() const
 {
     const int sel = ctx.ui.selectedPattern;
     if (ctx.ui.patternClipKind == 1) return sel != ctx.ui.patternClipSource;
-    if (ctx.ui.patternClipKind == 2) return sel != ctx.ui.patternClipSource || ctx.ui.patternsViewTrack != ctx.ui.patternClipTrack;
+    if (ctx.ui.patternClipKind == 2) return sel != ctx.ui.patternClipSource || ctx.ui.track != ctx.ui.patternClipTrack;
     return false;
 }
 
@@ -490,7 +490,7 @@ void PatternsView::copyPattern (int index)
 
 void PatternsView::copyTrack (int index)
 {
-    const int t = ctx.ui.patternsViewTrack;
+    const int t = ctx.ui.track;
     ctx.ui.trackClip = ctx.proc.read ([index, t] (const Project& p) { return p.patterns[(size_t) index].tracks[(size_t) t]; });
     ctx.ui.patternClip = Pattern();
     ctx.ui.patternClipKind = 2;
@@ -511,7 +511,7 @@ void PatternsView::pasteTo (int dest, bool oneOff)
     else
     {
         const auto clip = ctx.ui.trackClip;
-        const int t = ctx.ui.patternsViewTrack;   // the destination track: the TRACK dropdown
+        const int t = ctx.ui.track;   // the destination track: the TRACK dropdown
         ctx.proc.edit (dest, [dest, t, &clip] (Project& p) { p.patterns[(size_t) dest].tracks[(size_t) t] = clip; },
                        "PASTE TRACK TR" + pad2 (ctx.ui.patternClipTrack + 1) + Context::dot() + "PAT" + patternLabel (ctx.ui.patternClipSource)
                            + " > TR" + pad2 (t + 1) + Context::dot() + "PAT" + patternLabel (dest));
@@ -543,9 +543,15 @@ void PatternsView::showSlotMenu (int pattern)
     juce::PopupMenu m;
     m.addSectionHeader ("PATTERN " + patternLabel (pattern));
     m.addItem (3, "COPY PATTERN");
-    m.addItem (4, "COPY TRACK " + pad2 (ctx.ui.patternsViewTrack + 1));
-    m.addItem (5, "PASTE", ctx.ui.patternClipKind != 0);
+    m.addItem (4, "COPY TRACK " + pad2 (ctx.ui.track + 1));
+    // PASTE names what it pastes (SPEC.md 7.1)
+    const juce::String pasteText = ctx.ui.patternClipKind == 1 ? "PASTE PATTERN " + patternLabel (ctx.ui.patternClipSource)
+                                 : ctx.ui.patternClipKind == 2 ? "PASTE ON TRACK " + pad2 (ctx.ui.track + 1)
+                                 : juce::String ("PASTE");
+    m.addItem (5, pasteText, ctx.ui.patternClipKind != 0);
     m.addSeparator();
+    m.addItem (6, "NEW PATTERN");
+    m.addItem (7, "CLEAR PATTERN");
     m.addItem (1, "LOAD PATTERN...");
     m.addItem (2, "SAVE PATTERN AS...");
     juce::Component::SafePointer<PatternsView> safe (this);
@@ -557,6 +563,8 @@ void PatternsView::showSlotMenu (int pattern)
         else if (r == 3) safe->copyPattern (pattern);
         else if (r == 4) safe->copyTrack (pattern);
         else if (r == 5) safe->pasteTo (pattern, true);
+        else if (r == 6) safe->fileActions.newPattern (pattern);
+        else if (r == 7) safe->fileActions.clearPattern (pattern);
     });
 }
 
@@ -564,10 +572,10 @@ void PatternsView::showTrackMenu()
 {
     juce::PopupMenu m;
     for (int t = 0; t < numTracks; ++t)
-        m.addItem (t + 1, "TRACK " + pad2 (t + 1), true, t == ctx.ui.patternsViewTrack);
+        m.addItem (t + 1, "TRACK " + pad2 (t + 1), true, t == ctx.ui.track);
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&trackBox), [this] (int r)
     {
-        if (r > 0) { ctx.ui.patternsViewTrack = r - 1; ctx.changed(); }
+        if (r > 0) { ctx.ui.track = r - 1; ctx.changed(); }
     });
 }
 

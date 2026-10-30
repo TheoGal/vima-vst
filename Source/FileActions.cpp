@@ -121,6 +121,16 @@ void FileActions::newPattern (int index)
     });
 }
 
+void FileActions::clearPattern (int index)
+{
+    confirm ("Clear pattern", "Clear pattern " + patternLabel (index) + "? It becomes an empty slot. You can undo this.", [this, index]
+    {
+        ctx.proc.clearPattern (index);
+        ctx.ui.selection = 0;
+        ctx.changed();
+    });
+}
+
 void FileActions::loadPattern (int index)
 {
     const auto start = VimaProcessor::patternFolder().getChildFile (juce::String ("Pattern") + VimaProcessor::patternExtension);

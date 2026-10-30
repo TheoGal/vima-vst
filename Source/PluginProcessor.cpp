@@ -220,6 +220,13 @@ void VimaProcessor::newPattern (int index)
     edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::Pattern(); }, "PATTERN NEW > PAT" + vima::patternLabel (index));
 }
 
+void VimaProcessor::clearPattern (int index)
+{
+    if (index < 0 || index >= vima::numPatterns)
+        return;
+    edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::blankPattern(); }, "CLEAR PATTERN " + vima::patternLabel (index));
+}
+
 bool VimaProcessor::movePattern (int from, int to)
 {
     const Lock sl (lock);

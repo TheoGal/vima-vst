@@ -35,7 +35,6 @@ struct UiState
     int patternClipTrack = -1;
     Pattern patternClip;
     TrackPattern trackClip;
-    int patternsViewTrack = 0;   // track for COPY TRACK
 
     // Slot drag and drop (SPEC.md 7.1.3)
     int slotDragSource = -1;     // pattern being dragged, -1 = none

@@ -148,9 +148,9 @@ There is no step skip, no chords per step and no drum mode.
 - **Slot tones**: three backgrounds, the same order in both themes: the **playing** slot is the brightest (the "selected" color), a **stored** slot uses the tile color, an **empty** slot the panel color, so it sinks back.
 - **Slot cues**: the **selected** slot has a thick white outline; a **queued** slot's play button **blinks** until the switch. The selection is also where PASTE writes (7.1.2): copying does not change or hide it.
 - **Clicking a slot** anywhere except its play button only **selects** it (for COPY, COPY TRACK and + ADD to the chain). It does not play it.
-- **Right-clicking a slot** selects it and opens a menu for that pattern: COPY PATTERN, COPY TRACK nn (the track in the TRACK dropdown), PASTE (dimmed when nothing is copied; 7.1.2), then LOAD PATTERN... and SAVE PATTERN AS... (same rules as the FILE menu's PATTERN section, 13.3). Not while LEARN is on (there right-click frees mappings).
+- **Right-clicking a slot** selects it and opens a menu for that pattern: COPY PATTERN, COPY TRACK nn (the track in the TRACK dropdown), then PASTE, named after what it pastes: **PASTE** (dimmed, nothing copied), **PASTE PATTERN 05** (a pattern copied; its number), **PASTE ON TRACK 03** (a track copied; the track in the TRACK dropdown) (7.1.2). Then **NEW PATTERN** (the init pattern, 16 steps on, with the same confirmation as FILE > PATTERN > NEW), **CLEAR PATTERN** (makes the slot empty: a blank pattern, like a fresh slot 2-64; asks first: "Clear pattern 05? It becomes an empty slot. You can undo this."; one undo step), LOAD PATTERN... and SAVE PATTERN AS... (same rules as the FILE menu's PATTERN section, 13.3). Not while LEARN is on (there right-click frees mappings).
 - **The play button** selects the slot **and** queues it as the next pattern (7.3).
-- **Bottom bar**: a **PATTERN box** ("PATTERN  19", the selected pattern; styled like the TRACK box but display only), COPY, the TRACK dropdown, COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
+- **Bottom bar**: a **PATTERN box** ("PATTERN  19", the selected pattern; styled like the TRACK box but display only), COPY, the TRACK dropdown (the **same track as the step view's TRACK**: picking one in either view picks it in both), COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
 
 #### 7.1.1 Pattern thumbnail
 
@@ -625,10 +625,6 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-- **Slot menu (patterns view right-click) additions.**
-  - The PASTE item names what it pastes: nothing copied = **PASTE** (dimmed); a pattern copied = **PASTE PATTERN** (source number: still to decide); a track copied = **PASTE ON TRACK nn** (the selected track in the TRACK dropdown).
-  - Bottom section, with LOAD PATTERN... and SAVE PATTERN AS...: **NEW PATTERN** (the same as FILE > PATTERN > NEW: the init pattern, 16 steps on, with the same confirmation "Reset pattern 05 to the init pattern? You can undo this.") and **CLEAR PATTERN** (makes the slot empty: a blank pattern, like a fresh slot 2-64; one undo step; asks first like NEW).
-- **One shared track for the step view and the patterns view.** The patterns view's TRACK dropdown (COPY TRACK, track paste) and the step view's TRACK become the same value: picking a track in either view picks it in both. COPY TRACK and track paste use it; it is the track saved with the project (uiTrack).
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
@@ -734,3 +730,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: Patterns view: no LED on the PLAYING slot; chain entries cue like the slots (playing = bright background and a play icon, entries of the selected pattern = white outline); CHAIN and the pencil in the header on every screen; the chain panel's CHAIN ON/OFF button removed, its title shows CHAIN OFF (grey) / CHAIN ON (white).
 - 2026-10-30: Built: patterns view drag and drop (7.1.3): drag moves a pattern to an empty slot, Ctrl / Cmd + drag copies it, dragging onto the chain list inserts it; drops only on empty slots; nothing follows a moved pattern; undo steps can hold several patterns (a move is one step).
 - 2026-10-30: Patterns view: no separate paste destination. Copying keeps the selection outlined; a click selects as usual, and PASTE writes onto the selected slot (dimmed when it would change nothing). FILE, the slot menu and PASTE all act on the one outlined slot.
+- 2026-10-30: Built: one shared track for the step view and the patterns view. Slot menu: PASTE names what it pastes (PASTE PATTERN 05 / PASTE ON TRACK 03); NEW PATTERN and CLEAR PATTERN (empty slot, asks first, undoable).
