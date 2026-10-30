@@ -597,6 +597,17 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
+- **Pattern edit mode (edit one pattern while another plays).** Today the step view always shows the playing pattern, so a pattern cannot be edited while the chain (or anything else) plays a different one. Decided:
+  - A small **pencil button** right after CHAIN in the pattern controls tab (step view only). Edit mode has its **own color, pink** (dark theme `#FF6BAE`, a darker pink in the light theme). Off: plain outline, grey pencil. On: **filled pink**.
+  - **Edit mode off**: everything works as today (the view follows the playing pattern; the header arrows and picker play the picked pattern).
+  - **Edit mode on**: the header PATTERN arrows and picker only choose the **pattern to edit**. The switch is **instant, never quantized**, and the playing pattern is not touched. The PATTERN box gets a **pink stroke** to show this. Playing is left to the patterns view play buttons, the chain, the Pattern macro and incoming CC.
+  - **Edit mode on, BPM box**: the "120.00 BPM" text is replaced by **PLAYING nn**, always (also when the edited pattern is the playing one); the transport button stays. No NEXT readout. When the playing pattern changes, the number and the box outline **flash pink** and fade back over about 0.6 s (any source: chain, play buttons, macro, CC). No flash when the number stays the same (a chain entry followed by the same pattern, repeats). A new switch restarts the flash. **Clicking the box** makes the playing pattern the edited one (edit mode stays on).
+  - The grid's **running step light** only shows when the edited pattern is the playing one.
+  - **Switching edit mode off** jumps the view back to the playing pattern.
+  - **Patterns view**: STEPS returns to the playing pattern with edit mode off, to the **selected slot** with edit mode on.
+  - The **Macros page and LEARN** act on the edited pattern (what is on screen).
+  - Edit mode is a working state: **not saved** with the project or presets, **always off** when the plugin opens. Not a macro target.
+  - Header layout: CHAIN a bit narrower, the BPM box a bit wider, the right-hand buttons slightly closer together (mockup 2026-10-30).
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
