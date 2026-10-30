@@ -168,13 +168,13 @@ public:
         changed();
     }
 
-    // The last beat before a scheduled switch (SPEC.md 7.5): two pulses on the 8th notes.
+    // The last three 8th notes before a scheduled switch (SPEC.md 7.5): three pulses, one per 8th.
     // True while the blinking text is dimmed.
     bool switchPulseDim()
     {
         const double b = proc.engine.beatsToSwitch.load();
-        if (b <= 0.0 || b > 1.0) return false;
-        const double e = 1.0 - b;
+        if (b <= 0.0 || b > Engine::switchWarnBeats) return false;
+        const double e = Engine::switchWarnBeats - b;
         return std::fmod (e * 2.0, 1.0) < 0.5;
     }
 

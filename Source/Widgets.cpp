@@ -245,7 +245,17 @@ void Pill::paint (juce::Graphics& g)
         if (ledOnRight)
         {
             auto centre = juce::Point<float> ((float) getWidth() - 12.0f, b.getCentreY());
-            if (! lc.isTransparent()) draw::led (g, centre, 6.0f, lc, ledGlow && ledGlow());
+            if (! lc.isTransparent())
+            {
+                if (ledAsPlay)
+                {
+                    juce::Path tri;
+                    tri.addTriangle (centre.x - 3.0f, centre.y - 4.0f, centre.x - 3.0f, centre.y + 4.0f, centre.x + 4.0f, centre.y);
+                    g.setColour (lc);
+                    g.fillPath (tri);
+                }
+                else draw::led (g, centre, 6.0f, lc, ledGlow && ledGlow());
+            }
         }
         else
         {

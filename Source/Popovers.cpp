@@ -155,6 +155,7 @@ PatternPickerPopover::PatternPickerPopover (Context& c) : ctx (c)
             return l;
         };
         p.ledOnRight = true;
+        p.ledAsPlay = true;   // the playing pattern: a play icon, like the chain list (SPEC.md 7.4)
         p.ledColour = [this, s]
         {
             const int idx = ctx.ui.pickerPage * patternsPerPage + s;

@@ -46,6 +46,7 @@ public:
     // pattern waiting for quantize); -1 when none, or when the playing pattern lasts 1 beat or less
     // (SPEC.md 7.5: the last-beat blink)
     std::atomic<double> beatsToSwitch { -1.0 };
+    static constexpr double switchWarnBeats = 1.5;   // the blink before a switch: three 8th notes
 
     // Position of step n on the track's timeline (in steps), for a given length and direction
     static int stepIndexFor (long long n, int length, Direction dir);

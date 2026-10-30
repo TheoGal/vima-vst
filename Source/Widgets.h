@@ -79,6 +79,7 @@ public:
     std::function<juce::Colour()> ledColour;    // optional LED dot left of the text
     std::function<bool()> ledGlow;
     bool ledOnRight = false;
+    bool ledAsPlay = false;                      // draw a small play triangle instead of the LED dot
     std::function<bool()> cornerDot;            // small marker dot in the top right corner
     std::function<void()> onClick;
     std::function<void()> onRightClick;         // right-click (Ctrl-click on Mac), e.g. redo on UNDO

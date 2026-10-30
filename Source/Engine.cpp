@@ -460,7 +460,7 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
                 playLen = curLen * juce::jmax (1, (int) g.chain.getReference (chainIndex).repeats);
             }
         }
-        if (next >= 0 && next != project.currentPattern && playLen > beat + 1.0e-9 && at >= ppqEnd)
+        if (next >= 0 && next != project.currentPattern && playLen > switchWarnBeats * beat + 1.0e-9 && at >= ppqEnd)
             beatsToSwitch = (at - ppqEnd) / beat;
         else
             beatsToSwitch = -1.0;

@@ -421,11 +421,11 @@ void testPatterns()
         r.project->globals.chain.add ({ 2, 1 });   // 1 bar
         r.project->globals.chain.add ({ 3, 1 });
         r.project->globals.chainOn = true;
-        r.run (2.5);
+        r.run (2.0);
         const double far = r.engine.beatsToSwitch.load();
         r.run (1.0);
         const double close = r.engine.beatsToSwitch.load();
-        check (far > 1.0 && close > 0.0 && close <= 1.0, "chain: the switch is announced on the last beat only");
+        check (far > Engine::switchWarnBeats && close > 0.0 && close <= Engine::switchWarnBeats, "chain: the switch is announced on the last three 8th notes only");
     }
     {
         Runner r;
@@ -453,7 +453,7 @@ void testPatterns()
         const double far = r.engine.beatsToSwitch.load();
         r.run (1.6);
         const double close = r.engine.beatsToSwitch.load();
-        check (far > 1.0 && close > 0.0 && close <= 1.0, "queued pattern: announced on the last beat before the switch");
+        check (far > 1.0 && close > 0.0 && close <= 1.0, "queued pattern: announced just before the switch");
     }
 }
 

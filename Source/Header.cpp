@@ -326,17 +326,17 @@ void Header::resized()
     juce::Rectangle<int> chainArea, editArea;
     if (chainBtn.isVisible())
     {
-        editArea = right.removeFromRight (30).withSizeKeepingCentre (30, 32);
-        right.removeFromRight (4);
         chainArea = right.removeFromRight (58).withSizeKeepingCentre (58, 32);
+        right.removeFromRight (4);
+        editArea = right.removeFromRight (30).withSizeKeepingCentre (30, 32);
         right.removeFromRight (4);
     }
     patternArea = right.removeFromRight (162).withSizeKeepingCentre (162, 32);   // sized for two-digit numbers
     if (! pv)
     {
         patternArea.setX (496);   // over the pattern tiles
-        chainArea.setX (patternArea.getRight() + 4);
-        editArea.setX (chainArea.getRight() + 4);
+        editArea.setX (patternArea.getRight() + 4);
+        chainArea.setX (editArea.getRight() + 4);
     }
     chainBtn.setBounds (chainArea.reduced (0, 3));
     editBtn.setBounds (editArea.reduced (0, 3));
