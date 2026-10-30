@@ -101,7 +101,10 @@ jobs:
         with:
           files: Vima-Windows-x64.zip
 
+  # Postponed during testing: only the Windows VST3 is built until the release is called.
+  # Re-enable by removing the "if: false" line.
   macos:
+    if: false
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7

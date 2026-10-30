@@ -18,7 +18,7 @@ Last updated: 2026-10-24 (checked against the code at that date).
 ## 2. Plugin format and hosting
 
 - Built with JUCE and CMake (details in 14).
-- Format: **VST3** only. Windows (x64) is the primary target. macOS (universal: Apple Silicon and Intel) builds are produced by CI for testers; the developer has no Mac. There is no Audio Unit version: an AU cannot send MIDI out of a plugin.
+- Format: **VST3** only. Windows (x64) is the primary target. During testing **only the Windows VST3 is built**; the macOS (universal: Apple Silicon and Intel) and Linux builds are postponed until the Windows version is final and a release is called. The developer has no Mac. There is no Audio Unit version: an AU cannot send MIDI out of a plugin.
 - The host sees Vima as an **instrument (synth) plugin**, not a MIDI effect.
 - It produces no audio. It outputs MIDI only (notes and CC). A silent stereo output bus exists only so hosts accept it as an instrument.
 - Incoming MIDI is used only for pattern change by CC (6, 7.3); it is not passed through.
@@ -530,7 +530,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Runs on every push to main, on pull requests and on demand. A tag like `v1.0.0` also publishes both zips to a GitHub Release.
 - **tests** (Linux): builds and runs the test harness under xvfb; uploads the rendered screenshots as "Vima-test-screenshots".
 - **windows**: builds the x64 VST3, runs pluginval (strictness 10; does not fail the build), uploads the folder **Vima-Windows-x64** (the download is a single zip; uploading a zip gave a zip inside a zip).
-- **macos**: builds a universal VST3 (macOS 10.13+), signs it ad-hoc (needed for Apple Silicon; not notarized), runs pluginval, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` plus INSTALL-macOS.txt (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
+- **macos** (disabled with `if: false` during testing; re-enabled for the release): builds a universal VST3 (macOS 10.13+), signs it ad-hoc (needed for Apple Silicon; not notarized), runs pluginval, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` plus INSTALL-macOS.txt (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
 - Install: Windows `C:\Program Files\Common Files\VST3\`; macOS `/Library/Audio/Plug-Ins/VST3/`, then `xattr -dr com.apple.quarantine` on the bundle.
 
 ### 14.3 Tests
@@ -597,7 +597,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-- **Linux VST3 build.** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
+- **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
 
@@ -697,3 +697,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: The NOTE knob / param renamed PITCH everywhere (PARAMS, RANGES, SHIFT, macros "Pitch St05 Tr03 Pat23", undo labels, code). "Note" now only means the note part: NOTES / CC, note mode, NOTE OUT, note on/off.
 - 2026-10-30: Settings section PITCH renamed MIDDLE C (PITCH is now the step knob).
 - 2026-10-30: Naming: the plugin is written **Vima** (not VIMA) everywhere: manual, README, spec, dialog titles. Folders renamed: Documents/Vima (Presets, Patterns, Macros) and the app settings folder Vima. All-caps UI labels (for example VIMA ON GITHUB) stay in the UI's capitals style; file format roots (`VIMA`, `VIMAPATTERN`...) and the VIMA Mono font name are internal and unchanged.
+- 2026-10-30: During testing only the Windows VST3 is built. The macOS job is disabled and the Linux build is postponed; both come back when the Windows version is final and a release is called.
