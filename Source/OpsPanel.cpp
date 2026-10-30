@@ -202,6 +202,29 @@ int RangeBar::valueAt (float x) const
 
 void RangeBar::mouseDown (const juce::MouseEvent& e)
 {
+    // right-click or Alt + click: back to the default range (SPEC.md 4.1, 12.5)
+    if (e.mods.isPopupMenu() || e.mods.isAltDown())
+    {
+        dragging = 0;
+        const Globals d;
+        const auto l = param;
+        ctx.edit (false, [l, d] (Project& p)
+        {
+            auto& g = p.globals;
+            switch (l)
+            {
+                case Param::on:          g.onChance = d.onChance; break;
+                case Param::ccOn:        g.ccOnChance = d.ccOnChance; break;
+                case Param::note:        g.rangeNote = d.rangeNote; break;
+                case Param::octave:      g.rangeOct = d.rangeOct; break;
+                case Param::velocity:    g.rangeVel = d.rangeVel; break;
+                case Param::gate:        g.rangeGate = d.rangeGate; break;
+                case Param::probability: g.rangeProb = d.rangeProb; break;
+                case Param::cc:          g.rangeCC = d.rangeCC; break;
+            }
+        });
+        return;
+    }
     int lo = 0, hi = 0;
     axis (lo, hi);
     const auto r = get();
@@ -216,6 +239,7 @@ void RangeBar::mouseDown (const juce::MouseEvent& e)
 
 void RangeBar::mouseDrag (const juce::MouseEvent& e)
 {
+    if (dragging == 0) return;
     auto r = get();
     const int v = valueAt ((float) e.x);
     if (dragging == 1) r.min = juce::jmin (v, r.max);

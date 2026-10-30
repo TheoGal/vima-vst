@@ -194,9 +194,11 @@ struct Globals
     bool armAllNote = false;   // ALL in note mode (CC mode has only ON and CC, no ALL)
     bool armCcOn = false;         // the ON param in CC mode (CC on/off)
     bool armOn = true, armNote = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
-    ParamRange rangeNote { 0, 11 }, rangeOct { minOctave, maxOctave }, rangeVel { 1, 127 }, rangeGate { 1, maxGate },
-              rangeProb { 1, 100 }, rangeCC { 0, 127 };
-    int onChance = 50, ccOnChance = 50;   // RANDOMIZE: chance (0-100 %) that a step is switched on (ON range bar)
+    // Default ranges (SPEC.md 4.1), chosen to sound musical at the default 1/16: three octaves
+    // around middle C, audible velocities, staccato to slight overlap, no vanishing steps
+    ParamRange rangeNote { 0, 11 }, rangeOct { 2, 4 }, rangeVel { 70, 127 }, rangeGate { 25, 150 },
+              rangeProb { 25, 100 }, rangeCC { 0, 127 };
+    int onChance = 70, ccOnChance = 70;   // RANDOMIZE: chance (0-100 %) that a step is switched on (ON range bar)
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)
 };

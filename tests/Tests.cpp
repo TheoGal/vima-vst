@@ -451,7 +451,7 @@ void testOperations()
             // the ON range bar: the chance a step is switched on
             auto q = std::make_unique<Project>();
             q->globals.armAllNote = false; q->globals.armNote = false; q->globals.armOn = true;
-            check (q->globals.onChance == 50 && q->globals.ccOnChance == 50, "ON chance starts at 50 % in both modes");
+            check (q->globals.onChance == 70 && q->globals.ccOnChance == 70, "ON chance starts at 70 % in both modes");
             auto onCount = [&] (int chance)
             {
                 q->globals.onChance = chance;
@@ -1042,9 +1042,11 @@ void testInitAndGate()
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
         check (g.armNote && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote
-                   && g.rangeGate.max == maxGate && g.rangeVel.min == 1
-                   && g.rangeVel.max == 127 && ! g.ccSmoothing && userSettings::middleC() == 3,
-               "init globals: ON and NOTE armed (CC mode: CC), full ranges, CC smoothing off, middle C = C3");
+                   && g.rangeNote.min == 0 && g.rangeNote.max == 11 && g.rangeOct.min == 2 && g.rangeOct.max == 4
+                   && g.rangeVel.min == 70 && g.rangeVel.max == 127 && g.rangeGate.min == 25 && g.rangeGate.max == 150
+                   && g.rangeProb.min == 25 && g.rangeProb.max == 100 && g.rangeCC.min == 0 && g.rangeCC.max == 127
+                   && g.onChance == 70 && ! g.ccSmoothing && userSettings::middleC() == 3,
+               "init globals: ON and NOTE armed (CC mode: CC), default ranges (ON 70 %, OCT 2-4, VEL 70-127, GATE 25-150 %, PROB 25-100 %), CC smoothing off, middle C = C3");
     }
     {
         Project p;
@@ -1243,6 +1245,7 @@ void testCurves()
     check (tp.steps[0].pitchClass == 10 && tp.steps[15].pitchClass == 0, "INV on NOTE mirrors the in-scale notes");
 
     only ({ Param::probability });
+    g.rangeProb = { 1, 100 };   // the full range (the default is 25-100)
     for (auto& st : tp.steps) st.probability = 100;
     invertSteps (*p, all, false);
     check (tp.steps[0].probability == 1, "INV on PROB: 100% becomes 1%, never 0");
@@ -1744,6 +1747,21 @@ int main (int argc, char** argv)
         }
         else
             check (false, "the header has a CHAIN toggle");
+        {
+            // right-click on a RANGES bar: back to its default
+            proc->edit (-1, [] (Project& p) { p.globals.onChance = 10; p.globals.rangeVel = { 1, 2 }; });
+            ed.refreshAll();
+            auto* onBar = findChild<RangeBar> (ed, 0);
+            auto* velBar = findChild<RangeBar> (ed, 3);
+            const auto rightClick = juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier);
+            if (onBar != nullptr && velBar != nullptr)
+            {
+                onBar->mouseDown (mouseEvent (*onBar, { 10, 5 }, { 10, 5 }, false, rightClick));
+                velBar->mouseDown (mouseEvent (*velBar, { 10, 5 }, { 10, 5 }, false, rightClick));
+            }
+            check (proc->read ([] (const Project& p) { return p.globals.onChance == 70 && p.globals.rangeVel.min == 70 && p.globals.rangeVel.max == 127; }),
+                   "right-click on a RANGES bar resets it to its default (ON 70 %, VEL 70-127)");
+        }
         {
             const auto sc = ctx.scope();
             ctx.ui.clip = proc->read ([&] (const Project& p) { return copySteps (p, sc); });
