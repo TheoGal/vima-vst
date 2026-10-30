@@ -71,8 +71,7 @@ void PatternSlot::mouseUp (const juce::MouseEvent& e)
         // right-click: the slot's file menu (not while LEARN is on, where right-click frees mappings)
         if (! ctx.ui.macroLearn && onMenu != nullptr)
         {
-            if (ctx.ui.patternClipKind == 0)
-                ctx.ui.selectedPattern = idx;
+            ctx.ui.selectedPattern = idx;
             ctx.changed();
             onMenu (idx);
         }
@@ -81,15 +80,12 @@ void PatternSlot::mouseUp (const juce::MouseEvent& e)
     if (playArea().contains (e.getPosition()))
     {
         // play button: select and queue (switches at the quantize point)
-        if (ctx.ui.patternClipKind == 0)
-            ctx.ui.selectedPattern = idx;
+        ctx.ui.selectedPattern = idx;
         if (idx != ctx.currentPattern())
             ctx.proc.queuePattern (idx);
     }
-    else if (ctx.ui.patternClipKind != 0)
-        ctx.ui.patternPasteDest = idx;   // COPIED: the click only picks where the paste lands
     else
-        ctx.ui.selectedPattern = idx;    // select only (for COPY / COPY TRACK)
+        ctx.ui.selectedPattern = idx;    // select only (COPY / COPY TRACK, and where PASTE writes)
     ctx.changed();
 }
 
@@ -103,15 +99,13 @@ void PatternSlot::paint (juce::Graphics& g)
     const bool playing = idx == ctx.currentPattern();
     const int q = ctx.proc.engine.queuedPattern.load();
     const bool queued = idx == q && ! playing;
-    const bool copying = ctx.ui.patternClipKind != 0;
-    const bool sel = ! copying && idx == ctx.ui.selectedPattern;
-    const bool dest = copying && idx == ctx.ui.patternPasteDest;
+    const bool sel = idx == ctx.ui.selectedPattern;   // also where PASTE writes (SPEC.md 7.1.2)
     const auto chain = ctx.globalsCopy().chain;
     bool inChain = false;
     for (const auto& e : chain) inChain = inChain || e.pattern == idx;
 
     // Cues (SPEC.md 7.1): playing = brightest background, stored = tile, empty = panel;
-    // selected (or, while copying, the paste destination) = thick white outline;
+    // selected (also where PASTE writes) = thick white outline;
     // queued = blinking play button.
     auto b = getLocalBounds().toFloat();
     const auto fill = playing ? t.selected : (used ? t.tile : t.panel);
@@ -120,7 +114,7 @@ void PatternSlot::paint (juce::Graphics& g)
     const bool slotDrag = ctx.ui.slotDragSource >= 0;
     const bool target = slotDrag && idx == ctx.ui.slotDropTarget;
     const bool allowed = slotDrag && ! used && idx != ctx.ui.slotDragSource;
-    const bool outlined = slotDrag ? target : (sel || dest);
+    const bool outlined = slotDrag ? target : sel;
     const auto border = outlined ? t.neutral : (allowed ? t.muted : t.border3);
     const float bw = outlined ? 2.0f : (allowed ? 1.5f : 1.0f);
     g.setColour (fill);
@@ -287,7 +281,7 @@ void ChainRow::paint (juce::Graphics& g)
     // Cues like the slots (SPEC.md 7.2): the playing entry = brightest background and a play icon;
     // entries of the selected pattern = thick white outline
     const bool cur = gl.chainOn && ctx.proc.engine.isPlaying && ctx.proc.engine.chainPosition.load() == index;
-    const bool sel = ctx.ui.patternClipKind == 0 && (int) e.pattern == ctx.ui.selectedPattern;
+    const bool sel = (int) e.pattern == ctx.ui.selectedPattern;
     draw::tile (g, getLocalBounds().toFloat(), cur || dragging ? t.selected : t.tile, dragging ? t.dim2 : t.border, 6.0f);
     if (sel && ! dragging)
     {
@@ -396,11 +390,10 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     {
         const auto& t = Theme::current();
         if (flashing()) return Pill::filled (t.green, t.onAccent);   // one-off paste done
-        const bool ready = ctx.ui.patternClipKind != 0 && ctx.ui.patternPasteDest >= 0;
-        return Pill::outline (ready ? t.neutral : t.border2, t.text2);
+        return Pill::outline (canPasteOnSelection() ? t.neutral : t.border2, t.text2);
     };
-    pasteBtn.alpha = [this, flashing] { return (flashing() || (ctx.ui.patternClipKind != 0 && ctx.ui.patternPasteDest >= 0)) ? 1.0f : 0.4f; };
-    pasteBtn.onClick = [this] { pasteTo (ctx.ui.patternPasteDest, false); };
+    pasteBtn.alpha = [this, flashing] { return (flashing() || canPasteOnSelection()) ? 1.0f : 0.4f; };
+    pasteBtn.onClick = [this] { if (canPasteOnSelection()) pasteTo (ctx.ui.selectedPattern, false); };
     clearBtn.text = [] { return juce::String ("CLEAR"); };
     clearBtn.font = smallFont; clearBtn.look = plain;
     clearBtn.alpha = [this] { return ctx.ui.patternClipKind != 0 ? 1.0f : 0.4f; };
@@ -475,6 +468,16 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     addChildComponent (chainScroll);
 }
 
+// PASTE writes onto the selected slot; dimmed when that would change nothing (the copied pattern
+// itself, or for a track copy the same track of the same pattern)
+bool PatternsView::canPasteOnSelection() const
+{
+    const int sel = ctx.ui.selectedPattern;
+    if (ctx.ui.patternClipKind == 1) return sel != ctx.ui.patternClipSource;
+    if (ctx.ui.patternClipKind == 2) return sel != ctx.ui.patternClipSource || ctx.ui.patternsViewTrack != ctx.ui.patternClipTrack;
+    return false;
+}
+
 void PatternsView::copyPattern (int index)
 {
     ctx.ui.patternClip = ctx.proc.read ([index] (const Project& p) { return p.patterns[(size_t) index]; });
@@ -482,7 +485,6 @@ void PatternsView::copyPattern (int index)
     ctx.ui.patternClipKind = 1;
     ctx.ui.patternClipSource = index;
     ctx.ui.patternClipTrack = -1;
-    ctx.ui.patternPasteDest = -1;
     ctx.changed();
 }
 
@@ -494,7 +496,6 @@ void PatternsView::copyTrack (int index)
     ctx.ui.patternClipKind = 2;
     ctx.ui.patternClipSource = index;
     ctx.ui.patternClipTrack = t;
-    ctx.ui.patternPasteDest = -1;
     ctx.changed();
 }
 
@@ -531,7 +532,7 @@ void PatternsView::pasteTo (int dest, bool oneOff)
 void PatternsView::cancelClip()
 {
     ctx.ui.patternClipKind = 0;
-    ctx.ui.patternClipSource = ctx.ui.patternClipTrack = ctx.ui.patternPasteDest = -1;
+    ctx.ui.patternClipSource = ctx.ui.patternClipTrack = -1;
     ctx.ui.patternClip = Pattern();
     ctx.ui.trackClip = TrackPattern();
     ctx.changed();
@@ -770,7 +771,7 @@ void PatternsView::slotDropped (int pattern, juce::Point<int> pos, bool copy)
         if (copy ? ctx.proc.copyPatternTo (pattern, target) : ctx.proc.movePattern (pattern, target))
             ctx.ui.selectedPattern = target;
     }
-    else if (pattern >= 0 && insertAt < 0 && slotIndexAt (pos) == pattern && ctx.ui.patternClipKind == 0)
+    else if (pattern >= 0 && insertAt < 0 && slotIndexAt (pos) == pattern)
     {
         ctx.ui.selectedPattern = pattern;   // released on its own slot: a click that slipped, select it
     }

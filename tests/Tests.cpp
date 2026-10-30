@@ -1932,23 +1932,25 @@ int main (int argc, char** argv)
                 ctx.ui.patternsViewTrack = 0;
                 if (auto* b = findPill (*pv, "COPY TRACK")) click (*b);
                 auto* paste = findPill (*pv, "PASTE");
-                check (findPill (*pv, "TRACK COPIED") != nullptr && paste != nullptr && paste->alpha && paste->alpha() < 1.0f,
-                       "COPY TRACK lights up as TRACK COPIED; PASTE is dimmed until a destination is picked");
+                check (findPill (*pv, "TRACK COPIED") != nullptr && paste != nullptr && paste->alpha && paste->alpha() < 1.0f
+                           && ctx.ui.selectedPattern == 18,
+                       "COPY TRACK lights up as TRACK COPIED; the selection stays; PASTE is dimmed on the copied track itself");
                 ctx.ui.patternsViewTrack = 1;   // paste into track 2
                 click (*s3, body);
-                check (ctx.ui.patternPasteDest == 19 && ctx.ui.selectedPattern == 18, "while copied, a slot click only picks the destination");
+                check (ctx.ui.selectedPattern == 19 && paste->alpha() == 1.0f, "while copied, a slot click selects it: the paste destination");
                 if (paste) click (*paste);
                 check (proc->read ([] (const Project& p) { return p.patterns[19].tracks[1].steps[0].velocity == 77 && p.patterns[19].tracks[1].swing == 33
                                                                      && p.patterns[19].tracks[0].steps[0].velocity == 100; }),
                        "PASTE writes track 1 of pattern 19 into track 2 of pattern 20 (all settings)");
                 check (findPill (*pv, "TRACK COPIED") != nullptr, "the button stays lit for more pastes");
                 if (auto* c = findPill (*pv, "CLEAR")) click (*c);
-                check (ctx.ui.patternClipKind == 0 && ctx.ui.patternPasteDest < 0 && findPill (*pv, "COPY TRACK") != nullptr
+                check (ctx.ui.patternClipKind == 0 && findPill (*pv, "COPY TRACK") != nullptr
                            && proc->read ([] (const Project& p) { return p.patterns[18].tracks[0].steps[0].velocity == 77; }),
                        "CLEAR cancels and empties the clipboard, and never erases a pattern");
 
+                click (*s2, body);   // select pattern 19 again, then copy it
                 if (auto* b = findPill (*pv, "COPY")) click (*b);
-                check (findPill (*pv, "COPIED") != nullptr, "COPY lights up as COPIED");
+                check (findPill (*pv, "COPIED") != nullptr && ctx.ui.selectedPattern == 18, "COPY lights up as COPIED; the selection stays");
                 click (*s0, body);
                 if (paste) click (*paste);
                 check (proc->read ([] (const Project& p) { return p.patterns[16].tracks[0].steps[0].velocity == 77; }), "PASTE writes the whole pattern");

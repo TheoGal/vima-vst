@@ -146,9 +146,9 @@ There is no step skip, no chords per step and no drum mode.
 - **Pages**: a row of 4 buttons, 1 - 16, 17 - 32, 33 - 48, 49 - 64. A small dot marks the page holding the playing or queued pattern.
 - **Pattern grid**: 4 x 4 slots for the current page. Each slot shows the pattern's own number (page 17 - 32 shows 17 to 32), a small **play button at the top center**, a state on the right (PLAYING, NEXT, STORED, or EMPTY when no track has any step on), and a thumbnail of the 8 tracks (7.1.1). A thin line at the bottom marks patterns used in the chain (hidden under the selection outline; the chain list then outlines the entries of the selected pattern, 7.2).
 - **Slot tones**: three backgrounds, the same order in both themes: the **playing** slot is the brightest (the "selected" color), a **stored** slot uses the tile color, an **empty** slot the panel color, so it sinks back.
-- **Slot cues**: the **selected** slot has a thick white outline; a **queued** slot's play button **blinks** until the switch; while COPIED / TRACK COPIED is lit, the selection outline is hidden and the **paste destination** gets the same thick white outline (7.1.2).
+- **Slot cues**: the **selected** slot has a thick white outline; a **queued** slot's play button **blinks** until the switch. The selection is also where PASTE writes (7.1.2): copying does not change or hide it.
 - **Clicking a slot** anywhere except its play button only **selects** it (for COPY, COPY TRACK and + ADD to the chain). It does not play it.
-- **Right-clicking a slot** selects it (unless COPIED is lit) and opens a menu for that pattern: COPY PATTERN, COPY TRACK nn (the track in the TRACK dropdown), PASTE (dimmed when nothing is copied; 7.1.2), then LOAD PATTERN... and SAVE PATTERN AS... (same rules as the FILE menu's PATTERN section, 13.3). Not while LEARN is on (there right-click frees mappings).
+- **Right-clicking a slot** selects it and opens a menu for that pattern: COPY PATTERN, COPY TRACK nn (the track in the TRACK dropdown), PASTE (dimmed when nothing is copied; 7.1.2), then LOAD PATTERN... and SAVE PATTERN AS... (same rules as the FILE menu's PATTERN section, 13.3). Not while LEARN is on (there right-click frees mappings).
 - **The play button** selects the slot **and** queues it as the next pattern (7.3).
 - **Bottom bar**: a **PATTERN box** ("PATTERN  19", the selected pattern; styled like the TRACK box but display only), COPY, the TRACK dropdown, COPY TRACK, PASTE and CLEAR. On the right, an info text shows what is copied: "PATTERN 05" for a pattern, "PATTERN 05 - TRACK 02" for a track, nothing when the clipboard is empty.
 
@@ -170,9 +170,9 @@ Works like step copy / paste (9.1):
 
 - **COPY** copies the whole selected pattern; **COPY TRACK** copies the selected pattern's track chosen in the TRACK dropdown. The button lights up and reads **COPIED** or **TRACK COPIED**. There is one clipboard: copying again replaces it.
 - A copy takes **everything**: all steps (note and CC parts) and all settings stored in the pattern. Armed params do not apply here. Routing (channel, outputs, CC number) is not part of a pattern and is not copied.
-- While a copy button is lit, a click on a slot only picks the **destination pattern**, shown with the thick white outline (the selection outline is hidden meanwhile, and the selection does not change). The slot play buttons still play.
+- **Copying keeps the selection**: the copied slot stays selected (outlined). With the clipboard full, a click on a slot **selects** it as usual, and the selected slot is where PASTE writes. There is no separate destination: one outline, which is also what FILE and the slot menu act on.
 - For a track copy, the **destination track** is the one in the TRACK dropdown when PASTE is pressed, so track 1 can be pasted into track 2 of the same or another pattern.
-- **PASTE** is dimmed until a destination is picked. It writes there (one undo step), and the button stays lit for more pastes.
+- **PASTE** writes onto the selected slot (one undo step), and the button stays lit for more pastes. It is dimmed when that would change nothing: a pattern copy with the copied pattern still selected, or a track copy onto the same track of the same pattern.
 - **Slot menu** (right-click, 7.1): COPY PATTERN / COPY TRACK use the **same clipboard** and light the same buttons. Its **PASTE is a one-off**: it writes straight into the right-clicked slot (a track copy goes into the track in the TRACK dropdown), one undo step, then clears the clipboard (COPIED / TRACK COPIED switches off) and the bottom-bar **PASTE flashes green** briefly to confirm. The bottom-bar PASTE keeps the clipboard as above, whichever way the copy was made.
 - Clicking the lit button, or **CLEAR**, cancels: the clipboard is emptied and the ghost preview removed. **CLEAR never erases a pattern.** To reset a pattern, use PATTERN > NEW in the FILE menu (13.3); preset NEW resets everything.
 
@@ -440,7 +440,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back; right-click: one step forward (redo) (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings dialog.
 
 **Patterns view**
-- Pattern slot: click to select it (or, while COPIED / TRACK COPIED is lit, to pick the paste destination). The play button at the top center selects it and queues it.
+- Pattern slot: click to select it (also where PASTE writes). The play button at the top center selects it and queues it.
 - Chain row: drag the row (grip on the left) to reorder; - / + change the repeats; x removes the entry.
 
 **Macros page**
@@ -730,3 +730,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: Built: pattern edit mode (7.5): a pink pencil next to CHAIN; the header picker then only chooses the pattern to edit (instant, no quantize), the BPM box shows PLAYING nn (click: edit the playing pattern), STEPS opens the selected slot; off on open, not saved. Last-beat blink before a switch (two 8th-note pulses): the PATTERN box number for chain switches, PLAYING in edit mode.
 - 2026-10-30: Patterns view: no LED on the PLAYING slot; chain entries cue like the slots (playing = bright background and a play icon, entries of the selected pattern = white outline); CHAIN and the pencil in the header on every screen; the chain panel's CHAIN ON/OFF button removed, its title shows CHAIN OFF (grey) / CHAIN ON (white).
 - 2026-10-30: Built: patterns view drag and drop (7.1.3): drag moves a pattern to an empty slot, Ctrl / Cmd + drag copies it, dragging onto the chain list inserts it; drops only on empty slots; nothing follows a moved pattern; undo steps can hold several patterns (a move is one step).
+- 2026-10-30: Patterns view: no separate paste destination. Copying keeps the selection outlined; a click selects as usual, and PASTE writes onto the selected slot (dimmed when it would change nothing). FILE, the slot menu and PASTE all act on the one outlined slot.

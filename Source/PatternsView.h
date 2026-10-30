@@ -67,6 +67,7 @@ public:
     void copyTrack (int index);          // the track in the TRACK dropdown
     void pasteTo (int dest, bool oneOff);   // oneOff (slot menu): clear the clipboard after, flash PASTE
     void cancelClip();
+    bool canPasteOnSelection() const;
 
 private:
     void showTrackMenu();

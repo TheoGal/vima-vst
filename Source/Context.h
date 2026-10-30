@@ -33,7 +33,6 @@ struct UiState
     int patternClipKind = 0;     // 0 none, 1 pattern, 2 track
     int patternClipSource = -1;  // pattern index copied from
     int patternClipTrack = -1;
-    int patternPasteDest = -1;   // destination pattern picked while COPIED / TRACK COPIED
     Pattern patternClip;
     TrackPattern trackClip;
     int patternsViewTrack = 0;   // track for COPY TRACK
