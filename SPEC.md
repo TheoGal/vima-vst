@@ -191,7 +191,7 @@ Works like step copy / paste (9.1):
 
 - An ordered list (song list) of up to 64 entries, shown on the right of the patterns view.
 - Each entry: a play icon (playing entry only), position number, pattern number, length in bars (one play of the pattern times its repeats, in 4/4 bars) with a progress bar while playing, a repeat count (- / +, 1 to 99) and a remove button (x).
-- **+ ADD PATTERN 05** appends the selected pattern. **CLEAR** (under the chain) empties the chain. Entries can repeat the same pattern. The footer shows the number of entries and the total length.
+- **+ ADD PATTERN 05** appends the selected pattern. **CLEAR CHAIN** (next to it) empties the chain. Entries can repeat the same pattern. The footer shows the number of entries and the total length.
 - **Entry cues**, like the slots: the **playing** entry has the brightest background (the "selected" color) and the play icon; every entry of the **selected pattern** has the thick white outline, so the user sees at a glance where the selected pattern is used (none while COPIED / TRACK COPIED is lit).
 - Chain playback is switched with the header **CHAIN** toggle (on every screen, 12.1). The chain panel's title shows the state: **CHAIN OFF** (grey) or **CHAIN ON** (white); it is not a button. **LOOP ON/OFF** (on the right of the panel title): at the end of the chain, LOOP ON goes back to the first entry; LOOP OFF plays the chain once, then keeps playing (repeating) its last pattern until the transport stops or another pattern is picked.
 - One play of a pattern lasts as long as its longest track (length x division).

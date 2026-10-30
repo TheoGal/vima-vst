@@ -460,7 +460,7 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     clearChainBtn.radius = 6.0f;
     clearChainBtn.font = smallFont;
     clearChainBtn.look = plain;
-    clearChainBtn.text = [] { return juce::String ("CLEAR"); };
+    clearChainBtn.text = [] { return juce::String ("CLEAR CHAIN"); };
     clearChainBtn.onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.chain.clear(); }); };
     addAndMakeVisible (clearChainBtn);
     chainScroll.setAutoHide (false);
@@ -697,7 +697,7 @@ void PatternsView::resized()
     footer = a.removeFromBottom (14);
     a.removeFromBottom (8);
     auto buttons = a.removeFromBottom (34);
-    clearChainBtn.setBounds (buttons.removeFromRight (70));
+    clearChainBtn.setBounds (buttons.removeFromRight (116));
     buttons.removeFromRight (6);
     addBtn.setBounds (buttons);
     a.removeFromBottom (10);
