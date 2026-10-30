@@ -105,11 +105,11 @@ Steps which are off are dimmed. Steps beyond the track length are faded out and 
 
 You can create up to 8 completely individual sequences by using Vima's **tracks**. Furthermore you can "jump" to different sequences or chain them into longer ones by using **patterns**. You can think of it like this: a track can be set (via its MIDI channel output) to control a specific instrument in your DAW while patterns can be used to provide variations of what each instrument plays and build long sequences. 
 
-### Tracks
+### The track controls
 
-Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assigned and its **note** and **cc** modes. Its related parameters can be adjusted at the top of the plugin, in the **track frame**
+Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assigned and its **note** and **cc** modes. Its related parameters can be adjusted at the top of the plugin, in the **track controls**
 
-**[screenshot]** the track frame
+**[screenshot]** the track controls
 
 - **TRACK**: pick which of the 8 tracks you see and edit.
 - **NOTES / CC**: switch between note mode and CC mode. Each button has a small light showing whether that output (notes or CC) is on for this track.
@@ -123,11 +123,11 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 
 >**design choice:** A new Vima starts with track 1 sending notes on channel 1 (so you can quickly check if MIDI routing in your DAW is set correctly and an instrument is receiving notes), CC mode off and CC numbers 102-109 assigned to all 8 tracks (numbers that are unassigned in the MIDI standard). So loading Vima won't accidentally mess up your carefully designed synth sound. The tracks are assigned to MIDI channels 1 to 8.
 
-### Patterns
+### The pattern controls
 
-Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings. These parameters can be adjusted at the top of the plugin, in the **pattern frame**
+Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings. These parameters can be adjusted at the top of the plugin, in the **pattern controls**
 
-**[screenshot]** the pattern frame
+**[screenshot]** the pattern controls
 
 - **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view 
 - **CHAIN**, switches chain playback on and off. It lights up while the chain is on, so you can always see whether the patterns are changing by themselves.
@@ -136,6 +136,8 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 - **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once.
 - **SWING** (0-100%): delays every second step. 0% is straight; 100% delays it by half a step.
 - **USE SCALE** (on / off): whether this track follows the global scale in this pattern.
+
+Switching, copying and chaining patterns is covered later, in **Working with patterns**.
 
 >A new Vima starts with **pattern 1** ready to play (16 steps on, every step a middle C at velocity 100) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used.
 
@@ -254,7 +256,7 @@ You can copy - paste selected parameters of steps with the **copy** and **paste*
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
 
-## Switching patterns
+## Working with patterns
 
 At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. 
 
