@@ -1,3 +1,5 @@
+# work in progress - nothing to download yet, follow to be informed when the release is out
+
 # VIMA
 
 VIMA (from Greek "βήμα", step) is an 8-track MIDI step sequencer plugin, built with JUCE.
