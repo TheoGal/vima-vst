@@ -614,6 +614,14 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
+- **Drag and drop in the patterns view.** Slots can be dragged (a drag starts after the mouse moves a few pixels, so a click still selects and the play button still plays; no dragging while COPIED / TRACK COPIED is lit):
+  - **Drag** a slot onto another slot: **move** the pattern there (copy it, then reset the source to a blank pattern, like a fresh slot 2-64).
+  - **Ctrl + drag** (Cmd + drag on Mac, the same keys as step selection): **copy** the pattern there; the source stays.
+  - **Drops land only on empty slots** (EMPTY: no step on in any track), for move and copy. A stored slot is refused: no outline, releasing there does nothing. The empty target's settings (length, division...) are overwritten.
+  - While dragging, every allowed (empty) slot gets an outline lighter than the default border and darker than the selected outline; the slot under the mouse, if allowed, gets the selected (thick white) outline. A small ghost of the dragged slot follows the mouse. Hovering a PAGE button while dragging switches to that page.
+  - **Nothing follows a moved pattern**: the chain, the playing pattern and macro mappings keep pointing at pattern numbers (a move changes the arrangement: the chain then plays the now blank source number).
+  - **Drag a slot onto the chain list**: insert the pattern at the insertion line (the same line as reordering), 1 repeat. Any pattern can be added this way.
+  - **Undo**: a move is one undo step that restores both patterns ("MOVE PATTERN 05 > 12"); a copy is one step like PASTE ("COPY PATTERN 05 > 12"); adding to the chain is not undoable (the chain is not part of undo). The undo history gets steps that hold several patterns.
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
