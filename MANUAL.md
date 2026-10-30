@@ -2,29 +2,25 @@
 
 **[Screenshot]** The full window in the dark theme, note mode, with a busy pattern. *(main-dark-notes.png)*
 
-## 1. Vima - the VST step sequencer to kill all VST step sequencers
+## Vima - the VST step sequencer to kill all VST step sequencers
 
 **VIMA** (from the Greek word "βήμα", which means **step**) is an **8-track melodic MIDI step sequencer** that runs as a plugin (VST3) inside your DAW. It makes no sound of its own: it plays notes and CC (controller) messages into the instruments and effects you already use. Its focused on being easy to use while still providing extensive capabilities in an unclutttered UI.
 
 Each of its 8 tracks has up to 32 steps, its own length, timing and direction, and can play notes, send a CC value, or both at once. You can store 64 patterns, chain them into a longer arrangement, switch between them live, and automate almost everything from your DAW.
 
-Attention has been given to what I like to call **guided randomization**. Randomness is a great way to find ideas you would never have played yourself, but pure chance is rarely musical. In VIMA you steer it:
+Attention has been given to what I like to call **guided randomization**. Randomness is a great way to find ideas you would never have played yourself, but pure chance is rarely musical. In VIMA you steer it by using selected steps and parameters and controlling the randomization output with ranges, smoothing and pre-defined curves.
 
-- you choose **which steps** change (the selection),
-- you choose **which values** change (note, octave, velocity, gate, probability, CC),
-- you choose **the limits** they move within (the ranges),
-- you can shape the parameters: apply pre-defined shapes smooth them, draw a curve over them, etc.
+UNDO - REDO is always one click away so VIMA encourages experimentation.
 
-Editing is quick and direct. Nothing asks "are you sure?" when you randomize: you try, you listen, and if you do not like it, UNDO is one click away.
+## Who am I - disclaimer
 
-## 2. Who am I - disclaimer
+I have been a music software - MIDI freak for a long time. Under the name "Softcore" I wrote electronic music and built a lot of software little helpers (MaxForLive, Lemur templates, Reaktor instruments etc.): Microtonic Lemurized (2013), was a Lemur template which turned Sonic Charge's Microtonic into a complete touch instrument with per-parameter exclusion randomizing; its developer, Magnus Lidström, called it "absolutely amazing" (https://soniccharge.com/forum/topic/383-microtonic-lemuriized). I was one of the first to buy Zaquencer - the custom firmware which transformed the BCR2000 into a full-blown sequencer (which also inspired this VST), and Bome MIDI Translator glued my setups together for years, performing hybrid DJ - Live techno sets for many years.
 
-I have been a MIDI freak for a long time. Under the name "Softcore" I wrote electronic music and built a lot of software little helpers (MaxForLive, Lemur templates, Reaktor instruments etc.): Microtonic Lemurized (2013), was a Lemur template which turned Sonic Charge's Microtonic into a complete touch instrument with per-parameter exclusion randomizing; its developer, Magnus Lidström, called it "absolutely amazing" (https://soniccharge.com/forum/topic/383-microtonic-lemuriized). I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
+So, even though I've tipped my toes into coding I am not a C++ developer. I always had ideas about what I want the software to do but never got round to actually learning a proper coding language (Lemur scripting was close to that though).
 
-So, even though I've tipped my toes into coding I am not a C++ developer.
-**VIMA was vibe-coded**:  I designed it, decision by decision, and an AI (Claude by Anthropic) wrote the code for JUCE, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in Vima was made on purpose. Throughout this manual I'll be explaining various design choices and the reasoning behind them. Furthermore, Vima is not processing any audio so there is no DSP processing which is something I would not trust to an AI without personal knowledge.
+**VIMA was vibe-coded**:  I designed it, decision by decision, and an AI (Claude by Anthropic) wrote the code for JUCE, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in Vima was made on purpose by me. Throughout this manual I'll be explaining various design choices and the reasoning behind them. Furthermore, Vima is not processing any audio so there is no DSP processing which is something I would not trust to an AI without personal knowledge.
 
-## 3. Installing and setting up
+## Installing and setting up
 
 - **Windows:** copy the `Vima.vst3` folder to `C:\Program Files\Common Files\VST3\`.
 - **macOS:** copy `Vima.vst3` to `/Library/Audio/Plug-Ins/VST3/`. Test builds are not notarized by Apple, so the first time you may need to remove the quarantine flag (see INSTALL-macOS.txt in the download).
@@ -35,9 +31,9 @@ VIMA is a VST3 plugin only. There is no Audio Unit version, because an AU plugin
 
 Your DAW lists VIMA as an **instrument**. Put it on its own track, then route that track's MIDI output to the instruments you want to play.
 
->**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "midi FX plugins" are not recognised by many current DAWs. 
+>**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "midi FX plugins" is a very limited format. 
 
-**Ableton Live:** on the instrument track (the instrument you wish to control), set "MIDI From" to the VIMA track, choose VIMA in the lower chooser, and set monitoring to "In".
+**Ableton Live:** Add VIMA to your project as an instrument track. On the target instrument track (the instrument you wish to control), set "MIDI From" to the VIMA track, choose VIMA in the lower chooser, and set monitoring to "In".
 Other DAWs have a similar "MIDI input from another track" option.
 
 **Note for Ableton Live users.** Live strips the MIDI channel from MIDI data internally. All 8 tracks of one VIMA arrive mixed together on the receiving track, whatever their MIDI channels. So in Live, use **one VIMA per instrument track**: its 8 tracks can still play several drum voices or layers of that one instrument. (Hosts such as Bitwig and Reaper keep the channels, so there one VIMA can feed several instruments by channel. In Live, that would need a Max for Live device.)
@@ -59,10 +55,10 @@ The step sequencer consists of two rows of 16 steps, each row with a thin **LED 
 
 There are two modes available: **Note Mode** and **CC Mode** which share the same length, time division and direction. 
 
-- In **note mode** the steps show note, octave and one slider (velocity, gate or probability).
+- In **note mode** the steps show pitch and octave knobs and one slider (velocity, gate or probability).
 - In **CC mode** each step shows one tall slider for its CC value.
 
-Each of the modes can be set to output MIDI messages or not - so a seqeunce (a track) can output only notes, only CC values or both.
+Each of the modes can be set to output MIDI messages or not - so a sequence (a track) can output only notes, only CC values or both.
 
 ### Steps in detail
 
@@ -70,27 +66,31 @@ Each of the modes can be set to output MIDI messages or not - so a seqeunce (a t
 
 **note mode:**
 
-- **The step button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
-- **The note knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
+- **The step on-off button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
+- **The pitch knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
 - **The octave knob**.
 - **The slider**: velocity, gate or probability, as chosen with SLIDER, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
 
-**CC mode:** the cell shows the step button (CC on / off for that step) and one tall cyan slider for the CC value.
+**CC mode:** 
 
-Steps whose shown part is off are dimmed. Steps beyond the track length are faded out and are not played.
+- the cell shows the **step on-off button** (CC on / off for that step) and one tall cyan slider for the **CC value**.
+
+Steps which are off are dimmed. Steps beyond the track length are faded out and are not played.
 
 **What a step holds.**
 
 | Mode | Value | Range | What it does |
 |---|---|---|---|
 | Note mode | Note on / off | | Whether the step triggers a note. |
-| CC mode | CC on / off | (in CC mode) | Whether the step sends its CC value. Independent of the note on / off. |
-| Note mode | Note | C to B | The note name. With the scale on, only notes in the scale. |
+| CC mode | CC on / off | (in CC mode) | Whether the step sends its CC value. Independent of the note on-off. |
+| Note mode | Pitch | C to B | The note name. With the scale on, only notes in the scale. |
 | Note mode | Octave | C-2 to 8 (with middle C = C3) | The whole MIDI range. |
-| Note mode | Velocity | 1-127 | How hard the note is played. |
+| Note mode | Velocity | 1-127 | How hard the note is played *(actually its how fast a key travelled when played on a physical piano keyboard, but lets not get into that)*. |
 | Note mode | Gate | 1-400% | How long the note lasts, in steps: 100% is one step, 50% half a step, 400% four steps (legato and long notes). |
 | Note mode | Probability | 1-100% | The chance that the note plays each time the step comes round.|
 | CC mode | CC value | 0-127 | The value sent when the step's CC is on. |
+
+- **Long gates** (over 100%) let notes overlap into the next steps. This is particularly useful with monophonic synths that have a legato ("slide") option: when a held note overlaps a next note with a different pitch, the synth glides (portamento) into it. If the same note plays again on the same channel while the old one is still held, the old one ends just before the new one starts, so nothing gets stuck.
 
 >**design choice:** You might have noticed that velocity and probability ranges do not include a 0 value. A Midi note on message with velocity 0 is actually a Note off and a 0 probability is actually "never" hence the design choices here.
 
@@ -148,24 +148,6 @@ VIMA holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 - **Purple**: gate. **Amber**: probability.
 
 
-
-**On the right:**
-
-- **The start / stop button and BPM** (the BPM shown is your DAW's tempo):
-  - Normally VIMA simply follows the DAW.
-  - Press **stop while the DAW plays**: VIMA stops and stays stopped (the icon turns **amber**: "held") until you press its play button again, even if the DAW stops and starts in between. Handy for muting the whole sequencer without touching the DAW.
-  - Press **play while the DAW is stopped**: VIMA runs on its own from step 1 at the DAW's tempo, to audition ideas without starting the song.
-- **FILE** (folder icon): presets, single patterns and macro sets (section 10).
-- **UNDO**: one step back, up to 64 steps.
-- **MACROS**: the Macros page (section 9).
-- **SETTINGS** (gear icon): the Settings dialog (section 11).
-- **SCALE** (on the right, under the buttons): the global scale and root, for example "C MIN". Click it to pick a root and one of 13 scales or your own USER scale. The mouse wheel over it steps through the scales.
-
-> **[Screenshot]** The scale popover open. *(popover-scale.png)*
-
-**Why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. Tracks that should ignore it (drums, effects) just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
-
-
 ## 4. Step operations
 
 The **operations panel** at the bottom holds the tools that change many steps at once.
@@ -193,43 +175,49 @@ By default, **step operations** act on all the steps visible and inside the leng
 ### PARAMS: choosing which values change
 
 You can select which parameters to "arm" for operation - for example you might want to randomize notes, but not octaves or step on - off and velocities but not anything else. 
-In note mode: **ALL, ON, NOTE, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**. ON means the step's note on / off in note mode, its CC on / off in CC mode.
+In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**. ON means the step's note on / off in note mode, its CC on / off in CC mode.
 
 - Note mode and CC mode remember their own choice.
 
-PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the curves. By default, note on - offs and notes are armed for quickly generating melodies.
+PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the CURVES. By default, note on - off and pitch are armed for quickly generating melodies.
 
 ### RANGES: setting the limits
 
-The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed and obviously steps on-off do not have a range bar since their value can simply be "on" or "off"
+The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed.  Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, i.e. with a 50% chance, its pure random if a step is on or off -  with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesnt necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
 
-The **NOTE** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, E, F, G in any octave (in C minor: D, D#, F, G).
+The **PITCH** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, E, F, G in any octave (in C minor: D, D#, F, G).
 
 >**design choice:** Velocity and probability ranges do not include a 0 value. A Midi note on message with velocity 0 is actually a Note off and a 0 probability is actually "never" hence the design choices here.
+
+>**design choice:** Default ranges are not set to their full but rather to practical settings most possible to produce musically interesting patterns.
 
 ### RANDOMIZE
 
 Gives the armed values of the steps in scope new random values, within their ranges.
 
-- **ON**: each step is switched on with a 70% chance.
-- **NOTE**: random notes from the NOTE range, in the scale when the track's scale is on.
+- **ON**: each step is switched on with a chance defined by the "chance" bar.
+- **PITCH**: random notes from the PITCH range, in the scale when the track's scale is on.
 - Randomize includes steps that are off (they get new values too, ready for when you switch them on).
 
-Each press is one undo step, so you can press, listen, undo, press again.
+Each press is one undo step, so you can press, listen, undo, press again - redo is always an option (right-click Undo).
 
-**Guided randomization in practice:** select steps 9-16, arm only VEL, set the VEL range to 60-110, press RANDOMIZE. Only the velocities of the second half change, and only within a musical range.
+>**Guided randomization in practice:** select steps 9-16, arm only VEL, set the VEL range to 60-110, press RANDOMIZE. Only the velocities of the second half change, and only within a musical range.
 
-### 5.4 SMOOTH
+### SMOOTH
 
-Pulls the armed values one step closer to their average. Press once for a small nudge; **press and hold** to keep smoothing until the values meet. Great for taming a wild randomize result without losing its character.
+When working with extreme ranges, its quite often - especially with parameters like velocity and CC values which drive synthesizer parameters thus the actual sound produced - that a result is somewhat desired but makes too extreme changes to the sound. Think for example velocity or a CC value driving a filter cut off. Having used full range min - max values may result in too extreme chnanges. Surely you could just limit the min - max values but what if the random pattern produced is actually desired but just too extreme?<br/>  
+Meet **Smooth:** it pulls the armed values one step closer to their average. In other words, with a velocity range of 1 - 127, lower randomly produced values will rise to 64 by 1 while higher ones will fall to 64. Press once for a small nudge; **press and hold** to keep smoothing until the values meet the average. The whole operation is great for taming a wild randomize result without losing its character.
 
-- Off steps are left out (not counted and not changed).
+- Smooth in steps on - off works based on the "chance" setting: remmeber how I mentioned above that a 50% chance doesnt necessarily mean precisely half the steps will be "on". It might happen in a pattern with length 16, 7 steps are on or 10 steps are on. Smooth will add randomely an "on" step if the total is less than the chance, will subtract randomly a "on" step if the total in more than the chance. In our examples, the 7 on steps will become 8 and the 10 steps on will become 9.
+
 - Notes are smoothed in scale steps, across octave boundaries.
 - Smooth never goes outside the values you already have.
 
-### 5.5 Curves, rotate and invert
+>**design choice** When using smooth, the actual values of the armed parameters is taken into consideration excluding the steps which are "off". This is by design to actually smooth out (calculate an average) based on the "audible" parameters. Then the "smoothing" is applied to all steps (not only the on ones) so if you happen to switch a step to on, its parameters will be near the already "on" steps
 
-Under RANDOMIZE and SMOOTH:
+### Curves, rotate and invert
+
+Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with pre-fixed curves to apply to parameters.
 
 - **Shapes**: **SINE**, **TRIANGLE**, **RAMP** and **SQUARE** draw one cycle of that shape over the steps in scope, between each armed value's range limits. Want a ramp down? RAMP, then INV.
 - **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only NOTE to move the melody over a fixed rhythm.
@@ -239,17 +227,20 @@ Each press is one undo step.
 
 > **[Screenshot]** A row of CC values before and after SINE.
 
-### 5.6 SHIFT ALL
+### SHIFT
 
-An endless knob that moves one value of all steps in scope up or down together, keeping the shape: NOTE (in scale steps), OCT, VEL, GATE or PROB in note mode, picked with the buttons next to the knob. In CC mode it always moves the CC value, so the knob stands alone.
+Finally, the **Shift** knob is an endless knob that moves one value of all steps in scope up or down together, keeping the shape: PITCH (in scale steps), OCT, VEL, GATE or PROB in note mode. Shift works with its own parameters selection which is exclusive - you cannot shift ALL parameters at once. In CC mode it always moves the CC value, so the knob stands alone. 
+
+>**design choice** Steps on - off are not an option in Shift - you can easily drag switch all of them on or off. Shift works with its own parameter selection because there really is no need to select ALL parameters to shift up or down - such a thing would be accident waiting to happen and I doubt it would be a happy one.
 
 - While you turn, the knob shows the running offset ("+3"); it springs back to 0 when you let go.
+- If PITCH is selected, turning the knob and reaching the pitch limits for the given octave, an octave is added or subtracted and keeps shifting (transposing)
 - A step that hits its limit stays there while the others keep moving, and turning back in the same move brings the original shape back exactly.
-- You hear the change live while turning; the whole move is one undo step.
+- You hear the change live while turning; the whole move is one undo step (or REDO with right-clicking UNDO).
 
-### 5.7 COPY and PASTE (steps)
+### COPY and PASTE steps parameters
 
-Copy is how you move steps between tracks and patterns.
+You can copy - paste selected parameters of steps with the **copy** and **paste** buttons.
 
 1. Select steps (or none for all), arm the PARAMS you want to copy, press **COPY**. It lights up as **COPIED**.
 2. Click an LED to pick the **landing step**: a ghost preview shows where the steps will land. Copied steps keep their spacing.
@@ -258,25 +249,30 @@ Copy is how you move steps between tracks and patterns.
 
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (NOTE), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
-### 5.8 UNDO
 
-UNDO (in the top band) steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH).
+## Patterns
 
-Routing (channel, outputs, CC number), global settings, the chain and macro mappings are not part of undo.
+At the top of the plug in you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. 
 
----
+When switching patterns manually the **Quantize** setting (found in Settings window) is considered:
 
+- **OFF**: instantly, at the moment you pick it. Every track carries on at the right step, so the groove never stumbles.
+- **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
+- **PATTERN END**: when the playing pattern reaches its end.
 
+While a switch is waiting, the PATTERN box blinks. Picking another pattern before the switch replaces the waiting one. When the DAW is stopped, patterns switch at once.
 
----
+> **[Screenshot]** The patterns pop-up
 
-## 7. The patterns view
+This will also allow you to switch to the **patterns view**. 
 
-The patterns view is where you see all your patterns, copy them around and build a song with the chain. Open it from the PATTERN picker in the top band ("OPEN PATTERNS VIEW"); the green **STEPS** button takes you back.
+### The patterns view
+
+The patterns view is where you see all your patterns, copy them around and build an arrangement with the chain. While in patterns view the green **STEPS** button takes you back to the main window.
 
 > **[Screenshot]** The patterns view with several stored patterns, one playing, and a chain. *(patterns-view.png)*
 
-### 7.1 The pattern slots
+### The pattern slots
 
 The four page buttons show patterns 1-16, 17-32, 33-48 and 49-64. A small dot marks the page with the playing pattern.
 
@@ -284,26 +280,26 @@ Each slot shows:
 
 - the pattern number and a **play button**,
 - its state: **PLAYING**, **NEXT** (waiting to switch), **STORED** or **EMPTY**,
-- a **thumbnail** of the pattern (7.2),
+- a **thumbnail** of the pattern,
 - a thin line at the bottom if the pattern is used in the chain.
 
-At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots sink back. The **selected** slot has a thick white outline.
+At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots are darker. The **selected** slot has a thick white outline.
 
 - **Click a slot** to select it. This does **not** play it.
-- **Click its play button** to select it and switch to it (following the quantize setting, 7.5). A waiting pattern's play button blinks until the switch happens.
+- **Click its play button** to select it and switch to it. A waiting pattern's play button blinks until the switch happens.
 
-### 7.2 Reading the thumbnails
+### Reading the thumbnails
 
 Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the top.
 
-- A **green** line is the track's notes, a **cyan** line its CC. Each lit stripe is a step that is on.
+- A **green** line is the track's notes, a **cyan** line its CC. Each lit rectangle is a step that is on.
 - The line is as long as the track: 32 steps fill the width, 16 half of it.
 - A part whose output is **off** is shown dimmed: it holds steps, but you will not hear it.
-- A part with no steps on is not shown at all.
+- A part with no steps on is not shown at all to save space.
 
 > **[Screenshot]** One slot enlarged, with the note and CC lines of a few tracks pointed out.
 
-### 7.3 Copying patterns and tracks
+### Copying patterns and tracks
 
 The bar under the slots copies whole patterns or single tracks:
 
@@ -313,13 +309,13 @@ The bar under the slots copies whole patterns or single tracks:
 - A track copy is pasted into the track in the TRACK box, so you can copy track 1 of one pattern into track 3 of another.
 - **CLEAR**, or clicking the lit button, finishes. CLEAR never erases a pattern.
 
-**Right-click a slot** for a quicker way: **COPY PATTERN**, **COPY TRACK**, **PASTE**, plus **LOAD PATTERN...** and **SAVE PATTERN AS...** (section 10). A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard, and the PASTE button flashes green to confirm.
+You can also **Right-click a slot** for a one-shot copy-paste: **COPY PATTERN**, **COPY TRACK**, **PASTE**, plus **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later). A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard, and the PASTE button flashes green to confirm.
 
 > **[Screenshot]** The slot right-click menu, and the patterns view with COPIED lit and a paste destination outlined. *(patterns-view-copied.png)*
 
-### 7.4 The chain
+### The chain
 
-The chain on the right is a song list: patterns played one after the other.
+Using the chain allows to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
 
 - **+ ADD** adds the selected pattern at the end. The same pattern can appear many times.
 - Each entry shows the pattern, its length in bars and a **repeat** count (- / +, up to 99). The playing entry has a lit LED and a progress bar.
@@ -327,37 +323,14 @@ The chain on the right is a song list: patterns played one after the other.
 - **CHAIN ON / OFF** starts and stops chain playback (the same as the CHAIN button next to the PATTERN box in the main window). **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
 - Long chains scroll with the mouse wheel or the scroll bar.
 
-When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do. This was a deliberate choice: it keeps editing patterns from the DAW simple.) Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
+>**design choice** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do. This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
 > **[Screenshot]** A long chain with the scroll bar. *(patterns-view-long-chain.png)*
 
-### 7.5 When does a pattern switch?
 
-The **Quantize** setting (Settings dialog) decides:
+## Macros: automating VIMA from your DAW
 
-- **OFF**: instantly, at the moment you pick it. Every track carries on at the right step, so the groove never stumbles.
-- **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature.
-- **PATTERN END**: when the playing pattern reaches its end.
-
-While a switch is waiting, the PATTERN box blinks. Picking another pattern before the switch replaces the waiting one. When the DAW is stopped, patterns switch at once.
-
-Patterns can also be switched from outside: by a **CC message** from a controller or another track (Settings, 11), or by the **Pattern macro** from DAW automation (9).
-
----
-
-## 8. Playback details worth knowing
-
-- **Steps follow the song position.** Step 1 of every track falls on bar 1, beat 1 of your song and on every repeat of the track's length after it. Start the DAW anywhere and every track is on the right step.
-- **Swing** counts from the song position too, so swung tracks stay locked together.
-- **Long gates** (over 100%) let notes overlap into the next steps. If the same note plays again on the same channel while the old one is still held, the old one ends just before the new one starts, so nothing gets stuck.
-- **Stopping**, jumping in the timeline and instant pattern switches end every sounding note.
-- **CC smoothing** (Settings) glides each track's CC smoothly from one CC step to the next instead of jumping.
-
----
-
-## 9. Macros: automating VIMA from your DAW
-
-### 9.1 Why macros?
+### One more design choice: Why macros?
 
 A DAW can only automate parameters that a plugin "publishes", and it needs a fixed list of them. VIMA has 8 tracks x 64 patterns x 32 steps x 8 values per step: well over 100,000 things you might want to move. No DAW can show a list like that, and nobody could find anything in it.
 
@@ -377,20 +350,20 @@ The **Pattern** macro is special: turning it picks the next pattern, and the mac
 
 A **Note** macro follows the scale like the note knob: in C minor it moves through the 7 notes of the scale.
 
-### 9.2 The Macros page
+### The Macros view
 
-Open it with **MACROS** in the top band; **STEPS** goes back.
+Open it with **MACROS** button in the top; green **STEPS** button gets you back to the main window.
 
-> **[Screenshot]** The Macros page with some mapped macros and the editor on the right. *(macros.png)*
+> **[Screenshot]** The Macros view with some mapped macros and the editor on the right. *(macros.png)*
 
-- **Left:** 4 pages of 32 macros (1-32 ... 97-128), the total count ("40 OF 128 MAPPED") and **LEARN**. Each macro cell shows its number, a knob with the current value, what it controls ("STEP 05 VEL") and where ("T04 · 06" = track 4, pattern 06).
-- **Right:** the editor for the selected macro. Choose **TARGET** (GLOBAL / TRACK / STEP), **PARAMETER**, and the **TRACK**, **PATTERN** and **STEP** it points at. **CLEAR MAPPING** empties it.
+In **Macros view** 4 pages of 32 macros (1-32 ... 97-128) are displayed. Each macro cell shows its number, a knob with the current value, what it controls ("STEP 05 VEL") and where ("T04 · 06" = track 4, pattern 06).
+Next to the macros cells is the editor for the selected macro. Choose **TARGET** (GLOBAL / TRACK / STEP), **PARAMETER**, and the **TRACK**, **PATTERN** and **STEP** it points at. **CLEAR MAPPING** empties it. You can either manually assign a macro to a parameter using the editor or use the **Learn** function.
 
-### 9.3 LEARN: mapping by clicking
+### LEARN: mapping by clicking
 
-The quickest way to map:
+The quickest way to map multiple macros to parameters is using the **Learn** function.
 
-1. Press **LEARN**. The selected macro (or the next free one) starts listening; the header button reads "LEARN M005" in amber.
+1. Press **LEARN**. The selected macro (or the next free one) starts listening; the header button reads "LEARN M00X" in amber.
 2. Go to the step view or the patterns view and **click the control** you want to automate: a step's velocity, a track's swing, a pattern slot...
 3. The macro is mapped to that control (on the track and pattern you are looking at), and LEARN moves on to the next free macro. Keep clicking to map more.
 4. Press LEARN again to stop.
@@ -401,19 +374,46 @@ While learning, every mapped control shows an amber outline with its macro numbe
 
 Then, in your DAW, automate or map hardware knobs to the macros as you would with any plugin parameter.
 
----
 
-## 10. Saving: presets, patterns and macro sets
 
-### 10.1 Your DAW project saves everything
+## UNDO & REDO
+
+UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). Right clicking UNDO performs a REDO
+
+Routing (channel, outputs, CC number), global settings, the chain and macro mappings are not part of undo.
+
+
+## TRANSPORT
+
+Bt default, VIMA simply follows your DAW start - stop and the **steps follow the song position.** Step 1 of every track falls on bar 1, beat 1 of your song and on every repeat of the track's length after it. Start the DAW anywhere and every track is on the right step.
+
+The **transport** section of VIMA at the top displays your DAW's BPM. The **play - stop** has been designed to understand your intentions without complicated options ("smart" following - or not - your DAW transport)
+
+- Press **stop while the DAW plays**: VIMA stops and stays stopped (the icon turns **amber**: "held") until you press its play button again, even if the DAW stops and starts in between. Handy for muting the whole sequencer without touching the DAW.
+- Press **play while the DAW is stopped**: VIMA runs on its own from step 1 at the DAW's tempo, to audition ideas without starting the song.
+
+
+## SCALE
+
+VIMA can be set to send note messages in a defined scale. Clicking the **SCALE** button on the right opens a pop up to pick a root and one of 13 scales or your own USER scale (defined in Settings window). The mouse wheel over it steps through the scales.
+
+> **[Screenshot]** The scale popover open. *(popover-scale.png)*
+
+**Design choice: why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. For tracks that should ignore it just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
+
+
+
+## Saving: presets, patterns and macro sets
 
 Every VIMA in your project saves its **complete** state with the project: all patterns, the chain, routing, scale, settings, macro mappings and window size. Each VIMA instance keeps its own: two VIMAs in the same project can have completely different settings. You never need to save a preset just to keep your work.
 
-The files below are for **reusing** material across projects.
+The files button opens a menu to save presets, patterns and macro mappings.
 
-### 10.2 The FILE menu
+>**design choice:** instead of having a "preset" system that saves everything, saving is "modularized" into three distinct categories: "presets" for saving everything but macros which allows for easy transfering of your work between projects or even DAWs, "patterns" for saving individual sequences and melodies ready to be re-used in the same DAW project or a new one and "macros" which might be desired to be-reused in new projects with new sequences and melodies.
 
-Click **FILE** (the folder icon) for one menu with three sections.
+### The FILE menu
+
+Clicking the **file** button (with a folder icon) at the top of the plugin opens the file menu.
 
 > **[Screenshot]** The FILE menu open, showing the PRESET, PATTERN and MACROS sections.
 
@@ -423,7 +423,6 @@ Click **FILE** (the folder icon) for one menu with three sections.
 - Does **not** hold the macro mappings, the settings found only in the Settings dialog (CC smoothing, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
 - **NEW** starts over (pattern 1 ready, the rest empty) and asks first. **LOAD...**, **SAVE** (overwrites the current preset; greyed out if it has never been saved) and **SAVE AS...**
 - The menu header shows the current preset's name, or "UNSAVED".
-- Loading a preset or NEW clears the undo history.
 - Files end in **.vima** and are kept in Documents/VIMA/Presets by default.
 
 **PATTERN**: one single pattern.
@@ -432,7 +431,8 @@ Click **FILE** (the folder icon) for one menu with three sections.
 - Holds the pattern's 8 tracks: their steps and their length, division, direction, swing and use scale. No routing, no scale: a loaded pattern plays in the current scale.
 - **NEW** resets the pattern (16 steps on, ready to edit) and asks first. **LOAD...** asks before replacing a pattern that has steps. **SAVE AS...** saves it. Both NEW and LOAD can be undone.
 - Files end in **.vimapattern**, in Documents/VIMA/Patterns.
-- Also available by right-clicking a slot in the patterns view.
+
+You can also save or load a pattern by right-clicking a slot in the patterns view.
 
 **MACROS**: all 128 macro mappings, as a set.
 
@@ -443,46 +443,36 @@ Click **FILE** (the folder icon) for one menu with three sections.
 
 Your DAW's own preset system (for example Live's .adv or .vstpreset files) also works and stores everything, mappings included.
 
----
 
-## 11. The Settings dialog
+## 8. The Settings window
 
-Open it with **SETTINGS** (the gear icon). Click **DONE** or anywhere outside it to close.
+The **settings** pop up opens with the **SETTINGS** button (the gear icon). Click **DONE** or anywhere outside it to close.
 
 > **[Screenshot]** The Settings dialog, dark and light. *(settings.png, settings-light.png)*
 
-- **APPEARANCE: Theme**, DARK or LIGHT. This is **your** preference: it applies to every VIMA in every project, and switching it in one VIMA switches all open ones.
-- **PITCH: Middle C is** C3, C4 or C5. This only changes how octaves are **numbered** on screen (MIDI note 60 is always middle C), so VIMA can match your DAW: C3 for Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 for Reaper and Tracktion; C5 for FL Studio, Cakewalk and Renoise. Like the theme, it is your preference for every VIMA.
-- **USER SCALE**: build your own scale. Choose the **root** and switch the 12 notes on or off (the root is always on). Then pick **USER** in the SCALE popover. The root here is the same as the one in the SCALE popover.
-- **CC OUTPUT: Smooth between steps**: when on, each track's CC glides from one CC step's value to the next instead of jumping.
-- **PATTERN CHANGE**:
-  - **From incoming CC**: switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.
-  - **Quantize changes to**: OFF, 1 BEAT, 1 BAR or PATTERN END (see 7.5).
-- **RESET DEFAULTS** puts everything in this dialog back to its starting value. The theme and middle C are reset for every VIMA; the scale you selected is kept.
+**APPEARANCE: Theme**, DARK or LIGHT. This is **your** preference: it applies to every VIMA in every project, and switching it in one VIMA switches all open ones.
+
+**PITCH: Middle C is** C3, C4 or C5. This only changes how octaves are **numbered** on screen (MIDI note 60 is always middle C), so VIMA can match your DAW: C3 for Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 for Reaper and Tracktion; C5 for FL Studio, Cakewalk and Renoise. Like the theme, it is your preference for every VIMA.
+
+**USER SCALE**: build your own scale. Choose the **root** and switch the 12 notes on or off (the root is always on). Then pick **USER** in the SCALE pop up. The root here is the same as the one in the SCALE pop up.
+
+**CC OUTPUT: Smooth between steps**: By default, each CC step sends a CC value so when two adjacent steps have a big difference in values the controled parameter "jumps". Target a synth parameter with the CC steps and you'll see at once what I mean.  When "smoothing" is on, each track's CC glides from one CC step's value to the next instead of jumping with a linear interpolation. Which mode you prefer is depending on the actual synth parameter controlled and personal taste - goal for the resulting sound.
+
+**PATTERN CHANGE**:
+**From incoming CC**: You can use this setting to switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.
+
+**Quantize changes to**: OFF, 1 BEAT, 1 BAR or PATTERN END. This controls how the patterns switch when selected manually
+- **OFF**: instantly, at the moment you pick it. Every track carries on at the right step, so the groove never stumbles.
+- **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
+- **PATTERN END**: when the playing pattern reaches its end.
+
+
+**RESET DEFAULTS** puts everything in this dialog back to its starting value. The theme and middle C are reset for every VIMA; the scale you selected is kept.
 
 Except for the theme and middle C, these settings belong to each VIMA in your project and are saved with the project, but not in presets: a preset is about the music, these are about how the instance is set up.
 
----
 
-## Appendix A: Starting values
-
-| Setting | Starting value |
-|---|---|
-| Tracks | track 1 notes on, tracks 2-8 silent; MIDI channels 1-8; CC output off; CC numbers 102-109 |
-| Patterns | pattern 1: 16 steps on; patterns 2-64 empty |
-| Steps | F above middle C, velocity 100, gate 100%, probability 100%, CC value 64 |
-| Track settings | length 16, 1/16, forward, swing 0%, use scale on |
-| Scale | C minor |
-| PARAMS | ON and NOTE in note mode, CC in CC mode |
-| RANGES | full range of every value |
-| Chain | empty, off, loop on |
-| Quantize | 1 BAR |
-| CC smoothing | off |
-| Pattern change by CC | off (channel 16, CC 20) |
-| Middle C | C3 |
-| Theme | dark |
-
-## Appendix B: Mouse quick reference
+## Appendix: Mouse quick reference
 
 | Where | What you do | What happens |
 |---|---|---|
@@ -495,11 +485,12 @@ Except for the theme and middle C, these settings belong to each VIMA in your pr
 | LED bar | click / drag | select one step / a run |
 | LED bar | Ctrl + click / Ctrl + drag | add or remove steps / add a run |
 | SMOOTH | press and hold | keep smoothing |
-| SHIFT ALL | drag / wheel | shift values (springs back to 0) |
+| SHIFT | drag / wheel | shift values (springs back to 0) |
 | DIVISION, SCALE | mouse wheel | next / previous value |
 | Pattern slot | click / play button | select / select and switch |
 | Pattern slot | right-click | copy, paste, load, save menu |
 | Chain entry | drag the grip | reorder |
+| UNDO | right-click or Alt + click | REDO the last UNDO |
 | While LEARN is on | click / right-click a control | map it / free it |
 
 On a Mac, Alt is Option, and Ctrl + click for selecting steps is Cmd + click.
