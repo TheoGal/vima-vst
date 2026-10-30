@@ -24,6 +24,7 @@ So, even though I've dipped my toes into coding I am not a C++ developer. I alwa
 
 - **Windows:** copy the `Vima.vst3` folder to `C:\Program Files\Common Files\VST3\`.
 - **macOS:** copy `Vima.vst3` to `/Library/Audio/Plug-Ins/VST3/`. Test builds are not notarized by Apple, so the first time you may need to remove the quarantine flag (see INSTALL-macOS.txt in the download).
+- **Linux:** copy the `Vima.vst3` folder to `~/.vst3/` (just for you) or `/usr/lib/vst3/` (for all users). Create the folder if it does not exist yet. Bitwig Studio and Reaper both host Vima on Linux.
 
 Vima is a VST3 plugin only. There is no Audio Unit version, because an AU plugin cannot send MIDI out.
 
