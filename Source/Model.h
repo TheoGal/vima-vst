@@ -89,7 +89,7 @@ struct Pattern
 struct TrackRouting
 {
     std::uint8_t midiChannel = 1;   // 1-16 (init: the track number)
-    bool noteOut = false;           // init: on for track 1 only
+    bool noteOut = false;           // a new Vima: on for every track
     bool ccOut = false;
     std::uint8_t ccNumber = 102;    // 0-127 (init: 102 + track index, undefined CCs 102-109)
 };

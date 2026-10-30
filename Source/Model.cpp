@@ -244,7 +244,7 @@ void Project::resetToDefaults()
         routing[(size_t) t] = TrackRouting();
         routing[(size_t) t].midiChannel = (std::uint8_t) (t + 1);
         routing[(size_t) t].ccNumber = (std::uint8_t) (102 + t);
-        routing[(size_t) t].noteOut = t == 0;
+        routing[(size_t) t].noteOut = true;   // every track sends notes; tracks 2-8 start empty (SPEC.md 4)
     }
     globals = Globals();
     currentPattern = 0;
@@ -300,11 +300,21 @@ Pattern blankPattern()
     return p;
 }
 
+// A new Vima's pattern 1: track 1 with 16 steps on, tracks 2-8 empty (SPEC.md 4).
+// NEW PATTERN uses the init pattern (Pattern(): all tracks with their steps on).
+static Pattern startPattern()
+{
+    Pattern p;
+    for (size_t t = 1; t < p.tracks.size(); ++t)
+        for (auto& s : p.tracks[t].steps) { s.on = false; s.ccOn = false; }
+    return p;
+}
+
 const Pattern& defaultPattern (int index)
 {
-    static const Pattern init;
+    static const Pattern start = startPattern();
     static const Pattern blank = blankPattern();
-    return index == 0 ? init : blank;
+    return index == 0 ? start : blank;
 }
 
 static bool patternEquals (const Pattern& a, const Pattern& b)

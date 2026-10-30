@@ -122,7 +122,7 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 - **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
 - **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
 
->**design choice:** A new Vima starts with track 1 sending notes on channel 1 (so you can quickly check if MIDI routing in your DAW is set correctly and an instrument is receiving notes), CC mode off and CC numbers 102-109 assigned to all 8 tracks (numbers that are unassigned in the MIDI standard). So loading Vima won't accidentally mess up your carefully designed synth sound. The tracks are assigned to MIDI channels 1 to 8.
+>**design choice:** A new Vima starts with track 1 playing notes on channel 1 (so you can quickly check if MIDI routing in your DAW is set correctly and an instrument is receiving notes). Tracks 2-8 start empty but with their notes output on, so a step you switch on is heard at once. CC output is off and CC numbers 102-109 are assigned to all 8 tracks (numbers that are unassigned in the MIDI standard). So loading Vima won't accidentally mess up your carefully designed synth sound. The tracks are assigned to MIDI channels 1 to 8.
 
 ### The pattern controls
 
@@ -141,7 +141,7 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 
 Switching, copying and chaining patterns is covered later, in **Working with patterns**.
 
->A new Vima starts with **pattern 1** ready to play (16 steps on, every step a middle C at velocity 100) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used.
+>A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives a pattern with all 8 tracks full (16 steps on each).
 
 >**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain -  you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
 
@@ -338,7 +338,7 @@ The bar under the slots copies whole patterns or single tracks:
 
 - **COPY PATTERN** and **COPY TRACK nn**, the same as the buttons.
 - **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03** (dimmed when nothing is copied). A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard, and the PASTE button flashes green to confirm.
-- **NEW PATTERN**: resets the pattern to the starting pattern (16 steps on), after asking.
+- **NEW PATTERN**: resets the pattern to a full pattern (all 8 tracks with 16 steps on), after asking.
 - **CLEAR PATTERN**: makes the slot empty, after asking.
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 

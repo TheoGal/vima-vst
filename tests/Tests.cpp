@@ -1076,7 +1076,11 @@ void testInitAndGate()
     section ("Init values, long gates, middle C");
     {
         Project p;
-        const auto& s = p.patterns[0].tracks[5].steps[31];
+        const auto& s = p.patterns[0].tracks[0].steps[31];
+        bool othersEmpty = true;
+        for (int t = 1; t < numTracks; ++t)
+            for (auto& st : p.patterns[0].tracks[(size_t) t].steps) othersEmpty = othersEmpty && ! st.on && ! st.ccOn;
+        check (othersEmpty && Pattern().tracks[5].steps[31].on, "a new Vima: pattern 1 has track 1 full, tracks 2-8 empty; NEW PATTERN (the init pattern) has every track full");
         check (s.on && s.pitchClass == 0 && s.octave == 3 && s.velocity == 100 && s.gate == 100 && s.probability == 100 && s.cc == 64,
                "init step: on, C in the middle C octave (middle C), velocity 100, gate 100 %, probability 100 %, CC 64");
         check (p.patterns[0].tracks[7].length == 16 && p.patterns[0].tracks[7].division == 4 && p.currentPattern == 0, "init track: length 16, 1/16, pattern 1");
@@ -1091,9 +1095,9 @@ void testInitAndGate()
                "the init state saves no Pattern children and loads back the same");
         bool routing = true;
         for (int t = 0; t < numTracks; ++t)
-            routing = routing && p.routing[(size_t) t].midiChannel == t + 1 && p.routing[(size_t) t].noteOut == (t == 0)
+            routing = routing && p.routing[(size_t) t].midiChannel == t + 1 && p.routing[(size_t) t].noteOut
                       && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
-        check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
+        check (routing, "init routing: channels 1-8, notes out on every track, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
         check (g.armPitch && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote
                    && g.rangePitch.min == 0 && g.rangePitch.max == 11 && g.rangeOct.min == 2 && g.rangeOct.max == 4

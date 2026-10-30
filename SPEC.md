@@ -70,11 +70,11 @@ Per track parameters:
 
 ### 4.1 Init values (= defaults everywhere)
 
-A new instance, NEW in the FILE menu, and a right-click / Alt + click on any control use these values. On a new instance and on preset NEW, **pattern 1** is the init pattern (16 steps on, values below) and **patterns 2-64 are blank**: all steps off, every other value at init, so the patterns view is not crowded. Pattern NEW (13.3) gives the init pattern (16 steps on).
+A new instance, NEW in the FILE menu, and a right-click / Alt + click on any control use these values. On a new instance and on preset NEW, **pattern 1** has **track 1** with its 16 steps on (values below) and **tracks 2-8 empty** (all steps off, notes and CC), and **patterns 2-64 are blank**: all steps off, every other value at init, so the patterns view is not crowded. Pattern NEW (13.3, and NEW PATTERN in the slot menu) gives the **init pattern**: every track with its 16 steps on.
 
 | Setting | Init value |
 |---|---|
-| Notes output | on for track 1, off for tracks 2-8 |
+| Notes output | on for every track |
 | CC output | off on all tracks |
 | MIDI channel | track number (1-8) |
 | CC number | 102 + track index: tracks 1-8 = CC 102-109 (undefined CCs in the MIDI spec) |
@@ -93,7 +93,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Macros | none mapped |
 | Theme | dark (user-wide, 11) |
 
-Pattern 1 starts with its 16 steps on, so a new instance plays at once; patterns 2-64 start blank and the patterns view shows them as EMPTY (7.1).
+Pattern 1 starts with track 1's 16 steps on, so a new instance plays at once (tracks 2-8 are empty, with NOTE OUT on, so a step switched on there is heard at once); patterns 2-64 start blank and the patterns view shows them as EMPTY (7.1).
 
 ## 5. Steps
 
@@ -597,7 +597,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armPitch`...
 
 ### 14.7 State format
 
-- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 9 flags in the `params` property (note-mode and CC-mode params, and ALL for note mode), ranges as "min:max,...", onChance and ccOnChance), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's init state: the init pattern for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
+- Project state (DAW): XML root `VIMA`, `version` 2, with `currentPattern`, a `Globals` child (scale, root, userScale, ccSmoothing, patternCC..., quantize, chainOn, chainLoop, chain as "pattern:repeats,...", armed params as 9 flags in the `params` property (note-mode and CC-mode params, and ALL for note mode), ranges as "min:max,...", onChance and ccOnChance), 8 `Routing` children, `Macro` children (only mapped ones: index, target, track, pattern, step) and `Pattern` children (only patterns that differ from their slot's start state: track 1 full and tracks 2-8 empty for pattern 1, a blank pattern for 2-64). Each pattern has 8 `Track` children with length, division, direction, swing, scaleOn and `steps`: 32 steps x 9 bytes, base64 (on, pitch class, octave + 2, velocity, gate low, gate high, probability, CC, CC on). The DAW state also stores uiScale, uiTrack, presetPath and macroPath.
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the Settings-dialog properties in `Globals` (ccSmoothing, patternCC, patternCCChannel, patternCCNumber, quantize).
 - Pattern (.vimapattern): root `VIMAPATTERN`, `version` 1, with the 8 `Track` children as above. Loading starts from a blank pattern.
 - Mapping set (.vimamacros): root `VIMAMACROS`, `version` 1, with the `Macro` children.
@@ -732,3 +732,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: Patterns view: no separate paste destination. Copying keeps the selection outlined; a click selects as usual, and PASTE writes onto the selected slot (dimmed when it would change nothing). FILE, the slot menu and PASTE all act on the one outlined slot.
 - 2026-10-30: Built: one shared track for the step view and the patterns view. Slot menu: PASTE names what it pastes (PASTE PATTERN 05 / PASTE ON TRACK 03); NEW PATTERN and CLEAR PATTERN (empty slot, asks first, undoable).
 - 2026-10-30: Switch blink: three pulses over the last three 8th notes (was two over the last beat); none for patterns of 1.5 beats or less. The pencil sits between the PATTERN box and CHAIN. The quick picker marks the playing pattern with a play icon (was an LED).
+- 2026-10-31: A new Vima / preset NEW: pattern 1 has track 1 full and tracks 2-8 empty; NOTE OUT on for every track (CC OUT off). NEW PATTERN still gives the init pattern (every track full).
