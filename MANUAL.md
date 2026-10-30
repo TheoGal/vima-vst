@@ -185,6 +185,8 @@ PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the CURVES. By default, note on
 
 The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed.  Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, i.e. with a 50% chance, it's pure random if a step is on or off -  with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesn't necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
 
+**Right-click** (or Alt + click) on a range bar resets it to its default.
+
 The **PITCH** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, D#, E, F, F#, G in any octave (in C minor: D, D#, F, G).
 
 >**design choice:** Velocity and probability ranges do not include a 0 value. A MIDI note on message with velocity 0 is actually a Note off and a 0 probability is actually "never" hence the design choices here.
@@ -220,6 +222,7 @@ Meet **Smooth:** it pulls the armed values one step closer to their average. In 
 Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with pre-fixed curves to apply to parameters.
 
 - **Shapes**: **SINE**, **TRIANGLE**, **RAMP** and **SQUARE** draw one cycle of that shape over the steps in scope, between each armed value's range limits. Want a ramp down? RAMP, then INV.
+- With **ON** armed, the curves follow the **chance** setting: a step is on where the curve is above 100% minus the chance. With a 50% chance the upper half of the curve is on, with 70% everything above 30%, with 25% only the top quarter.
 - **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only PITCH to move the melody over a fixed rhythm.
 - **INV** (invert): flips the armed values around the middle of their range. With a CC range of 0-100, 30 becomes 70.
 
@@ -487,6 +490,7 @@ Except for the theme and middle C, these settings belong to each Vima in your pr
 | SMOOTH | press and hold | keep smoothing |
 | SHIFT | drag / wheel | shift values (springs back to 0) |
 | DIVISION, SCALE | mouse wheel | next / previous value |
+| Range bars | right-click or Alt + click | reset to default |
 | Pattern slot | click / play button | select / select and switch |
 | Pattern slot | right-click | copy, paste, load, save menu |
 | Chain entry | drag the grip | reorder |
