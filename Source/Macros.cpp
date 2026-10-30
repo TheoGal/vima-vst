@@ -15,7 +15,7 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::swing,       MacroKind::track,  "SWING",      "Swing",       true,  0, 100 },
     { MacroTarget::scaleOn,     MacroKind::track,  "SCALE ON",   "Scale On",    true,  0, 1 },
     { MacroTarget::stepOn,      MacroKind::step,   "NOTE ON",    "Note On",     true,  0, 1 },
-    { MacroTarget::note,        MacroKind::step,   "NOTE",       "Note",        true,  0, 11 },
+    { MacroTarget::pitch,        MacroKind::step,   "PITCH",      "Pitch",       true,  0, 11 },
     { MacroTarget::octave,      MacroKind::step,   "OCTAVE",     "Octave",      true,  minOctave, maxOctave },
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
     { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
@@ -87,7 +87,7 @@ std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int qu
         case MacroTarget::scaleOn:     return tp.scaleOn ? 1 : 0;
         case MacroTarget::stepOn:      return s.on ? 1 : 0;
         case MacroTarget::ccStepOn:    return s.ccOn ? 1 : 0;
-        case MacroTarget::note:        // the note that sounds, as the step's note knob shows it
+        case MacroTarget::pitch:        // the note that sounds, as the step's note knob shows it
             return tp.scaleOn ? (((quantizeToScale (p.globals.scaleMask(), p.globals.root, 60 + s.pitchClass) % 12) + 12) % 12)
                               : (int) s.pitchClass;
         case MacroTarget::octave:      return (int) s.octave;
@@ -131,7 +131,7 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
         case MacroTarget::scaleOn:     tp.scaleOn = v != 0; break;
         case MacroTarget::stepOn:      s.on = v != 0; break;
         case MacroTarget::ccStepOn:    s.ccOn = v != 0; break;
-        case MacroTarget::note:        s.pitchClass = (std::int8_t) v; break;
+        case MacroTarget::pitch:        s.pitchClass = (std::int8_t) v; break;
         case MacroTarget::octave:      s.octave = (std::int8_t) v; break;
         case MacroTarget::velocity:    s.velocity = (std::uint8_t) v; break;
         case MacroTarget::gate:        s.gate = (std::uint16_t) v; break;
@@ -149,7 +149,7 @@ bool MacroNotes::allows (int pc) const
 MacroNotes macroNotes (const Project& p, const MacroMap& m)
 {
     MacroNotes n;
-    if (m.target != MacroTarget::note)
+    if (m.target != MacroTarget::pitch)
         return n;
     n.scaleOn = p.patterns[(size_t) macroPattern (m)].tracks[(size_t) macroTrack (m)].scaleOn;
     n.mask = p.globals.scaleMask();
@@ -175,7 +175,7 @@ namespace
 
 int macroPositions (const MacroMap& m, const MacroNotes& n)
 {
-    if (m.target == MacroTarget::note)
+    if (m.target == MacroTarget::pitch)
     {
         std::array<int, 12> list {};
         return noteList (n, list);
@@ -188,7 +188,7 @@ int macroPositions (const MacroMap& m, const MacroNotes& n)
 int macroPlain (const MacroMap& m, float normalized, const MacroNotes& n)
 {
     const float f = juce::jlimit (0.0f, 1.0f, normalized);
-    if (m.target == MacroTarget::note)
+    if (m.target == MacroTarget::pitch)
     {
         std::array<int, 12> list {};
         const int count = noteList (n, list);
@@ -201,7 +201,7 @@ int macroPlain (const MacroMap& m, float normalized, const MacroNotes& n)
 
 float macroNormalized (const MacroMap& m, int plain, const MacroNotes& n)
 {
-    if (m.target == MacroTarget::note)
+    if (m.target == MacroTarget::pitch)
     {
         std::array<int, 12> list {};
         const int count = noteList (n, list);
@@ -237,7 +237,7 @@ static juce::String plainText (const MacroMap& m, int v, int octaveOffset)
         case MacroTarget::gate:
         case MacroTarget::probability: return juce::String (v) + "%";
         case MacroTarget::octave:      return juce::String (v + octaveOffset);
-        case MacroTarget::note:        return pitchClassName (((v % 12) + 12) % 12);
+        case MacroTarget::pitch:        return pitchClassName (((v % 12) + 12) % 12);
         case MacroTarget::length:
         case MacroTarget::velocity:
         case MacroTarget::cc:          return juce::String (v);
@@ -262,7 +262,7 @@ static const char* shortName (MacroTarget t)
     {
         case MacroTarget::stepOn:      return "NOTE ON";
         case MacroTarget::ccStepOn:    return "CC ON";
-        case MacroTarget::note:        return "NOTE";
+        case MacroTarget::pitch:        return "PITCH";
         case MacroTarget::octave:      return "OCT";
         case MacroTarget::velocity:    return "VEL";
         case MacroTarget::gate:        return "GATE";
@@ -330,7 +330,7 @@ juce::String macroHostName (const MacroMap& m, int index)
         case MacroTarget::swing:       return "Swing" + tr + pat;
         case MacroTarget::scaleOn:     return "Scale" + tr + pat;
         case MacroTarget::stepOn:      return "NoteOn" + st + tr + pat;
-        case MacroTarget::note:        return "Note" + st + tr + pat;
+        case MacroTarget::pitch:        return "Pitch" + st + tr + pat;
         case MacroTarget::octave:      return "Oct" + st + tr + pat;
         case MacroTarget::velocity:    return "Vel" + st + tr + pat;
         case MacroTarget::gate:        return "Gate" + st + tr + pat;

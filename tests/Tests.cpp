@@ -435,7 +435,7 @@ void testOperations()
     }
     {
         p->globals.armOn = false;
-        p->globals.armNote = true; p->globals.armVel = true; p->globals.armOct = true;
+        p->globals.armPitch = true; p->globals.armVel = true; p->globals.armOct = true;
         p->globals.rangeVel = { 60, 70 };
         p->globals.rangeOct = { 2, 3 };
         randomize (*p, makeScope (*p, 0, 0, -1, -1), false, rnd);
@@ -450,7 +450,7 @@ void testOperations()
         {
             // the ON range bar: the chance a step is switched on
             auto q = std::make_unique<Project>();
-            q->globals.armAllNote = false; q->globals.armNote = false; q->globals.armOn = true;
+            q->globals.armAllNote = false; q->globals.armPitch = false; q->globals.armOn = true;
             check (q->globals.onChance == 70 && q->globals.ccOnChance == 70, "ON chance starts at 70 % in both modes");
             auto onCount = [&] (int chance)
             {
@@ -495,11 +495,11 @@ void testOperations()
     {
         for (auto& s : tp.steps) s = blankStep();
         tp.steps[0].pitchClass = 10; tp.steps[0].octave = 3;   // A#3 in C minor
-        auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Param::note);
+        auto gst = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Param::pitch);
         applyShift (*p, gst, 1);
         check (tp.steps[0].pitchClass == 0 && tp.steps[0].octave == 4, "note shift moves in scale steps and rolls into the next octave");
         tp.scaleOn = false;
-        auto gst2 = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Param::note);
+        auto gst2 = beginShift (*p, makeScope (*p, 0, 0, 0, 0), Param::pitch);
         applyShift (*p, gst2, 1);
         check (tp.steps[0].pitchClass == 1 && tp.steps[0].octave == 4, "scale off: note shift moves in semitones");
         tp.scaleOn = true;
@@ -699,7 +699,7 @@ void testMacros()
         p.macros[1] = defaultMacroMap (MacroTarget::length, 2, 9, 0, p.globals);
         p.macros[2] = defaultMacroMap (MacroTarget::pattern, 0, 0, 0, p.globals);
         p.macros[3] = defaultMacroMap (MacroTarget::chainOn, 0, 0, 0, p.globals);
-        p.macros[4] = defaultMacroMap (MacroTarget::note, 1, 0, 0, p.globals);
+        p.macros[4] = defaultMacroMap (MacroTarget::pitch, 1, 0, 0, p.globals);
         p.macros[5] = defaultMacroMap (MacroTarget::probability, 3, 0, 0, p.globals);
         p.globals.quantize = Quantize::off;
     });
@@ -725,7 +725,7 @@ void testMacros()
     proc->syncParamsToHost();
     check (macro (0)->getCurrentValueAsText() == "33" && macro (4)->getCurrentValueAsText() == "G", "host shows the target value as text");
     check (macro (0)->getName (64) == "Vel St05 Tr04 Pat01" && macro (1)->getName (64) == "Length Tr03 Pat10" && macro (2)->getName (64) == "Pattern"
-               && macro (4)->getName (64) == "Note St01 Tr02 Pat01" && macro (10)->getName (64) == "Macro 11",
+               && macro (4)->getName (64) == "Pitch St01 Tr02 Pat01" && macro (10)->getName (64) == "Macro 11",
            "host names follow the mapping (Vel St05 Tr04 Pat01, Length Tr03 Pat10, Pattern), unmapped: Macro 11");
     check (macro (0)->getName (8) == "Vel St05", "short names keep the param first");
 
@@ -1041,12 +1041,12 @@ void testInitAndGate()
                       && ! p.routing[(size_t) t].ccOut && p.routing[(size_t) t].ccNumber == 102 + t;
         check (routing, "init routing: channels 1-8, notes out on track 1 only, CC out off, CC numbers 102-109");
         const auto& g = p.globals;
-        check (g.armNote && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote
-                   && g.rangeNote.min == 0 && g.rangeNote.max == 11 && g.rangeOct.min == 2 && g.rangeOct.max == 4
+        check (g.armPitch && g.armOn && ! g.armVel && ! g.armGate && g.armCC && ! g.armCcOn && ! g.armAllNote
+                   && g.rangePitch.min == 0 && g.rangePitch.max == 11 && g.rangeOct.min == 2 && g.rangeOct.max == 4
                    && g.rangeVel.min == 70 && g.rangeVel.max == 127 && g.rangeGate.min == 25 && g.rangeGate.max == 150
                    && g.rangeProb.min == 25 && g.rangeProb.max == 100 && g.rangeCC.min == 0 && g.rangeCC.max == 127
                    && g.onChance == 70 && ! g.ccSmoothing && userSettings::middleC() == 3,
-               "init globals: ON and NOTE armed (CC mode: CC), default ranges (ON 70 %, OCT 2-4, VEL 70-127, GATE 25-150 %, PROB 25-100 %), CC smoothing off, middle C = C3");
+               "init globals: ON and PITCH armed (CC mode: CC), default ranges (ON 70 %, OCT 2-4, VEL 70-127, GATE 25-150 %, PROB 25-100 %), CC smoothing off, middle C = C3");
     }
     {
         Project p;
@@ -1151,11 +1151,11 @@ void testCurves()
     auto only = [&] (std::initializer_list<Param> params)
     {
         g.armAllNote = false;
-        g.armOn = g.armNote = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = g.armCcOn = false;
+        g.armOn = g.armPitch = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = g.armCcOn = false;
         for (auto l : params)
             switch (l)
             {
-                case Param::on: g.armOn = true; break;          case Param::note: g.armNote = true; break;
+                case Param::on: g.armOn = true; break;          case Param::pitch: g.armPitch = true; break;
                 case Param::octave: g.armOct = true; break;     case Param::velocity: g.armVel = true; break;
                 case Param::gate: g.armGate = true; break;      case Param::probability: g.armProb = true; break;
                 case Param::cc: g.armCC = true; break;          case Param::ccOn: g.armCcOn = true; break;
@@ -1238,11 +1238,11 @@ void testCurves()
     invertSteps (*p, all, false);
     check (! tp.steps[0].on && tp.steps[8].on, "INV on ON swaps on and off");
 
-    only ({ Param::note });
+    only ({ Param::pitch });
     applyCurve (*p, all, false, CurveShape::ramp);
-    check (tp.steps[0].pitchClass == 0 && tp.steps[15].pitchClass == 10, "NOTE follows the scale: C minor ramp runs C to A#");
+    check (tp.steps[0].pitchClass == 0 && tp.steps[15].pitchClass == 10, "PITCH follows the scale: C minor ramp runs C to A#");
     invertSteps (*p, all, false);
-    check (tp.steps[0].pitchClass == 10 && tp.steps[15].pitchClass == 0, "INV on NOTE mirrors the in-scale notes");
+    check (tp.steps[0].pitchClass == 10 && tp.steps[15].pitchClass == 0, "INV on PITCH mirrors the in-scale notes");
 
     only ({ Param::probability });
     g.rangeProb = { 1, 100 };   // the full range (the default is 25-100)
@@ -1353,7 +1353,7 @@ int main (int argc, char** argv)
                 {
                     auto& g = p.globals;
                     g.armOn = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = all;
-                    g.armNote = true;
+                    g.armPitch = true;
                 });
                 ed.refreshAll();
             };
@@ -1392,7 +1392,7 @@ int main (int argc, char** argv)
             check (ctx.ui.clip.empty() && ctx.ui.pasteStart < 0 && findPill (ed, "COPY") != nullptr, "clicking COPIED empties the clipboard");
 
             // only the armed params are copied
-            setParams (false);   // NOTE only
+            setParams (false);   // PITCH only
             proc->edit (-1, [] (Project& p)
             {
                 auto& s0 = p.patterns[(size_t) p.currentPattern].tracks[4].steps[0];
@@ -1404,7 +1404,7 @@ int main (int argc, char** argv)
             if (auto* copy = findPill (ed, "COPY")) click (*copy);
             click (*grid, ledPos (5));
             if (auto* paste = findPill (ed, "PASTE")) click (*paste);
-            check (stepOf (4, 5).pitchClass == 7 && stepOf (4, 5).velocity == 99, "with only NOTE armed, PASTE writes the note and leaves velocity");
+            check (stepOf (4, 5).pitchClass == 7 && stepOf (4, 5).velocity == 99, "with only PITCH armed, PASTE writes the note and leaves velocity");
 
             if (auto* clr = findPill (ed, "CLEAR")) click (*clr);
             check (ctx.ui.clip.empty() && ctx.ui.pasteStart < 0 && ctx.ui.selection == 0, "CLEAR empties the clipboard and removes the ghost");
@@ -1564,15 +1564,15 @@ int main (int argc, char** argv)
                     auto& g = p.globals;
                     g.armAllNote = false;
                     g.armOn = g.armOct = g.armVel = g.armGate = g.armProb = false;
-                    g.armNote = true;
+                    g.armPitch = true;
                 });
                 ed.refreshAll();
                 auto armed = [&] { return proc->read ([] (const Project& p) { return armedParams (p.globals, false); }); };
-                if (auto* b = findPill (*ops, "NOTE")) click (*b);
-                check (armed().size() == 1 && armed()[0] == Param::note, "clicking the only armed param does nothing");
+                if (auto* b = findPill (*ops, "PITCH")) click (*b);
+                check (armed().size() == 1 && armed()[0] == Param::pitch, "clicking the only armed param does nothing");
                 if (auto* b = findPill (*ops, "ALL")) click (*b);
                 const auto g1 = proc->read ([] (const Project& p) { return p.globals; });
-                check (g1.armAllNote && ! g1.armNote && armed().size() == 6, "ALL arms every note param, and only ALL is lit");
+                check (g1.armAllNote && ! g1.armPitch && armed().size() == 6, "ALL arms every note param, and only ALL is lit");
                 if (auto* b = findPill (*ops, "ALL")) click (*b);
                 check (proc->read ([] (const Project& p) { return p.globals.armAllNote; }), "clicking the lit ALL does nothing");
                 if (auto* b = findPill (*ops, "VEL")) click (*b);
@@ -1580,7 +1580,7 @@ int main (int argc, char** argv)
                        "while ALL is lit, clicking a param arms only that param");
                 if (auto* b = findPill (*ops, "GATE")) click (*b);
                 check (armed().size() == 2, "outside ALL, params toggle one by one");
-                proc->edit (-1, [] (Project& p) { auto& g = p.globals; g.armVel = g.armGate = false; g.armNote = true; });
+                proc->edit (-1, [] (Project& p) { auto& g = p.globals; g.armVel = g.armGate = false; g.armPitch = true; });
                 ed.refreshAll();
             }
 
@@ -1970,7 +1970,7 @@ int main (int argc, char** argv)
             p.macros[21] = defaultMacroMap (MacroTarget::cc, 6, 22, 0, p.globals);
             p.macros[22] = defaultMacroMap (MacroTarget::pattern, 2, 22, 0, p.globals);
             p.macros[23] = defaultMacroMap (MacroTarget::chainOn, 2, 22, 0, p.globals);
-            p.macros[24] = defaultMacroMap (MacroTarget::note, 2, 22, 0, p.globals);
+            p.macros[24] = defaultMacroMap (MacroTarget::pitch, 2, 22, 0, p.globals);
             p.macros[25] = defaultMacroMap (MacroTarget::octave, 2, 22, 0, p.globals);
         });
         ctx.ui.selectedMacro = 16;

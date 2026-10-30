@@ -193,10 +193,10 @@ struct Globals
     // ALL is its own state per mode; something is always armed.
     bool armAllNote = false;   // ALL in note mode (CC mode has only ON and CC, no ALL)
     bool armCcOn = false;         // the ON param in CC mode (CC on/off)
-    bool armOn = true, armNote = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
+    bool armOn = true, armPitch = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
     // Default ranges (SPEC.md 4.1), chosen to sound musical at the default 1/16: three octaves
     // around middle C, audible velocities, staccato to slight overlap, no vanishing steps
-    ParamRange rangeNote { 0, 11 }, rangeOct { 2, 4 }, rangeVel { 70, 127 }, rangeGate { 25, 150 },
+    ParamRange rangePitch { 0, 11 }, rangeOct { 2, 4 }, rangeVel { 70, 127 }, rangeGate { 25, 150 },
               rangeProb { 25, 100 }, rangeCC { 0, 127 };
     int onChance = 70, ccOnChance = 70;   // RANDOMIZE: chance (0-100 %) that a step is switched on (ON range bar)
 
@@ -224,7 +224,7 @@ enum class MacroTarget : std::uint8_t
     none,
     pattern, chainOn,                                                      // global
     noteOut, ccOut, length, division, direction, swing, scaleOn,           // track
-    stepOn, note, octave, velocity, gate, probability, cc,                 // step
+    stepOn, pitch, octave, velocity, gate, probability, cc,                 // step
     ccStepOn                                                               // step (CC part)
 };
 constexpr int numMacroTargets = 18;

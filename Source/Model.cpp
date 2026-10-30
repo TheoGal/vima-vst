@@ -467,11 +467,11 @@ juce::ValueTree Project::toValueTree() const
     for (const auto& e : g.chain) chainText.add (juce::String (e.pattern) + ":" + juce::String (e.repeats));
     gt.setProperty ("chain", chainText.joinIntoString (","), nullptr);
     juce::String params;
-    for (bool b : { g.armOn, g.armNote, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote })
+    for (bool b : { g.armOn, g.armPitch, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote })
         params << (b ? "1" : "0");
     gt.setProperty ("params", params, nullptr);
     juce::StringArray ranges;
-    for (const auto* r : { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
+    for (const auto* r : { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
         ranges.add (juce::String (r->min) + ":" + juce::String (r->max));
     gt.setProperty ("onChance", g.onChance, nullptr);
     gt.setProperty ("ccOnChance", g.ccOnChance, nullptr);
@@ -538,16 +538,16 @@ void Project::fromValueTree (const juce::ValueTree& root)
         const auto params = gt.getProperty ("params").toString();
         if (params.length() == 9)
         {
-            bool* flags[] = { &g.armOn, &g.armNote, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn, &g.armAllNote };
+            bool* flags[] = { &g.armOn, &g.armPitch, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn, &g.armAllNote };
             for (int i = 0; i < 9; ++i) *flags[i] = params[i] == '1';
         }
         // something is always armed
-        if (! g.armAllNote && ! (g.armOn || g.armNote || g.armOct || g.armVel || g.armGate || g.armProb)) g.armNote = true;
+        if (! g.armAllNote && ! (g.armOn || g.armPitch || g.armOct || g.armVel || g.armGate || g.armProb)) g.armPitch = true;
         if (! (g.armCcOn || g.armCC)) g.armCC = true;
         g.onChance = juce::jlimit (0, 100, (int) gt.getProperty ("onChance", g.onChance));
         g.ccOnChance = juce::jlimit (0, 100, (int) gt.getProperty ("ccOnChance", g.ccOnChance));
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
-        ParamRange* rs[] = { &g.rangeNote, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
+        ParamRange* rs[] = { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
         if (rangeParts.size() == 6)
             for (int i = 0; i < 6; ++i)
             {

@@ -87,8 +87,8 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
-| PARAMS | ON and NOTE armed in note mode (ALL off), CC armed in CC mode (CC mode has no ALL) |
-| RANGES | Chosen to sound musical at the default 1/16: ON chance 70% (note mode and CC mode), NOTE full (C-B), OCT 2-4 (three octaves around middle C, shown as 2-4 with middle C = C3), VEL 70-127, GATE 25-150%, PROB 25-100%, CC full (0-127). Right-click / Alt + click on a bar resets it to these. |
+| PARAMS | ON and PITCH armed in note mode (ALL off), CC armed in CC mode (CC mode has no ALL) |
+| RANGES | Chosen to sound musical at the default 1/16: ON chance 70% (note mode and CC mode), PITCH full (C-B), OCT 2-4 (three octaves around middle C, shown as 2-4 with middle C = C3), VEL 70-127, GATE 25-150%, PROB 25-100%, CC full (0-127). Right-click / Alt + click on a bar resets it to these. |
 | SHIFT param / SLIDER / view | NOTE / VEL / NOTES |
 | Macros | none mapped |
 | Theme | dark (user-wide, 11) |
@@ -105,7 +105,7 @@ Per step values:
 |---|---|---|
 | Note on / off | on / off | Whether the step plays its note. An off step still takes its time slot; it is not skipped. |
 | CC on / off | on / off | Whether the step sends its CC value, **independent of the note on/off**: a step can send CC without a note, or a note without CC. |
-| Note | C to B (pitch class) | Separate control from octave. With the track's scale on, only in-scale notes. |
+| Pitch | C to B (pitch class) | Separate control from octave. With the track's scale on, only in-scale notes. |
 | Octave | the whole MIDI range: C-2 to 8 (with middle C = C3) | Notes above MIDI 127 (G8) are not played. |
 | Velocity | 1-127 | Never 0: in MIDI a Note On with velocity 0 is a Note Off. Every operation clamps velocity to 1-127. |
 | Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step, up to 400% = four steps (legato and long notes). When a note is still held and the same pitch plays again on the same channel, the old note ends just before the new one. |
@@ -114,10 +114,10 @@ Per step values:
 
 Pitch display and scale behavior:
 
-- **The scale is a master setting for everything note related**: when a track's scale is on, every note control, display and operation follows it (note knob and its arc, NOTE range, Randomize, Smooth, Shift, note macros, playback).
+- **The scale is a master setting for everything note related**: when a track's scale is on, every note control, display and operation follows it (pitch knob and its arc, PITCH range, Randomize, Smooth, Shift, pitch macros, playback).
 
-- The step's note knob and octave knob always show the note that will actually sound (scale applied, middle C setting applied to the octave number).
-- When the track's scale is on, the note knob can only land on notes in the scale, and its arc follows the scale: the in-scale notes are spread evenly over the whole arc, whatever their number (7 in C minor, 3 in a 3-note user scale). The lowest in-scale note (from C up) is fully left, the highest fully right (A# in C minor). With the scale off, the arc covers all 12 notes, C to B.
+- The step's pitch knob and octave knob always show the note that will actually sound (scale applied, middle C setting applied to the octave number).
+- When the track's scale is on, the pitch knob can only land on notes in the scale, and its arc follows the scale: the in-scale notes are spread evenly over the whole arc, whatever their number (7 in C minor, 3 in a 3-note user scale). The lowest in-scale note (from C up) is fully left, the highest fully right (A# in C minor). With the scale off, the arc covers all 12 notes, C to B.
 
 There is no step skip, no chords per step and no drum mode.
 
@@ -230,7 +230,7 @@ Works like step copy / paste (9.1):
 
 Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right-click UNDO (Ctrl-click on Mac) steps forward again through what was undone, as many steps as were undone; a new edit clears the redo steps, and loading a preset or preset NEW clears both undo and redo. UNDO looks dimmed only when there is nothing to undo and nothing to redo. **Steps that changed nothing are skipped**: a SMOOTH press or hold after the values had already converged, the same curve pressed twice, a knob clicked without moving, and so on, leave no undo step, so UNDO and REDO never "do nothing"; the UNDO box names the newest step that actually changed something. Undo covers everything stored in patterns: step edits, per-pattern track settings, copy / paste, randomize, smooth, shift and pattern pastes. One gesture is one undo entry (a whole knob drag, a slider drawing, one Randomize press, one Smooth press or hold, one paste). Routing (channel, outputs, CC number), global settings, armed params and ranges, the chain and macro mappings are not undone. Loading a preset or preset NEW clears the undo history. Pattern NEW and pattern LOAD (13.3) are one undo step each. Macro mapping NEW / LOAD are not undone. Host automation (macros) is not added to undo.
 
-**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box with two rows: the **next undo** and the **next redo**, for example "UNDO: RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23" and "REDO: STEP 05 NOTE · TR03 · PAT23". Other undo labels: "STEP 05 NOTE · TR03 · PAT23", "DRAW VEL · STEPS 3-9 · TR02 · PAT01", "STEPS 3-5 NOTE ON · TR05 · PAT01", "LENGTH · TR04 · PAT12", "PASTE PATTERN 05 > 19", "PATTERN NEW > PAT07". An empty row reads "NOTHING TO UNDO" / "NOTHING TO REDO", dimmed (the redo row is always shown, so people learn that right-click redoes). Every undoable edit records its label when it happens (a stroke updates it as it grows); a redo step keeps the label. The box follows the theme and closes when the mouse leaves.
+**UNDO info box**: hovering UNDO opens, after a very short delay (0.25 s), a small box with two rows: the **next undo** and the **next redo**, for example "UNDO: RANDOMIZE · VEL · STEPS 3-9 · TR03 · PAT23" and "REDO: STEP 05 PITCH · TR03 · PAT23". Other undo labels: "STEP 05 PITCH · TR03 · PAT23", "DRAW VEL · STEPS 3-9 · TR02 · PAT01", "STEPS 3-5 NOTE ON · TR05 · PAT01", "LENGTH · TR04 · PAT12", "PASTE PATTERN 05 > 19", "PATTERN NEW > PAT07". An empty row reads "NOTHING TO UNDO" / "NOTHING TO REDO", dimmed (the redo row is always shown, so people learn that right-click redoes). Every undoable edit records its label when it happens (a stroke updates it as it grows); a redo step keeps the label. The box follows the theme and closes when the mouse leaves.
 
 ### 9.1 Copy / Paste (steps)
 
@@ -245,16 +245,16 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
 
 ### 9.2 Randomize
 
-- Which values change is chosen with the **PARAMS** buttons (shared with Smooth and Copy): ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or just ON and CC in CC mode (ON = CC on/off; with only two params there is no ALL: both lit is everything). The LED bar chooses which steps; the PARAMS buttons choose which values of those steps.
+- Which values change is chosen with the **PARAMS** buttons (shared with Smooth and Copy): ALL, ON, PITCH, OCT, VEL, GATE, PROB in note mode (ON = note on/off), or just ON and CC in CC mode (ON = CC on/off; with only two params there is no ALL: both lit is everything). The LED bar chooses which steps; the PARAMS buttons choose which values of those steps.
 - **Arming params**:
   - Note mode: clicking **ALL** lights only ALL: every param of the mode is armed, but the single buttons stay unlit. (CC mode has no ALL.)
   - While ALL is lit, clicking a param turns ALL off and arms **only that param**.
   - Outside ALL, the param buttons toggle one by one.
   - **Something is always armed**: clicking the only lit button (ALL, or the last armed param) does nothing.
-  - Note mode and CC mode each keep their own armed params. Init: ON and NOTE in note mode, CC in CC mode.
+  - Note mode and CC mode each keep their own armed params. Init: ON and PITCH in note mode, CC in CC mode.
 - Each param except ON has a min / max range (RANGES, 12.6). Random values stay inside it. ON has a single value instead: its **on chance**.
 - **ON**: each step is switched on with the **on chance** set by the ON bar in RANGES (0-100%, default 70%; note mode and CC mode each have their own). 0% switches every step off, 100% every step on.
-- **NOTE**: a random note from the NOTE range, which is a pitch-class range (the same for every octave). With the track's scale on, only in-scale notes within the range (the NOTE bar then shows only in-scale notes, 12.6); if none is in range, any note.
+- **PITCH**: a random note from the PITCH range, which is a pitch-class range (the same for every octave). With the track's scale on, only in-scale notes within the range (the PITCH bar then shows only in-scale notes, 12.6); if none is in range, any note.
 - Applies to the steps in scope (8.2), including off steps.
 
 ### 9.3 Smooth
@@ -265,8 +265,8 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
   2. Every value in scope (off steps too) below the average goes up by 1, every value above it goes down by 1. Values equal to the average do not move.
 - Example: CC values 0, 64, 127 give an average of 63.67, rounded to 64. One press gives 1, 64, 126.
 - The average is recalculated on every press.
-- Units of "one step" per param: NOTE 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
-- NOTE and octave are treated as one combined pitch for NOTE smoothing, so notes converge across octave boundaries.
+- Units of "one step" per param: PITCH 1 scale step (1 semitone when the scale is off), OCT 1 octave, VEL 1, GATE 1%, PROB 1%, CC 1.
+- PITCH and octave are treated as one combined pitch for PITCH smoothing, so notes converge across octave boundaries.
 - **ON** (with ON armed; CC ON in CC mode): each press moves the number of on steps in scope **one step closer to the on chance**: the target is chance x steps in scope, **rounded half up** to a whole number (5 steps at 50% = 2.5 = 3; 7 steps at 30% = 2.1 = 2; 16 at 50% = 8). Fewer on than the target, a random off step is switched on; more, a random on step is switched off. Press and hold converges, then stops changing.
 - **Off steps**: the average is taken only from the steps that are **on** (for the CC param: CC on), but **every step in scope moves** toward it, off steps included, so a step switched on later already fits. With no step on there is no average and nothing moves. (Randomize, too, includes off steps.) **Exception: ON** is not averaged; it follows the on chance (above).
 - Smooth ignores the Randomize ranges (it only moves values toward the average, never outside the current spread).
@@ -277,7 +277,7 @@ Undo: the UNDO button in the header steps back, up to 64 levels. **Redo**: right
 A relative shift of all steps in scope.
 
 - A param selector (its own buttons, separate from PARAMS) picks what the shift changes:
-  - **NOTE**: ±1 per detent, in scale steps when the track's scale is on (semitones when it is off). Crossing the top or bottom of an octave rolls into the next or previous octave.
+  - **PITCH**: ±1 per detent, in scale steps when the track's scale is on (semitones when it is off). Crossing the top or bottom of an octave rolls into the next or previous octave.
   - **OCT**: ±1 octave per detent.
   - **VEL**: ±1 per detent.
   - **GATE**: ±1% per detent.
@@ -291,9 +291,9 @@ A relative shift of all steps in scope.
 
 Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the armed PARAMS, like Randomize; each press is one undo step; off steps are included (like Randomize).
 
-- **Shapes**: SINE, TRIANGLE, RAMP (up) and SQUARE write one cycle of the shape from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. SINE starts at the middle and goes up first; TRIANGLE peaks in the middle; RAMP runs from min at the first step to max at the last; SQUARE is high for the first half, low for the second. NOTE uses the notes of the NOTE range, in-scale only when the track's scale is on (5); octaves are not changed unless OCT is armed. ON: a step is on where the curve is above **100% minus the on chance** of its height (chance 50% = the upper half, 70% = above 30%, 25% = only the top quarter; 0% = all off, 100% = all on). A ramp down is RAMP then INV.
-- **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = the last value goes first, ‹ = the first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: NOTE moves pitch classes only, OCT only when OCT is armed; with only some params armed, only those move (for example ON alone shifts the rhythm under fixed notes).
-- **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 1%, GATE 100% becomes 301%. With CC range 0-100: 30 becomes 70. NOTE mirrors the notes of the NOTE range (in-scale when the scale is on; octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
+- **Shapes**: SINE, TRIANGLE, RAMP (up) and SQUARE write one cycle of the shape from the first to the last step of the scope (by step position, so gaps in a non-adjacent selection are respected), scaled between each param's RANGE min and max. SINE starts at the middle and goes up first; TRIANGLE peaks in the middle; RAMP runs from min at the first step to max at the last; SQUARE is high for the first half, low for the second. PITCH uses the notes of the PITCH range, in-scale only when the track's scale is on (5); octaves are not changed unless OCT is armed. ON: a step is on where the curve is above **100% minus the on chance** of its height (chance 50% = the upper half, 70% = above 30%, 25% = only the top quarter; 0% = all off, 100% = all on). A ramp down is RAMP then INV.
+- **Rotate ‹ ›**: moves each armed param's values by one step among the steps in scope (› = the last value goes first, ‹ = the first value goes last), whatever the values came from (curves, Randomize, hand edits). With a non-adjacent selection the values cycle through the selected steps in step order. Each param rotates on its own: PITCH moves pitch classes only, OCT only when OCT is armed; with only some params armed, only those move (for example ON alone shifts the rhythm under fixed notes).
+- **Invert INV**: flips each armed param's values around the center of its RANGE (min + max - value), whatever the values came from. With the full range: CC 0 becomes 127, VEL 1 becomes 127, PROB 100% becomes 1%, GATE 100% becomes 301%. With CC range 0-100: 30 becomes 70. PITCH mirrors the notes of the PITCH range (in-scale when the scale is on; octave unchanged unless OCT is armed). ON swaps on and off. Results stay within the param's limits.
 
 ## 10. CC output
 
@@ -353,7 +353,7 @@ The NOTES and CC mode buttons each carry an LED showing whether that output is o
 ### 12.3 Step cell
 
 - **Top**: one button with the step number inside, used as the on/off toggle of the shown part (note on/off in note mode, CC on/off in CC mode). On: filled with the mode accent, number in a dark contrasting color. Off (within the length): filled grey. Beyond the length: outline only, and the whole cell dimmed.
-- **Note mode**: note knob, octave knob below it, then a vertical slider with its value under it. The **SLIDER** switch in the parameter row makes all sliders show velocity, gate or probability. The slider takes that param's color, and so does the value under it.
+- **Note mode**: pitch knob, octave knob below it, then a vertical slider with its value under it. The **SLIDER** switch in the parameter row makes all sliders show velocity, gate or probability. The slider takes that param's color, and so does the value under it.
 - **CC mode**: one tall cyan slider for the step's CC value (0-127), filling the cell below the step button, with the value under it in cyan.
 - When the shown part of a step is off, its controls and value are dimmed.
 - Knobs are flat arc rings (270 degrees) with the value as text in the middle. Cells keep the same height in both modes so the layout does not jump.
@@ -375,13 +375,13 @@ The NOTES and CC mode buttons each carry an LED showing whether that output is o
 
 On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click also counts as a right-click.
 
-**Knobs and step sliders** (MIDI CH, LENGTH, SWING, CC NUM; per-step NOTE and OCTAVE knobs; the VEL / GATE / PROB / CC step sliders; the knobs in Settings and in the macro mapping editor)
+**Knobs and step sliders** (MIDI CH, LENGTH, SWING, CC NUM; per-step PITCH and OCTAVE knobs; the VEL / GATE / PROB / CC step sliders; the knobs in Settings and in the macro mapping editor)
 - **Knobs, drag up / down**: change the value, relative to where the drag started. **Shift + drag**: fine control (3 times slower).
 - **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps of the same row in one move (one undo step).
-- **Mouse wheel**: one value per notch (the NOTE knob: one in-scale note when the scale is on).
+- **Mouse wheel**: one value per notch (the PITCH knob: one in-scale note when the scale is on).
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
 - **Right-click or Alt + click**: reset to the default.
-- Defaults are the init values (4.1): MIDI CH = the track number, LENGTH 16, SWING 0%, CC NUM = 102 + track index, NOTE C, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
+- Defaults are the init values (4.1): MIDI CH = the track number, LENGTH 16, SWING 0%, CC NUM = 102 + track index, PITCH C, OCTAVE = the octave of middle C, VELOCITY 100, GATE 100%, PROBABILITY 100%, CC value 64. Settings and macro-editor knobs reset to their own defaults.
 
 **Buttons** (on/off and choice buttons, PARAMS buttons, tabs)
 - **Hover**: every clickable, enabled button gets a lighter background while the mouse is over it (the "selected" color, like the slot play buttons in the patterns view); filled buttons (green STEPS, lit toggles, RANDOMIZE) brighten slightly instead. Dimmed (inactive) buttons and the step buttons get no hover.
@@ -426,10 +426,10 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 ### 12.6 Operations panel (bottom, left to right)
 
 1. **SELECTION**: the "LENGTH: 7, STEPS: 4" line, with COPY (COPIED when lit), PASTE and CLEAR (9.1).
-2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode (no ALL there). In note mode ALL is its own state; something is always armed (9.2).
-3. **RANGES**: a bar per param, in that param's color: ON, NOTE, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode. ON has one handle and shows the **on chance** (0-100%, default 70%; green in note mode, cyan in CC mode; each mode keeps its own); the others are min / max bars. The bars are spread evenly from under the RANGES title down to near the panel's bottom edge (the last one lines up with the bottom row of buttons beside it); CC mode's two bars keep a natural spacing near the top. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **NOTE bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the note knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
+2. **PARAMS**: buttons shared by Randomize, Smooth and Copy: ALL, ON, PITCH, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode (no ALL there). In note mode ALL is its own state; something is always armed (9.2).
+3. **RANGES**: a bar per param, in that param's color: ON, PITCH, OCT, VEL, GATE, PROB in note mode; ON and CC in CC mode. ON has one handle and shows the **on chance** (0-100%, default 70%; green in note mode, cyan in CC mode; each mode keeps its own); the others are min / max bars. The bars are spread evenly from under the RANGES title down to near the panel's bottom edge (the last one lines up with the bottom row of buttons beside it); CC mode's two bars keep a natural spacing near the top. Ranges are global (shared by all tracks). **Ranges of unarmed params are dimmed** (none with ALL on). The **PITCH bar follows the scale**: when the current track's scale is on, it shows only the in-scale notes, spread evenly over the bar (like the pitch knob arc, 5), so C minor runs from C to A#; with the scale off, C to B. The range is stored as notes (a pitch-class range), so it keeps its meaning when the scale changes.
 4. **RANDOMIZE** (filled, mode accent) and **SMOOTH** (outlined, mode accent), and under them the curve buttons (9.5): a row of four shape icons (sine, triangle, ramp up, square), then a row with ‹, › and INV. Outlined in the mode accent; green while pressed.
-5. **SHIFT**: endless knob plus its own param buttons (NOTE, OCT, VEL, GATE, PROB) in note mode; in CC mode the knob alone (it shifts the CC value).
+5. **SHIFT**: endless knob plus its own param buttons (PITCH, OCT, VEL, GATE, PROB) in note mode; in CC mode the knob alone (it shifts the CC value).
 
 ### 12.7 Mockups
 
@@ -451,7 +451,7 @@ Targets:
 | GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
 | TRACK | Notes Out, CC Out | 1-8 | - | - |
 | TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | 01 to 64 | - |
-| STEP | Note On, Note, Octave, Velocity, Gate, Probability, CC On, CC Value | 1-8 | 01 to 64 | 1-32 |
+| STEP | Note On, Pitch, Octave, Velocity, Gate, Probability, CC On, CC Value | 1-8 | 01 to 64 | 1-32 |
 
 **Exposed vs not exposed (checklist)**
 
@@ -460,7 +460,7 @@ Exposed as macro targets (the table above, nothing else):
 - Global: Pattern (which pattern plays), Chain On.
 - Track routing (the same in every pattern): Notes Out, CC Out.
 - Track settings (per pattern): Length, Division, Direction, Swing, Scale On.
-- Step values (per pattern and step): Note On (note on/off), Note, Octave, Velocity, Gate, Probability, CC On (CC on/off), CC Value.
+- Step values (per pattern and step): Note On (note on/off), Pitch, Octave, Velocity, Gate, Probability, CC On (CC on/off), CC Value.
 
 Not exposed (set in the plugin only):
 
@@ -474,10 +474,10 @@ Not exposed (set in the plugin only):
 - **Every mapping is fixed**: it always points at one track, one pattern (for settings stored per pattern) and one step. It never follows the screen or the playing pattern, so DAW automation records and plays back exactly. (Mapping that follows the track or pattern on screen, for hardware controllers, is set aside for now.)
 - **Full range**: every macro always covers its target's whole range over its whole travel. There is no min / max per mapping.
 - **Note On** and **CC On** switch the step's note part and CC part on or off (5).
-- **Note** follows the scale like the step's note knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
+- **Pitch** follows the scale like the step's pitch knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
 - **Pattern macro**: moving it queues the picked pattern (quantize applies, in the background), and the macro shows the **picked** pattern at once, not the one still playing; turning it back to the playing pattern cancels the queued switch.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
-- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Note, NoteOn, Oct, Vel, Gate, Prob, CCval, CCOn); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
+- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Pitch, NoteOn, Oct, Vel, Gate, Prob, CCval, CCOn); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
 - The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
 - Host changes are not added to undo.
 
@@ -488,7 +488,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 128 MAPPED" (all pages), LEARN. Mapping sets are loaded and saved from the FILE menu (13.3). A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
 - **Right**: the mapping editor for the selected macro ("M017", with its host name "MACRO 17"):
   - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro). Outlined buttons, the chosen one filled, like the PARAMETER and TRACK buttons below.
-  - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE ON, NOTE, OCTAVE, VELOCITY, GATE, PROB, CC ON, CC VALUE. A new mapping starts on the track and pattern on screen.
+  - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE ON, PITCH, OCTAVE, VELOCITY, GATE, PROB, CC ON, CC VALUE. A new mapping starts on the track and pattern on screen.
   - **TRACK** (1-8), **PATTERN** (a knob, 01 to 64, for targets stored per pattern), **STEP** (a knob, 1-32, for step targets).
   - Footer: **CLEAR MAPPING** (unmaps the macro) and the current value ("NOW 16").
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005" in amber. A banner on the Macros page explains it while listening.
@@ -497,7 +497,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability, or CC value in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON (the patterns view button or the header CHAIN toggle).
 - **No duplicates in the editor either**: a change in the mapping editor that would point a second macro at a control that already has one is refused, and the footer shows "ALREADY ON M003".
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
-- Colors follow the params: note on, note, octave and velocity green, gate purple, probability amber, CC on and CC value cyan, track and global targets neutral.
+- Colors follow the params: note on, pitch, octave and velocity green, gate purple, probability amber, CC on and CC value cyan, track and global targets neutral.
 
 ### 13.3 Presets, patterns and macro mapping sets
 
@@ -540,7 +540,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 ### 14.4 Source map (Source/)
 
-Naming in the code follows the UI: params (`Param`, `armedParams`, `armNote`...), pages, macros. The step slider class is `StepSlider`.
+Naming in the code follows the UI: params (`Param`, `armedParams`, `armPitch`...), pages, macros. The step slider class is `StepSlider`.
 
 
 - **Model.h/.cpp**: the data model (Step, TrackPattern, Pattern, TrackRouting, Globals, Chain, MacroMap, Project), constants, scales, divisions, serialization.
@@ -694,3 +694,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-29: SHIFT ALL renamed SHIFT (ALL could be confused with ALL in PARAMS).
 - 2026-10-29: Fix: dragging the Pattern macro on the Macros page while the host plays with quantize on updated the shown pattern only every half second (the queued pattern changed no data, so the screen did not refresh); the views now refresh whenever the queued pattern changes.
 - 2026-10-30: Default RANGES chosen to sound musical at 1/16: ON chance 70%, OCT 2-4, VEL 70-127, GATE 25-150%, PROB 25-100% (NOTE and CC full). Right-click / Alt + click on a RANGES bar resets it to its default.
+- 2026-10-30: The NOTE knob / param renamed PITCH everywhere (PARAMS, RANGES, SHIFT, macros "Pitch St05 Tr03 Pat23", undo labels, code). "Note" now only means the note part: NOTES / CC, note mode, NOTE OUT, note on/off.

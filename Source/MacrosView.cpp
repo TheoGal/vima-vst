@@ -16,7 +16,7 @@ namespace
         static const std::vector<MacroTarget> global { MacroTarget::pattern, MacroTarget::chainOn };
         static const std::vector<MacroTarget> track { MacroTarget::noteOut, MacroTarget::ccOut, MacroTarget::length, MacroTarget::division,
                                                        MacroTarget::direction, MacroTarget::swing, MacroTarget::scaleOn };
-        static const std::vector<MacroTarget> step { MacroTarget::stepOn, MacroTarget::note, MacroTarget::octave, MacroTarget::velocity,
+        static const std::vector<MacroTarget> step { MacroTarget::stepOn, MacroTarget::pitch, MacroTarget::octave, MacroTarget::velocity,
                                                       MacroTarget::gate, MacroTarget::probability, MacroTarget::ccStepOn, MacroTarget::cc };
         static const std::vector<MacroTarget> none;
         return k == MacroKind::global ? global : k == MacroKind::track ? track : k == MacroKind::step ? step : none;
@@ -32,7 +32,7 @@ juce::Colour MacrosView::targetColour (MacroTarget target)
     {
         case MacroTarget::none:        return t.dim;
         case MacroTarget::stepOn:
-        case MacroTarget::note:
+        case MacroTarget::pitch:
         case MacroTarget::octave:
         case MacroTarget::velocity:    return t.green;
         case MacroTarget::gate:        return t.purple;

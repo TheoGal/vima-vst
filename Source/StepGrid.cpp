@@ -143,7 +143,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
         const int t = ctx.ui.track;
         ctx.edit (false, [t, pc, this] (Project& p) { setPitchClass (p, p.currentPattern, t, index, pc); });
     };
-    pitch.onGestureStart = [this, stepLabel] { ctx.beginGesture (stepLabel ("NOTE")); };
+    pitch.onGestureStart = [this, stepLabel] { ctx.beginGesture (stepLabel ("PITCH")); };
     pitch.pixelsPerStep = 8.0f;
     addAndMakeVisible (pitch);
 
@@ -223,7 +223,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     // LEARN targets (SPEC.md 13.1)
     getProperties().set ("learnStep", index);
     setLearnTarget (toggle, MacroTarget::stepOn);
-    setLearnTarget (pitch, MacroTarget::note);
+    setLearnTarget (pitch, MacroTarget::pitch);
     setLearnTarget (octave, MacroTarget::octave);
     setLearnTarget (slider, -1);
 

@@ -52,7 +52,7 @@ Scope makeScope (const Project& p, int pattern, int track, int selFirst, int sel
 std::vector<Param> armedParams (const Globals& g, bool ccMode)
 {
     std::vector<Param> params;
-    if (! ccMode && g.armAllNote) return { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability };
+    if (! ccMode && g.armAllNote) return { Param::on, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability };
     if (ccMode)
     {
         if (g.armCcOn) params.push_back (Param::ccOn);
@@ -60,7 +60,7 @@ std::vector<Param> armedParams (const Globals& g, bool ccMode)
         return params;
     }
     if (g.armOn) params.push_back (Param::on);
-    if (g.armNote) params.push_back (Param::note);
+    if (g.armPitch) params.push_back (Param::pitch);
     if (g.armOct) params.push_back (Param::octave);
     if (g.armVel) params.push_back (Param::velocity);
     if (g.armGate) params.push_back (Param::gate);
@@ -145,7 +145,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
     const auto mask = g.scaleMask();
 
     std::vector<int> pcs;
-    for (int pc = juce::jmin (g.rangeNote.min, g.rangeNote.max); pc <= juce::jmax (g.rangeNote.min, g.rangeNote.max); ++pc)
+    for (int pc = juce::jmin (g.rangePitch.min, g.rangePitch.max); pc <= juce::jmax (g.rangePitch.min, g.rangePitch.max); ++pc)
         if (! tp.scaleOn || inScale (mask, g.root, pc)) pcs.push_back (pc);
     if (pcs.empty())
         for (int pc = 0; pc < 12; ++pc) pcs.push_back (pc);
@@ -163,7 +163,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
             {
                 case Param::on:          s.on = r.nextInt (100) < g.onChance; break;       // the ON range bar
                 case Param::ccOn:        s.ccOn = r.nextInt (100) < g.ccOnChance; break;
-                case Param::note:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
+                case Param::pitch:        s.pitchClass = (std::int8_t) pcs[(size_t) r.nextInt ((int) pcs.size())]; break;
                 case Param::octave:      s.octave = (std::int8_t) (octLo <= octHi ? randomIn (r, octLo, octHi) : minOctave); break;
                 case Param::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, randomIn (r, g.rangeVel.min, g.rangeVel.max)); break;
                 case Param::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
@@ -180,7 +180,7 @@ static int paramValue (const Project& p, const TrackPattern& tp, const Step& s, 
     const auto& g = p.globals;
     switch (param)
     {
-        case Param::note:
+        case Param::pitch:
         {
             int pitch = midiNote (s.octave, s.pitchClass);
             if (tp.scaleOn)
@@ -207,7 +207,7 @@ static void paramLimits (const Project& p, const TrackPattern& tp, Param param, 
     const auto& g = p.globals;
     switch (param)
     {
-        case Param::note:
+        case Param::pitch:
         {
             const int loPitch = lowestPitch, hiPitch = highestPitch;
             if (tp.scaleOn)
@@ -242,7 +242,7 @@ static void setParamValue (const Project& p, const TrackPattern& tp, Step& s, Pa
     v = juce::jlimit (lo, hi, v);
     switch (param)
     {
-        case Param::note:
+        case Param::pitch:
             setPitch (s, tp.scaleOn ? degreeToPitch (g.scaleMask(), g.root, v) : v);
             break;
         case Param::octave:      s.octave = (std::int8_t) v; break;
@@ -309,7 +309,7 @@ namespace
     {
         switch (l)
         {
-            case Param::note:        return g.rangeNote;
+            case Param::pitch:        return g.rangePitch;
             case Param::octave:      return g.rangeOct;
             case Param::velocity:    return g.rangeVel;
             case Param::gate:        return g.rangeGate;
@@ -325,7 +325,7 @@ namespace
     {
         std::vector<int> pcs;
         const auto mask = g.scaleMask();
-        const int lo = juce::jmin (g.rangeNote.min, g.rangeNote.max), hi = juce::jmax (g.rangeNote.min, g.rangeNote.max);
+        const int lo = juce::jmin (g.rangePitch.min, g.rangePitch.max), hi = juce::jmax (g.rangePitch.min, g.rangePitch.max);
         for (int pc = lo; pc <= hi; ++pc)
             if (! tp.scaleOn || inScale (mask, g.root, pc)) pcs.push_back (pc);
         if (pcs.empty())
@@ -341,7 +341,7 @@ namespace
         {
             case Param::on:          return s.on ? 1 : 0;
             case Param::ccOn:        return s.ccOn ? 1 : 0;
-            case Param::note:        return s.pitchClass;
+            case Param::pitch:        return s.pitchClass;
             case Param::octave:      return s.octave;
             case Param::velocity:    return s.velocity;
             case Param::gate:        return s.gate;
@@ -357,7 +357,7 @@ namespace
         {
             case Param::on:          s.on = v != 0; break;
             case Param::ccOn:        s.ccOn = v != 0; break;
-            case Param::note:        s.pitchClass = (std::int8_t) juce::jlimit (0, 11, v); break;
+            case Param::pitch:        s.pitchClass = (std::int8_t) juce::jlimit (0, 11, v); break;
             case Param::octave:      s.octave = (std::int8_t) juce::jlimit (minOctave, maxOctave, v); break;
             case Param::velocity:    s.velocity = (std::uint8_t) juce::jlimit (1, 127, v); break;
             case Param::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v); break;
@@ -404,7 +404,7 @@ void applyCurve (Project& p, const Scope& sc, bool ccMode, CurveShape shape)
                 const int chance = param == Param::ccOn ? g.ccOnChance : g.onChance;
                 setRaw (s, param, chance > 0 && f >= 1.0 - chance / 100.0 - 1.0e-9 ? 1 : 0);
             }
-            else if (param == Param::note)
+            else if (param == Param::pitch)
                 s.pitchClass = (std::int8_t) pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, (int) std::lround (f * (double) (pcs.size() - 1)))];
             else
             {
@@ -446,7 +446,7 @@ void invertSteps (Project& p, const Scope& sc, bool ccMode)
             auto& s = tp.steps[(size_t) i];
             if (param == Param::on || param == Param::ccOn)
                 setRaw (s, param, rawValue (s, param) != 0 ? 0 : 1);
-            else if (param == Param::note)
+            else if (param == Param::pitch)
             {
                 // the nearest NOTE position, mirrored
                 int best = 0;
@@ -514,7 +514,7 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
             {
                 case Param::on:          s.on = c.step.on; break;
                 case Param::ccOn:        s.ccOn = c.step.ccOn; break;
-                case Param::note:        s.pitchClass = c.step.pitchClass; break;
+                case Param::pitch:        s.pitchClass = c.step.pitchClass; break;
                 case Param::octave:      s.octave = c.step.octave; break;
                 case Param::velocity:    s.velocity = c.step.velocity; break;
                 case Param::gate:        s.gate = c.step.gate; break;

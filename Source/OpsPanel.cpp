@@ -9,7 +9,7 @@ namespace
         switch (l)
         {
             case Param::on:          return g.armOn;
-            case Param::note:        return g.armNote;
+            case Param::pitch:        return g.armPitch;
             case Param::octave:      return g.armOct;
             case Param::velocity:    return g.armVel;
             case Param::gate:        return g.armGate;
@@ -24,7 +24,7 @@ namespace
     {
         switch (l)
         {
-            case Param::note:        return g.rangeNote;
+            case Param::pitch:        return g.rangePitch;
             case Param::octave:      return g.rangeOct;
             case Param::velocity:    return g.rangeVel;
             case Param::gate:        return g.rangeGate;
@@ -52,7 +52,7 @@ namespace
         {
             case Param::on:
             case Param::ccOn:        return "ON";
-            case Param::note:        return "NOTE";
+            case Param::pitch:        return "PITCH";
             case Param::octave:      return "OCT";
             case Param::velocity:    return "VEL";
             case Param::gate:        return "GATE";
@@ -67,7 +67,7 @@ namespace
         const auto& t = Theme::current();
         switch (l)
         {
-            case Param::note: case Param::octave: case Param::velocity: return t.green;
+            case Param::pitch: case Param::octave: case Param::velocity: return t.green;
             case Param::gate:        return t.purple;
             case Param::probability: return t.amber;
             case Param::cc: case Param::ccOn: return t.cyan;
@@ -78,7 +78,7 @@ namespace
 
     const std::vector<Param>& noteParams()
     {
-        static const std::vector<Param> l { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability };
+        static const std::vector<Param> l { Param::on, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability };
         return l;
     }
     const std::vector<Param>& ccParams()
@@ -120,7 +120,7 @@ ParamRange RangeBar::get() const
     auto g = ctx.globalsCopy();
     if (single()) return { 0, param == Param::on ? g.onChance : g.ccOnChance };
     const auto r = paramRange (g, param);
-    if (param != Param::note)
+    if (param != Param::pitch)
         return r;
     const auto pcs = notePositions();
     const int n = (int) pcs.size();
@@ -141,7 +141,7 @@ void RangeBar::set (ParamRange r)
         ctx.edit (false, [v, cc] (Project& p) { (cc ? p.globals.ccOnChance : p.globals.onChance) = v; });
         return;
     }
-    if (param == Param::note)
+    if (param == Param::pitch)
     {
         const auto pcs = notePositions();
         const int n = (int) pcs.size();
@@ -160,7 +160,7 @@ void RangeBar::axis (int& lo, int& hi) const
 {
     switch (param)
     {
-        case Param::note:        lo = 0; hi = (int) notePositions().size() - 1; return;
+        case Param::pitch:        lo = 0; hi = (int) notePositions().size() - 1; return;
         case Param::octave:      lo = minOctave; hi = maxOctave; return;
         case Param::velocity:    lo = 1; hi = 127; return;
         case Param::gate:        lo = 1; hi = maxGate; return;
@@ -174,7 +174,7 @@ juce::String RangeBar::valueText (int v) const
 {
     switch (param)
     {
-        case Param::note:
+        case Param::pitch:
         {
             const auto pcs = notePositions();
             return pitchClassName (pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, v)]);
@@ -215,7 +215,7 @@ void RangeBar::mouseDown (const juce::MouseEvent& e)
             {
                 case Param::on:          g.onChance = d.onChance; break;
                 case Param::ccOn:        g.ccOnChance = d.ccOnChance; break;
-                case Param::note:        g.rangeNote = d.rangeNote; break;
+                case Param::pitch:        g.rangePitch = d.rangePitch; break;
                 case Param::octave:      g.rangeOct = d.rangeOct; break;
                 case Param::velocity:    g.rangeVel = d.rangeVel; break;
                 case Param::gate:        g.rangeGate = d.rangeGate; break;
@@ -437,7 +437,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     addAndMakeVisible (clearBtn);
 
     // PARAMS buttons (ALL first). Note mode: ALL, ON, NOTE, OCT, VEL, GATE, PROB; CC mode: ON, CC.
-    std::vector<Param> all { Param::on, Param::ccOn, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc };
+    std::vector<Param> all { Param::on, Param::ccOn, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc };
     {
         auto* p = paramBtns.add (new Pill());
         p->text = [] { return juce::String ("ALL"); };
@@ -504,7 +504,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     for (auto* p : paramBtns) { p->font = [] { return Fonts::monoSemi (11.0f); }; p->radius = 5.0f; }
 
     // RANGES: note mode ON, NOTE, OCT, VEL, GATE, PROB; CC mode ON, CC (ON = the chance a step is switched on)
-    for (auto l : { Param::on, Param::note, Param::octave, Param::velocity, Param::gate, Param::probability, Param::ccOn, Param::cc })
+    for (auto l : { Param::on, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::ccOn, Param::cc })
         addAndMakeVisible (ranges.add (new RangeBar (ctx, l)));
 
     randomBtn.text = [] { return juce::String ("RANDOMIZE"); };
@@ -601,7 +601,7 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     }
 
     addAndMakeVisible (shiftKnob);
-    for (auto l : { Param::note, Param::octave, Param::velocity, Param::gate, Param::probability })   // note mode only
+    for (auto l : { Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability })   // note mode only
     {
         auto* p = shiftChips.add (new Pill());
         p->getProperties().set ("param", (int) l);

@@ -9,7 +9,7 @@
 
 namespace vima
 {
-enum class Param { on, note, octave, velocity, gate, probability, cc, ccOn };   // on = note on/off, ccOn = CC on/off
+enum class Param { on, pitch, octave, velocity, gate, probability, cc, ccOn };   // on = note on/off, ccOn = CC on/off
 
 // The steps an operation acts on: a set of steps (bit n = step n), always within the track length
 struct Scope
@@ -60,7 +60,7 @@ void invertSteps (Project&, const Scope&, bool ccMode);
 struct ShiftGesture
 {
     Scope scope;
-    Param param = Param::note;
+    Param param = Param::pitch;
     std::array<Step, maxSteps> snapshot {};   // the track's steps when the knob was grabbed
 };
 ShiftGesture beginShift (const Project&, const Scope&, Param);
