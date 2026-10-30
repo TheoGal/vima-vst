@@ -249,7 +249,7 @@ void SettingsDialog::resized()
     segment (rowArea ("Theme", 32), themeBtns, 64);
     divider();
 
-    section ("PITCH");
+    section ("MIDDLE C");   // not "PITCH": that is the name of the step knob
     segment (rowArea ("Middle C is", 32), midCBtns, 120);
     divider();
 
