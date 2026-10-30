@@ -77,10 +77,10 @@ public:
     }
 
     // Presets and macro mapping sets (SPEC.md 13.3). Message thread.
-    static juce::File presetFolder();   // Documents/VIMA/Presets
-    static juce::File macroFolder();    // Documents/VIMA/Macros
+    static juce::File presetFolder();   // Documents/Vima/Presets
+    static juce::File macroFolder();    // Documents/Vima/Macros
     static constexpr const char* presetExtension = ".vima";
-    static juce::File patternFolder();  // Documents/VIMA/Patterns
+    static juce::File patternFolder();  // Documents/Vima/Patterns
     static constexpr const char* macroExtension = ".vimamacros";
     static constexpr const char* patternExtension = ".vimapattern";
     bool savePreset (const juce::File&);

@@ -17,14 +17,14 @@ namespace
     juce::File& settingsFile()
     {
         // The app settings folder (no permission prompts or blocks, unlike Documents):
-        // Windows %APPDATA%\VIMA, macOS ~/Library/Application Support/VIMA, Linux ~/.config/VIMA
+        // Windows %APPDATA%\VIMA, macOS ~/Library/Application Support/Vima, Linux ~/.config/Vima
         static juce::File f = []
         {
             auto dir = juce::File::getSpecialLocation (juce::File::userApplicationDataDirectory);
            #if JUCE_MAC
             dir = dir.getChildFile ("Application Support");
            #endif
-            return dir.getChildFile ("VIMA").getChildFile ("Settings.xml");
+            return dir.getChildFile ("Vima").getChildFile ("Settings.xml");
         }();
         return f;
     }

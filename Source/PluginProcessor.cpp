@@ -104,7 +104,7 @@ void VimaProcessor::toggleTransport()
 // ---------------------------------------------------------------------------------------
 static juce::File vimaFolder (const char* sub)
 {
-    auto f = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("VIMA").getChildFile (sub);
+    auto f = juce::File::getSpecialLocation (juce::File::userDocumentsDirectory).getChildFile ("Vima").getChildFile (sub);
     f.createDirectory();
     return f;
 }

@@ -1,8 +1,8 @@
-# VIMA - Design Spec
+# Vima - Design Spec
 
-Name: **VIMA** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
+Name: **Vima** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
 
-**Naming rule**: everywhere the plugin is called by its English name, **VIMA** (product name, host plugin list, file names, folders, manual text, README, release notes). The Greek "βήμα" appears only in these places: when explaining the origin of the name (as above), as the wordmark in the single-row header of the patterns view and the Macros page, and as the square **β** logo in the step view's top band.
+**Naming rule**: everywhere the plugin is called by its English name, **Vima** (product name, host plugin list, file names, folders, manual text, README, release notes). The Greek "βήμα" appears only in these places: when explaining the origin of the name (as above), as the wordmark in the single-row header of the patterns view and the Macros page, and as the square **β** logo in the step view's top band.
 
 Status: **in testing**. Every push is built by GitHub Actions; testers use the CI builds. This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the user manual, MANUAL.md (written for musicians; keep it in step with this spec).
 
@@ -19,15 +19,15 @@ Last updated: 2026-10-24 (checked against the code at that date).
 
 - Built with JUCE and CMake (details in 14).
 - Format: **VST3** only. Windows (x64) is the primary target. macOS (universal: Apple Silicon and Intel) builds are produced by CI for testers; the developer has no Mac. There is no Audio Unit version: an AU cannot send MIDI out of a plugin.
-- The host sees VIMA as an **instrument (synth) plugin**, not a MIDI effect.
+- The host sees Vima as an **instrument (synth) plugin**, not a MIDI effect.
 - It produces no audio. It outputs MIDI only (notes and CC). A silent stereo output bus exists only so hosts accept it as an instrument.
 - Incoming MIDI is used only for pattern change by CC (6, 7.3); it is not passed through.
-- In the DAW, other tracks receive VIMA's MIDI output (for example in Ableton Live: "MIDI From" = the VIMA track, the lower chooser = VIMA, monitor "In").
+- In the DAW, other tracks receive Vima's MIDI output (for example in Ableton Live: "MIDI From" = the Vima track, the lower chooser = Vima, monitor "In").
 
 ### 2.1 Ableton Live and MIDI channels (tested and confirmed)
 
-- **Confirmed by testing (Live 12, Windows): Ableton Live strips the MIDI channel from MIDI data internally.** All 8 tracks of one VIMA instance arrive mixed together on the destination track, whatever their MIDI channels. So in Live there is **no native way to use a VST step sequencer with multiple MIDI channels** (one instance feeding several instruments by channel). Someone who wants that in Live would have to build it with **Max for Live**.
-- How VIMA is used in Live: **one VIMA instance per destination track** (each instance still has 8 tracks, for example several drum voices or layers going to one instrument). Accepted as is.
+- **Confirmed by testing (Live 12, Windows): Ableton Live strips the MIDI channel from MIDI data internally.** All 8 tracks of one Vima instance arrive mixed together on the destination track, whatever their MIDI channels. So in Live there is **no native way to use a VST step sequencer with multiple MIDI channels** (one instance feeding several instruments by channel). Someone who wants that in Live would have to build it with **Max for Live**.
+- How Vima is used in Live: **one Vima instance per destination track** (each instance still has 8 tracks, for example several drum voices or layers going to one instrument). Accepted as is.
 - Hosts that keep MIDI channels (for example Bitwig, Reaper) can route one instance to several destinations by channel.
 
 ## 3. Transport and clock
@@ -35,11 +35,11 @@ Last updated: 2026-10-24 (checked against the code at that date).
 - Follows the host: plays when the host plays, stops when the host stops, follows the host tempo, time signature and song position.
 - **Step positions come from the song position**: step 1 of a track falls on song position 0 and on every multiple of the track's length (length x division) after it. Locating, looping and jumping in the host land on the matching step.
 - **Start / stop button** (the play / stop icon at the left of the BPM box in the header):
-  - **Stop while the host plays**: VIMA stops and is **held**. A held VIMA ignores the host stopping and starting again; it stays stopped until its own play button is pressed. The stop icon is **amber** while held.
-  - **Play while the host plays**: VIMA starts again in sync with the host and the hold is released; from then on it follows the host.
-  - **Play while the host is stopped**: VIMA runs on its own from step 1 at the host's tempo (this also releases a hold). Stopping it with the button, or the host starting, ends that. A stop made while the host is stopped does not hold: the next time the host plays, VIMA follows.
+  - **Stop while the host plays**: Vima stops and is **held**. A held Vima ignores the host stopping and starting again; it stays stopped until its own play button is pressed. The stop icon is **amber** while held.
+  - **Play while the host plays**: Vima starts again in sync with the host and the hold is released; from then on it follows the host.
+  - **Play while the host is stopped**: Vima runs on its own from step 1 at the host's tempo (this also releases a hold). Stopping it with the button, or the host starting, ends that. A stop made while the host is stopped does not hold: the next time the host plays, Vima follows.
   - The hold is not saved: it is released when the project is reopened.
-- The icon shows whether VIMA is playing (play icon, mode accent), stopped (grey stop icon) or held (amber stop icon). The BPM shown is the host's.
+- The icon shows whether Vima is playing (play icon, mode accent), stopped (grey stop icon) or held (amber stop icon). The BPM shown is the host's.
 - On stop, on a jump and on an instant pattern switch, every sounding note gets its note-off.
 
 ## 4. Tracks
@@ -211,7 +211,7 @@ Works like step copy / paste (9.1):
 ### 8.1 The LED bar
 
 - Above each row of 16 steps is an LED bar, one segment per step.
-- It shows the **playhead**: the segment of the playing step lights in the mode accent (green in note mode, cyan in CC mode) while VIMA plays. The step cells do not change as it passes.
+- It shows the **playhead**: the segment of the playing step lights in the mode accent (green in note mode, cyan in CC mode) while Vima plays. The step cells do not change as it passes.
 - Segments beyond the track length are dark and cannot be selected.
 - It is also the **selection tool**:
   - Click and drag across segments to select a range. A single click selects that one step (and replaces the selection).
@@ -306,13 +306,13 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 
 Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same style. Sections, top to bottom:
 
-- **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\VIMA\Settings.xml`, macOS `~/Library/Application Support/VIMA/Settings.xml`; no permission prompts, unlike Documents) and used by every VIMA instance; switching it in one instance switches all open VIMA windows. Projects and presets do not carry it.
-- **MIDDLE C**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. Like the theme, middle C is a **user-wide preference**: stored once in Settings.xml and used by every VIMA instance (changing it in one changes all open windows); projects and presets do not carry it. There is no octave range setting: octaves always cover the whole MIDI range.
+- **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\Vima\Settings.xml`, macOS `~/Library/Application Support/Vima/Settings.xml`; no permission prompts, unlike Documents) and used by every Vima instance; switching it in one instance switches all open Vima windows. Projects and presets do not carry it.
+- **MIDDLE C**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. Like the theme, middle C is a **user-wide preference**: stored once in Settings.xml and used by every Vima instance (changing it in one changes all open windows); projects and presets do not carry it. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF (10).
 - **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
 - No close (×) button: every setting applies the moment it is clicked, so **DONE** or a click outside the dialog closes it.
-- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
+- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **Vima ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
 
 ## 12. UI
 
@@ -442,7 +442,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 ### 13.1 Macros (host automation)
 
-The host sees 128 parameters, "Macro 1" to "Macro 128", in 4 groups of 32 (Macros 1-32 ... 97-128). They are the **only automatable parameters**. Each macro can be mapped to one target in the plugin, so only what is needed is exposed. Mapping a DAW knob or controller to a macro is done in the DAW; VIMA has no MIDI learn of its own.
+The host sees 128 parameters, "Macro 1" to "Macro 128", in 4 groups of 32 (Macros 1-32 ... 97-128). They are the **only automatable parameters**. Each macro can be mapped to one target in the plugin, so only what is needed is exposed. Mapping a DAW knob or controller to a macro is done in the DAW; Vima has no MIDI learn of its own.
 
 Targets:
 
@@ -476,8 +476,8 @@ Not exposed (set in the plugin only):
 - **Note On** and **CC On** switch the step's note part and CC part on or off (5).
 - **Pitch** follows the scale like the step's pitch knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
 - **Pattern macro**: moving it queues the picked pattern (quantize applies, in the background), and the macro shows the **picked** pattern at once, not the one still playing; turning it back to the playing pattern cancels the queued switch.
-- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside VIMA (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
-- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Pitch, NoteOn, Oct, Vel, Gate, Prob, CCval, CCOn); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, VIMA tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
+- **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside Vima (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
+- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Pitch, NoteOn, Oct, Vel, Gate, Prob, CCval, CCOn); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, Vima tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
 - The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
 - Host changes are not added to undo.
 
@@ -504,18 +504,18 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens one flat menu with three sections, each under its own header: **PRESET**, **PATTERN**, **MACROS**.
 - **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first: "Clear all patterns, chain and settings? Macro mappings are kept."; resets what a preset holds to the init values (4.1), keeps the mappings and everything a preset does not hold), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
   - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
-  - Dialogs start in **Documents/VIMA/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
+  - Dialogs start in **Documents/Vima/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
 - **PATTERN** (header "PATTERN 05", the slot only, no file name) acts on the **selected pattern**: the one in the PATTERN box, or the selected slot in the patterns view. NEW (asks first; the init pattern, 16 steps on), LOAD... (asks before replacing a pattern that has steps on), SAVE AS... There is no plain SAVE: a file would have to be linked to each of the 64 slots. NEW and LOAD are one undo step each.
   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals: a loaded pattern plays in the current preset's scale.
-  - Dialogs start in **Documents/VIMA/Patterns**; extension **.vimapattern** (XML). The patterns view's slot right-click (7.1) offers the same LOAD and SAVE AS for that slot.
+  - Dialogs start in **Documents/Vima/Patterns**; extension **.vimapattern** (XML). The patterns view's slot right-click (7.1) offers the same LOAD and SAVE AS for that slot.
 - **MACROS** (header "MACROS", no file name): NEW (asks first; clears all 128 mappings), LOAD... (asks before replacing when any macro is mapped), SAVE (overwrites the linked mapping file, like presets; dimmed when no file is linked), SAVE AS... A mapping set holds all 128 mappings; loading one replaces all mappings and leaves the music alone. The linked file is remembered with the DAW project; NEW unlinks it. Preset NEW / LOAD leave mappings alone.
-  - Dialogs start in **Documents/VIMA/Macros**; extension **.vimamacros** (XML).
+  - Dialogs start in **Documents/Vima/Macros**; extension **.vimamacros** (XML).
 - Files can be saved anywhere; a wrong kind of file (a preset as a pattern, etc.) is refused.
 - DAW preset formats (Live .adv, .vstpreset) also work and store the whole state, mappings included.
 
 ## 14. Build and development notes
 
-- **No backwards compatibility while VIMA is in testing.** Projects, presets and mapping sets saved by earlier test builds may load wrongly or not at all; no conversion code is written for them.
+- **No backwards compatibility while Vima is in testing.** Projects, presets and mapping sets saved by earlier test builds may load wrongly or not at all; no conversion code is written for them.
 
 ### 14.1 Toolchain
 
@@ -564,7 +564,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armPitch`...
 
 - Stateless timing: for each track, step number n = floor(song position / step length); the step index is n modulo the length (direction applied). Swing delays odd n.
 - Notes are scheduled sample-accurately with pending note-offs; a same-pitch retrigger on the same channel releases the old note first. A jump is detected when the new block's position differs from the expected one by more than 0.02 quarter notes: all notes are released and CC state reset.
-- While the host is stopped, VIMA's own run (3) counts its position from 0 at the host tempo.
+- While the host is stopped, Vima's own run (3) counts its position from 0 at the host tempo.
 - Pattern switches can happen mid-block; up to 8 switches per block are handled.
 
 ### 14.7 State format
@@ -573,7 +573,7 @@ Naming in the code follows the UI: params (`Param`, `armedParams`, `armPitch`...
 - Preset (.vima): the same `VIMA` tree with `content="preset"`, without `Macro` children and without the Settings-dialog properties in `Globals` (ccSmoothing, patternCC, patternCCChannel, patternCCNumber, quantize).
 - Pattern (.vimapattern): root `VIMAPATTERN`, `version` 1, with the 8 `Track` children as above. Loading starts from a blank pattern.
 - Mapping set (.vimamacros): root `VIMAMACROS`, `version` 1, with the `Macro` children.
-- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\VIMA`, macOS `~/Library/Application Support/VIMA`, Linux `~/.config/VIMA`), root `VIMASETTINGS` with `lightTheme` and `middleC` (the user-wide theme and middle C). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the change still holds for the session. Presets, patterns and mapping sets stay in Documents/VIMA (only touched from load / save dialogs).
+- User settings: `Settings.xml` in the app settings folder (Windows `%APPDATA%\Vima`, macOS `~/Library/Application Support/Vima`, Linux `~/.config/Vima`), root `VIMASETTINGS` with `lightTheme` and `middleC` (the user-wide theme and middle C). Not in Documents: on macOS that needs a privacy permission for the DAW, and Windows Controlled Folder Access can block it. If the file cannot be written, the change still holds for the session. Presets, patterns and mapping sets stay in Documents/Vima (only touched from load / save dialogs).
 - Mapping set (.vimamacros): XML root `VIMAMACROS`, `version` 1, with `Macro` children.
 - Host parameter IDs: `macro001` ... `macro128` (version 1), names "Macro 1" ... "Macro 128". **Changing the IDs breaks saved DAW automation.**
 
@@ -585,12 +585,12 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
   > I have been a MIDI freak for a long time. Under the name Softcore I wrote music and built control surfaces: a lot of Lemur templates for the iPad, some of them a bit out of this world. One of them, Microtonic Lemuriized (2013), turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing". I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
   >
-  > VIMA comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Guided randomization: chance that you steer, on the steps you pick, for the parameters you choose, within the ranges you set. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
+  > Vima comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Guided randomization: chance that you steer, on the steps you pick, for the parameters you choose, within the ranges you set. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
   >
-  > VIMA was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
+  > Vima was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
 
-- Name origin: VIMA comes from the Greek "βήμα" (step); see the naming rule at the top.
-- **Plan (to revisit when MANUAL.md is finished): manual inside the plugin.** A PDF made from the finished manual is committed as `docs/VIMA Manual.pdf` (checked before it ships) and the CI build copies it into the bundle's `Contents/Resources` folder (Windows and macOS). A **MANUAL** link in the Settings footer, next to VIMA ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
+- Name origin: Vima comes from the Greek "βήμα" (step); see the naming rule at the top.
+- **Plan (to revisit when MANUAL.md is finished): manual inside the plugin.** A PDF made from the finished manual is committed as `docs/Vima Manual.pdf` (checked before it ships) and the CI build copies it into the bundle's `Contents/Resources` folder (Windows and macOS). A **MANUAL** link in the Settings footer, next to Vima ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
 - **Plan (to revisit when MANUAL.md is finished):** the finished manual becomes the repo's `README.md`. On top, a short block: one screenshot, a Download line (latest CI build), a one-line "in testing" status. At the end, a short "For developers / license" section pointing to SPEC.md (build, CI, tests). The current README's install steps move into the manual's "Before you start". Screenshots in `docs/images/`. A PDF can be made from the same file.
 
 ## 15. Open questions
@@ -601,11 +601,11 @@ Nothing at the moment.
 
 ### 15.2 Open
 
-- **Alternate macro configuration: VIMA as a hands-on instrument (idea, not decided).** A second macro configuration, next to today's fixed mappings (13.1), where macros follow what is on screen:
+- **Alternate macro configuration: Vima as a hands-on instrument (idea, not decided).** A second macro configuration, next to today's fixed mappings (13.1), where macros follow what is on screen:
   - **Sets of 32 macros** mapped to whatever mode (note or CC), track and pattern is visible, one set each for: steps on / off, note value, CC value, octave, velocity, gate (32 macros = the 32 steps).
   - **Dedicated macro controls** for selecting: track, pattern, mode (NOTES / CC), length, division.
   - **A configurable output for playhead "feedback"** into a MIDI controller (for example step LEDs), separate from the MIDI going to the instruments.
-  - Such a configuration would let a MIDI controller (like a Behringer BCR2000) act as a control surface for VIMA and actually make it a "playable", hands-on instrument.
+  - Such a configuration would let a MIDI controller (like a Behringer BCR2000) act as a control surface for Vima and actually make it a "playable", hands-on instrument.
   - Unlike today's macros it cannot serve DAW automation (a recorded move would land on whatever is visible at playback), so it would be a separate mode, not a replacement.
   - It remains to be seen if anyone would ever use it, or even ask for such a thing.
 
@@ -696,3 +696,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: Default RANGES chosen to sound musical at 1/16: ON chance 70%, OCT 2-4, VEL 70-127, GATE 25-150%, PROB 25-100% (NOTE and CC full). Right-click / Alt + click on a RANGES bar resets it to its default.
 - 2026-10-30: The NOTE knob / param renamed PITCH everywhere (PARAMS, RANGES, SHIFT, macros "Pitch St05 Tr03 Pat23", undo labels, code). "Note" now only means the note part: NOTES / CC, note mode, NOTE OUT, note on/off.
 - 2026-10-30: Settings section PITCH renamed MIDDLE C (PITCH is now the step knob).
+- 2026-10-30: Naming: the plugin is written **Vima** (not VIMA) everywhere: manual, README, spec, dialog titles. Folders renamed: Documents/Vima (Presets, Patterns, Macros) and the app settings folder Vima. All-caps UI labels (for example VIMA ON GITHUB) stay in the UI's capitals style; file format roots (`VIMA`, `VIMAPATTERN`...) and the VIMA Mono font name are internal and unchanged.

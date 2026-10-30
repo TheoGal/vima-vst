@@ -1,8 +1,8 @@
 # work in progress - nothing to download yet, follow to be informed when the release is out
 
-# VIMA
+# Vima
 
-VIMA (from Greek "βήμα", step) is an 8-track MIDI step sequencer plugin, built with JUCE.
+Vima (from Greek "βήμα", step) is an 8-track MIDI step sequencer plugin, built with JUCE.
 It loads as an instrument (VST3) and sends MIDI notes and CC to other tracks and plugins.
 
 The full design is in [SPEC.md](SPEC.md).
@@ -32,13 +32,13 @@ Windows: copy `Vima.vst3` to `C:\Program Files\Common Files\VST3\` and rescan pl
 
 ## Using it in Ableton Live
 
-Live strips the MIDI channel from MIDI data internally, so all 8 tracks of one VIMA instance
-arrive together on the destination track. In Live, use **one VIMA instance per destination track**.
+Live strips the MIDI channel from MIDI data internally, so all 8 tracks of one Vima instance
+arrive together on the destination track. In Live, use **one Vima instance per destination track**.
 
-1. Put VIMA on a MIDI track.
-2. On the track you want to play, set **MIDI From** to the VIMA track, the lower chooser to
+1. Put Vima on a MIDI track.
+2. On the track you want to play, set **MIDI From** to the Vima track, the lower chooser to
    **Vima**, and Monitor to **In**.
-3. Press play: VIMA plays while the host plays.
+3. Press play: Vima plays while the host plays.
 
 Hosts that keep MIDI channels (for example Bitwig or Reaper) can route one instance to several
 instruments by channel.

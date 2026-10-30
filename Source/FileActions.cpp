@@ -88,7 +88,7 @@ void FileActions::loadPreset()
 {
     const auto current = ctx.proc.presetFile;
     const auto start = current != juce::File() ? current : VimaProcessor::presetFolder().getChildFile (juce::String ("Untitled") + VimaProcessor::presetExtension);
-    choose (false, "Load VIMA preset", start, VimaProcessor::presetExtension, [this] (const juce::File& f)
+    choose (false, "Load Vima preset", start, VimaProcessor::presetExtension, [this] (const juce::File& f)
     {
         if (ctx.proc.loadPreset (f)) { ctx.ui.selection = 0; ctx.changed(); }
     });
@@ -103,7 +103,7 @@ void FileActions::savePresetAs()
 {
     const auto current = ctx.proc.presetFile;
     const auto start = current != juce::File() ? current : VimaProcessor::presetFolder().getChildFile (juce::String ("Untitled") + VimaProcessor::presetExtension);
-    choose (true, "Save VIMA preset", start, VimaProcessor::presetExtension, [this] (const juce::File& f)
+    choose (true, "Save Vima preset", start, VimaProcessor::presetExtension, [this] (const juce::File& f)
     {
         ctx.proc.savePreset (f);
         ctx.changed();

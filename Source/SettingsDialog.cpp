@@ -87,7 +87,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         g.drawText ("VIMA ON GITHUB", b.withTrimmedLeft (30.0f), juce::Justification::centredLeft, false);
     };
     githubBtn->onClick = [] { juce::URL ("https://github.com/TheoGal/vima-vst").launchInDefaultBrowser(); };
-    githubBtn->setTitle ("VIMA on GitHub");
+    githubBtn->setTitle ("Vima on GitHub");
 
     doneBtn = &pill();
     doneBtn->radius = 6.0f;

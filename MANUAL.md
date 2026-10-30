@@ -423,14 +423,14 @@ Clicking the **file** button (with a folder icon) at the top of the plugin opens
 - Does **not** hold the macro mappings, the settings found only in the Settings dialog (CC smoothing, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
 - **NEW** starts over (pattern 1 ready, the rest empty) and asks first. **LOAD...**, **SAVE** (overwrites the current preset; greyed out if it has never been saved) and **SAVE AS...**
 - The menu header shows the current preset's name, or "UNSAVED".
-- Files end in **.vima** and are kept in Documents/VIMA/Presets by default.
+- Files end in **.vima** and are kept in Documents/Vima/Presets by default.
 
 **PATTERN**: one single pattern.
 
 - Works on the **selected pattern** (the one in the PATTERN box, or the selected slot in the patterns view).
 - Holds the pattern's 8 tracks: their steps and their length, division, direction, swing and use scale. No routing, no scale: a loaded pattern plays in the current scale.
 - **NEW** resets the pattern (16 steps on, ready to edit) and asks first. **LOAD...** asks before replacing a pattern that has steps. **SAVE AS...** saves it. Both NEW and LOAD can be undone.
-- Files end in **.vimapattern**, in Documents/VIMA/Patterns.
+- Files end in **.vimapattern**, in Documents/Vima/Patterns.
 
 You can also save or load a pattern by right-clicking a slot in the patterns view.
 
@@ -439,7 +439,7 @@ You can also save or load a pattern by right-clicking a slot in the patterns vie
 - Handy for a mapping you use with a hardware controller, or a standard set of automation targets.
 - **NEW** clears all mappings and asks first. **LOAD...** asks before replacing existing mappings. **SAVE** and **SAVE AS...** work like presets.
 - Loading a macro set never touches your music, and loading a preset never touches your mappings.
-- Files end in **.vimamacros**, in Documents/VIMA/Macros.
+- Files end in **.vimamacros**, in Documents/Vima/Macros.
 
 Your DAW's own preset system (for example Live's .adv or .vstpreset files) also works and stores everything, mappings included.
 
