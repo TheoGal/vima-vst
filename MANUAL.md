@@ -170,7 +170,7 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 
 Switching, copying and chaining patterns is covered later, in **Working with patterns**.
 
->A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives a pattern with all 8 tracks full (16 steps on each).
+>A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives an empty pattern, like patterns 2-64.
 
 >**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain -  you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
 
@@ -372,11 +372,10 @@ The bar under the slots copies whole patterns or single tracks:
 
 - **COPY PATTERN** and **COPY TRACK nn**, the same as the buttons.
 - **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03** (dimmed when nothing is copied). A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard, and the PASTE button flashes green to confirm.
-- **NEW PATTERN**: resets the pattern to a full pattern (all 8 tracks with 16 steps on), after asking.
-- **CLEAR PATTERN**: makes the slot empty, after asking.
+- **NEW PATTERN**: resets the pattern to an empty one (all steps off, every setting back to its default), after asking.
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 
-NEW PATTERN and CLEAR PATTERN can be undone.
+NEW PATTERN can be undone.
 
 > **[Screenshot]** The slot right-click menu, and the patterns view with COPIED lit. *(patterns-view-copied.png)*
 
