@@ -213,13 +213,11 @@ By default, **step operations** act on all the steps visible and inside the leng
 
 ### PARAMS section
 
- <img src="docs/images/params-section.png" align="left" width="220" alt="Params sections">
+ <img src="docs/images/params-section.png" align="left" width="220" alt="Params section">
 
 You can select which parameters to "arm" for operation - for example you might want to randomize notes, but not octaves or step on - off and velocities but not anything else. 
-In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**.
-- Note mode and CC mode remember their own choice.
-
- <br clear="left"><br />
+In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**. Note mode and CC mode remember their own choice.
+<br clear="left"><br />
 
 PARAMS are shared by COPY-PASTE, RANDOMIZE, SMOOTH and the CURVES. By default, note on - off and pitch are armed for quickly generating melodies.
 
@@ -234,9 +232,12 @@ After having selected desired steps and params, you can copy - paste them with t
 
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
-### RANGES: setting the limits
+### RANGES section
+
+ <img src="docs/images/ranges-section.png" align="left" width="400" alt="Ranges section">
 
 The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed.  Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, i.e. with a 50% chance, it's pure random if a step is on or off -  with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesn't necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
+<br clear="left"><br />
 
 **Right-click** (or Alt + click) on a range bar resets it to its default.
 
