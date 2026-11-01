@@ -282,7 +282,10 @@ Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with pre-fixed curves to
 
 Each press is one undo step.
 
-> **[Screenshot]** A row of CC values before and after SINE.
+<p align="center">
+  <img src="docs/images/sine-applied.png" width="800" alt="Sine applied"><br>
+  <em>Sine curve (bottom) applied to a row of steps in CC mode</em>
+</p>
 
 ### SHIFT
 
