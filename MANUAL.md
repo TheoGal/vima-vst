@@ -56,7 +56,7 @@ The plugin window can be resized by dragging its bottom right corner, from 75% t
 The step sequencer consists of two rows of 16 steps, each row with a thin **LED bar** above it which serves as a "playhead" - it's the sequencer's "running light".
 
 <p align="center">
-  <img src="docs/images/vima-steps-view.png" width="200" alt="Vima steps"><br>
+  <img src="docs/images/vima-steps-view.png" width="800" alt="Vima steps"><br>
   <em>Vima steps</em>
 </p>
 
