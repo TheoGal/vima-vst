@@ -59,7 +59,7 @@ The main window (the **steps view**) shows one track of one pattern at a time.
 
 The plugin window can be resized by dragging its bottom right corner, from 75% to 200%. The size is remembered with your project.
 
-The step sequencer consists of two rows of 16 steps, each row with a thin **LED bar** above it which serves as a "playhead" - it's the sequencer's "running light".
+The step sequencer consists of two rows of 16 steps, each row with a thin **LED bar** above it which serves as a "playhead" - it's the sequencer's "running light". Steps which are off are dimmed. Steps beyond the track length are faded out and are not played.
 
 <p align="center">
   <img src="docs/images/vima-steps-view.png" width="800" alt="Vima steps in Note mode"><br>
@@ -81,24 +81,30 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 
 ### Steps in detail
 
-<p align="center">
-  <img src="docs/images/vima-step-detailed.png" width="300" alt="A step cell"><br>
-  <em>A step cell in Note mode and velocity, gate, probability and in CC mode</em>
-</p>
-
-
 **note mode:**
 
-- **The step on-off button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
+<p align="left">
+  <img src="docs/images/vima-notemode-header.png" width="300" alt="Note mode">
+</p>
+
+ <img src="docs/images/vima-step-detailed.png" align="left" width="300" alt="A step cell">
+
+ - **The step on-off button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
 - **The pitch knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
 - **The octave knob**.
 - **The slider**: velocity, gate or probability, as chosen with SLIDER, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
 
+ <br clear="left">
+ 
 **CC mode:** 
+
+<img src="docs/images/vima-step-detailed.png" align="left" width="300" alt="A step cell">
 
 - the cell shows the **step on-off button** (CC on / off for that step) and one tall cyan slider for the **CC value**.
 
-Steps which are off are dimmed. Steps beyond the track length are faded out and are not played.
+ <br clear="left"><br />
+
+
 
 **What a step holds.**
 
