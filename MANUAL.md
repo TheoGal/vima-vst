@@ -187,7 +187,7 @@ Switching, copying and chaining patterns is covered later, in **Working with pat
 The **operations panel** at the bottom holds the tools that change many steps at once.
 
 <p align="center">
-  <img src="docs/images/step-operations.png" width="800" alt="Step operations">
+  <img src="docs/images/step-operations.png" width="1000" alt="Step operations">
 </p>
 
 Two things decide what every function (copy, randomize, smooth, shift, curves...) changes:
@@ -195,7 +195,7 @@ Two things decide what every function (copy, randomize, smooth, shift, curves...
 - **Which steps**: the selection (or all steps)
 - **Which values**: the **PARAMS** buttons.
 
-### Selection for step operations
+### SELECTION section
 
 By default, **step operations** act on all the steps visible and inside the length range. You can however select specific steps by using the "playhead" LED bar above each step row which also functions as a selector.
 
@@ -206,9 +206,12 @@ By default, **step operations** act on all the steps visible and inside the leng
 
 **The scope rule.** Every step operation in Vima (copy, randomize, smooth, shift, curves...) works on **the selected steps, or on all steps of the track if nothing is selected**. The SELECTION box in the operations panel always tells you what that is, for example "LENGTH: 7, STEPS: 4".
 
-> **[Screenshot]** A row with a non-adjacent selection (white LEDs) and the SELECTION box.
+<p align="center">
+  <img src="docs/images/steps-selected.png" width="1000" alt="Steps selected">
+      <em>Steps 1,2,3,4,5 and 7 selected</em>
+</p>
 
-### PARAMS: choosing which values change
+### PARAMS section
 
 You can select which parameters to "arm" for operation - for example you might want to randomize notes, but not octaves or step on - off and velocities but not anything else. 
 In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**. ON means the step's note on / off in note mode, its CC on / off in CC mode.
@@ -216,6 +219,17 @@ In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** a
 - Note mode and CC mode remember their own choice.
 
 PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the CURVES. By default, note on - off and pitch are armed for quickly generating melodies.
+
+### COPY and PASTE steps parameters
+
+After having selected desired steps and params, you can copy - paste them with the **copy** and **paste** buttons.
+
+1. Select steps (or none for all), arm the PARAMS you want to copy, press **COPY**. It lights up as **COPIED**.
+2. Click an LED to pick the **landing step**: a ghost preview shows where the steps will land. Copied steps keep their spacing.
+3. Press **PASTE**. COPIED stays lit, so you can switch track or pattern and paste again.
+4. Click **COPIED** or **CLEAR** to finish.
+
+Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
 ### RANGES: setting the limits
 
@@ -276,18 +290,6 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 - If PITCH is selected, turning the knob and reaching the pitch limits for the given octave, an octave is added or subtracted and keeps shifting (transposing)
 - A step that hits its limit stays there while the others keep moving, and turning back in the same move brings the original shape back exactly.
 - You hear the change live while turning; the whole move is one undo step (or REDO with right-clicking UNDO).
-
-### COPY and PASTE steps parameters
-
-You can copy - paste selected parameters of steps with the **copy** and **paste** buttons.
-
-1. Select steps (or none for all), arm the PARAMS you want to copy, press **COPY**. It lights up as **COPIED**.
-2. Click an LED to pick the **landing step**: a ghost preview shows where the steps will land. Copied steps keep their spacing.
-3. Press **PASTE**. COPIED stays lit, so you can switch track or pattern and paste again.
-4. Click **COPIED** or **CLEAR** to finish.
-
-Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
-
 
 ## Working with patterns
 
