@@ -83,11 +83,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 
 **note mode:**
 
-<p align="left">
-  <img src="docs/images/vima-notemode-header.png" width="300" alt="Note mode">
-</p>
-
- <img src="docs/images/vima-step-detailed.png" align="left" width="300" alt="A step cell">
+ <img src="docs/images/step-detail-note.png" align="left" width="300" alt="Note step detailed">
 
  - **The step on-off button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
 - **The pitch knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
