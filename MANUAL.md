@@ -88,7 +88,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
  - **The step on-off button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
 - **The pitch knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
 - **The octave knob**.
-- **The slider**: velocity, gate or probability, as chosen with SLIDER, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
+- **The slider**: velocity, gate or probability, as chosen with SLIDER *(see also Track controls)*, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
 
  <br clear="left"><br />
  
@@ -103,7 +103,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 
 
 
-**What a step holds.**
+### What a step holds
 
 | Mode | Value | Range | What it does |
 |---|---|---|---|
@@ -135,7 +135,9 @@ You can create up to 8 completely individual sequences by using Vima's **tracks*
 
 Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assigned and its **note** and **cc** modes. Its related parameters can be adjusted at the top of the plugin, in the **track controls**
 
-**[screenshot]** the track controls
+<p align="center">
+  <img src="docs/images/vima-track-controls.png" width="800" alt="Vima track controls">
+</p>
 
 - **TRACK**: pick which of the 8 tracks you see and edit.
 - **NOTES / CC**: switch between note mode and CC mode. Each button has a small light showing whether that output (notes or CC) is on for this track.
@@ -153,10 +155,12 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 
 Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings. These parameters can be adjusted at the top of the plugin, in the **pattern controls**
 
-**[screenshot]** the pattern controls
+<p align="center">
+  <img src="docs/images/vima-pattern-controls.png" width="700" alt="Vima pattern controls">
+</p>
 
 - **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view 
-- **Pencil** (pattern edit mode), right after the PATTERN box: lets you edit one pattern while another one plays. See **Editing a pattern while another plays**.
+- **PATTERNS EDIT MODE** (pencil iocn): lets you edit one pattern while another one plays. See also **Editing a pattern while another plays**.
 - **CHAIN**, switches chain playback on and off. It lights up while the chain is on, so you can always see whether the patterns are changing by themselves. The pencil and CHAIN are also in the top bar of the patterns view and the Macros page.
 - **LENGTH** (4-32 steps): How many steps a pattern has. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms.
 - **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
