@@ -56,8 +56,8 @@ The plugin window can be resized by dragging its bottom right corner, from 75% t
 The step sequencer consists of two rows of 16 steps, each row with a thin **LED bar** above it which serves as a "playhead" - it's the sequencer's "running light".
 
 <p align="center">
-  <img src="docs/images/vima-steps-view.png" width="800" alt="Vima steps"><br>
-  <em>Vima steps</em>
+  <img src="docs/images/vima-steps-view.png" width="800" alt="Vima steps in Note mode"><br>
+  <em>Vima steps in Note mode</em>
 </p>
 
 
@@ -65,6 +65,11 @@ There are two modes available: **Note Mode** and **CC Mode** which share the sam
 
 - In **note mode** the steps show pitch and octave knobs and one slider (velocity, gate or probability).
 - In **CC mode** each step shows one tall slider for its CC value.
+
+<p align="center">
+  <img src="docs/images/vima-ccmode.png" width="800" alt="Vima steps in CC mode"><br>
+  <em>Vima steps in CC mode</em>
+</p>
 
 Each of the modes can be set to output MIDI messages or not - so a sequence (a track) can output only notes, only CC values or both.
 
