@@ -2,7 +2,9 @@
 <img src="docs/images/vima-icon-dark.png" width="150" alt="Vima logo">
 </p>
 
-# Vima User Manual
+<h1 align="center">
+Vima User Manual
+</h1>
 
 <p align="center">
   <img src="docs/images/vima-screenshot.png" width="800" alt="Vima Screenshot">
@@ -10,7 +12,7 @@
 
 ## Vima - the VST step sequencer to kill all VST step sequencers
 
-**Vima** (from the Greek word "βήμα", which means **step**) is an **8-track melodic MIDI step sequencer** that runs as a plugin (VST3) inside your DAW. It makes no sound of its own: it plays notes and CC (controller) messages into the instruments and effects you already use. It's focused on being easy to use while still providing extensive capabilities in an uncluttered UI.
+**Vima** (from the Greek word "βήμα", which means **step**) is an **8-track melodic MIDI step sequencer** that runs as a plugin (VST3) inside your DAW. It makes no sound of its own: it plays notes and sends CC (controller) messages into the instruments and effects you already use. It's focused on being easy to use while still providing extensive capabilities in an uncluttered UI.
 
 Each of its 8 tracks has up to 32 steps, its own length, timing and direction, and can play notes, send a CC value, or both at once. You can store 64 patterns, chain them into a longer arrangement, switch between them live, and automate almost everything from your DAW.
 
@@ -79,7 +81,11 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 
 ### Steps in detail
 
-**[screenshot]** two step cells, one note mode, one cc mode
+<p align="center">
+  <img src="docs/images/vima-step-detailed.png" width="300" alt="A step cell"><br>
+  <em>A step cell in Note mode and velocity, gate, probability and in CC mode</em>
+</p>
+
 
 **note mode:**
 
