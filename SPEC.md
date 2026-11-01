@@ -625,6 +625,13 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
+- **Hand picks while the chain plays become one-off insertions** (replaces 7.2 "a pattern picked by hand ... plays for the length of the current chain entry"). Example: chain 1, 2, 3, 4; while 2 plays, pattern 8 is picked: when 2 finishes (with its repeats), 8 plays **once, for its own length**, then the chain continues with 3.
+  - With the chain playing, a hand pick always waits for the **end of the current entry**, whatever the Quantize setting (quantize still applies with the chain off).
+  - The chain list shows a **thin row** between the current entry and the next one ("08" and a progress bar): empty while 8 waits (its slot's play button blinks as today), filling while it plays; it disappears when the chain goes on. It is never a real chain entry and is not saved.
+  - Another pick before 8 starts replaces it; a pick while 8 plays queues one more insertion after it.
+  - Patterns that are in the chain work the same way (picking 4 while 2 plays: 2, 4, 3, 4). All hand picks count: play buttons, header arrows and picker, the Pattern macro and the pattern-change CC.
+  - LOOP OFF, after the chain has finished (repeating its last pattern): the chain is done, a pick switches as today.
+  - The switch blink (7.5) announces the insertion and the return to the chain like any switch.
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
