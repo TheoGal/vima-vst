@@ -1,3 +1,7 @@
+<p align="center">
+<img src="docs/images/vima-icon-dark.png" width="150" alt="Vima logo">
+</p>
+
 # Vima User Manual
 
 <p align="center">
