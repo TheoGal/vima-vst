@@ -94,7 +94,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
  
 **CC mode:** 
 
-<img src="docs/images/vima-step-detailed.png" align="left" width="300" alt="A step cell">
+ <img src="docs/images/step-detail-cc.png" align="left" width="300" alt="CC step detailed">
 
 - the cell shows the **step on-off button** (CC on / off for that step) and one tall cyan slider for the **CC value**.
 
