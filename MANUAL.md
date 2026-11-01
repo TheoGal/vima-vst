@@ -1,7 +1,7 @@
 # Vima User Manual
 
 <p align="center">
-  <img src="docs/images/via-screenshot.png" width="800" alt="Vima Screenshot"><br>
+  <img src="docs/images/vima-screenshot.png" width="800" alt="Vima Screenshot"><br>
   <em>Vima screensot</em>
 </p>
 
