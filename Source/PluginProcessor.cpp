@@ -217,14 +217,8 @@ void VimaProcessor::newPattern (int index)
 {
     if (index < 0 || index >= vima::numPatterns)
         return;
-    edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::Pattern(); }, "PATTERN NEW > PAT" + vima::patternLabel (index));
-}
-
-void VimaProcessor::clearPattern (int index)
-{
-    if (index < 0 || index >= vima::numPatterns)
-        return;
-    edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::blankPattern(); }, "CLEAR PATTERN " + vima::patternLabel (index));
+    // an empty pattern: every step off, every pattern setting and step value at init (SPEC.md 13.3)
+    edit (index, [index] (vima::Project& p) { p.patterns[(size_t) index] = vima::blankPattern(); }, "PATTERN NEW > PAT" + vima::patternLabel (index));
 }
 
 bool VimaProcessor::movePattern (int from, int to)

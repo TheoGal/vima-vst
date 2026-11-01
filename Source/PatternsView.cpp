@@ -553,7 +553,6 @@ void PatternsView::showSlotMenu (int pattern)
     m.addItem (5, pasteText, ctx.ui.patternClipKind != 0);
     m.addSeparator();
     m.addItem (6, "NEW PATTERN");
-    m.addItem (7, "CLEAR PATTERN");
     m.addItem (1, "LOAD PATTERN...");
     m.addItem (2, "SAVE PATTERN AS...");
     juce::Component::SafePointer<PatternsView> safe (this);
@@ -566,7 +565,6 @@ void PatternsView::showSlotMenu (int pattern)
         else if (r == 4) safe->copyTrack (pattern);
         else if (r == 5) safe->pasteTo (pattern, true);
         else if (r == 6) safe->fileActions.newPattern (pattern);
-        else if (r == 7) safe->fileActions.clearPattern (pattern);
     });
 }
 

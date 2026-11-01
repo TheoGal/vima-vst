@@ -301,7 +301,7 @@ Pattern blankPattern()
 }
 
 // A new Vima's pattern 1: track 1 with 16 steps on, tracks 2-8 empty (SPEC.md 4).
-// NEW PATTERN uses the init pattern (Pattern(): all tracks with their steps on).
+// NEW PATTERN gives an empty pattern (blankPattern).
 static Pattern startPattern()
 {
     Pattern p;

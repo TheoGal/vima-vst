@@ -92,8 +92,7 @@ public:
     void newMacros();                   // clears all 128 mappings and unlinks the mapping file
     bool savePattern (int index, const juce::File&);
     bool loadPattern (int index, const juce::File&);   // undoable
-    void clearPattern (int index);      // an empty (blank) pattern; undoable
-    void newPattern (int index);        // the init pattern (16 steps on); undoable
+    void newPattern (int index);        // an empty pattern (all steps off, settings at init); undoable
     juce::File presetFile;              // last saved / loaded preset (saved with the project)
     juce::File macroFile;               // last saved / loaded mapping set (saved with the project)
 

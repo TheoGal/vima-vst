@@ -113,19 +113,9 @@ void FileActions::savePresetAs()
 // ---- patterns
 void FileActions::newPattern (int index)
 {
-    confirm ("New pattern", "Reset pattern " + patternLabel (index) + " to the init pattern? You can undo this.", [this, index]
+    confirm ("New pattern", "Reset Pattern " + patternLabel (index) + "? You can undo this", [this, index]
     {
         ctx.proc.newPattern (index);
-        ctx.ui.selection = 0;
-        ctx.changed();
-    });
-}
-
-void FileActions::clearPattern (int index)
-{
-    confirm ("Clear pattern", "Clear pattern " + patternLabel (index) + "? It becomes an empty slot. You can undo this.", [this, index]
-    {
-        ctx.proc.clearPattern (index);
         ctx.ui.selection = 0;
         ctx.changed();
     });

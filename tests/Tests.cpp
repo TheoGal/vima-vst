@@ -1097,8 +1097,9 @@ void testPresets()
            "loading a pattern fills that slot and leaves the scale alone");
     check (proc->canUndo() && proc->performUndo() && get ([] (const Project& p) { return p.patterns[20].isEmpty(); }), "loading a pattern is undoable");
     proc->newPattern (7);
-    check (get ([] (const Project& p) { const auto& x = p.patterns[7]; return x.tracks[1].steps[3].velocity == 100 && x.tracks[1].steps[4].on && x.tracks[6].length == 16; }),
-           "pattern NEW gives the init pattern (16 steps on)");
+    check (get ([] (const Project& p) { const auto& x = p.patterns[7]; return x.isEmpty() && x.tracks[1].steps[3].velocity == 100 && x.tracks[6].length == 16
+                                                                          && x.tracks[6].division == 4 && x.tracks[6].swing == 0; }),
+           "pattern NEW gives an empty pattern: all steps off, settings and values at init");
     check (proc->performUndo() && get ([] (const Project& p) { return p.patterns[7].tracks[1].steps[3].velocity == 33; }), "pattern NEW is undoable");
     check (! proc->loadPattern (3, presetFile) && ! proc->loadPreset (patFile) && ! proc->loadMacros (patFile), "pattern files and other files are not mixed up");
     dir.deleteRecursively();
@@ -1113,7 +1114,7 @@ void testInitAndGate()
         bool othersEmpty = true;
         for (int t = 1; t < numTracks; ++t)
             for (auto& st : p.patterns[0].tracks[(size_t) t].steps) othersEmpty = othersEmpty && ! st.on && ! st.ccOn;
-        check (othersEmpty && Pattern().tracks[5].steps[31].on, "a new Vima: pattern 1 has track 1 full, tracks 2-8 empty; NEW PATTERN (the init pattern) has every track full");
+        check (othersEmpty, "a new Vima: pattern 1 has track 1 full, tracks 2-8 empty");
         check (s.on && s.pitchClass == 0 && s.octave == 3 && s.velocity == 100 && s.gate == 100 && s.probability == 100 && s.cc == 64,
                "init step: on, C in the middle C octave (middle C), velocity 100, gate 100 %, probability 100 %, CC 64");
         check (p.patterns[0].tracks[7].length == 16 && p.patterns[0].tracks[7].division == 4 && p.currentPattern == 0, "init track: length 16, 1/16, pattern 1");
@@ -2096,13 +2097,13 @@ int main (int argc, char** argv)
                 ctx.ui.track = 4;
                 ctx.changed();
                 check (findPill (*pv, "TRACK  05") != nullptr, "the patterns view TRACK is the step view's track");
-                // CLEAR PATTERN (slot menu): an empty slot, one undo step
+                // NEW PATTERN (slot menu and FILE): an empty slot, one undo step
                 const auto before5 = proc->read ([] (const Project& p) { return p.patterns[5]; });
-                proc->clearPattern (5);
-                check (proc->read ([] (const Project& p) { return p.patterns[5].isEmpty(); }) && proc->nextUndoLabel() == "CLEAR PATTERN 06",
-                       "CLEAR PATTERN makes the slot empty (one undo step)");
+                proc->newPattern (5);
+                check (proc->read ([] (const Project& p) { return p.patterns[5].isEmpty(); }) && proc->nextUndoLabel() == "PATTERN NEW > PAT06",
+                       "NEW PATTERN makes the slot empty (one undo step)");
                 proc->performUndo();
-                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[5], before5); }), "UNDO brings a cleared pattern back");
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[5], before5); }), "UNDO brings the pattern back after NEW");
                 ctx.ui.track = 2;
                 ctx.changed();
             }
