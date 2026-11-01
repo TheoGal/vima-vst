@@ -90,13 +90,14 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 - **The octave knob**.
 - **The slider**: velocity, gate or probability, as chosen with SLIDER, in that value's color. **Click and drag across several sliders to draw** a shape in one move.
 
- <br clear="left">
+ <br clear="left"><br />
  
 **CC mode:** 
 
- <img src="docs/images/step-detail-cc.png" align="left" width="300" alt="CC step detailed">
+ <img src="docs/images/step-detail-cc.png" align="left" width="100" alt="CC step detailed">
 
-- the cell shows the **step on-off button** (CC on / off for that step) and one tall cyan slider for the **CC value**.
+ - **The step on-off button**: click to switch the step's note on or off.
+ - **The CC value**: defines what CC value this step will send 
 
  <br clear="left"><br />
 
