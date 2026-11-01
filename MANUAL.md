@@ -1,6 +1,9 @@
 # Vima User Manual
 
-**[Screenshot]** The full window in the dark theme, note mode, with a busy pattern. *(main-dark-notes.png)*
+<p align="center">
+  <img src="docs/images/via-screenshot.png" width="800" alt="Vima Screenshot"><br>
+  <em>Vima screensot</em>
+</p>
 
 ## Vima - the VST step sequencer to kill all VST step sequencers
 
