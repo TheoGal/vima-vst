@@ -204,11 +204,11 @@ By default, **step operations** act on all the steps visible and inside the leng
 - Selected steps show as **white** LEDs.
 - CLEAR (in the operations panel) removes the selection. Switching tracks clears it too.
 
-**The scope rule.** Every step operation in Vima (copy, randomize, smooth, shift, curves...) works on **the selected steps, or on all steps of the track if nothing is selected**. The SELECTION box in the operations panel always tells you what that is, for example "LENGTH: 7, STEPS: 4".
+**The scope rule.** Every step operation in Vima (copy, randomize, smooth, shift, curves...) works on **the selected steps, or on all steps of the track if nothing is selected**. The SELECTION box in the operations panel always tells you what that is, for example "LENGTH: 7, STEPS: 6".
 
 <p align="center">
   <img src="docs/images/steps-selected.png" width="1000" alt="Steps selected">
-      <em>Steps 1,2,3,4,5 and 7 selected</em>
+      <em>Steps 1,2,3,4,5 and 7 selected, LENGTH: 7, STEPS: 6</em>
 </p>
 
 ### PARAMS section
