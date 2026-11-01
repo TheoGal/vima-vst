@@ -89,6 +89,49 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     githubBtn->onClick = [] { juce::URL ("https://github.com/TheoGal/vima-vst").launchInDefaultBrowser(); };
     githubBtn->setTitle ("Vima on GitHub");
 
+    // MANUAL: opens the PDF manual from the plugin's bundle (Contents/Resources/Vima Manual.pdf);
+    // without it, the online manual on GitHub (SPEC.md 14.8)
+    manualBtn = &pill();
+    manualBtn->radius = 6.0f;
+    manualBtn->look = githubBtn->look;
+    manualBtn->text = [] { return juce::String ("MANUAL"); };
+    manualBtn->font = githubBtn->font;
+    manualBtn->justification = juce::Justification::centredLeft;
+    manualBtn->textInset = 30;
+    manualBtn->icon = [] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+    {
+        // document icon: a page with a folded corner and three text lines
+        const auto page = juce::Rectangle<float> (b.getX() + 11.0f, b.getCentreY() - 7.0f, 11.0f, 14.0f);
+        juce::Path p;
+        p.startNewSubPath (page.getRight() - 4.0f, page.getY());
+        p.lineTo (page.getX(), page.getY());
+        p.lineTo (page.getX(), page.getBottom());
+        p.lineTo (page.getRight(), page.getBottom());
+        p.lineTo (page.getRight(), page.getY() + 4.0f);
+        p.lineTo (page.getRight() - 4.0f, page.getY());
+        p.lineTo (page.getRight() - 4.0f, page.getY() + 4.0f);
+        p.lineTo (page.getRight(), page.getY() + 4.0f);
+        for (int i = 0; i < 3; ++i)
+        {
+            const float y = page.getY() + 6.5f + (float) i * 2.5f;
+            p.startNewSubPath (page.getX() + 2.5f, y);
+            p.lineTo (page.getRight() - 2.5f, y);
+        }
+        g.setColour (c);
+        g.strokePath (p, juce::PathStrokeType (1.3f, juce::PathStrokeType::mitered, juce::PathStrokeType::square));
+        g.setFont (Fonts::sansSemi (11.0f).withExtraKerningFactor (0.1f));
+        g.drawText ("MANUAL", b.withTrimmedLeft (30.0f), juce::Justification::centredLeft, false);
+    };
+    manualBtn->onClick = []
+    {
+        // the plugin binary sits in <bundle>/Contents/<platform folder>/; the PDF in <bundle>/Contents/Resources
+        const auto bin = juce::File::getSpecialLocation (juce::File::currentExecutableFile);
+        const auto pdf = bin.getParentDirectory().getParentDirectory().getChildFile ("Resources").getChildFile ("Vima Manual.pdf");
+        if (pdf.existsAsFile()) pdf.startAsProcess();
+        else juce::URL ("https://github.com/TheoGal/vima-vst/blob/main/MANUAL.md").launchInDefaultBrowser();
+    };
+    manualBtn->setTitle ("Vima manual");
+
     doneBtn = &pill();
     doneBtn->radius = 6.0f;
     doneBtn->look = [] { const auto& t = Theme::current(); return Pill::filled (t.neutral, t.onNeutral); };
@@ -209,12 +252,14 @@ void SettingsDialog::resized()
     rows.clear();
     dividers.clear();
     const auto panel = panelBounds();
-    // footer: RESET DEFAULTS and DONE on the left, the VIMA ON GITHUB link on the right
+    // footer: RESET DEFAULTS and DONE on the left, the MANUAL and VIMA ON GITHUB links on the right
     auto footer = panel.withTop (panel.getBottom() - 60).reduced (20, 13);
     resetBtn->setBounds (footer.removeFromLeft (140));
     footer.removeFromLeft (8);
     doneBtn->setBounds (footer.removeFromLeft (90));
     githubBtn->setBounds (footer.removeFromRight (150));
+    footer.removeFromRight (4);
+    manualBtn->setBounds (footer.removeFromRight (100));
 
     auto body = panel.withTrimmedTop (54).withTrimmedBottom (60).reduced (20, 14);
     const int labelW = 150;

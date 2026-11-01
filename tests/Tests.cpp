@@ -414,6 +414,39 @@ void testPatterns()
         r.project->globals.chainLoop = false;
     }
     {
+        // a hand pick while the chain plays: a one-off insertion after the current entry (SPEC.md 7.2)
+        Runner r;
+        for (int p : { 0, 1, 2, 3, 7 }) fillOn (r.track (0, p), p);
+        for (int p : { 0, 1, 2, 3 }) r.project->globals.chain.add ({ (std::uint8_t) p, 1 });
+        r.project->globals.chainOn = true;
+        r.project->globals.quantize = Quantize::beat;   // ignored while the chain plays
+        std::vector<int> bars;
+        r.run (4.5);                 // into entry 2 (pattern 2)
+        r.engine.queuedPattern = 7;  // pick pattern 8
+        r.run (0.5);
+        const bool waiting = r.engine.insertPattern.load() == 7 && ! r.engine.insertPlaying.load() && r.engine.chainPosition.load() == 1;
+        for (int k = 0; k < 5; ++k) { r.run (1.0); }
+        bars.push_back (r.project->currentPattern);   // at 10.0 beats: bar 3
+        const bool playingRow = r.engine.insertPattern.load() == 7 && r.engine.insertPlaying.load() && r.engine.chainPosition.load() == 1;
+        r.run (4.0); bars.push_back (r.project->currentPattern);   // bar 4
+        r.run (4.0); bars.push_back (r.project->currentPattern);   // bar 5
+        check (waiting && playingRow, "insertion: waits after the current entry, then shows as playing between entries 2 and 3");
+        check (bars == std::vector<int> { 7, 2, 3 } && r.engine.insertPattern.load() < 0,
+               "insertion: 1, 2, then the picked pattern once, then the chain goes on with 3");
+    }
+    {
+        Runner r;   // LOOP OFF: the chain plays once, then keeps its last pattern
+        for (int p : { 0, 1 }) fillOn (r.track (0, p), p);
+        r.project->globals.chain.add ({ 0, 1 });
+        r.project->globals.chain.add ({ 1, 1 });
+        r.project->globals.chainOn = true;
+        r.project->globals.chainLoop = false;
+        r.run (9.0);
+        const int a = r.project->currentPattern;
+        r.run (8.0);
+        check (a == 1 && r.project->currentPattern == 1 && r.engine.chainPosition.load() < 0, "LOOP OFF: after the chain, its last pattern keeps playing");
+    }
+    {
         // the last-beat blink before a switch (SPEC.md 7.5)
         Runner r;
         fillOn (r.track (0, 2), 2);
@@ -2027,6 +2060,17 @@ int main (int argc, char** argv)
             ctx.ui.selectedPattern = 22;
             ctx.changed();
             snapshot (ed, outDir.getChildFile ("patterns-view-chain-playing.png"));
+            // a hand pick while the chain plays: pattern 08 inserted after entry 2, playing
+            proc->engine.insertPattern = 7;
+            proc->engine.insertPlaying = true;
+            proc->engine.insertProgress = 0.4f;
+            if (auto* pv = findChild<PatternsView> (ed)) { pv->resized(); check (pv->insertRowShownAfter() == 1, "a hand pick while the chain plays shows as a thin row after the current entry"); }
+            ctx.changed();
+            snapshot (ed, outDir.getChildFile ("patterns-view-chain-insert.png"));
+            proc->engine.insertPattern = -1;
+            proc->engine.insertPlaying = false;
+            proc->engine.insertProgress = 0.0f;
+            if (auto* pv = findChild<PatternsView> (ed)) pv->resized();
             proc->engine.isPlaying = false;
             proc->engine.chainPosition = -1;
             proc->edit (-1, [] (Project& p) { p.globals.chainOn = false; });

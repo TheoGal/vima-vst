@@ -23,6 +23,9 @@ void Engine::reset()
     lastPpqEnd = -1.0;
     lastCCSent.fill (-1);
     chainActive = false;
+    chainFinished = chainJoinPending = inserting = false;
+    insertPattern = -1;
+    insertPlaying = false;
     lastChainOnState = -1;
     for (auto& s : playStep) s = -1;
     isPlaying = false;
@@ -275,6 +278,9 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
         wasPlaying = false;
         lastPpqEnd = -1.0;
         chainActive = false;
+        chainFinished = chainJoinPending = inserting = false;
+        insertPattern = -1;
+        insertPlaying = false;
         lastCCSent.fill (-1);
         for (auto& s : playStep) s = -1;
         isPlaying = false;
@@ -303,6 +309,7 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
     {
         // Transport start: a chain starts from its first entry
         chainActive = chainEnabled;
+        chainFinished = chainJoinPending = inserting = false;
         if (chainActive)
         {
             chainIndex = 0;
@@ -312,22 +319,23 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
     }
     else if (jumped && chainActive)
     {
-        // Loop or locate while playing: the current chain entry starts again from here
+        // Loop or locate while playing: the current chain entry (or insertion) starts again from here
         chainEntryStart = ppq;
+        insertStart = ppq;
     }
-    else if (chainEnabled != chainActive)
+    else if (! chainEnabled)
     {
-        // Chain switched on or off while playing
-        if (chainEnabled)
-        {
-            chainActive = true;
-            chainIndex = 0;
-            queuedPattern = (int) g.chain.getReference (0).pattern;
-        }
-        else
-        {
-            chainActive = false;
-        }
+        // Chain switched off while playing
+        chainActive = chainFinished = chainJoinPending = inserting = false;
+    }
+    else if (! chainActive && ! chainFinished)
+    {
+        // Chain switched on while playing: its first entry is queued (quantize applies)
+        chainActive = true;
+        chainJoinPending = true;
+        inserting = false;
+        chainIndex = 0;
+        queuedPattern = (int) g.chain.getReference (0).pattern;
     }
     if (chainActive)
         chainIndex = juce::jlimit (0, g.chain.size() - 1, chainIndex);
@@ -359,7 +367,21 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
         bool fromChain = false;
 
         const int q = queuedPattern.load();
-        if (q >= 0 && q < numPatterns)
+        const bool picked = q >= 0 && q < numPatterns;
+        const bool chainRuns = chainActive && ! chainJoinPending;
+        if (chainRuns)
+        {
+            // The chain plays: a hand pick waits for the end of the current entry (or insertion)
+            // and then plays once as an insertion (SPEC.md 7.2)
+            const double end = inserting ? insertStart + juce::jmax (1.0e-6, project.patterns[(size_t) project.currentPattern].lengthPpq())
+                                         : chainEntryEnd (project);
+            if (end < ppqEnd)
+            {
+                switchAt = juce::jmax (end, a);
+                fromChain = true;
+            }
+        }
+        else if (picked)
         {
             double t;
             if (g.quantize == Quantize::off)
@@ -372,15 +394,6 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
                 target = q;
             }
         }
-        else if (chainActive)
-        {
-            const double end = chainEntryEnd (project);
-            if (end < ppqEnd)
-            {
-                switchAt = juce::jmax (end, a);
-                fromChain = true;
-            }
-        }
 
         renderSegment (project, project.currentPattern, a, switchAt, ppq, ppqPerSample, numSamples, out);
         renderCCSmoothing (project, project.currentPattern, a, switchAt, ppq, ppqPerSample, numSamples, out);
@@ -390,13 +403,23 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
             break;
 
         const int switchSample = juce::jlimit (0, numSamples - 1, (int) std::floor ((switchAt - ppq) / ppqPerSample + 1.0e-6));
-        if (fromChain)
+        if (fromChain && picked)
         {
+            // an insertion starts: the picked pattern plays once, the chain waits after its entry
+            int expected = q;
+            queuedPattern.compare_exchange_strong (expected, -1);
+            project.currentPattern = q;
+            inserting = true;
+            insertStart = switchAt;
+        }
+        else if (fromChain)
+        {
+            inserting = false;
             int next = chainIndex + 1;
             if (next >= g.chain.size())
             {
                 if (g.chainLoop) next = 0;
-                else { chainActive = false; next = g.chain.size() - 1; }
+                else { chainActive = false; chainFinished = true; next = g.chain.size() - 1; }   // LOOP OFF: keep playing
             }
             if (chainActive)
             {
@@ -411,54 +434,65 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
             queuedPattern.compare_exchange_strong (expected, -1);
             project.currentPattern = target;
             if (chainActive)
+            {
+                // the chain's first entry joins (chain switched on while playing)
                 chainEntryStart = switchAt;
+                chainJoinPending = false;
+                inserting = false;
+            }
             if (g.quantize == Quantize::off)
                 flushAllNotes (out, switchSample);
         }
         a = switchAt;
     }
 
-    if (chainActive && ! g.chain.isEmpty())
+    const int pending = queuedPattern.load();
+    const bool chainRuns = chainActive && ! chainJoinPending && ! g.chain.isEmpty();
+    const double curLen = juce::jmax (1.0e-6, project.patterns[(size_t) project.currentPattern].lengthPpq());
+    if (chainRuns)
     {
-        const double len = juce::jmax (1.0e-6, project.patterns[(size_t) project.currentPattern].lengthPpq());
         const auto& entry = g.chain.getReference (chainIndex);
         const double elapsed = ppqEnd - chainEntryStart;
         chainPosition = chainIndex;
-        chainRepeat = juce::jlimit (0, (int) entry.repeats - 1, (int) std::floor (elapsed / len));
-        chainEntryProgress = (float) juce::jlimit (0.0, 1.0, elapsed / (len * juce::jmax (1, (int) entry.repeats)));
+        chainRepeat = inserting ? (int) entry.repeats - 1 : juce::jlimit (0, (int) entry.repeats - 1, (int) std::floor (elapsed / curLen));
+        chainEntryProgress = inserting ? 1.0f : (float) juce::jlimit (0.0, 1.0, elapsed / (curLen * juce::jmax (1, (int) entry.repeats)));
+        // the insertion row in the chain list: the playing insertion, else a waiting hand pick
+        insertPlaying = inserting;
+        insertPattern = inserting ? project.currentPattern : (pending >= 0 && pending < numPatterns ? pending : -1);
+        insertProgress = inserting ? (float) juce::jlimit (0.0, 1.0, (ppqEnd - insertStart) / curLen) : 0.0f;
     }
     else
     {
         chainPosition = -1;
         chainEntryProgress = 0.0f;
+        insertPattern = -1;
+        insertPlaying = false;
+        insertProgress = 0.0f;
     }
 
-    // Next scheduled switch, for the last-beat blink (SPEC.md 7.5)
+    // Next scheduled switch, for the switch blink (SPEC.md 7.5)
     {
         const double beat = 4.0 / juce::jmax (1, host.timeSigDenominator);
-        const double curLen = project.patterns[(size_t) project.currentPattern].lengthPpq();
         double at = -1.0, playLen = 0.0;
         int next = -1;
-        const int q = queuedPattern.load();
-        if (q >= 0 && q < numPatterns)
+        if (chainRuns)
         {
-            if (g.quantize != Quantize::off)
+            at = inserting ? insertStart + curLen : chainEntryEnd (project);
+            playLen = inserting ? curLen : curLen * juce::jmax (1, (int) g.chain.getReference (chainIndex).repeats);
+            if (pending >= 0 && pending < numPatterns)
+                next = pending;   // an insertion comes next
+            else
             {
-                at = nextQuantizePoint (project, host, ppqEnd);
-                next = q;
-                playLen = curLen;
+                int ni = chainIndex + 1;
+                if (ni >= g.chain.size()) ni = g.chainLoop ? 0 : -1;
+                if (ni >= 0) next = (int) g.chain.getReference (ni).pattern;
             }
         }
-        else if (chainActive && ! g.chain.isEmpty())
+        else if (pending >= 0 && pending < numPatterns && g.quantize != Quantize::off)
         {
-            int ni = chainIndex + 1;
-            if (ni >= g.chain.size()) ni = g.chainLoop ? 0 : -1;
-            if (ni >= 0)
-            {
-                at = chainEntryEnd (project);
-                next = (int) g.chain.getReference (ni).pattern;
-                playLen = curLen * juce::jmax (1, (int) g.chain.getReference (chainIndex).repeats);
-            }
+            at = nextQuantizePoint (project, host, ppqEnd);
+            next = pending;
+            playLen = curLen;
         }
         if (next >= 0 && next != project.currentPattern && playLen > switchWarnBeats * beat + 1.0e-9 && at >= ppqEnd)
             beatsToSwitch = (at - ppqEnd) / beat;

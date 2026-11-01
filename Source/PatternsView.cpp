@@ -280,7 +280,9 @@ void ChainRow::paint (juce::Graphics& g)
     const auto e = gl.chain[index];
     // Cues like the slots (SPEC.md 7.2): the playing entry = brightest background and a play icon;
     // entries of the selected pattern = thick white outline
-    const bool cur = gl.chainOn && ctx.proc.engine.isPlaying && ctx.proc.engine.chainPosition.load() == index;
+    // during an insertion (a hand pick, 7.2) the entry before it is finished: not playing
+    const bool cur = gl.chainOn && ctx.proc.engine.isPlaying && ctx.proc.engine.chainPosition.load() == index
+                     && ! ctx.proc.engine.insertPlaying.load();
     const bool sel = (int) e.pattern == ctx.ui.selectedPattern;
     draw::tile (g, getLocalBounds().toFloat(), cur || dragging ? t.selected : t.tile, dragging ? t.dim2 : t.border, 6.0f);
     if (sel && ! dragging)
@@ -624,6 +626,14 @@ void PatternsView::refreshState()
     repaint();
 }
 
+int PatternsView::currentInsertAfter() const
+{
+    auto& e = ctx.proc.engine;
+    if (! e.isPlaying.load() || e.insertPattern.load() < 0) return -1;
+    const int cp = e.chainPosition.load();
+    return cp >= 0 && cp < chainRows.size() ? cp : -1;
+}
+
 int PatternsView::chainVisibleCount() const
 {
     return juce::jmax (1, (chainList.getHeight() + 4) / 40);   // rows of 36 px plus 4 px gaps
@@ -717,13 +727,23 @@ void PatternsView::resized()
         chainScroll.setRangeLimits (0.0, (double) n, juce::dontSendNotification);
         chainScroll.setCurrentRange ((double) chainFirst, (double) visible, juce::dontSendNotification);
     }
+    // a hand pick while the chain plays shows as a thin row after the current entry (SPEC.md 7.2)
+    insertRowAfter = currentInsertAfter();
+    insertRowArea = {};
     for (int i = 0; i < n; ++i)
     {
         auto* row = chainRows[i];
-        const bool shown = i >= chainFirst && i < chainFirst + visible;
+        const int y = list.getY() + (i - chainFirst) * 40 + (insertRowAfter >= 0 && i > insertRowAfter ? insertRowHeight + 4 : 0);
+        const bool shown = i >= chainFirst && i < chainFirst + visible && y + 36 <= list.getBottom();
         row->setVisible (shown);
         if (shown)
-            row->setBounds (list.getX(), list.getY() + (i - chainFirst) * 40, list.getWidth(), 36);
+            row->setBounds (list.getX(), y, list.getWidth(), 36);
+    }
+    if (insertRowAfter >= chainFirst && insertRowAfter < chainFirst + visible)
+    {
+        const int y = list.getY() + (insertRowAfter - chainFirst) * 40 + 40;
+        if (y + insertRowHeight <= list.getBottom())
+            insertRowArea = { list.getX(), y, list.getWidth(), insertRowHeight };
     }
 }
 
@@ -851,6 +871,37 @@ void PatternsView::paint (juce::Graphics& g)
     }
 
     draw::tile (g, aside.toFloat(), t.panel, t.border, 8.0f);
+    if (! insertRowArea.isEmpty())
+    {
+        // the insertion row: the hand-picked pattern, waiting (empty bar) or playing (play icon, bar fills)
+        auto& e = ctx.proc.engine;
+        const bool playing = e.insertPlaying.load();
+        draw::tile (g, insertRowArea.toFloat(), playing ? t.selected : t.tile, t.border, 4.0f);
+        auto r = insertRowArea.reduced (4, 0);
+        r.removeFromLeft (12);
+        if (playing)
+        {
+            const juce::Point<float> c ((float) r.getX() + 9.0f, (float) r.getCentreY());
+            juce::Path tri;
+            tri.addTriangle (c.x - 2.5f, c.y - 3.5f, c.x - 2.5f, c.y + 3.5f, c.x + 3.5f, c.y);
+            g.setColour (t.neutral);
+            g.fillPath (tri);
+        }
+        r.removeFromLeft (18 + 6 + 26 + 6);
+        g.setColour (t.text);
+        g.setFont (Fonts::monoSemi (10.0f));
+        g.drawText (patternLabel (e.insertPattern.load()), r.removeFromLeft (40), juce::Justification::centredLeft);
+        r.removeFromLeft (36);
+        r.removeFromRight (24 + 6);
+        auto prog = r.withSizeKeepingCentre (r.getWidth(), 3).toFloat();
+        g.setColour (t.border);
+        g.fillRoundedRectangle (prog, 1.5f);
+        if (playing)
+        {
+            g.setColour (t.neutral);
+            g.fillRoundedRectangle (prog.withWidth (prog.getWidth() * e.insertProgress.load()), 1.5f);
+        }
+    }
     // the chain state as a title (the switch is the header CHAIN): grey CHAIN OFF, white CHAIN ON
     {
         const bool on = ctx.globalsCopy().chainOn;

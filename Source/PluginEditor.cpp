@@ -444,7 +444,14 @@ void VimaEditor::timerCallback()
     if (patterns.isVisible())
     {
         const int cp = proc.engine.chainPosition.load();
-        const float pr = proc.engine.chainEntryProgress.load();
+        const float pr = proc.engine.chainEntryProgress.load() + proc.engine.insertProgress.load();
+        // the insertion row (a hand pick while the chain plays) appears / moves / goes: lay out again
+        const int insertKey = proc.engine.insertPattern.load() < 0 ? -1 : cp * 2 + (proc.engine.insertPlaying.load() ? 1 : 0);
+        if (insertKey != lastInsertKey)
+        {
+            lastInsertKey = insertKey;
+            patterns.resized();
+        }
         if (cp != lastChainPos || std::abs (pr - lastProgress) > 0.004f || queued)
         {
             lastChainPos = cp;

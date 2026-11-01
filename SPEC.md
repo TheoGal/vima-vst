@@ -197,7 +197,12 @@ Works like step copy / paste (9.1):
 - One play of a pattern lasts as long as its longest track (length x division).
 - The chain **does not follow the song position**: when the host starts, the chain always starts from its first entry, wherever the host's playhead is. A jump while playing (locate or host loop) restarts the current entry from there. Steps inside a pattern still follow the song position (3), so timing stays in sync. (Decided to keep it this way: a song-position chain would make editing patterns from the DAW awkward.)
 - Switching the chain on while playing queues its first entry (quantize applies).
-- A pattern picked by hand while the chain plays (play button, header, CC, macro) switches as usual and then plays for the length of the current chain entry; after that the chain goes on with its next entry.
+- **A hand pick while the chain plays is a one-off insertion** (play buttons, header arrows and picker, the Pattern macro, the pattern-change CC). Example: chain 1, 2, 3, 4; while 2 plays, pattern 8 is picked: when 2 finishes (with its repeats), 8 plays **once, for its own length**, then the chain continues with 3. Patterns that are in the chain work the same way (picking 4 while 2 plays: 2, 4, 3, 4).
+  - With the chain playing, a hand pick always waits for the **end of the current entry** (or of the insertion playing), whatever the Quantize setting (quantize still applies with the chain off, and when the chain is switched on while playing, its first entry waits for quantize).
+  - The chain list shows a **thin row** between the current entry and the next one: the picked pattern's number and a progress bar, empty while it waits (its slot's play button blinks as usual), brighter with a play icon and a filling bar while it plays; the entry before it is no longer shown as playing. The row disappears when the chain goes on. It is never a real chain entry and is not saved.
+  - Another pick before the insertion starts replaces it; a pick while it plays queues one more insertion after it.
+  - LOOP OFF, after the chain has played once (it keeps its last pattern): the chain is done, a pick switches as usual (quantize applies), and the chain does not start again by itself.
+  - The switch blink (7.5) announces the insertion and the return to the chain like any switch.
 - **Scrolling**: when the chain has more entries than fit, the list scrolls by whole entries: mouse wheel over the list, or the thin scroll bar on its right. + ADD scrolls to the new entry; dragging an entry past the top or bottom of the list scrolls it.
 - **Reordering**: drag an entry up or down the list (a grip on its left shows it can be dragged). A line shows where it will land. Playback keeps following the entry that is playing, wherever it moves. Removing an entry also keeps playback on the right entry.
 
@@ -339,7 +344,7 @@ Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same s
 - **CC OUTPUT**: Smooth between steps ON / OFF (10).
 - **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
 - No close (×) button: every setting applies the moment it is clicked, so **DONE** or a click outside the dialog closes it.
-- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **Vima ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
+- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
 
 ## 12. UI
 
@@ -618,20 +623,13 @@ The PDF manual is written from this spec. Material that belongs only in the manu
   > Vima was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
 
 - Name origin: Vima comes from the Greek "βήμα" (step); see the naming rule at the top.
-- **Plan (to revisit when MANUAL.md is finished): manual inside the plugin.** A PDF made from the finished manual is committed as `docs/Vima Manual.pdf` (checked before it ships) and the CI build copies it into the bundle's `Contents/Resources` folder (Windows and macOS). A **MANUAL** link in the Settings footer, next to Vima ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
+- **Plan (to revisit when MANUAL.md is finished): manual inside the plugin.** (The MANUAL link is already built; it falls back to the online manual until the PDF ships.) A PDF made from the finished manual is committed as `docs/Vima Manual.pdf` (checked before it ships) and the CI build copies it into the bundle's `Contents/Resources` folder (Windows and macOS). A **MANUAL** link in the Settings footer, next to Vima ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
 - **Plan (to revisit when MANUAL.md is finished):** the finished manual becomes the repo's `README.md`. On top, a short block: one screenshot, a Download line (latest CI build), a one-line "in testing" status. At the end, a short "For developers / license" section pointing to SPEC.md (build, CI, tests). The current README's install steps move into the manual's "Before you start". Screenshots in `docs/images/`. A PDF can be made from the same file.
 
 ## 15. Open questions
 
 ### 15.1 Decided, not built yet
 
-- **Hand picks while the chain plays become one-off insertions** (replaces 7.2 "a pattern picked by hand ... plays for the length of the current chain entry"). Example: chain 1, 2, 3, 4; while 2 plays, pattern 8 is picked: when 2 finishes (with its repeats), 8 plays **once, for its own length**, then the chain continues with 3.
-  - With the chain playing, a hand pick always waits for the **end of the current entry**, whatever the Quantize setting (quantize still applies with the chain off).
-  - The chain list shows a **thin row** between the current entry and the next one ("08" and a progress bar): empty while 8 waits (its slot's play button blinks as today), filling while it plays; it disappears when the chain goes on. It is never a real chain entry and is not saved.
-  - Another pick before 8 starts replaces it; a pick while 8 plays queues one more insertion after it.
-  - Patterns that are in the chain work the same way (picking 4 while 2 plays: 2, 4, 3, 4). All hand picks count: play buttons, header arrows and picker, the Pattern macro and the pattern-change CC.
-  - LOOP OFF, after the chain has finished (repeating its last pattern): the chain is done, a pick switches as today.
-  - The switch blink (7.5) announces the insertion and the return to the chain like any switch.
 - **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
 
 ### 15.2 Open
@@ -740,3 +738,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-30: Built: one shared track for the step view and the patterns view. Slot menu: PASTE names what it pastes (PASTE PATTERN 05 / PASTE ON TRACK 03); NEW PATTERN and CLEAR PATTERN (empty slot, asks first, undoable).
 - 2026-10-30: Switch blink: three pulses over the last three 8th notes (was two over the last beat); none for patterns of 1.5 beats or less. The pencil sits between the PATTERN box and CHAIN. The quick picker marks the playing pattern with a play icon (was an LED).
 - 2026-10-31: A new Vima / preset NEW: pattern 1 has track 1 full and tracks 2-8 empty; NOTE OUT on for every track (CC OUT off). NEW PATTERN still gives the init pattern (every track full).
+- 2026-11-01: Built: a hand pick while the chain plays is a one-off insertion after the current entry (shown as a thin row in the chain list), then the chain continues. Fix: LOOP OFF no longer restarts the chain after it has played once. Settings footer: MANUAL link (PDF in the bundle, else the online manual).

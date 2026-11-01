@@ -90,6 +90,14 @@ private:
     juce::Point<int> slotDragPos;
     bool slotDragCopy = false;
     int chainInsertIndex = -1;   // where a dragged slot would be added to the chain
+    // a hand pick while the chain plays: a thin row after the current entry (SPEC.md 7.2)
+    int currentInsertAfter() const;
+    int insertRowAfter = -1;
+    juce::Rectangle<int> insertRowArea;
+    static constexpr int insertRowHeight = 16;
+public:
+    int insertRowShownAfter() const { return insertRowAfter; }
+private:
     juce::Rectangle<int> left, aside, pagesLabel, slotsLabel, slotsArea, selectedBar, chainHeader, columnHeader, chainList, footer;
     int lastChainSize = -1;
     // chain list scrolling (by whole entries): the first entry shown, and the scroll bar

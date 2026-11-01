@@ -28,6 +28,7 @@ private:
     Pill* resetBtn = nullptr;
     Pill* doneBtn = nullptr;
     Pill* githubBtn = nullptr;   // opens the repository in the browser
+    Pill* manualBtn = nullptr;   // opens the PDF manual (or the online one)
     juce::Array<Pill*> themeBtns, midCBtns, rootBtns, userBtns, quantBtns;
     Pill* smoothBtn = nullptr;
     Pill* patternCCBtn = nullptr;

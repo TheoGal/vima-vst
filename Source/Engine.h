@@ -46,6 +46,11 @@ public:
     // pattern waiting for quantize); -1 when none, or when the playing pattern lasts 1 beat or less
     // (SPEC.md 7.5: the last-beat blink)
     std::atomic<double> beatsToSwitch { -1.0 };
+    // A hand pick while the chain plays is a one-off insertion after the current entry (SPEC.md 7.2):
+    // the inserted pattern (waiting or playing, -1 = none), whether it plays, and its progress
+    std::atomic<int> insertPattern { -1 };
+    std::atomic<bool> insertPlaying { false };
+    std::atomic<float> insertProgress { 0.0f };
     static constexpr double switchWarnBeats = 1.5;   // the blink before a switch: three 8th notes
 
     // Position of step n on the track's timeline (in steps), for a given length and direction
@@ -108,6 +113,10 @@ private:
     int chainIndex = 0;
     double chainEntryStart = 0.0;
     bool chainActive = false;
+    bool chainFinished = false;     // LOOP OFF: the chain has played once (keeps its last pattern)
+    bool chainJoinPending = false;  // chain switched on while playing: its first entry waits for quantize
+    bool inserting = false;         // a hand-picked pattern plays once between two chain entries
+    double insertStart = 0.0;
 
     juce::Random random;
 };
