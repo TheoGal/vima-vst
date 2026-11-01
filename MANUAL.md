@@ -302,13 +302,7 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 
 At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. 
 
-When switching patterns manually the **Quantize** setting (found in Settings window) is considered:
-
-- **OFF**: instantly, at the moment you pick it. Every track carries on at the right step, so the groove never stumbles.
-- **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
-- **PATTERN END**: when the playing pattern reaches its end.
-
-While a switch is waiting, the PATTERN box blinks. Picking another pattern before the switch replaces the waiting one. When the DAW is stopped, patterns switch at once. When the chain is about to move to another pattern, the PATTERN box number blinks three times, once per 8th note, just before the switch (not for patterns of 1.5 beats or less, which would blink all the time).
+When switching patterns manually the **Quantize** setting is considered. See also **Settings window**
 
 In the quick pattern pop-up, the playing pattern is outlined and marked with a small play icon.
 
