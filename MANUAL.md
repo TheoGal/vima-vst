@@ -186,7 +186,9 @@ Switching, copying and chaining patterns is covered later, in **Working with pat
 
 The **operations panel** at the bottom holds the tools that change many steps at once.
 
-> **[Screenshot]** The operations panel in note mode, labeled: SELECTION, PARAMS, RANGES, RANDOMIZE / SMOOTH / curves, SHIFT ALL.
+<p align="center">
+  <img src="docs/images/step-operations.png" width="800" alt="Step operations">
+</p>
 
 Two things decide what every function (copy, randomize, smooth, shift, curves...) changes:
 
