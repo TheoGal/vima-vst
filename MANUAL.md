@@ -213,12 +213,15 @@ By default, **step operations** act on all the steps visible and inside the leng
 
 ### PARAMS section
 
-You can select which parameters to "arm" for operation - for example you might want to randomize notes, but not octaves or step on - off and velocities but not anything else. 
-In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**. ON means the step's note on / off in note mode, its CC on / off in CC mode.
+ <img src="docs/images/params-section.png" align="left" width="220" alt="Params sections">
 
+You can select which parameters to "arm" for operation - for example you might want to randomize notes, but not octaves or step on - off and velocities but not anything else. 
+In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**.
 - Note mode and CC mode remember their own choice.
 
-PARAMS are shared by COPY, RANDOMIZE, SMOOTH and the CURVES. By default, note on - off and pitch are armed for quickly generating melodies.
+ <br clear="left"><br />
+
+PARAMS are shared by COPY-PASTE, RANDOMIZE, SMOOTH and the CURVES. By default, note on - off and pitch are armed for quickly generating melodies.
 
 ### COPY and PASTE steps parameters
 
