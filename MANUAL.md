@@ -332,24 +332,10 @@ Each cell shows:
 - a **thumbnail** of the pattern,
 - a thin line at the bottom if the pattern is used in the chain
 
-At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots are darker. The **selected** slot has a thick white outline. The selected cell is the one everything acts on: COPY, PASTE, + ADD PATTERN, the right-click menu and the FILE menu's PATTERN section.
+At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots are darker. The **selected** slot has a thick white outline.
 
 - **Click a cell** to select it. This does **not** play it.
 - **Click its play button** to select it and switch to it. A waiting pattern's play button blinks until the switch happens.
-
-### Moving and copying patterns by dragging
-
-- **Drag a slot** onto an **empty** slot to **move** the pattern there. The slot it came from becomes empty.
-- **Ctrl + drag** (Cmd + drag on a Mac) to **copy** it instead; the original stays.
-- **Drag a slot onto the chain list** to add it to the chain exactly where the line shows.
-
-While you drag, the empty slots get a grey outline and the one under the mouse a white one; stored slots get none, because a drag never overwrites a pattern. Hover a page button to switch pages on the way. A move or a copy is one UNDO step.
-
-A move changes your arrangement: the chain and any macros keep pointing at the pattern **numbers**. If the chain played pattern 05 and you move 05 to 12, the chain now plays the empty 05 until you change it.
-
-
-
-> **[Screenshot]** Dragging a pattern onto an empty slot. *(patterns-view-drag.png)*
 
 ### Reading the thumbnails
 
@@ -367,6 +353,8 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 
 ### Copying patterns and tracks
 
+There are multiple ways to move, copy and paste cells around.
+
 The bar under the slots copies whole patterns or single tracks:
 
 - Use the **TRACK** selector to define the working track for copying - pasting
@@ -376,11 +364,19 @@ The bar under the slots copies whole patterns or single tracks:
 - You can select a different track with one track **copied**, so you can copy track 1 of one pattern into track 3 of another or even copy paste tracks inside the same pattern.
 - **CLEAR**, or clicking the lit button, finishes. CLEAR never erases a pattern.
 
+You can use drag and drop on cells to move around or copy paste them. This works for whole patterns.
+
+- **Drag a cell** onto an **empty** cell to **move** the pattern there. The cell it came from becomes empty.
+- **Ctrl + drag** (Cmd + drag on a Mac) to **copy** it instead; the original stays.
+- **Drag a cell onto the chain list** to add it to the chain exactly where the line shows.
+
+**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons. This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
+
 You can also **right-click a **cell** to select it and open its menu:
 
-- **COPY PATTERN** and **COPY TRACK nn**, work the same as the buttons.
-- **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard.
-- **NEW PATTERN**: resets the pattern to an empty one (all steps off, every setting back to its default), after asking.
+- **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
+- **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a **one-off**: it pastes into the slot you right-clicked, then clears the clipboard.
+- **NEW PATTERN**: resets the pattern to an empty one (all steps off, every setting back to its default).
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 
 NEW PATTERN can be undone.
@@ -391,31 +387,28 @@ NEW PATTERN can be undone.
 
 Using the chain allows to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
 
-- **+ ADD PATTERN 05** adds the selected pattern at the end. You can also drag a slot onto the list to put it anywhere. The same pattern can appear many times.
+- **+ ADD PATTERN XX** adds the selected pattern at the end. You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
 - Each entry shows the pattern, its length in bars and a **repeat** count (- / +, up to 99). The playing entry is brighter, with a small play icon and a progress bar. Every entry of the **selected** pattern has a white outline, so you can see at a glance where it is used.
 - **Drag** an entry by its grip to reorder; **x** removes it; **CLEAR CHAIN** empties the chain.
-- The **CHAIN** button in the top bar starts and stops chain playback. The chain's title shows the state: **CHAIN OFF** (grey) or **CHAIN ON** (white). **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
+- The **CHAIN** button in the top bar starts and stops chain playback. **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
 - Long chains scroll with the mouse wheel or the scroll bar.
 
 >**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
 > **[Screenshot]** A long chain with the scroll bar. *(patterns-view-long-chain.png)*
 
-### Editing a pattern while another plays
+### Patterns edit mode
 
-Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button, between the PATTERN box and CHAIN. It turns pink when on.
+Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. Of course, you will often want to work on patterns while a chain is active so you need to have a pattern visible regardless if its currently playing or not. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button, at the top bar **patterns controls**. It turns pink when on.
 
 > **[Screenshot]** Pattern edit mode on: the pink pencil, the pink outline around the PATTERN box and PLAYING in place of the BPM. *(main-edit-mode.png)*
 
 While edit mode is on:
 
-- The **PATTERN** box (pink outline) chooses the pattern you edit. The arrows and the quick picker change it **at once**, whatever the Quantize setting, and the music is not touched. To change what plays, use the play buttons in the patterns view, the chain, the Pattern macro or a pattern change CC.
-- The BPM display shows **PLAYING** and the number of the pattern that is playing. Its PLAYING label blinks three times, once per 8th note, just before a switch to another pattern. **Click it** to jump to the playing pattern and edit that one.
-- The running step light only shows when you are editing the pattern that is playing.
-- Everything on screen works on the pattern you edit: steps, operations, undo, the FILE menu's PATTERN section, the Macros page and LEARN.
-- In the patterns view, the header arrows and quick picker select the slot too, and **STEPS** takes you to the selected slot, so you can pick a pattern there and go straight to editing it.
+- The **PATTERN** selection now chooses the pattern you edit (indicated by the pink outline). The arrows and the quick picker change it **at once**, whatever the Quantize setting, and the music is not touched. To change what plays, use the play buttons in the patterns view or wait for the chain.
+- The BPM display switches to a "currently playing pattern indication" - it shows the number of the pattern that is playing. **Click it** to jump to the playing pattern and edit that one.
 
-Switch the pencil off and the main window goes back to the pattern that is playing. Edit mode always starts off when you open a project: it is a way of working, not a setting.
+Switch the pencil off and the main window goes back to the pattern that is playing.
 
 
 ## Macros: automating Vima from your DAW
@@ -436,7 +429,6 @@ What can be mapped:
 - **Track:** Notes Out, CC Out; and per pattern: Length, Division, Direction, Swing, Scale On.
 - **Step:** Note On (note on / off), Pitch, Octave, Velocity, Gate, Probability, CC On (CC on / off), CC Value.
 
-The **Pattern** macro is special: turning it picks the next pattern, and the macro shows that pattern straight away, while the actual switch waits for the quantize point in the background.
 
 A **Pitch** macro follows the scale like the pitch knob: in C minor it moves through the 7 notes of the scale.
 
@@ -446,7 +438,7 @@ Open it with **MACROS** button in the top; green **STEPS** button gets you back 
 
 > **[Screenshot]** The Macros view with some mapped macros and the editor on the right. *(macros.png)*
 
-In **Macros view** 4 pages of 32 macros (1-32 ... 97-128) are displayed. Each macro cell shows its number, a knob with the current value, what it controls ("STEP 05 VEL") and where ("T04 · 06" = track 4, pattern 06).
+In **Macros view** 4 pages of 32 macros are displayed. Each macro cell shows its number, a knob with the current value, what it controls ("STEP 05 VEL") and where ("T04 · 06" = track 4, pattern 06).
 Next to the macros cells is the editor for the selected macro. Choose **TARGET** (GLOBAL / TRACK / STEP), **PARAMETER**, and the **TRACK**, **PATTERN** and **STEP** it points at. **CLEAR MAPPING** empties it. You can either manually assign a macro to a parameter using the editor or use the **Learn** function.
 
 ### LEARN: mapping by clicking
@@ -463,8 +455,6 @@ While learning, every mapped control shows an amber outline with its macro numbe
 > **[Screenshot]** The step view while learning, with amber outlines and macro numbers. *(main-learning.png)*
 
 Then, in your DAW, automate or map hardware knobs to the macros as you would with any plugin parameter.
-
-
 
 ## UNDO & REDO
 
