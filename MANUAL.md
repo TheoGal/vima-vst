@@ -343,7 +343,7 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 - A part with no steps on is not shown at all to save space.
 
 <p align="center">
-  <img src="docs/images/pattern-cell.png" width="450" alt="Pattern cell"><br>
+  <img src="docs/images/pattern-cell.png" width="400" alt="Pattern cell"><br>
   <em>A pattern cell with on steps in tracks 1, 2, 4 and 7, note out on in tracks 1 and 2, CC out on in track 1 and 7 and track 4 with a legnth of 32 steps</em>
 </p>
 
@@ -410,7 +410,7 @@ Normally the main window always shows the pattern that is playing: when the chai
 
 While edit mode is on:
 
-- The **PATTERN** selection now chooses the pattern you edit (indicated by the pink outline). The arrows and the quick picker change it **at once**, whatever the Quantize setting, and the music is not touched. To change what plays, use the play buttons in the patterns view or wait for the chain.
+- The **PATTERN** selection now chooses the pattern you edit (indicated by the pink outline). The arrows and the quick picker change it **at once**, whatever the Quantize setting, and the playing pattern does not change (to change it, use the play buttons in the patterns view or wait for the chain to progress).
 - The BPM display switches to a "currently playing pattern indication" - it shows the number of the pattern that is playing. **Click it** to jump to the playing pattern and edit that one.
 
 Switch the pencil off and the main window goes back to the pattern that is playing.
@@ -442,7 +442,7 @@ A **Pitch** macro follows the scale like the pitch knob: in C minor it moves thr
 Open it with **MACROS** button in the top; green **STEPS** button gets you back to the main window.
 
 <p align="center">
-  <img src="docs/images/vima-macros.png" width="300" alt="Macros view"><br>
+  <img src="docs/images/vima-macros.png" width="800" alt="Macros view"><br>
   <em>Macros view</em>
 </p>
 
@@ -460,13 +460,20 @@ The quickest way to map multiple macros to parameters is using the **Learn** fun
 
 While learning, every mapped control shows an amber outline with its macro number. A control can only have one macro: clicking a mapped one does nothing. **Right-click** a mapped control to free it.
 
-> **[Screenshot]** The step view while learning, with amber outlines and macro numbers. *(main-learning.png)*
+<p align="center">
+  <img src="docs/images/vima-learn-mode.png" width="800" alt="Parameters mapped in learn mode"><br>
+  <em>Macros view</em>
+</p>
 
 Then, in your DAW, automate or map hardware knobs to the macros as you would with any plugin parameter.
 
 ## UNDO & REDO
 
-UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). Right clicking UNDO performs a REDO
+<p align="center">
+  <img src="docs/images/undo-redo.png" width="800" alt="Undo">
+</p>
+
+UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). **Right clicking UNDO** performs a REDO
 
 Routing (channel, outputs, CC number), global settings, the chain and macro mappings are not part of undo.
 
