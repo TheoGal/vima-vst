@@ -178,8 +178,6 @@ Clicking on **PATTERN** opens a pop up to quickly select one of the 64 patterns.
 
 >**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain -  you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
 
-- A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives an empty pattern, like patterns 2-64.
-
 >**design choice:** Controls are visually grouped and color coded according to their scope
 >
 >- **White / neutral**: settings for the whole track, pattern or the whole instance (length, division, direction, swing, MIDI channel, scale).
@@ -283,7 +281,7 @@ Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with pre-fixed curves to
 
 - **Shapes**: **SINE**, **TRIANGLE**, **RAMP** and **SQUARE** draw one cycle of that shape over the steps in scope, between each armed value's range limits. Want a ramp down? RAMP, then INV.
 - With **ON** armed, the curves follow the **chance** setting: a step is on where the curve is above 100% minus the chance. With a 50% chance the upper half of the curve is on, with 70% everything above 30%, with 25% only the top quarter.
-- **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only PITCH to move the melody over a fixed rhythm.
+- **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only PITCH to move the melody over a fixed rhythm. Having applied a curve, **rotate** helps timing the curve's phase as desired.
 - **INV** (invert): flips the armed values around the middle of their range. With a CC range of 0-100, 30 becomes 70.
 
 Each press is one undo step.
@@ -346,7 +344,7 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 
 <p align="center">
   <img src="docs/images/pattern-cell.png" width="500" alt="Pattern cell"><br>
-  <em>A pattern cell with on steps in tracks 1,2 and 4, note out on in tracks 1 and 4 and CC out on only in track 1</em>
+  <em>A pattern cell with on steps in tracks 1, 2, 4 and 7, note out on in tracks 1 and 2, CC out on in track 1 and 7 and track 4 with a legnth of 32 steps</em>
 </p>
 
 ### Copying patterns and tracks
@@ -370,7 +368,11 @@ You can use drag and drop on cells to move around or copy paste them. This works
 
 >**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons. This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
 
-You can also **right-click a **cell** to select it and open its menu:
+You can also **right-click** a **cell** to select it and open its menu:
+
+<p align="center">
+  <img src="docs/images/vima-cell-rightclick.png" width="800" alt="Cell right click">
+</p>
 
 - **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
 - **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a **one-off**: it pastes into the slot you right-clicked, then clears the clipboard.
