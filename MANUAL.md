@@ -377,7 +377,7 @@ There are multiple ways to move, copy and paste cells around.
 3. You can also **right-click** a **cell** to select it and open its menu:
 
 <p align="center">
-  <img src="docs/images/vima-cell-rightclick.png" width="350" alt="Cell right click">
+  <img src="docs/images/vima-cell-rightclick.png" width="380" alt="Cell right click">
 </p>
 
 - **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
