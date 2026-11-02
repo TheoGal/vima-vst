@@ -26,7 +26,7 @@ I have been a music software - MIDI freak for a long time. Under the name "Softc
 
 So, even though I've dipped my toes into coding I am not a C++ developer. I always had ideas about what I want the software to do but never got round to actually learning a proper coding language (Lemur scripting was close to that though).
 
-**Vima was vibe-coded**:  I designed it, decision by decision, and an AI (Claude by Anthropic) wrote the code for JUCE, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in Vima was made on purpose by me. Throughout this manual I'll be explaining various design choices and the reasoning behind them. Furthermore, Vima is not processing any audio so there is no DSP processing which is something I would not trust to an AI without personal knowledge.
+**Vima was vibe-coded**: I designed it, decision by decision, and an AI (Claude by Anthropic) wrote the code for JUCE, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in Vima was made on purpose by me. Throughout this manual I'll be explaining various design choices and the reasoning behind them. Furthermore, Vima is not processing any audio so there is no DSP processing which is something I would not trust to an AI without personal knowledge.
 
 ## Installing and setting up
 
@@ -40,7 +40,7 @@ Vima is a VST3 plugin only. There is no Audio Unit version, because an AU plugin
 
 Your DAW lists Vima as an **instrument**. Put it on its own track, then route that track's MIDI output to the instruments you want to play.
 
->**design choice:** Vima is on purpose designed to be recognised by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "MIDI FX plugins" is a very limited format. 
+>**design choice:** Vima is on purpose designed to be recognized by DAWs as an **"instrument"** as this is the most compatible format to be able to get MIDI data out of a VST plugin and "MIDI FX plugins" is a very limited format. 
 
 **Ableton Live:** Add Vima to your project as an instrument track. On the target instrument track (the instrument you wish to control), set "MIDI From" to the Vima track, choose Vima in the lower chooser, and set monitoring to "In".
 Other DAWs have a similar "MIDI input from another track" option.
@@ -96,8 +96,8 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 
  <img src="docs/images/step-detail-cc.png" align="left" width="80" alt="CC step detailed">
 
- - **The step on-off button**: click to switch the step's note on or off.
- - **The CC value**: defines what CC value this step will send 
+ - **The step on-off button**: click to switch the step's CC on or off.
+ - **The CC value**: defines what CC value this step will send.
 
  <br clear="left"><br />
 
@@ -133,7 +133,7 @@ You can create up to 8 completely individual sequences by using Vima's **tracks*
 
 ### The track controls
 
-Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assigned and its **note** and **cc** modes. Its related parameters can be adjusted at the top of the plugin, in the **track controls**
+Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assigned and its **note** and **cc** modes. Its related parameters can be adjusted at the top of the plugin, in the **track controls**.
 
 <p align="center">
   <img src="docs/images/vima-track-controls.png" width="700" alt="Vima track controls">
@@ -161,9 +161,9 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 
  These parameters can be adjusted at the top of the plugin, in the **pattern controls** - Changing, copying and chaining patterns is covered in detail later, in **Working with patterns**.
 
-- **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view
-- **PATTERNS EDIT MODE** (pencil iocn): lets you edit one pattern while another one plays.
-- **CHAIN**, switches chain playback on and off
+- **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view.
+- **PATTERN EDIT MODE** (pencil icon): lets you edit one pattern while another one plays.
+- **CHAIN**: switches chain playback on and off.
 - **LENGTH** (4-32 steps): How many steps a pattern has. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms.
 - **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
 - **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once.
@@ -176,7 +176,7 @@ Clicking on **PATTERN** opens a pop up to quickly select one of the 64 patterns.
   <img src="docs/images/vima-patterns-quick.png" width="300" alt="Vima pattern pop up">
 </p>
 
->**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain -  you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
+>**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain - you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
 
 >**design choice:** Controls are visually grouped and color coded according to their scope
 >
@@ -239,7 +239,7 @@ Only the armed params are copied. So you can copy just the rhythm (ON), just the
 
  <img src="docs/images/ranges-section.png" align="left" width="400" alt="Ranges section">
 
-The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed.  Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, i.e. with a 50% chance, it's pure random if a step is on or off -  with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesn't necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
+The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed. Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, e.g. with a 50% chance, it's pure random if a step is on or off - with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesn't necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
 <br clear="left"><br />
 
 **Right-click** (or Alt + click) on a range bar resets it to its default.
@@ -248,7 +248,7 @@ The **PITCH** range follows the scale: with the scale on, it shows only the note
 
 Again, velocity and probability ranges do not include a 0 value. A MIDI note on message with velocity 0 is actually a Note off and a 0 probability is actually "never".
 
->**design choice:** Default ranges are not set to their full but rather to practical settings most possible to produce musically interesting patterns.
+>**design choice:** Default ranges are not set to their full but rather to practical settings most likely to produce musically interesting patterns.
 
 ### RANDOMIZE
 
@@ -265,18 +265,18 @@ Each press is one undo step, so you can press, listen, undo, press again - redo 
 ### SMOOTH
 
 When working with extreme ranges, it's quite often - especially with parameters like velocity and CC values which drive synthesizer parameters thus the actual sound produced - that a result is somewhat desired but makes too extreme changes to the sound. Think for example velocity or a CC value driving a filter cut off. Having used full range min - max values may result in too extreme changes. Surely you could just limit the min - max values but what if the random pattern produced is actually desired but just too extreme?<br/>  
-Meet **Smooth:** it pulls the armed values one step closer to their average. In other words, with a velocity range of 1 - 127, lower randomly produced values will rise to 64 by 1 while higher ones will fall to 64. Press once for a small nudge; **press and hold** to keep smoothing until the values meet the average. The whole operation is great for taming a wild randomize result without losing its character.
+Meet **Smooth:** it pulls the armed values one step closer to their average. In other words, with a velocity range of 1 - 127, lower randomly produced values will rise by 1 toward 64 while higher ones will fall by 1 toward 64. Press once for a small nudge; **press and hold** to keep smoothing until the values meet the average. The whole operation is great for taming a wild randomize result without losing its character.
 
-- Smooth in steps on - off works based on the "chance" setting: remember how I mentioned above that a 50% chance doesn't necessarily mean precisely half the steps will be "on". It might happen in a pattern with length 16, 7 steps are on or 10 steps are on. Smooth will add randomly an "on" step if the total is less than the chance, will subtract randomly a "on" step if the total is more than the chance. In our examples, the 7 on steps will become 8 and the 10 steps on will become 9.
+- Smooth in steps on - off works based on the "chance" setting: remember how I mentioned above that a 50% chance doesn't necessarily mean precisely half the steps will be "on". It might happen in a pattern with length 16, 7 steps are on or 10 steps are on. Smooth will add randomly an "on" step if the total is less than the chance, will subtract randomly an "on" step if the total is more than the chance. In our examples, the 7 on steps will become 8 and the 10 steps on will become 9.
 
 - Notes are smoothed in scale steps, across octave boundaries.
 - Smooth never goes outside the values you already have.
 
->**design choice:** When using smooth, the actual values of the armed parameters are taken into consideration excluding the steps which are "off". This is by design to actually smooth out (calculate an average) based on the "audible" parameters. Then the "smoothing" is applied to all steps (not only the on ones) so if you happen to switch a step to on, its parameters will be near the already "on" steps
+>**design choice:** When using smooth, the actual values of the armed parameters are taken into consideration excluding the steps which are "off". This is by design to actually smooth out (calculate an average) based on the "audible" parameters. Then the "smoothing" is applied to all steps (not only the on ones) so if you happen to switch a step to on, its parameters will be near the already "on" steps.
 
 ### Curves, rotate and invert
 
-Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with pre-fixed curves to apply to parameters.
+Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with predefined curves to apply to parameters.
 
 - **Shapes**: **SINE**, **TRIANGLE**, **RAMP** and **SQUARE** draw one cycle of that shape over the steps in scope, between each armed value's range limits. Want a ramp down? RAMP, then INV.
 - With **ON** armed, the curves follow the **chance** setting: a step is on where the curve is above 100% minus the chance. With a 50% chance the upper half of the curve is on, with 70% everything above 30%, with 25% only the top quarter.
@@ -305,7 +305,7 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 
 At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. 
 
-When changing patterns manually the **Quantize** setting is considered. See also **Settings window**
+When changing patterns manually the **Quantize** setting is considered. See also **Settings window**.
 
 ### The patterns view
 
@@ -341,14 +341,14 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 
 <p align="center">
   <img src="docs/images/pattern-cell.png" width="400" alt="Pattern cell"><br>
-  <em>A pattern cell with on steps in tracks 1, 2, 4 and 7, note out on in tracks 1 and 2, CC out on in track 1 and 7 and track 4 with a legnth of 32 steps</em>
+  <em>A pattern cell with on steps in tracks 1, 2, 4 and 7, note out on in tracks 1 and 2, CC out on in tracks 1 and 7 and track 4 with a length of 32 steps</em>
 </p>
 
 ### Copying patterns and tracks
 
 There are multiple ways to move, copy and paste cells around.
 
-1. The bar under the slots copies whole patterns or single tracks:
+1. The bar under the cells copies whole patterns or single tracks:
 
 <p align="center">
   <img src="docs/images/patt-copy-paste.png" width="600" alt="Pattern copy paste">
@@ -372,7 +372,7 @@ There are multiple ways to move, copy and paste cells around.
 - **Ctrl + drag** (Cmd + drag on a Mac) to **copy** it instead; the original stays.
 - **Drag a cell onto the chain list** to add it to the chain exactly where the line shows.
 
->**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons. This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
+>**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons). This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
 
 3. You can also **right-click** a **cell** to select it and open its menu:
 
@@ -381,7 +381,7 @@ There are multiple ways to move, copy and paste cells around.
 </p>
 
 - **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
-- **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a **one-off**: it pastes into the slot you right-clicked, then clears the clipboard.
+- **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a **one-off**: it pastes into the cell you right-clicked, then clears the clipboard.
 - **NEW PATTERN**: resets the pattern to an empty one (all steps off, every setting back to its default).
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 
@@ -394,7 +394,7 @@ NEW PATTERN can be undone.
   <em>The chain in patterns view</em>
 </p>
 
-Using the chain allows to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
+Using the chain allows you to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
 
 - **+ ADD PATTERN XX** adds the selected pattern at the end.
 - You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
@@ -410,11 +410,11 @@ Using the chain allows to chain patterns played one after the other to create lo
 - Long chains scroll with the mouse wheel or the scroll bar.
 - While a chain is active you can experiment by clicking to play patterns which are not currently in the chain. They will be temporarily inserted and played at the next "switch" of the chain. Once they reach their end, the chain keeps going from where it was interrupted.
 
->**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
+>**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple.
 
 ### Pattern edit mode
 
-Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. Of course, you will often want to work on patterns while a chain is active so you need to have a pattern visible regardless if its currently playing or not. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button, at the top bar **patterns controls**. It turns pink when on.
+Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. Of course, you will often want to work on patterns while a chain is active so you need to have a pattern visible regardless of whether it's currently playing or not. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button, at the top bar **pattern controls**. It turns pink when on.
 
 <p align="center">
   <img src="docs/images/patt-edit-mode.png" width="350" alt="Patterns edit mode"><br>
@@ -486,7 +486,7 @@ Then, in your DAW, automate or map hardware knobs to the macros as you would wit
   <img src="docs/images/undo-redo.png" width="400" alt="Undo">
 </p>
 
-UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). **Right clicking UNDO** performs a REDO
+UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). **Right-clicking UNDO** performs a REDO.
 
 Routing (channel, outputs, CC number), global settings, the chain and macro mappings are not part of undo.
 
@@ -495,7 +495,7 @@ Routing (channel, outputs, CC number), global settings, the chain and macro mapp
 
 By default, Vima simply follows your DAW start - stop and the **steps follow the song position.** Step 1 of every track falls on bar 1, beat 1 of your song and on every repeat of the track's length after it. Start the DAW anywhere and every track is on the right step.
 
-The **transport** section of Vima at the top displays your DAW's BPM. The **play - stop** has been designed to understand your intentions without complicated options ("smart" following - or not - your DAW transport)
+The **transport** section of Vima at the top displays your DAW's BPM. The **play - stop** has been designed to understand your intentions without complicated options ("smart" following - or not - your DAW transport).
 
 - Press **stop while the DAW plays**: Vima stops and stays stopped (the icon turns **amber**: "held") until you press its play button again, even if the DAW stops and starts in between. Handy for muting the whole sequencer without touching the DAW.
 - Press **play while the DAW is stopped**: Vima runs on its own from step 1 at the DAW's tempo, to audition ideas without starting the song.
@@ -539,12 +539,12 @@ Clicking the **file** button (with a folder icon) at the top of the plugin opens
 
 **PATTERN**: one single pattern.
 
-- Works on the **selected pattern** (the one in the PATTERN box, or the selected slot in the patterns view).
+- Works on the **selected pattern** (the one in the PATTERN box, or the selected cell in the patterns view).
 - Holds the pattern's 8 tracks: their steps and their length, division, direction, swing and use scale. No routing, no scale: a loaded pattern plays in the current scale.
-- **NEW** resets the pattern (16 steps on, ready to edit) and asks first. **LOAD...** asks before replacing a pattern that has steps. **SAVE AS...** saves it. Both NEW and LOAD can be undone.
+- **NEW** resets the pattern to an empty one (all steps off, every setting back to its default) and asks first. **LOAD...** asks before replacing a pattern that has steps. **SAVE AS...** saves it. Both NEW and LOAD can be undone.
 - Files end in **.vimapattern**, in Documents/Vima/Patterns.
 
-You can also save or load a pattern by right-clicking a slot in the patterns view.
+You can also save or load a pattern by right-clicking a cell in the patterns view.
 
 **MACROS**: all 128 macro mappings, as a set.
 
@@ -575,12 +575,12 @@ The **settings** pop up opens with the **SETTINGS** button (the gear icon). Clic
 
 **USER SCALE**: build your own scale. Choose the **root** and switch the 12 notes on or off (the root is always on). Then pick **USER** in the SCALE pop up. The root here is the same as the one in the SCALE pop up.
 
-**CC OUTPUT: Smooth between steps**: By default, each CC step sends a CC value so when two adjacent steps have a big difference in values the controlled parameter "jumps". Target a synth parameter with the CC steps and you'll see at once what I mean.  When "smoothing" is on, each track's CC glides from one CC step's value to the next instead of jumping with a linear interpolation. Which mode you prefer depends on the actual synth parameter controlled and personal taste - goal for the resulting sound.
+**CC OUTPUT: Smooth between steps**: By default, each CC step sends a CC value so when two adjacent steps have a big difference in values the controlled parameter "jumps". Target a synth parameter with the CC steps and you'll see at once what I mean.  When "smoothing" is on, each track's CC glides from one CC step's value to the next instead of jumping with a linear interpolation. Which mode you prefer depends on the actual synth parameter controlled and personal taste and the sound you're after.
 
 **PATTERN CHANGE**:
 **From incoming CC**: You can use this setting to switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.
 
-**Quantize changes to**: OFF, 1 BEAT, 1 BAR or PATTERN END. This controls how the patterns switch when selected manually
+**Quantize changes to**: OFF, 1 BEAT, 1 BAR or PATTERN END. This controls how the patterns switch when selected manually:
 - **OFF**: instantly, at the moment you pick it. Every track carries on at the right step, so the groove never stumbles.
 - **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
 - **PATTERN END**: when the playing pattern reaches its end.
@@ -598,20 +598,28 @@ Except for the theme and middle C, these settings belong to each Vima in your pr
 | Knobs and sliders | mouse wheel | one value per notch |
 | Knobs and sliders | double-click | type a value |
 | Knobs and sliders | right-click or Alt + click | reset to default |
+| Step sliders | click | the value jumps to the click |
 | Step sliders | click and drag across steps | draw values |
+| Step sliders | Shift + drag | fine control of that one step |
 | Step buttons | click / drag across | switch on or off / paint |
 | LED bar | click / drag | select one step / a run |
 | LED bar | Ctrl + click / Ctrl + drag | add or remove steps / add a run |
 | SMOOTH | press and hold | keep smoothing |
 | SHIFT | drag / wheel | shift values (springs back to 0) |
 | DIVISION, SCALE | mouse wheel | next / previous value |
+| Range bars | click / drag | move the nearest handle |
+| Range bars | Shift + drag | fine control |
 | Range bars | right-click or Alt + click | reset to default |
-| Pattern slot | click / play button | select / select and switch |
-| Pattern slot | right-click | copy, paste, new, clear, load, save menu |
-| Pattern slot | drag / Ctrl + drag | move / copy to an empty slot |
-| Pattern slot | drag onto the chain | add it to the chain there |
+| PATTERN box | click the number / the arrows | quick picker / previous or next pattern |
+| Pencil | click | pattern edit mode on / off |
+| Pattern cell | click / play button | select / select and switch |
+| Pattern cell | right-click | copy, paste, new, load, save menu |
+| Pattern cell | drag / Ctrl + drag | move / copy to an empty cell |
+| Pattern cell | drag onto the chain | add it to the chain there |
+| Page buttons | hover while dragging a cell | switch page |
 | Chain entry | drag the grip | reorder |
 | PLAYING (edit mode) | click | edit the playing pattern |
+| UNDO | hover | shows the next undo and redo |
 | UNDO | right-click | REDO the last UNDO |
 | While LEARN is on | click / right-click a control | map it / free it |
 
