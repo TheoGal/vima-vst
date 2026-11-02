@@ -237,7 +237,7 @@ Only the armed params are copied. So you can copy just the rhythm (ON), just the
 
 ### RANGES section
 
- <img src="docs/images/ranges-section.png" align="left" width="400" alt="Ranges section">
+ <img src="docs/images/ranges-section.png" align="left" width="300" alt="Ranges section">
 
 The range bars define the min - max values a parameter can acquire after an operation. Ranges of values that are not armed are dimmed. Obviously steps on-off do not have a range bar - instead they feature a **"chance"** parameter which defines how probable it is to have a step "on" after a randomization, e.g. with a 50% chance, it's pure random if a step is on or off - with a 70% chance steps are more likely to be "on". Keep in mind, a 50% chance doesn't necessarily mean 50% of the steps will be on, each step is randomized independently *(this will be important to remember further down the operations)*
 <br clear="left"><br />
