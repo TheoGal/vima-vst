@@ -506,10 +506,10 @@ The **transport** section of Vima at the top displays your DAW's BPM. The **play
 Vima can be set to send note messages in a defined scale. Clicking the **SCALE** button on the right opens a pop up to pick a root and one of 13 scales or your own USER scale (defined in Settings window). The mouse wheel over it steps through the scales.
 
 <p align="center">
-  <img src="docs/images/scale-popup.png" width="380" alt="Scale">
+  <img src="docs/images/scale-popup.png" width="350" alt="Scale">
 </p>
 
-**Design choice: why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. For tracks that should ignore it just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
+>**Design choice: why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. For tracks that should ignore it just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
 
 
 
@@ -560,9 +560,16 @@ Your DAW's own preset system (for example Live's .adv or .vstpreset files) also 
 
 The **settings** pop up opens with the **SETTINGS** button (the gear icon). Click **DONE** or anywhere outside it to close.
 
-> **[Screenshot]** The Settings dialog, dark and light. *(settings.png, settings-light.png)*
+<p align="center">
+  <img src="docs/images/vima-settings.png" width="600" alt="Settings pop">
+</p>
 
 **APPEARANCE: Theme**, DARK or LIGHT. This is **your** preference: it applies to every Vima in every project, and switching it in one Vima switches all open ones.
+
+<p align="center">
+  <img src="docs/images/vima-light.png" width="600" alt="Light theme"><br>
+  <em>OF COURSE I would include one</em>
+</p>
 
 **MIDDLE C: Middle C is** C3, C4 or C5. This only changes how octaves are **numbered** on screen (MIDI note 60 is always middle C), so Vima can match your DAW: C3 for Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 for Reaper and Tracktion; C5 for FL Studio, Cakewalk and Renoise. Like the theme, it is your preference for every Vima.
 
@@ -578,10 +585,9 @@ The **settings** pop up opens with the **SETTINGS** button (the gear icon). Clic
 - **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
 - **PATTERN END**: when the playing pattern reaches its end.
 
-
 **RESET DEFAULTS** puts everything in this dialog back to its starting value. The theme and middle C are reset for every Vima; the scale you selected is kept.
 
-Except for the theme and middle C, these settings belong to each Vima in your project and are saved with the project, but not in presets: a preset is about the music, these are about how the instance is set up.
+Except for the theme and middle C, these settings belong to each Vima in your project and are saved with the project, but not in presets: a preset is about the MIDI output setup, these are about how the instance is set up.
 
 
 ## Appendix: Mouse quick reference
