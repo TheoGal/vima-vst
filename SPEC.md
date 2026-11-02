@@ -4,7 +4,7 @@ Name: **Vima** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
 
 **Naming rule**: everywhere the plugin is called by its English name, **Vima** (product name, host plugin list, file names, folders, manual text, README, release notes). The Greek "βήμα" appears only in these places: when explaining the origin of the name (as above), as the wordmark in the single-row header of the patterns view and the Macros page, and as the square **β** logo in the step view's top band.
 
-Status: **in testing**. Every push is built by GitHub Actions; testers use the CI builds. This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the user manual, MANUAL.md (written for musicians; keep it in step with this spec).
+Status: **released (1.0.0)**. Every push is built by GitHub Actions; releases are published from version tags (14.2). This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the user manual, MANUAL.md (written for musicians; keep it in step with this spec).
 
 Last updated: 2026-10-24 (checked against the code at that date).
 
@@ -18,7 +18,7 @@ Last updated: 2026-10-24 (checked against the code at that date).
 ## 2. Plugin format and hosting
 
 - Built with JUCE and CMake (details in 14).
-- Format: **VST3** only. Windows (x64) is the primary target. During testing **only the Windows VST3 is built**; the macOS (universal: Apple Silicon and Intel) and Linux builds are postponed until the Windows version is final and a release is called. The developer has no Mac. There is no Audio Unit version: an AU cannot send MIDI out of a plugin.
+- Format: **VST3** only. Built for **Windows (x64)**, **macOS (universal: Apple Silicon and Intel)** and **Linux (x64)**. Windows is the primary target (the developer has no Mac). There is no Audio Unit version: an AU cannot send MIDI out of a plugin.
 - The host sees Vima as an **instrument (synth) plugin**, not a MIDI effect.
 - It produces no audio. It outputs MIDI only (notes and CC). A silent stereo output bus exists only so hosts accept it as an instrument.
 - Incoming MIDI is used only for pattern change by CC (6, 7.3); it is not passed through.
@@ -563,8 +563,11 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Runs on every push to main, on pull requests and on demand. A tag like `v1.0.0` also publishes both zips to a GitHub Release.
 - **tests** (Linux): builds and runs the test harness under xvfb; uploads the rendered screenshots as "Vima-test-screenshots".
 - **windows**: builds the x64 VST3, runs pluginval (strictness 10; does not fail the build), uploads the folder **Vima-Windows-x64** (the download is a single zip; uploading a zip gave a zip inside a zip).
-- **macos** (disabled with `if: false` during testing; re-enabled for the release): builds a universal VST3 (macOS 10.13+), signs it ad-hoc (needed for Apple Silicon; not notarized), runs pluginval, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` plus INSTALL-macOS.txt (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
-- Install: Windows `C:\Program Files\Common Files\VST3\`; macOS `/Library/Audio/Plug-Ins/VST3/`, then `xattr -dr com.apple.quarantine` on the bundle.
+- **macos**: builds a universal VST3 (macOS 10.13+), signs it ad-hoc (needed for Apple Silicon; not notarized), runs pluginval, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` plus INSTALL-macOS.txt (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
+- **linux**: builds the x64 VST3 on ubuntu (same JUCE dependencies as the tests job), runs pluginval under xvfb (does not fail the build), uploads the folder **Vima-Linux-x64** (with INSTALL-Linux.txt).
+- **The manual inside the bundle**: a CMake post-build step copies `docs/Vima Manual.pdf` into each bundle's `Contents/Resources` (all three platforms, before the macOS signing). The PDF is built from MANUAL.md with `tools/manual-pdf/make_pdf.py` (Markdown, then Chromium print to A4; the layout lives only there) and committed: rebuild and commit it after editing MANUAL.md.
+- **release** (only for a tag like `v1.0.0`, after windows, macos and linux pass): one GitHub Release named "Vima v1.0.0" with Vima-Windows-x64.zip, Vima-macOS-plugin.zip and Vima-Linux-x64.zip and short install notes. The version in CMakeLists.txt matches the tag.
+- Install: Windows `C:\Program Files\Common Files\VST3\`; macOS `/Library/Audio/Plug-Ins/VST3/`, then `xattr -dr com.apple.quarantine` on the bundle; Linux `~/.vst3/` (or `/usr/lib/vst3/`).
 
 ### 14.3 Tests
 
@@ -623,14 +626,14 @@ The PDF manual is written from this spec. Material that belongs only in the manu
   > Vima was vibe-coded: I am not a C++ developer. I designed it, decision by decision, and an AI (Claude, by Anthropic) wrote the code, which I tested in real sessions and sent back with notes until it behaved the way I wanted. Every choice you will find in this manual was made on purpose.
 
 - Name origin: Vima comes from the Greek "βήμα" (step); see the naming rule at the top.
-- **Plan (to revisit when MANUAL.md is finished): manual inside the plugin.** (The MANUAL link is already built; it falls back to the online manual until the PDF ships.) A PDF made from the finished manual is committed as `docs/Vima Manual.pdf` (checked before it ships) and the CI build copies it into the bundle's `Contents/Resources` folder (Windows and macOS). A **MANUAL** link in the Settings footer, next to Vima ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
+- **Manual inside the plugin (built).** The PDF made from MANUAL.md is committed as `docs/Vima Manual.pdf` and copied into the bundle's `Contents/Resources` folder on every platform (14.2). A **MANUAL** link in the Settings footer, next to Vima ON GITHUB, with a small document icon, finds the plugin's own bundle and opens the PDF in the default PDF viewer; if the PDF is missing, it opens the online manual on GitHub instead.
 - **Plan (to revisit when MANUAL.md is finished):** the finished manual becomes the repo's `README.md`. On top, a short block: one screenshot, a Download line (latest CI build), a one-line "in testing" status. At the end, a short "For developers / license" section pointing to SPEC.md (build, CI, tests). The current README's install steps move into the manual's "Before you start". Screenshots in `docs/images/`. A PDF can be made from the same file.
 
 ## 15. Open questions
 
 ### 15.1 Decided, not built yet
 
-- **Linux VST3 build (postponed until the release is called, together with re-enabling macOS).** Add a Linux job to the CI next to Windows and macOS. It builds the Vima VST3 on ubuntu with the same JUCE dependencies the tests job already installs, and uploads `Vima.vst3` as an artifact, zipped like the other platforms. Install location for users: `~/.vst3`. Main hosts to test in: Bitwig Studio and Reaper.
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -744,3 +747,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-02: RANGES bars (ON chance and min / max): Shift + drag is fine control (relative, 3 times slower, no jump).
 - 2026-11-02: MACROS toggles (a second click returns to the step view). FILE and the TRACK boxes: a second click closes their menu; fix: the button no longer stays in its hover look after the menu closes.
 - 2026-11-02: Fix: the LEARN frame in the step view started below the header line and cut through the top band; it now covers the whole window. Header CHAIN can be learned from the step view (it was outside the learn layer).
+- 2026-11-03: Release 1.0.0. Builds for Windows, macOS and Linux (macOS re-enabled, Linux job added). The PDF manual (docs/Vima Manual.pdf, made with tools/manual-pdf) ships inside every bundle for the Settings MANUAL link. A version tag publishes one GitHub Release with the three zips.

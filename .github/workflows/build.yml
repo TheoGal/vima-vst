@@ -1,8 +1,9 @@
 name: Build
 
-# Builds VIMA as VST3 for Windows (x64) and macOS (universal: Apple Silicon and Intel)
+# Builds Vima as VST3 for Windows (x64), macOS (universal: Apple Silicon and Intel) and Linux (x64)
 # on every push, runs the test harness on Linux, and checks the plugins with pluginval.
-# Pushing a tag like v1.0.0 also attaches both zips to that GitHub Release.
+# The PDF manual (docs/Vima Manual.pdf) is copied into each bundle's Contents/Resources by CMake.
+# Pushing a tag like v1.0.0 publishes a GitHub Release with the three zips (the release job).
 on:
   push:
     branches: [main]
@@ -95,16 +96,12 @@ jobs:
           name: Vima-Windows-x64
           path: Vima-Windows-x64/
 
-      - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
-        uses: softprops/action-gh-release@v3
+      - uses: actions/upload-artifact@v7.0.1
         with:
-          files: Vima-Windows-x64.zip
+          name: release-windows
+          path: Vima-Windows-x64.zip
 
-  # Postponed during testing: only the Windows VST3 is built until the release is called.
-  # Re-enable by removing the "if: false" line.
   macos:
-    if: false
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v7
@@ -147,7 +144,7 @@ jobs:
           cp LICENSE README.md "$OUT"/ 2>/dev/null || true
           cp Resources/fonts/OFL-IBMPlex.txt "$OUT"/
           cat > "$OUT/INSTALL-macOS.txt" <<'EOF'
-          VIMA for macOS (Apple Silicon and Intel)
+          Vima for macOS (Apple Silicon and Intel)
 
           1. Copy Vima.vst3 to /Library/Audio/Plug-Ins/VST3/
              (the main Library folder at the top of the disk; macOS asks for your password)
@@ -159,7 +156,7 @@ jobs:
 
           3. Restart your DAW.
 
-          VIMA is VST3 only: the Audio Unit format cannot send MIDI out of a plugin.
+          Vima is VST3 only: the Audio Unit format cannot send MIDI out of a plugin.
           EOF
           ditto -c -k --keepParent "$OUT" "Vima-macOS-plugin.zip"
 
@@ -171,8 +168,89 @@ jobs:
           name: Vima-macOS-universal
           path: Vima-macOS-plugin.zip
 
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-macos
+          path: Vima-macOS-plugin.zip
+
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: Install JUCE dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y -q libasound2-dev libfreetype-dev libfontconfig1-dev libx11-dev \
+            libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev libgl1-mesa-dev xvfb ninja-build zip
+
+      - name: Configure
+        run: cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --parallel --target Vima_VST3
+
+      - name: Validate with pluginval
+        continue-on-error: true
+        run: |
+          curl -sSfLo pluginval.zip https://github.com/Tracktion/pluginval/releases/download/v1.0.4/pluginval_Linux.zip
+          unzip -q pluginval.zip
+          set +e
+          xvfb-run -a ./pluginval --strictness-level 10 --validate-in-process --output-dir pluginval-log build/Vima_artefacts/Release/VST3/Vima.vst3 2>&1 | tee pluginval-out.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ]; then
+            grep -E "!!!|FAILED|[Ff]ailed|ERROR|Error" pluginval-out.txt | head -25 | while read -r l; do echo "::warning title=pluginval Linux::$l"; done
+            echo "::warning title=pluginval Linux::exit code $code"
+            exit 1
+          fi
+          echo "::notice title=pluginval Linux::passed, strictness 10"
+
+      - name: Package
+        run: |
+          OUT=Vima-Linux-x64
+          mkdir -p "$OUT"
+          cp -r build/Vima_artefacts/Release/VST3/Vima.vst3 "$OUT/"
+          cp LICENSE README.md "$OUT"/ 2>/dev/null || true
+          cp Resources/fonts/OFL-IBMPlex.txt "$OUT"/
+          printf 'Vima for Linux (x64)\n\nCopy the Vima.vst3 folder to ~/.vst3/ (just for you) or /usr/lib/vst3/ (all users).\nCreate the folder if it does not exist. Then rescan plugins in your DAW.\n' > "$OUT/INSTALL-Linux.txt"
+          zip -qr "$OUT.zip" "$OUT"
+
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: Vima-Linux-x64
+          path: Vima-Linux-x64/
+
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: release-linux
+          path: Vima-Linux-x64.zip
+
+  # A tag like v1.0.0: one GitHub Release with the three zips, once all builds passed
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [windows, macos, linux]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v8
+        with:
+          pattern: release-*
+          merge-multiple: true
+          path: release
+
       - name: Publish release
-        if: startsWith(github.ref, 'refs/tags/v')
         uses: softprops/action-gh-release@v3
         with:
-          files: Vima-macOS-plugin.zip
+          name: Vima ${{ github.ref_name }}
+          files: |
+            release/Vima-Windows-x64.zip
+            release/Vima-macOS-plugin.zip
+            release/Vima-Linux-x64.zip
+          body: |
+            Vima is an 8-track melodic MIDI step sequencer (VST3) for your DAW.
+
+            Downloads:
+            - **Windows (x64):** Vima-Windows-x64.zip. Copy the Vima.vst3 folder to C:\Program Files\Common Files\VST3\
+            - **macOS (Apple Silicon and Intel):** Vima-macOS-plugin.zip. Not notarized: see INSTALL-macOS.txt inside.
+            - **Linux (x64):** Vima-Linux-x64.zip. Copy Vima.vst3 to ~/.vst3/
+
+            The full manual is inside the plugin (Settings > MANUAL) and in [MANUAL.md](https://github.com/TheoGal/vima-vst/blob/main/MANUAL.md).

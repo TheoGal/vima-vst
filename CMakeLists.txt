@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.22)
-project(Vima VERSION 0.1.0 LANGUAGES C CXX)
+project(Vima VERSION 1.0.0 LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -82,6 +82,13 @@ target_link_libraries(Vima
         juce::juce_recommended_config_flags
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
+
+# The PDF manual goes inside the plugin bundle (Contents/Resources), where the MANUAL link in
+# Settings opens it (SPEC.md 14.8). The binary sits in Contents/<platform folder>.
+add_custom_command(TARGET Vima_VST3 POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Vima_VST3>/../Resources"
+    COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/docs/Vima Manual.pdf" "$<TARGET_FILE_DIR:Vima_VST3>/../Resources/Vima Manual.pdf"
+    VERBATIM)
 
 # Optional test harness: offline engine checks and rendered screenshots of the UI
 option(VIMA_BUILD_TESTS "Build the test harness" OFF)
