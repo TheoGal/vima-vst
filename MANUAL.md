@@ -461,8 +461,8 @@ The quickest way to map multiple macros to parameters is using the **Learn** fun
 While learning, every mapped control shows an amber outline with its macro number. A control can only have one macro: clicking a mapped one does nothing. **Right-click** a mapped control to free it.
 
 <p align="center">
-  <img src="docs/images/vima-learn-mode.png" width="800" alt="Parameters mapped in learn mode"><br>
-  <em>Macros view</em>
+  <img src="docs/images/vima-learn-mode.png" width="800" alt="Learn mode"><br>
+  <em>Parameters mapped in learn mode</em>
 </p>
 
 Then, in your DAW, automate or map hardware knobs to the macros as you would with any plugin parameter.
@@ -470,7 +470,7 @@ Then, in your DAW, automate or map hardware knobs to the macros as you would wit
 ## UNDO & REDO
 
 <p align="center">
-  <img src="docs/images/undo-redo.png" width="800" alt="Undo">
+  <img src="docs/images/undo-redo.png" width="200" alt="Undo">
 </p>
 
 UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). **Right clicking UNDO** performs a REDO
