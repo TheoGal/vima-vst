@@ -246,7 +246,7 @@ The range bars define the min - max values a parameter can acquire after an oper
 
 The **PITCH** range follows the scale: with the scale on, it shows only the notes of the scale. It is a range of note names (it applies to every octave), so "D to G" means only D, D#, E, F, F#, G in any octave (in C minor: D, D#, F, G).
 
->**design choice:** Velocity and probability ranges do not include a 0 value. A MIDI note on message with velocity 0 is actually a Note off and a 0 probability is actually "never" hence the design choices here.
+Again, velocity and probability ranges do not include a 0 value. A MIDI note on message with velocity 0 is actually a Note off and a 0 probability is actually "never".
 
 >**design choice:** Default ranges are not set to their full but rather to practical settings most possible to produce musically interesting patterns.
 
