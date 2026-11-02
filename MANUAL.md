@@ -153,11 +153,13 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 
 ### The pattern controls
 
-Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings. These parameters can be adjusted at the top of the plugin, in the **pattern controls**
+Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings.
 
 <p align="center">
   <img src="docs/images/vima-pattern-controls.png" width="700" alt="Vima pattern controls">
 </p>
+
+ These parameters can be adjusted at the top of the plugin, in the **pattern controls**
 
 - **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view 
 - **PATTERNS EDIT MODE** (pencil iocn): lets you edit one pattern while another one plays. See also **Editing a pattern while another plays**.
@@ -168,7 +170,13 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
 - **SWING** (0-100%): delays every second step. 0% is straight; 100% delays it by half a step.
 - **USE SCALE** (on / off): whether this track follows the global scale in this pattern.
 
-Switching, copying and chaining patterns is covered later, in **Working with patterns**.
+Clicking on **PATTERN** opens a pop up to quickly select one of the 64 patterns.
+
+<p align="center">
+  <img src="docs/images/vima-patterns-quick.png" width="300" alt="Vima pattern pop up">
+</p>
+
+Changing, copying and chaining patterns is covered later, in **Working with patterns**.
 
 >A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives an empty pattern, like patterns 2-64.
 
@@ -202,7 +210,6 @@ By default, **step operations** act on all the steps visible and inside the leng
 - **Click** one LED to select that step. **Drag** to select a run of steps.
 - **Ctrl + click** (Cmd + click on Mac) adds or removes a single step, so you can select steps that are not next to each other. **Ctrl + drag** adds a run.
 - Selected steps show as **white** LEDs.
-- CLEAR (in the operations panel) removes the selection. Switching tracks clears it too.
 
 **The scope rule.** Every step operation in Vima (copy, randomize, smooth, shift, curves...) works on **the selected steps, or on all steps of the track if nothing is selected**. The SELECTION box in the operations panel always tells you what that is, for example "LENGTH: 7, STEPS: 6".
 
@@ -229,6 +236,7 @@ After having selected desired steps and params, you can copy - paste them with t
 2. Click an LED to pick the **landing step**: a ghost preview shows where the steps will land. Copied steps keep their spacing.
 3. Press **PASTE**. COPIED stays lit, so you can switch track or pattern and paste again.
 4. Click **COPIED** or **CLEAR** to finish.
+5.  Click **CLEAR** at any time to cancel the **selection**
 
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
@@ -269,7 +277,7 @@ Meet **Smooth:** it pulls the armed values one step closer to their average. In 
 - Notes are smoothed in scale steps, across octave boundaries.
 - Smooth never goes outside the values you already have.
 
->**design choice:** When using smooth, the actual values of the armed parameters is taken into consideration excluding the steps which are "off". This is by design to actually smooth out (calculate an average) based on the "audible" parameters. Then the "smoothing" is applied to all steps (not only the on ones) so if you happen to switch a step to on, its parameters will be near the already "on" steps
+>**design choice:** When using smooth, the actual values of the armed parameters are taken into consideration excluding the steps which are "off". This is by design to actually smooth out (calculate an average) based on the "audible" parameters. Then the "smoothing" is applied to all steps (not only the on ones) so if you happen to switch a step to on, its parameters will be near the already "on" steps
 
 ### Curves, rotate and invert
 
@@ -300,21 +308,18 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 
 ## Working with patterns
 
-At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. 
+At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. 
 
-When switching patterns manually the **Quantize** setting is considered. See also **Settings window**
-
-In the quick pattern pop-up, the playing pattern is outlined and marked with a small play icon.
-
-> **[Screenshot]** The patterns pop-up
-
-This will also allow you to switch to the **patterns view**. 
+When changing patterns manually the **Quantize** setting is considered. See also **Settings window**
 
 ### The patterns view
 
 The patterns view is where you see all your patterns, copy them around and build an arrangement with the chain. While in patterns view the green **STEPS** button takes you back to the main window.
 
-> **[Screenshot]** The patterns view with several stored patterns, one playing, and a chain. *(patterns-view.png)*
+<p align="center">
+  <img src="docs/images/vima-patt-view.png" width="800" alt="The patterns view"><br>
+  <em>The patterns view</em>
+</p>
 
 ### The pattern slots
 
