@@ -234,6 +234,14 @@ void RangeBar::mouseDown (const juce::MouseEvent& e)
     dragging = std::abs (x - xOf (r.min)) <= std::abs (x - xOf (r.max)) ? 1 : 2;
     if (r.min == r.max) dragging = x < xOf (r.min) ? 1 : 2;
     if (single()) dragging = 2;   // one handle
+    fine = e.mods.isShiftDown();
+    if (fine)
+    {
+        // Shift: fine control, like a knob: the nearest handle moves relative to its value, no jump
+        fineStartX = e.x;
+        fineStartValue = dragging == 1 ? r.min : r.max;
+        return;
+    }
     mouseDrag (e);
 }
 
@@ -241,7 +249,15 @@ void RangeBar::mouseDrag (const juce::MouseEvent& e)
 {
     if (dragging == 0) return;
     auto r = get();
-    const int v = valueAt ((float) e.x);
+    int v = valueAt ((float) e.x);
+    if (fine)
+    {
+        int lo = 0, hi = 0;
+        axis (lo, hi);
+        // 3 times slower than the bar itself, at least 4 px per value
+        const float pxPerValue = juce::jmax (4.0f, 3.0f * barArea().getWidth() / (float) juce::jmax (1, hi - lo));
+        v = juce::jlimit (lo, hi, fineStartValue + juce::roundToInt ((float) (e.x - fineStartX) / pxPerValue));
+    }
     if (dragging == 1) r.min = juce::jmin (v, r.max);
     else if (dragging == 2) r.max = juce::jmax (v, r.min);
     set (r);

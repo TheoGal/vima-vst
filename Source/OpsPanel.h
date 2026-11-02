@@ -31,6 +31,8 @@ private:
     Context& ctx;
     Param param;
     int dragging = 0;   // 1 = min handle, 2 = max handle
+    bool fine = false;  // Shift + drag: the handle moves relative to its value, 3 times slower (no jump)
+    int fineStartX = 0, fineStartValue = 0;
 };
 
 class ShiftKnob : public juce::Component

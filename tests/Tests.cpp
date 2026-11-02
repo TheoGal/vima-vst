@@ -1898,6 +1898,19 @@ int main (int argc, char** argv)
             }
             check (proc->read ([] (const Project& p) { return p.globals.onChance == 70 && p.globals.rangeVel.min == 70 && p.globals.rangeVel.max == 127; }),
                    "right-click on a RANGES bar resets it to its default (ON 70 %, VEL 70-127)");
+            if (onBar != nullptr)
+            {
+                // Shift + drag: fine, relative; the press does not jump the handle to the mouse
+                const juce::ModifierKeys shift (juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::shiftModifier);
+                const juce::Point<int> a { 100, 5 }, b { 120, 5 };
+                onBar->mouseDown (mouseEvent (*onBar, a, a, false, shift));
+                const int afterPress = proc->read ([] (const Project& p) { return p.globals.onChance; });
+                onBar->mouseDrag (mouseEvent (*onBar, b, a, true, shift));
+                onBar->mouseUp (mouseEvent (*onBar, b, a, true, shift));
+                const int after = proc->read ([] (const Project& p) { return p.globals.onChance; });
+                check (afterPress == 70 && after > 70 && after <= 75, "Shift + drag on a RANGES bar: fine, relative (20 px = a few %), no jump; got " + juce::String (after));
+                proc->edit (-1, [] (Project& p) { p.globals.onChance = 70; });
+            }
         }
         {
             const auto sc = ctx.scope();

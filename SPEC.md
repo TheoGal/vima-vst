@@ -436,7 +436,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **SHIFT knob**: drag up / down to shift the chosen param (Shift + drag = finer); **mouse wheel** shifts by one per notch. The knob springs back to 0 on release; the whole drag is one undo step. No double-click or reset.
 
-**RANGES bars**: click or drag; the nearest handle (min or max) follows the mouse. The handles cannot cross. The ON bar has one handle (the on chance). **Right-click or Alt + click**: reset that bar to its default (4.1). No wheel or double-click.
+**RANGES bars**: click or drag; the nearest handle (min or max) follows the mouse. The handles cannot cross. The ON bar has one handle (the on chance). **Shift + click and drag**: fine control: the nearest handle moves relative to its value (no jump to the click), 3 times slower than the bar (at least 4 px per value). **Right-click or Alt + click**: reset that bar to its default (4.1). No wheel or double-click.
 
 **Header**
 - TRACK: click for the track list. NOTES / CC: click to switch.
@@ -741,3 +741,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-01: Built: a hand pick while the chain plays is a one-off insertion after the current entry (shown as a thin row in the chain list), then the chain continues. Fix: LOOP OFF no longer restarts the chain after it has played once. Settings footer: MANUAL link (PDF in the bundle, else the online manual).
 - 2026-11-02: Pattern NEW (FILE menu and slot menu) gives an empty pattern (all steps off, settings and values at init; routing untouched), confirmation "Reset Pattern 05? You can undo this". CLEAR PATTERN removed from the slot menu (now the same as NEW). The full pattern (every track with 16 steps on) is no longer something NEW creates.
 - 2026-11-02: Step sliders: Shift + drag is fine control of that one step (relative, like a knob); the click-to-jump and drawing apply without Shift.
+- 2026-11-02: RANGES bars (ON chance and min / max): Shift + drag is fine control (relative, 3 times slower, no jump).
