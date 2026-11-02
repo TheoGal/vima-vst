@@ -506,7 +506,7 @@ The **transport** section of Vima at the top displays your DAW's BPM. The **play
 Vima can be set to send note messages in a defined scale. Clicking the **SCALE** button on the right opens a pop up to pick a root and one of 13 scales or your own USER scale (defined in Settings window). The mouse wheel over it steps through the scales.
 
 <p align="center">
-  <img src="docs/images/scale-popup.png" width="450" alt="Scale">
+  <img src="docs/images/scale-popup.png" width="380" alt="Scale">
 </p>
 
 **Design choice: why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. For tracks that should ignore it just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
