@@ -75,6 +75,16 @@ LearnOverlay::Hit LearnOverlay::resolve (juce::Component* c)
     return hit;
 }
 
+bool LearnOverlay::hitTest (int x, int y)
+{
+    bool self = false, children = false;
+    getInterceptsMouseClicks (self, children);
+    if (! self) return false;   // hitAt() looks through the overlay
+    if (! passThrough.contains (x, y))
+        return true;
+    return hitAt ({ x, y }).component != nullptr;
+}
+
 LearnOverlay::Hit LearnOverlay::hitAt (juce::Point<int> local)
 {
     setInterceptsMouseClicks (false, false);
@@ -305,9 +315,12 @@ void VimaEditor::layoutContent()
     const auto views = r.withTrimmedTop (headerHeight);
     patterns.setBounds (views);
     macrosView.setBounds (views);
-    learnOverlay.setBounds (views);
     if (stepView) r.removeFromTop (topPadding);
     header.setBounds (r.removeFromTop (headerHeight));
+    // LEARN frame: the whole window in the step view (its top band reaches the top edge), below the
+    // flat header elsewhere (SPEC.md 13.2)
+    learnOverlay.setBounds (stepView ? content.getLocalBounds() : views);
+    learnOverlay.passThrough = stepView ? header.getBounds() : juce::Rectangle<int>();
     auto body = r.reduced (20, 0).withTrimmedBottom (10);
     paramRow.setBounds (body.removeFromTop (48 + 2 * vima::ParamRow::tileInset));
     body.removeFromTop (14);

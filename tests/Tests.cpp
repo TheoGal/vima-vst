@@ -1795,6 +1795,19 @@ int main (int argc, char** argv)
             check (! ctx.ui.macrosView, "STEPS goes back to the step view");
             auto* overlay = findChild<LearnOverlay> (ed);
             check (overlay != nullptr && overlay->isVisible(), "while learning, the step view is covered by the learn layer");
+            if (overlay != nullptr)
+            {
+                check (overlay->getY() == 0, "the LEARN frame covers the whole step view, up to the top edge");
+                auto* chainPill = findPill (ed, "CHAIN");
+                auto* settingsPill = findByTitle (ed, "Settings");
+                if (chainPill && settingsPill)
+                {
+                    const auto cp = overlay->getLocalPoint (chainPill, chainPill->getLocalBounds().getCentre());
+                    const auto sp = overlay->getLocalPoint (settingsPill, settingsPill->getLocalBounds().getCentre());
+                    check (overlay->hitTest (cp.x, cp.y) && ! overlay->hitTest (sp.x, sp.y),
+                           "while learning, header CHAIN is caught for mapping; the other header buttons keep working");
+                }
+            }
             auto* cell3 = findChild<StepCell> (ed, 2);
             auto* sl = cell3 != nullptr ? findChild<StepSlider> (*cell3) : nullptr;
             if (overlay != nullptr && sl != nullptr)

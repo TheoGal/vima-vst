@@ -41,6 +41,10 @@ public:
     Hit hitAt (juce::Point<int> localPoint);
     Hit resolve (juce::Component*);   // the learnable control a component belongs to
     std::vector<std::pair<Hit, int>> mappedControls();   // visible mapped controls and their macro
+    // Step view: the overlay covers the whole window, but in the header only learnable controls
+    // (CHAIN) are caught; the other header buttons (LEARN, FILE, SETTINGS...) keep working
+    juce::Rectangle<int> passThrough;
+    bool hitTest (int x, int y) override;
 
 private:
     void timerCallback() override { stopTimer(); flash = {}; repaint(); }
