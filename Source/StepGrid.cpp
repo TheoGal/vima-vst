@@ -28,6 +28,13 @@ void StepSlider::mouseDown (const juce::MouseEvent& e)
         Knob::mouseDown (e);   // reset to default
         return;
     }
+    if (e.mods.isShiftDown())
+    {
+        // Shift: fine control of this one step, like a knob (relative, 3 times slower), no jump or drawing
+        drawing = false;
+        Knob::mouseDown (e);
+        return;
+    }
     drawing = true;
     if (onGestureStart) onGestureStart();   // the whole draw is one undo step
     if (onDraw) onDraw (e.getScreenPosition(), true);
@@ -35,12 +42,14 @@ void StepSlider::mouseDown (const juce::MouseEvent& e)
 
 void StepSlider::mouseDrag (const juce::MouseEvent& e)
 {
-    if (drawing && onDraw) onDraw (e.getScreenPosition(), false);
+    if (drawing) { if (onDraw) onDraw (e.getScreenPosition(), false); }
+    else Knob::mouseDrag (e);   // Shift-started: a relative knob drag (fine while Shift is held)
 }
 
-void StepSlider::mouseUp (const juce::MouseEvent&)
+void StepSlider::mouseUp (const juce::MouseEvent& e)
 {
-    if (drawing && onGestureEnd) onGestureEnd();
+    if (drawing) { if (onGestureEnd) onGestureEnd(); }
+    else Knob::mouseUp (e);
     drawing = false;
 }
 

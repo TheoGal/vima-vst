@@ -410,7 +410,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Knobs and step sliders** (MIDI CH, LENGTH, SWING, CC NUM; per-step PITCH and OCTAVE knobs; the VEL / GATE / PROB / CC step sliders; the knobs in Settings and in the macro mapping editor)
 - **Knobs, drag up / down**: change the value, relative to where the drag started. **Shift + drag**: fine control (3 times slower).
-- **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps of the same row in one move (one undo step).
+- **Step sliders, click**: the value jumps to the click position. **Click and drag across neighbouring sliders** to draw values over several steps of the same row in one move (one undo step). **Shift + click and drag**: fine control of that one step, like a knob: relative to its value (no jump to the click), 3 times slower, no drawing.
 - **Mouse wheel**: one value per notch (the PITCH knob: one in-scale note when the scale is on).
 - **Double-click**: type a value. Enter applies it; Esc or clicking elsewhere cancels. Notes can be typed as names (C, D#, A#).
 - **Right-click or Alt + click**: reset to the default.
@@ -740,3 +740,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-10-31: A new Vima / preset NEW: pattern 1 has track 1 full and tracks 2-8 empty; NOTE OUT on for every track (CC OUT off). NEW PATTERN still gives the init pattern (every track full).
 - 2026-11-01: Built: a hand pick while the chain plays is a one-off insertion after the current entry (shown as a thin row in the chain list), then the chain continues. Fix: LOOP OFF no longer restarts the chain after it has played once. Settings footer: MANUAL link (PDF in the bundle, else the online manual).
 - 2026-11-02: Pattern NEW (FILE menu and slot menu) gives an empty pattern (all steps off, settings and values at init; routing untouched), confirmation "Reset Pattern 05? You can undo this". CLEAR PATTERN removed from the slot menu (now the same as NEW). The full pattern (every track with 16 steps on) is no longer something NEW creates.
+- 2026-11-02: Step sliders: Shift + drag is fine control of that one step (relative, like a knob); the click-to-jump and drawing apply without Shift.

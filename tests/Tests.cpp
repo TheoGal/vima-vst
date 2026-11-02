@@ -1621,6 +1621,19 @@ int main (int argc, char** argv)
                 }
                 if (slider) slider->mouseDown (mouseEvent (*slider, { 5, 5 }, { 5, 5 }, false, juce::ModifierKeys (juce::ModifierKeys::rightButtonModifier)));
                 check (stepOf (4, 0).velocity == 100, "right-click resets velocity to 100");
+                if (slider)
+                {
+                    // Shift + drag: fine control of this one step, relative (no jump to the mouse, no drawing)
+                    const juce::ModifierKeys shift (juce::ModifierKeys::leftButtonModifier | juce::ModifierKeys::shiftModifier);
+                    const int other = stepOf (4, 1).velocity;
+                    const juce::Point<int> a { slider->getWidth() / 2, slider->getHeight() - 3 }, b = a.translated (0, -9);
+                    slider->mouseDown (mouseEvent (*slider, a, a, false, shift));
+                    const int afterPress = stepOf (4, 0).velocity;
+                    slider->mouseDrag (mouseEvent (*slider, b, a, true, shift));
+                    slider->mouseUp (mouseEvent (*slider, b, a, true, shift));
+                    check (afterPress == 100 && stepOf (4, 0).velocity == 102 && stepOf (4, 1).velocity == other,
+                           "Shift + drag on a step slider: fine, relative (9 px up = +2), no jump, no drawing; got " + juce::String ((int) stepOf (4, 0).velocity));
+                }
             }
 
             // randomize respects the selection (scope rule)
