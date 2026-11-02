@@ -467,7 +467,7 @@ Next to the macros cells is the editor for the selected macro. Choose **TARGET**
 The quickest way to map multiple macros to parameters is using the **Learn** function.
 
 1. Press **LEARN**. The selected macro (or the next free one) starts listening; the header button reads "LEARN M00X" in amber.
-2. Go to the step view or the patterns view and **click the control** you want to automate: a step's velocity, a track's swing, a pattern slot...
+2. Go to the step view or the patterns view and **click the control** you want to automate: a step's velocity, a track's swing, a pattern cell...
 3. The macro is mapped to that control (on the track and pattern you are looking at), and LEARN moves on to the next free macro. Keep clicking to map more.
 4. Press LEARN again to stop.
 
