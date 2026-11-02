@@ -231,8 +231,7 @@ After having selected desired steps and params, you can copy - paste them with t
 1. Select steps (or none for all), arm the PARAMS you want to copy, press **COPY**. It lights up as **COPIED**.
 2. Click an LED to pick the **landing step**: a ghost preview shows where the steps will land. Copied steps keep their spacing.
 3. Press **PASTE**. COPIED stays lit, so you can switch track or pattern and paste again.
-4. Click **COPIED** or **CLEAR** to finish.
-5.  Click **CLEAR** at any time to cancel the **selection**
+4. Click **COPIED** or **CLEAR** to clear the clipboard.
 
 Only the armed params are copied. So you can copy just the rhythm (ON), just the notes (PITCH), just the velocities, or everything (ALL). A paste that runs past the end of the track is cut off; it never wraps round.
 
@@ -413,12 +412,12 @@ Using the chain allows to chain patterns played one after the other to create lo
 
 >**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
-### Patterns edit mode
+### Pattern edit mode
 
 Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. Of course, you will often want to work on patterns while a chain is active so you need to have a pattern visible regardless if its currently playing or not. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button, at the top bar **patterns controls**. It turns pink when on.
 
 <p align="center">
-  <img src="docs/images/patt-edit-mode.png" width="300" alt="Pattern edit mode"><br>
+  <img src="docs/images/patt-edit-mode.png" width="350" alt="Patterns edit mode"><br>
   <em>Pattern selector in pattern edit mode</em>
 </p>
 
@@ -506,7 +505,9 @@ The **transport** section of Vima at the top displays your DAW's BPM. The **play
 
 Vima can be set to send note messages in a defined scale. Clicking the **SCALE** button on the right opens a pop up to pick a root and one of 13 scales or your own USER scale (defined in Settings window). The mouse wheel over it steps through the scales.
 
-> **[Screenshot]** The scale popover open. *(popover-scale.png)*
+<p align="center">
+  <img src="docs/images/scale-popup.png" width="450" alt="Scale">
+</p>
 
 **Design choice: why is SCALE global?** Most electronic music stays in one key and one scale. A global scale means you set it once and every track agrees. For tracks that should ignore it just switch USE SCALE off. USE SCALE is stored per pattern, so a track can follow the scale in one pattern and ignore it in another.
 
