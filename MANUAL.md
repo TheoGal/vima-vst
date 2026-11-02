@@ -386,13 +386,19 @@ NEW PATTERN can be undone.
 
 ### The chain
 
+<p align="center">
+  <img src="docs/images/vima-chain.png" width="300" alt="The chain section"><br>
+  <em>The chain in patterns view</em>
+</p>
+
 Using the chain allows to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
 
 - **+ ADD PATTERN XX** adds the selected pattern at the end. You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
 - Each entry shows the pattern, its length in bars and a **repeat** count (- / +, up to 99). The playing entry is brighter, with a small play icon and a progress bar. Every entry of the **selected** pattern has a white outline, so you can see at a glance where it is used.
 - **Drag** an entry by its grip to reorder; **x** removes it; **CLEAR CHAIN** empties the chain.
-- The **CHAIN** button in the top bar starts and stops chain playback. **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
+- The **CHAIN** button in the top bar of the plugin starts and stops chain playback. **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
 - Long chains scroll with the mouse wheel or the scroll bar.
+- While a chain is active you can experiment by clicking to play patterns which are not currently in the chain. They will be temporarily inserted and played at the next "switch" of the chain. Once they reach their end, the chain keeps going from where it was interrupted.
 
 >**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
