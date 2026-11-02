@@ -360,7 +360,10 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 - A part whose output is **off** is shown dimmed: it holds steps, but you will not hear it.
 - A part with no steps on is not shown at all to save space.
 
-> **[Screenshot]** One slot enlarged, with the note and CC lines of a few tracks pointed out.
+<p align="center">
+  <img src="docs/images/pattern-cell.png" width="500" alt="Pattern cell"><br>
+  <em>A pattern cell with on steps in tracks 1,2 and 4, note out on in tracks 1 and 4 and CC out on only in track 1</em>
+</p>
 
 ### Copying patterns and tracks
 
