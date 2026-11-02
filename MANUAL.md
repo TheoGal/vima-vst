@@ -191,7 +191,7 @@ Clicking on **PATTERN** opens a pop up to quickly select one of the 64 patterns.
 The **operations panel** at the bottom holds the tools that change many steps at once.
 
 <p align="center">
-  <img src="docs/images/step-operations.png" width="1000" alt="Step operations">
+  <img src="docs/images/step-operations.png" width="800" alt="Step operations">
 </p>
 
 Two things decide what every function (copy, randomize, smooth, shift, curves...) changes:
@@ -210,7 +210,7 @@ By default, **step operations** act on all the steps visible and inside the leng
 **The scope rule.** Every step operation in Vima (copy, randomize, smooth, shift, curves...) works on **the selected steps, or on all steps of the track if nothing is selected**. The SELECTION box in the operations panel always tells you what that is, for example "LENGTH: 7, STEPS: 6".
 
 <p align="center">
-  <img src="docs/images/steps-selected.png" width="1000" alt="Steps selected">
+  <img src="docs/images/steps-selected.png" width="800" alt="Steps selected">
       <em>Steps 1,2,3,4,5 and 7 selected, LENGTH: 7, STEPS: 6</em>
 </p>
 
@@ -354,7 +354,7 @@ There are multiple ways to move, copy and paste cells around.
 The bar under the slots copies whole patterns or single tracks:
 
 <p align="center">
-  <img src="docs/images/patt-copy-paste.png" width="400" alt="Pattern copy paste">
+  <img src="docs/images/patt-copy-paste.png" width="700" alt="Pattern copy paste">
 </p>
 
 - Use the **TRACK** selector to define the working track for copying - pasting
@@ -403,7 +403,7 @@ Using the chain allows to chain patterns played one after the other to create lo
 - You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
 
 <p align="center">
-  <img src="docs/images/patt-drag-chain.png" width="400" alt="Pattern drag into chain"><br>
+  <img src="docs/images/patt-drag-chain.png" width="500" alt="Pattern drag into chain"><br>
   <em>Pattern 4 dragged to be inserted between patterns 1 and 2 in the chain</em>
 </p>
 
