@@ -83,7 +83,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 
 **note mode:**
 
- <img src="docs/images/step-detail-note.png" align="left" width="300" alt="Note step detailed">
+ <img src="docs/images/step-detail-note.png" align="left" width="250" alt="Note step detailed">
 
  - **The step on-off button**: click to switch the step's note on or off. Lit = on, grey = off. **Drag across several step buttons to paint**: start on an off step and every step you pass turns on; start on an on step and every step you pass turns off.
 - **The pitch knob**: Select what note to play. With the scale on, it only lands on notes in the scale.
@@ -94,7 +94,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
  
 **CC mode:** 
 
- <img src="docs/images/step-detail-cc.png" align="left" width="100" alt="CC step detailed">
+ <img src="docs/images/step-detail-cc.png" align="left" width="80" alt="CC step detailed">
 
  - **The step on-off button**: click to switch the step's note on or off.
  - **The CC value**: defines what CC value this step will send 
@@ -136,7 +136,7 @@ You can create up to 8 completely individual sequences by using Vima's **tracks*
 Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assigned and its **note** and **cc** modes. Its related parameters can be adjusted at the top of the plugin, in the **track controls**
 
 <p align="center">
-  <img src="docs/images/vima-track-controls.png" width="800" alt="Vima track controls">
+  <img src="docs/images/vima-track-controls.png" width="700" alt="Vima track controls">
 </p>
 
 - **TRACK**: pick which of the 8 tracks you see and edit.
