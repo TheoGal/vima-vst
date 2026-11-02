@@ -33,6 +33,7 @@ public:
     int fileMenuPattern();   // the pattern the FILE menu's PATTERN section acts on
 private:
     void pickToEdit (int index);
+    MenuToggle fileMenu, trackMenu;
     Context& ctx;
     FileActions fileActions { ctx, *this };
     Pill trackBox, notesBtn, ccBtn, stepsBtn, prevBtn, nextBtn, patternBtn, undoBtn, macrosBtn, settingsBtn, transportBtn, fileBtn, chainBtn, editBtn, playingBtn;

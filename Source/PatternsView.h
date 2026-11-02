@@ -71,6 +71,7 @@ public:
 
 private:
     void showTrackMenu();
+    MenuToggle trackMenu;
     juce::uint32 pasteFlashUntil = 0;   // PASTE shows green until then (one-off paste confirmation)
     void showSlotMenu (int pattern);
     Context& ctx;

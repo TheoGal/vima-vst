@@ -109,7 +109,7 @@ Header::Header (Context& c) : ctx (c)
     // TRACK dropdown
     trackBox.look = [] { return Pill::Look { juce::Colours::transparentBlack, juce::Colours::transparentBlack, juce::Colours::transparentBlack, 0.0f, false }; };
     trackBox.radius = 6.0f;
-    trackBox.onClick = [this] { showTrackMenu(); };
+    trackBox.onClick = [this] { if (trackMenu.beginOpen()) showTrackMenu(); };
     addAndMakeVisible (trackBox);
 
     // NOTES / CC switch with output LEDs
@@ -192,7 +192,7 @@ Header::Header (Context& c) : ctx (c)
     fileBtn.look = plainOutline;
     fileBtn.radius = 6.0f;
     fileBtn.setTitle ("Presets");
-    fileBtn.onClick = [this] { Popover::closeAll (*ctx.root); showFileMenu(); };
+    fileBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (fileMenu.beginOpen()) showFileMenu(); };
     addAndMakeVisible (fileBtn);
 
     // UNDO and SETTINGS
@@ -232,7 +232,8 @@ Header::Header (Context& c) : ctx (c)
     macrosBtn.text = [this] { return ctx.ui.macroLearn ? "LEARN " + macroId (ctx.ui.selectedMacro) : juce::String ("MACROS"); };
     macrosBtn.font = [] { return Fonts::sansSemi (11.0f).withExtraKerningFactor (0.12f); };
     macrosBtn.radius = 6.0f;
-    macrosBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (ctx.showMacros) ctx.showMacros (true); };
+    // MACROS toggles: a second click goes back to the step view
+    macrosBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (ctx.showMacros) ctx.showMacros (! ctx.ui.macrosView); };
     addAndMakeVisible (macrosBtn);
 
     settingsBtn.look = plainOutline;
@@ -354,6 +355,7 @@ void Header::showTrackMenu()
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&trackBox).withMinimumWidth (trackBox.getWidth()),
                      [this] (int result)
                      {
+                         trackMenu.closed (trackBox);
                          if (result <= 0) return;
                          ctx.ui.track = result - 1;
                          ctx.ui.selection = 0;   // switching tracks clears the selection
@@ -383,7 +385,9 @@ void Header::showFileMenu()
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&fileBtn).withMinimumWidth (200),
                      [safe, pattern] (int result)
                      {
-                         if (safe != nullptr && result > 0)
+                         if (safe == nullptr) return;
+                         safe->fileMenu.closed (safe->fileBtn);
+                         if (result > 0)
                              safe->fileActions.perform (result, pattern);
                      });
 }

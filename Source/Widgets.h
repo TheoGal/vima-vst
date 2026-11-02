@@ -135,4 +135,35 @@ private:
 
 // Panel background for popovers and dialogs
 void paintPanel (juce::Graphics&, juce::Rectangle<float>, float radius = 8.0f);
+// A button that opens a popup menu (FILE, TRACK): clicking it again while the menu is open closes
+// the menu instead of reopening it, and the button drops its hover look when the menu closes
+// (the menu takes the mouse, so the button never sees the mouse leave).
+struct MenuToggle
+{
+    bool open = false;
+    juce::uint32 closedAt = 0;
+
+    // In the button's onClick: false when this click only closed the menu
+    bool beginOpen()
+    {
+        const auto now = juce::Time::getMillisecondCounter();
+        if (open || now - closedAt < 300)   // a click on the button dismisses the menu just before it arrives
+        {
+            open = false;
+            juce::PopupMenu::dismissAllActiveMenus();
+            return false;
+        }
+        open = true;
+        return true;
+    }
+
+    // In the menu's callback
+    void closed (juce::Component& button)
+    {
+        open = false;
+        closedAt = juce::Time::getMillisecondCounter();
+        button.repaint();
+    }
+};
+
 } // namespace vima

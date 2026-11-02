@@ -409,7 +409,7 @@ PatternsView::PatternsView (Context& c) : ctx (c)
     trackBox.textInset = 10;
     trackBox.font = [] { return Fonts::monoSemi (12.0f); };
     trackBox.text = [this] { return "TRACK  " + pad2 (ctx.ui.track + 1); };
-    trackBox.onClick = [this] { showTrackMenu(); };
+    trackBox.onClick = [this] { if (trackMenu.beginOpen()) showTrackMenu(); };
     trackBox.chevron = true;
     addAndMakeVisible (trackBox);
 
@@ -575,6 +575,7 @@ void PatternsView::showTrackMenu()
         m.addItem (t + 1, "TRACK " + pad2 (t + 1), true, t == ctx.ui.track);
     m.showMenuAsync (juce::PopupMenu::Options().withTargetComponent (&trackBox), [this] (int r)
     {
+        trackMenu.closed (trackBox);
         if (r > 0) { ctx.ui.track = r - 1; ctx.changed(); }
     });
 }

@@ -1871,6 +1871,13 @@ int main (int argc, char** argv)
             Theme::setLight (false);
             if (pencil != nullptr) click (*pencil);
             check (! ctx.ui.editMode && ctx.shown() == 22, "edit mode off: back to the playing pattern");
+            if (auto* mb = findPill (ed, "MACROS"))
+            {
+                click (*mb);
+                const bool opened = ctx.ui.macrosView;
+                if (auto* mb2 = findPill (ed, "MACROS")) click (*mb2);
+                check (opened && ! ctx.ui.macrosView && ! ctx.ui.patternsView, "MACROS toggles: a second click goes back to the step view");
+            }
             ed.refreshAll();
         }
         proc->edit (-1, [] (Project& p) { p.globals.chainOn = false; });
