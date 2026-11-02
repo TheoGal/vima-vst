@@ -1,5 +1,5 @@
 <p align="center">
-<img src="docs/images/vima-icon-dark.png" width="150" alt="Vima logo">
+<img src="docs/images/vima-icon-dark.png" width="100" alt="Vima logo">
 </p>
 
 <h1 align="center">
