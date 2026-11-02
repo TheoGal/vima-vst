@@ -156,7 +156,7 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings.
 
 <p align="center">
-  <img src="docs/images/vima-pattern-controls.png" width="700" alt="Vima pattern controls">
+  <img src="docs/images/vima-pattern-controls.png" width="620" alt="Vima pattern controls">
 </p>
 
  These parameters can be adjusted at the top of the plugin, in the **pattern controls** - Changing, copying and chaining patterns is covered in detail later, in **Working with patterns**.
