@@ -400,7 +400,7 @@ NEW PATTERN can be undone.
 Using the chain allows to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
 
 - **+ ADD PATTERN XX** adds the selected pattern at the end.
--You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
+- You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
 
 <p align="center">
   <img src="docs/images/patt-drag-chain.png" width="400" alt="Pattern drag into chain"><br>
