@@ -159,11 +159,11 @@ Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A p
   <img src="docs/images/vima-pattern-controls.png" width="700" alt="Vima pattern controls">
 </p>
 
- These parameters can be adjusted at the top of the plugin, in the **pattern controls**
+ These parameters can be adjusted at the top of the plugin, in the **pattern controls** - Changing, copying and chaining patterns is covered in detail later, in **Working with patterns**.
 
-- **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view 
-- **PATTERNS EDIT MODE** (pencil iocn): lets you edit one pattern while another one plays. See also **Editing a pattern while another plays**.
-- **CHAIN**, switches chain playback on and off. It lights up while the chain is on, so you can always see whether the patterns are changing by themselves. The pencil and CHAIN are also in the top bar of the patterns view and the Macros page.
+- **PATTERN**: the pattern you are looking at. The ‹ and › arrows step to the previous / next pattern; clicking the number opens a quick picker with all 64 patterns and a button to open the patterns view
+- **PATTERNS EDIT MODE** (pencil iocn): lets you edit one pattern while another one plays.
+- **CHAIN**, switches chain playback on and off
 - **LENGTH** (4-32 steps): How many steps a pattern has. Steps beyond the length are dimmed and not played. Different lengths on different tracks give you polyrhythms.
 - **DIVISION**: how long one step is: 1/1, 1/2, 1/4, 1/8, 1/16, 1/32, and the triplets 1/2T to 1/32T.
 - **DIRECTION**: forward, backward or ping-pong. Ping-pong plays the end steps once.
@@ -176,11 +176,9 @@ Clicking on **PATTERN** opens a pop up to quickly select one of the 64 patterns.
   <img src="docs/images/vima-patterns-quick.png" width="300" alt="Vima pattern pop up">
 </p>
 
-Changing, copying and chaining patterns is covered later, in **Working with patterns**.
-
->A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives an empty pattern, like patterns 2-64.
-
 >**design choice:** As you might have grasped by the above, **Note Mode** and **CC mode** of a track in a pattern share the same length, time division and sequencer direction. This is on purpose to make sequenced patterns easy to create and maintain -  you can, for example, create a simple 1 bar phrase and control a synth parameter at the same time. Want a CC rhythm that runs at a different length or speed than the notes? Use a second track on the same MIDI channel with only its CC output on.
+
+- A new Vima starts with **pattern 1** ready to play (track 1 with 16 steps on, every step a middle C at velocity 100; tracks 2-8 empty) and **patterns 2-64 empty**, so you can see at a glance which patterns you have actually used. NEW PATTERN gives an empty pattern, like patterns 2-64.
 
 >**design choice:** Controls are visually grouped and color coded according to their scope
 >
@@ -370,7 +368,7 @@ You can use drag and drop on cells to move around or copy paste them. This works
 - **Ctrl + drag** (Cmd + drag on a Mac) to **copy** it instead; the original stays.
 - **Drag a cell onto the chain list** to add it to the chain exactly where the line shows.
 
-**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons. This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
+>**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons. This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
 
 You can also **right-click a **cell** to select it and open its menu:
 
@@ -381,7 +379,10 @@ You can also **right-click a **cell** to select it and open its menu:
 
 NEW PATTERN can be undone.
 
-> **[Screenshot]** The slot right-click menu, and the patterns view with COPIED lit. *(patterns-view-copied.png)*
+<p align="center">
+  <img src="docs/images/vima-patt-view.png" width="800" alt="The patterns view"><br>
+  <em>The patterns view</em>
+</p>
 
 ### The chain
 
