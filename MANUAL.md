@@ -496,7 +496,9 @@ The files button opens a menu to save presets, patterns and macro mappings.
 
 Clicking the **file** button (with a folder icon) at the top of the plugin opens the file menu.
 
-> **[Screenshot]** The FILE menu open, showing the PRESET, PATTERN and MACROS sections.
+<p align="center">
+  <img src="docs/images/vima-filemenu.png" width="200" alt="File menu">
+</p>
 
 **PRESET**: the music of the whole instance.
 
