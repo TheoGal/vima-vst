@@ -470,7 +470,7 @@ Then, in your DAW, automate or map hardware knobs to the macros as you would wit
 ## UNDO & REDO
 
 <p align="center">
-  <img src="docs/images/undo-redo.png" width="200" alt="Undo">
+  <img src="docs/images/undo-redo.png" width="400" alt="Undo">
 </p>
 
 UNDO steps back through your edits, up to 64 steps. It covers everything stored in patterns: step edits, track settings per pattern, copy / paste, randomize, smooth, curves, shift and pattern pastes. One gesture is one undo step (a whole knob move, a whole slider drawing, a whole hold of SMOOTH). **Right clicking UNDO** performs a REDO
