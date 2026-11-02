@@ -343,7 +343,7 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 - A part with no steps on is not shown at all to save space.
 
 <p align="center">
-  <img src="docs/images/pattern-cell.png" width="500" alt="Pattern cell"><br>
+  <img src="docs/images/pattern-cell.png" width="450" alt="Pattern cell"><br>
   <em>A pattern cell with on steps in tracks 1, 2, 4 and 7, note out on in tracks 1 and 2, CC out on in track 1 and 7 and track 4 with a legnth of 32 steps</em>
 </p>
 
@@ -371,7 +371,7 @@ You can use drag and drop on cells to move around or copy paste them. This works
 You can also **right-click** a **cell** to select it and open its menu:
 
 <p align="center">
-  <img src="docs/images/vima-cell-rightclick.png" width="300" alt="Cell right click">
+  <img src="docs/images/vima-cell-rightclick.png" width="350" alt="Cell right click">
 </p>
 
 - **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
@@ -380,11 +380,6 @@ You can also **right-click** a **cell** to select it and open its menu:
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 
 NEW PATTERN can be undone.
-
-<p align="center">
-  <img src="docs/images/vima-patt-view.png" width="800" alt="The patterns view"><br>
-  <em>The patterns view</em>
-</p>
 
 ### The chain
 
@@ -404,13 +399,14 @@ Using the chain allows to chain patterns played one after the other to create lo
 
 >**design choice:** When the DAW starts, the chain always starts from its first entry. (It does not follow the song position like the steps do.) This was a deliberate choice: it keeps editing patterns from the DAW simple. Picking a pattern by hand while the chain plays works as usual; the chain then carries on with its next entry.
 
-> **[Screenshot]** A long chain with the scroll bar. *(patterns-view-long-chain.png)*
-
 ### Patterns edit mode
 
 Normally the main window always shows the pattern that is playing: when the chain moves on, the view moves with it. Of course, you will often want to work on patterns while a chain is active so you need to have a pattern visible regardless if its currently playing or not. To work on a different pattern while the music keeps going, switch on **pattern edit mode** with the **pencil** button, at the top bar **patterns controls**. It turns pink when on.
 
-> **[Screenshot]** Pattern edit mode on: the pink pencil, the pink outline around the PATTERN box and PLAYING in place of the BPM. *(main-edit-mode.png)*
+<p align="center">
+  <img src="docs/images/patt-edit-mode.png" width="300" alt="Pattern edit mode"><br>
+  <em>Pattern selector in pattern edit mode</em>
+</p>
 
 While edit mode is on:
 
@@ -445,7 +441,10 @@ A **Pitch** macro follows the scale like the pitch knob: in C minor it moves thr
 
 Open it with **MACROS** button in the top; green **STEPS** button gets you back to the main window.
 
-> **[Screenshot]** The Macros view with some mapped macros and the editor on the right. *(macros.png)*
+<p align="center">
+  <img src="docs/images/vima-macros.png" width="300" alt="Macros view"><br>
+  <em>Macros view</em>
+</p>
 
 In **Macros view** 4 pages of 32 macros are displayed. Each macro cell shows its number, a knob with the current value, what it controls ("STEP 05 VEL") and where ("T04 · 06" = track 4, pattern 06).
 Next to the macros cells is the editor for the selected macro. Choose **TARGET** (GLOBAL / TRACK / STEP), **PARAMETER**, and the **TRACK**, **PATTERN** and **STEP** it points at. **CLEAR MAPPING** empties it. You can either manually assign a macro to a parameter using the editor or use the **Learn** function.
