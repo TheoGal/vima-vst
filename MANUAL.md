@@ -371,7 +371,7 @@ You can use drag and drop on cells to move around or copy paste them. This works
 You can also **right-click** a **cell** to select it and open its menu:
 
 <p align="center">
-  <img src="docs/images/vima-cell-rightclick.png" width="800" alt="Cell right click">
+  <img src="docs/images/vima-cell-rightclick.png" width="300" alt="Cell right click">
 </p>
 
 - **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
