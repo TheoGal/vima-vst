@@ -321,24 +321,21 @@ The patterns view is where you see all your patterns, copy them around and build
   <em>The patterns view</em>
 </p>
 
-### The pattern slots
+### The pattern cells
 
 The four page buttons show patterns 1-16, 17-32, 33-48 and 49-64. A small dot marks the page with the playing pattern.
 
-The **TRACK** box in the bar under the slots is the same track as the TRACK box in the main window: pick a track in either place and both follow.
-
-Each slot shows:
+Each cell shows:
 
 - the pattern number and a **play button**,
 - its state: **PLAYING**, **NEXT** (waiting to switch), **STORED** or **EMPTY**,
 - a **thumbnail** of the pattern,
-- a thin line at the bottom if the pattern is used in the chain (hidden under the outline of the selected slot: the chain list shows where the selected pattern is used instead).
+- a thin line at the bottom if the pattern is used in the chain
 
-At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots are darker. The **selected** slot has a thick white outline. The selected slot is the one everything acts on: COPY, PASTE, + ADD PATTERN, the right-click menu and the FILE menu's PATTERN section.
+At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots are darker. The **selected** slot has a thick white outline. The selected cell is the one everything acts on: COPY, PASTE, + ADD PATTERN, the right-click menu and the FILE menu's PATTERN section.
 
-- **Click a slot** to select it. This does **not** play it.
+- **Click a cell** to select it. This does **not** play it.
 - **Click its play button** to select it and switch to it. A waiting pattern's play button blinks until the switch happens.
-- Picking a pattern with the header arrows or quick picker plays it but leaves the selection alone (in pattern edit mode it selects it instead, see **Editing a pattern while another plays**).
 
 ### Moving and copying patterns by dragging
 
@@ -349,6 +346,8 @@ At a glance: the **playing** slot is the brightest, **stored** slots are normal,
 While you drag, the empty slots get a grey outline and the one under the mouse a white one; stored slots get none, because a drag never overwrites a pattern. Hover a page button to switch pages on the way. A move or a copy is one UNDO step.
 
 A move changes your arrangement: the chain and any macros keep pointing at the pattern **numbers**. If the chain played pattern 05 and you move 05 to 12, the chain now plays the empty 05 until you change it.
+
+
 
 > **[Screenshot]** Dragging a pattern onto an empty slot. *(patterns-view-drag.png)*
 
@@ -367,16 +366,17 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 
 The bar under the slots copies whole patterns or single tracks:
 
-- **COPY** copies the selected pattern; **COPY TRACK** copies one track of it (the one in the TRACK box). The button lights up as **COPIED** / **TRACK COPIED**. The copied slot stays selected.
-- **Click the slot** you want to paste into: it becomes the selected slot.
-- **PASTE** writes into the selected slot. The button stays lit, so you can select and paste into more patterns. PASTE is dimmed while pasting would change nothing (the copied pattern itself is still selected).
-- A track copy is pasted into the track in the TRACK box, so you can copy track 1 of one pattern into track 3 of another.
+- Use the **TRACK** selector to define the working track for copying - pasting
+- **COPY** copies the selected pattern and all its tracks; **COPY TRACK** copies one track of it (the one in the TRACK selector). The button lights up as **COPIED** / **TRACK COPIED**.
+- **Click the cell** you want to paste into.
+- **PASTE** writes into the selected cell. The button stays lit, so you can select and paste into more patterns. Pasting on an occupied cell overwrites it.
+- You can select a different track with one track **copied**, so you can copy track 1 of one pattern into track 3 of another or even copy paste tracks inside the same pattern.
 - **CLEAR**, or clicking the lit button, finishes. CLEAR never erases a pattern.
 
-**Right-click a slot** to select it and open its menu:
+You can also **right-click a **cell** to select it and open its menu:
 
-- **COPY PATTERN** and **COPY TRACK nn**, the same as the buttons.
-- **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03** (dimmed when nothing is copied). A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard, and the PASTE button flashes green to confirm.
+- **COPY PATTERN** and **COPY TRACK nn**, work the same as the buttons.
+- **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a one-off: it pastes into the slot you right-clicked, then clears the clipboard.
 - **NEW PATTERN**: resets the pattern to an empty one (all steps off, every setting back to its default), after asking.
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 
