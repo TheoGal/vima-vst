@@ -156,7 +156,7 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 Vima holds **64 patterns**, numbered 01 to 64 and shown in four pages of 16. A pattern contains all 8 tracks: their steps and their settings.
 
 <p align="center">
-  <img src="docs/images/vima-pattern-controls.png" width="620" alt="Vima pattern controls">
+  <img src="docs/images/vima-pattern-controls.png" width="580" alt="Vima pattern controls">
 </p>
 
  These parameters can be adjusted at the top of the plugin, in the **pattern controls** - Changing, copying and chaining patterns is covered in detail later, in **Working with patterns**.
@@ -210,7 +210,7 @@ By default, **step operations** act on all the steps visible and inside the leng
 **The scope rule.** Every step operation in Vima (copy, randomize, smooth, shift, curves...) works on **the selected steps, or on all steps of the track if nothing is selected**. The SELECTION box in the operations panel always tells you what that is, for example "LENGTH: 7, STEPS: 6".
 
 <p align="center">
-  <img src="docs/images/steps-selected.png" width="800" alt="Steps selected">
+  <img src="docs/images/steps-selected.png" width="800" alt="Steps selected"><br>
       <em>Steps 1,2,3,4,5 and 7 selected, LENGTH: 7, STEPS: 6</em>
 </p>
 
@@ -328,10 +328,8 @@ Each cell shows:
 - a **thumbnail** of the pattern,
 - a thin line at the bottom if the pattern is used in the chain
 
-At a glance: the **playing** slot is the brightest, **stored** slots are normal, **empty** slots are darker. The **selected** slot has a thick white outline.
-
-- **Click a cell** to select it. This does **not** play it.
-- **Click its play button** to select it and switch to it. A waiting pattern's play button blinks until the switch happens.
+- **Click a cell** to select it.
+- **Click its play button** to select and play it. A waiting pattern's play button blinks until the switch happens.
 
 ### Reading the thumbnails
 
@@ -351,10 +349,10 @@ Each thumbnail is a tiny picture of the pattern: one row per track, 01 at the to
 
 There are multiple ways to move, copy and paste cells around.
 
-The bar under the slots copies whole patterns or single tracks:
+1. The bar under the slots copies whole patterns or single tracks:
 
 <p align="center">
-  <img src="docs/images/patt-copy-paste.png" width="700" alt="Pattern copy paste">
+  <img src="docs/images/patt-copy-paste.png" width="600" alt="Pattern copy paste">
 </p>
 
 - Use the **TRACK** selector to define the working track for copying - pasting
@@ -362,9 +360,9 @@ The bar under the slots copies whole patterns or single tracks:
 - **Click the cell** you want to paste into.
 - **PASTE** writes into the selected cell. The button stays lit, so you can select and paste into more patterns. Pasting on an occupied cell overwrites it.
 - You can select a different track with one track **copied**, so you can copy track 1 of one pattern into track 3 of another or even copy paste tracks inside the same pattern.
-- **CLEAR**, or clicking the lit button, finishes. CLEAR never erases a pattern.
+- **CLEAR** clears the clipboard.
 
-You can use drag and drop on cells to move around or copy paste them. This works for whole patterns.
+2. You can use drag and drop on cells to move around or copy paste them. This works for whole patterns.
 
 <p align="center">
   <img src="docs/images/patt-drag-drop.png" width="400" alt="Pattern drag drop"><br>
@@ -377,7 +375,7 @@ You can use drag and drop on cells to move around or copy paste them. This works
 
 >**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons. This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
 
-You can also **right-click** a **cell** to select it and open its menu:
+3. You can also **right-click** a **cell** to select it and open its menu:
 
 <p align="center">
   <img src="docs/images/vima-cell-rightclick.png" width="350" alt="Cell right click">
