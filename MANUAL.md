@@ -353,6 +353,10 @@ There are multiple ways to move, copy and paste cells around.
 
 The bar under the slots copies whole patterns or single tracks:
 
+<p align="center">
+  <img src="docs/images/patt-copy-paste.png" width="400" alt="Pattern copy paste">
+</p>
+
 - Use the **TRACK** selector to define the working track for copying - pasting
 - **COPY** copies the selected pattern and all its tracks; **COPY TRACK** copies one track of it (the one in the TRACK selector). The button lights up as **COPIED** / **TRACK COPIED**.
 - **Click the cell** you want to paste into.
@@ -361,6 +365,11 @@ The bar under the slots copies whole patterns or single tracks:
 - **CLEAR**, or clicking the lit button, finishes. CLEAR never erases a pattern.
 
 You can use drag and drop on cells to move around or copy paste them. This works for whole patterns.
+
+<p align="center">
+  <img src="docs/images/patt-drag-drop.png" width="400" alt="Pattern drag drop"><br>
+  <em>Pattern 1 drag dropping into pattern 2</em>
+</p>
 
 - **Drag a cell** onto an **empty** cell to **move** the pattern there. The cell it came from becomes empty.
 - **Ctrl + drag** (Cmd + drag on a Mac) to **copy** it instead; the original stays.
@@ -390,7 +399,14 @@ NEW PATTERN can be undone.
 
 Using the chain allows to chain patterns played one after the other to create longer arrangements. Coupled with copy pasting you can for example have a simple 16 step melody repeated while a CC value changes over the span of 4 bars.
 
-- **+ ADD PATTERN XX** adds the selected pattern at the end. You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
+- **+ ADD PATTERN XX** adds the selected pattern at the end.
+-You can also **drag a cell** onto the list to put it anywhere. The same pattern can appear many times.
+
+<p align="center">
+  <img src="docs/images/patt-drag-chain.png" width="400" alt="Pattern drag into chain"><br>
+  <em>Pattern 4 dragged to be inserted between patterns 1 and 2 in the chain</em>
+</p>
+
 - Each entry shows the pattern, its length in bars and a **repeat** count (- / +, up to 99). The playing entry is brighter, with a small play icon and a progress bar. Every entry of the **selected** pattern has a white outline, so you can see at a glance where it is used.
 - **Drag** an entry by its grip to reorder; **x** removes it; **CLEAR CHAIN** empties the chain.
 - The **CHAIN** button in the top bar of the plugin starts and stops chain playback. **LOOP ON** goes back to the first entry at the end; **LOOP OFF** plays the chain once and then keeps repeating the last pattern.
