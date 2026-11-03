@@ -4,7 +4,7 @@ Name: **Vima** (from Greek "βήμα", step). Repository: TheoGal/vima-vst.
 
 **Naming rule**: everywhere the plugin is called by its English name, **Vima** (product name, host plugin list, file names, folders, manual text, README, release notes). The Greek "βήμα" appears only in these places: when explaining the origin of the name (as above), as the wordmark in the single-row header of the patterns view and the Macros page, and as the square **β** logo in the step view's top band.
 
-Status: **released (1.0.0)**. Every push is built by GitHub Actions; releases are published from version tags (14.2). This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the user manual, MANUAL.md (written for musicians; keep it in step with this spec).
+Status: **released (1.0.1)**. Every push is built by GitHub Actions; releases are published from version tags (14.2). This file is the single source of truth: sections 1-13 describe the current design as built, section 14 holds the build details needed for further development, section 15 holds open questions and section 16 the history of decisions. It is also the main source for the user manual, MANUAL.md (written for musicians; keep it in step with this spec).
 
 Last updated: 2026-10-24 (checked against the code at that date).
 
