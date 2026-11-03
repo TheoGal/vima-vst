@@ -620,7 +620,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 - **Introduction (draft, in Ted's voice):**
 
-  > I have been a MIDI freak for a long time. Under the name Softcore I wrote music and built control surfaces: a lot of Lemur templates for the iPad, some of them a bit out of this world. One of them, Microtonic Lemuriized (2013), turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing". I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
+  > I have been a MIDI freak for a long time. Under the name Softcore I wrote music and built control surfaces: a lot of Lemur templates for the iPad, some of them a bit out of this world. One of them, Microtonic Lemurized (2013), turned Sonic Charge's Microtonic into a touch instrument with tilt-to-morph, a running step light that followed the host's clock, and randomize scripts with per-parameter exclusion; its developer, Magnus Lidström, called it "absolutely amazing". I was one of the first to buy Zaquencer, and Bome MIDI Translator glued my setups together for years.
   >
   > Vima comes from all of that: the things I kept wishing my sequencers did, and the habits those years left me with. Guided randomization: chance that you steer, on the steps you pick, for the parameters you choose, within the ranges you set. Keep the playhead honest to the host. Let automation play back exactly what you recorded. Make happy accidents quick, and undo quicker.
   >
