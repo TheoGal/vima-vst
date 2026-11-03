@@ -240,7 +240,7 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v3
         with:
-          name: Vima ${{ github.ref_name }}
+          name: Vima VST ${{ github.ref_name }}
           files: |
             release/Vima-Windows-x64.zip
             release/Vima-macOS-plugin.zip

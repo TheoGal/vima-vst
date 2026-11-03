@@ -566,7 +566,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **macos**: builds a universal VST3 (macOS 10.13+), signs it ad-hoc (needed for Apple Silicon; not notarized), runs pluginval, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` plus INSTALL-macOS.txt (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
 - **linux**: builds the x64 VST3 on ubuntu (same JUCE dependencies as the tests job), runs pluginval under xvfb (does not fail the build), uploads the folder **Vima-Linux-x64** (with INSTALL-Linux.txt).
 - **The manual inside the bundle**: a CMake post-build step copies `docs/Vima Manual.pdf` into each bundle's `Contents/Resources` (all three platforms, before the macOS signing). The PDF is built from MANUAL.md with `tools/manual-pdf/make_pdf.py` (Markdown, then Chromium print to A4; the layout lives only there) and committed: rebuild and commit it after editing MANUAL.md.
-- **release** (only for a tag like `v1.0.0`, after windows, macos and linux pass): one GitHub Release named "Vima v1.0.0" with Vima-Windows-x64.zip, Vima-macOS-plugin.zip and Vima-Linux-x64.zip and short install notes. The version in CMakeLists.txt matches the tag.
+- **release** (only for a tag like `v1.0.0`, after windows, macos and linux pass): one GitHub Release named "Vima VST v1.0.0" with Vima-Windows-x64.zip, Vima-macOS-plugin.zip and Vima-Linux-x64.zip and short install notes. The version in CMakeLists.txt matches the tag.
 - Install: Windows `C:\Program Files\Common Files\VST3\`; macOS `/Library/Audio/Plug-Ins/VST3/`, then `xattr -dr com.apple.quarantine` on the bundle; Linux `~/.vst3/` (or `/usr/lib/vst3/`).
 
 ### 14.3 Tests
