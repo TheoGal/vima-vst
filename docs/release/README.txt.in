@@ -1,0 +1,36 @@
+VIMA VST
+8-track melodic MIDI step sequencer (VST3)
+Version @PROJECT_VERSION@
+
+
+INSTALL
+
+Windows
+  Copy the Vima.vst3 folder to:
+  C:\Program Files\Common Files\VST3\
+
+macOS
+  Copy Vima.vst3 to /Library/Audio/Plug-Ins/VST3/
+  This build is not notarized by Apple, so macOS blocks it at first.
+  Open Terminal and run:
+  xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Vima.vst3
+
+Linux
+  Copy the Vima.vst3 folder to ~/.vst3/ (just for you)
+  or /usr/lib/vst3/ (all users). Create the folder if needed.
+
+Then restart your DAW or rescan plugins. Vima shows up as an instrument.
+
+
+MANUAL
+
+The full manual is inside the plugin: open Settings (gear icon)
+and click MANUAL.
+
+
+UPDATES AND SOURCE
+
+https://github.com/TheoGal/vima-vst
+
+
+Vima is free software. See LICENSE for details.

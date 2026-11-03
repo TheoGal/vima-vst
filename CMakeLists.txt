@@ -83,6 +83,9 @@ target_link_libraries(Vima
         juce::juce_recommended_lto_flags
         juce::juce_recommended_warning_flags)
 
+# README.txt for the release zips, with the project version filled in (docs/release/README.txt.in)
+configure_file ("${CMAKE_SOURCE_DIR}/docs/release/README.txt.in" "${CMAKE_BINARY_DIR}/README.txt" @ONLY)
+
 # The PDF manual goes inside the plugin bundle (Contents/Resources), where the MANUAL link in
 # Settings opens it (SPEC.md 14.8). The binary sits in Contents/<platform folder>.
 add_custom_command(TARGET Vima_VST3 POST_BUILD

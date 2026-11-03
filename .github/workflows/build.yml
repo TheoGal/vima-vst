@@ -85,7 +85,8 @@ jobs:
           $out = "Vima-Windows-x64"
           New-Item -ItemType Directory -Force -Path $out | Out-Null
           Copy-Item -Recurse "build/Vima_artefacts/Release/VST3/Vima.vst3" $out
-          Copy-Item LICENSE, README.md $out -ErrorAction SilentlyContinue
+          Copy-Item LICENSE $out -ErrorAction SilentlyContinue
+          Copy-Item "build/README.txt" $out
           Copy-Item "Resources/fonts/OFL-IBMPlex.txt" $out
           Compress-Archive -Path "$out/*" -DestinationPath "$out.zip" -Force
 
@@ -116,7 +117,7 @@ jobs:
         run: cmake --build build --config Release --parallel 3 --target Vima_VST3
 
       # Ad-hoc signature: required for Apple Silicon to load the code at all.
-      # (Not notarized: that needs a paid Apple Developer account. See INSTALL-macOS.txt.)
+      # (Not notarized: that needs a paid Apple Developer account. See README.txt in the zip.)
       - name: Sign (ad-hoc)
         run: codesign --force --deep --sign - build/Vima_artefacts/Release/VST3/Vima.vst3
 
@@ -141,23 +142,9 @@ jobs:
           OUT=Vima-macOS-universal
           mkdir -p "$OUT"
           ditto build/Vima_artefacts/Release/VST3/Vima.vst3 "$OUT/Vima.vst3"
-          cp LICENSE README.md "$OUT"/ 2>/dev/null || true
+          cp LICENSE "$OUT"/ 2>/dev/null || true
+          cp build/README.txt "$OUT"/
           cp Resources/fonts/OFL-IBMPlex.txt "$OUT"/
-          cat > "$OUT/INSTALL-macOS.txt" <<'EOF'
-          Vima for macOS (Apple Silicon and Intel)
-
-          1. Copy Vima.vst3 to /Library/Audio/Plug-Ins/VST3/
-             (the main Library folder at the top of the disk; macOS asks for your password)
-
-          2. This build is not notarized by Apple, so macOS blocks it at first.
-             Open Terminal and run:
-
-             xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Vima.vst3
-
-          3. Restart your DAW.
-
-          Vima is VST3 only: the Audio Unit format cannot send MIDI out of a plugin.
-          EOF
           ditto -c -k --keepParent "$OUT" "Vima-macOS-plugin.zip"
 
       # The macOS zip stays inside the download on purpose: GitHub's artifact zip drops file
@@ -210,9 +197,9 @@ jobs:
           OUT=Vima-Linux-x64
           mkdir -p "$OUT"
           cp -r build/Vima_artefacts/Release/VST3/Vima.vst3 "$OUT/"
-          cp LICENSE README.md "$OUT"/ 2>/dev/null || true
+          cp LICENSE "$OUT"/ 2>/dev/null || true
+          cp build/README.txt "$OUT"/
           cp Resources/fonts/OFL-IBMPlex.txt "$OUT"/
-          printf 'Vima for Linux (x64)\n\nCopy the Vima.vst3 folder to ~/.vst3/ (just for you) or /usr/lib/vst3/ (all users).\nCreate the folder if it does not exist. Then rescan plugins in your DAW.\n' > "$OUT/INSTALL-Linux.txt"
           zip -qr "$OUT.zip" "$OUT"
 
       - uses: actions/upload-artifact@v7.0.1
@@ -250,7 +237,7 @@ jobs:
 
             Downloads:
             - **Windows (x64):** Vima-Windows-x64.zip. Copy the Vima.vst3 folder to C:\Program Files\Common Files\VST3\
-            - **macOS (Apple Silicon and Intel):** Vima-macOS-plugin.zip. Not notarized: see INSTALL-macOS.txt inside.
+            - **macOS (Apple Silicon and Intel):** Vima-macOS-plugin.zip. Not notarized: see README.txt inside.
             - **Linux (x64):** Vima-Linux-x64.zip. Copy Vima.vst3 to ~/.vst3/
 
             The full manual is inside the plugin (Settings > MANUAL) and in [MANUAL.md](https://github.com/TheoGal/vima-vst/blob/main/MANUAL.md).
