@@ -1,5 +1,21 @@
 cmake_minimum_required(VERSION 3.22)
-project(Vima VERSION 1.0.1 LANGUAGES C CXX)
+# Version: from the newest git tag like v1.0.2 (a release build is the tag itself), so the version
+# is never edited by hand. Override with -DVIMA_VERSION=x.y.z; 0.0.0 without git or tags.
+set(VIMA_VERSION "" CACHE STRING "Plugin version (empty = from the newest v* git tag)")
+if(NOT VIMA_VERSION)
+    find_package(Git QUIET)
+    if(GIT_FOUND)
+        execute_process(COMMAND "${GIT_EXECUTABLE}" describe --tags --abbrev=0 --match "v[0-9]*"
+                        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+                        OUTPUT_VARIABLE vima_tag OUTPUT_STRIP_TRAILING_WHITESPACE ERROR_QUIET)
+        string(REGEX REPLACE "^v" "" VIMA_VERSION "${vima_tag}")
+    endif()
+endif()
+if(NOT VIMA_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    set(VIMA_VERSION "0.0.0")
+endif()
+message(STATUS "Vima version ${VIMA_VERSION}")
+project(Vima VERSION ${VIMA_VERSION} LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
