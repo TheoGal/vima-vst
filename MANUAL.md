@@ -329,7 +329,6 @@ Each cell shows:
 
 - **Click a cell** to select it.
 - **Click its play button** to select and play it. A waiting pattern's play button blinks until the switch happens.
-- Press **Delete** on your keyboard to empty the selected cell. Vima asks first, and it can be undone.
 
 ### Reading the thumbnails
 
@@ -615,7 +614,6 @@ Except for the theme and middle C, these settings belong to each Vima in your pr
 | Pencil | click | pattern edit mode on / off |
 | Pattern cell | click / play button | select / select and switch |
 | Pattern cell | right-click | copy, paste, new, load, save menu |
-| Pattern cell | Delete key | empty it (asks first) |
 | Pattern cell | drag / Ctrl + drag | move / copy to an empty cell |
 | Pattern cell | drag onto the chain | add it to the chain there |
 | Page buttons | hover while dragging a cell | switch page |

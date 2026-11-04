@@ -40,7 +40,6 @@ void PatternSlot::mouseExit (const juce::MouseEvent&)
 void PatternSlot::mouseDown (const juce::MouseEvent&)
 {
     slotDragging = false;
-    if (auto* p = getParentComponent()) p->grabKeyboardFocus();   // so Delete reaches the patterns view
 }
 
 void PatternSlot::mouseDrag (const juce::MouseEvent& e)
@@ -340,7 +339,6 @@ void ChainRow::paint (juce::Graphics& g)
 // ---------------------------------------------------------------------------------------
 PatternsView::PatternsView (Context& c) : ctx (c)
 {
-    setWantsKeyboardFocus (true);
     const auto neutralChoice = [] (bool on)
     {
         const auto& t = Theme::current();
@@ -633,18 +631,6 @@ int PatternsView::currentInsertAfter() const
     if (! e.isPlaying.load() || e.insertPattern.load() < 0) return -1;
     const int cp = e.chainPosition.load();
     return cp >= 0 && cp < chainRows.size() ? cp : -1;
-}
-
-// Delete (Backspace on Mac keyboards): empty the selected cell, like NEW PATTERN, after the same
-// confirmation; one undo step (SPEC.md 7.1). Not while a copy is lit or LEARN is on.
-bool PatternsView::keyPressed (const juce::KeyPress& k)
-{
-    if (k != juce::KeyPress::deleteKey && k != juce::KeyPress::backspaceKey)
-        return false;
-    if (! isShowing() || ctx.ui.patternClipKind != 0 || ctx.ui.macroLearn)
-        return true;
-    fileActions.newPattern (ctx.ui.selectedPattern);
-    return true;
 }
 
 int PatternsView::chainVisibleCount() const
