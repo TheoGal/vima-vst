@@ -61,6 +61,7 @@ public:
     void resized() override;
     void refreshState();
     void mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelDetails&) override;
+    bool keyPressed (const juce::KeyPress&) override;   // Delete / Backspace: empty the selected cell
 
     // Pattern / track clipboard (SPEC.md 7.1.2), shared by the bottom bar and the slot menu
     void copyPattern (int index);

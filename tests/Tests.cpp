@@ -2139,6 +2139,14 @@ int main (int argc, char** argv)
                 s5->mouseDrag (mouseEvent (*s5, b, a, true));
                 s5->mouseUp (mouseEvent (*s5, b, a, true));
                 check (ctx.ui.selectedPattern == 5 && hd->fileMenuPattern() == 5, "a click with a small slip on a slot still selects it");
+                // Delete / Backspace empty the selected cell (after a confirmation); other keys pass on
+                check (pv->getWantsKeyboardFocus() && ! pv->keyPressed (juce::KeyPress ('a')), "the patterns view takes keyboard focus; other keys pass on to the host");
+                pv->copyPattern (5);
+                const auto keep5 = proc->read ([] (const Project& p) { return p.patterns[5]; });
+                check (pv->keyPressed (juce::KeyPress (juce::KeyPress::deleteKey)) && pv->keyPressed (juce::KeyPress (juce::KeyPress::backspaceKey))
+                           && proc->read ([&] (const Project& p) { return samePattern (p.patterns[5], keep5); }),
+                       "Delete and Backspace are handled; while COPIED is lit they change nothing");
+                pv->cancelClip();
                 // one shared track for the step view and the patterns view
                 ctx.ui.track = 4;
                 ctx.changed();
