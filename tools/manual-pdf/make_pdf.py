@@ -48,7 +48,7 @@ h2, h3 {{ break-after: avoid; }}
 h2#who-am-i-disclaimer, h2#transport {{ break-before: auto; margin-top: 9mm; }}   /* share the page before */
 .table-box {{ break-inside: avoid; }}   /* tables stay whole (the step values table moves to the next page) */
 .page-break {{ break-before: page; }}
-.repo {{ margin-top: 4mm; padding: 5mm 6mm; border: 1px solid #c9d0d9; border-radius: 6px; background: #f1f6f3; text-align: center; break-inside: avoid; }}
+.repo {{ margin-top: 3mm; padding: 3.5mm 6mm; border: 1px solid #c9d0d9; border-radius: 6px; background: #f1f6f3; text-align: center; break-inside: avoid; }}
 .repo .label {{ font-size: 8.5pt; letter-spacing: .12em; text-transform: uppercase; color: #6b7480; }}
 .repo a {{ display: block; margin-top: 1.5mm; font-size: 12pt; font-weight: 600; color: #00804a; }}
 p, li {{ orphans: 3; widows: 3; }}
@@ -69,7 +69,7 @@ p.label {{ break-after: avoid; }}   /* "note mode:" style labels stay with what 
 blockquote {{ margin: 4mm 0; padding: 3mm 5mm; background: #f1f6f3; border-left: 3px solid #00954D; border-radius: 0 4px 4px 0; break-inside: avoid; }}
 blockquote p {{ margin: 1.5mm 0; }}
 table {{ border-collapse: collapse; width: 100%; margin: 3mm 0; font-size: 8.8pt; break-inside: auto; }}
-th, td {{ border: 1px solid #c9d0d9; padding: 1.1mm 2.4mm; text-align: left; vertical-align: top; }}
+th, td {{ border: 1px solid #c9d0d9; padding: 0.9mm 2.4mm; text-align: left; vertical-align: top; }}
 th {{ background: #eef1f5; font-weight: 600; }}
 tr {{ break-inside: avoid; }}
 ul, ol {{ padding-left: 6mm; }}
