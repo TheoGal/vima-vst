@@ -27,7 +27,7 @@ Last updated: 2026-10-24 (checked against the code at that date).
 ### 2.1 Ableton Live and MIDI channels (tested and confirmed)
 
 - **Confirmed by testing (Live 12, Windows): Ableton Live strips the MIDI channel from MIDI data internally.** All 8 tracks of one Vima instance arrive mixed together on the destination track, whatever their MIDI channels. So in Live there is **no native way to use a VST step sequencer with multiple MIDI channels** (one instance feeding several instruments by channel). Someone who wants that in Live would have to build it with **Max for Live**.
-- How Vima is used in Live: **one Vima instance per destination track** (each instance still has 8 tracks, for example several drum voices or layers going to one instrument). Accepted as is.
+- How Vima is used in Live: **one Vima instance per destination track** (each instance still has 8 tracks, all playing that one instrument, for example in complex polyrhythmic patterns). Accepted as is.
 - Hosts that keep MIDI channels (for example Bitwig, Reaper) can route one instance to several destinations by channel.
 
 ## 3. Transport and clock
