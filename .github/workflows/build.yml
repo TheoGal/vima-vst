@@ -246,8 +246,6 @@ jobs:
 
             ---
 
-            Vima is an 8-track melodic MIDI step sequencer (VST3) for your DAW.
-
             Downloads:
             - **Windows (x64):** Vima-Windows-x64.zip. Copy the Vima.vst3 folder to C:\Program Files\Common Files\VST3\
             - **macOS (Apple Silicon and Intel):** Vima-macOS-plugin.zip. Not notarized: see README.txt inside.
