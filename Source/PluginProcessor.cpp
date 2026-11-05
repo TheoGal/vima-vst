@@ -224,8 +224,7 @@ void VimaProcessor::newPattern (int index)
 bool VimaProcessor::movePattern (int from, int to)
 {
     const Lock sl (lock);
-    if (from == to || from < 0 || to < 0 || from >= vima::numPatterns || to >= vima::numPatterns
-        || ! project.patterns[(size_t) to].isEmpty())
+    if (from == to || from < 0 || to < 0 || from >= vima::numPatterns || to >= vima::numPatterns)
         return false;
     undo.push (project, std::vector<int> { from, to }, "MOVE PATTERN " + vima::patternLabel (from) + " > " + vima::patternLabel (to));
     project.patterns[(size_t) to] = project.patterns[(size_t) from];
@@ -237,8 +236,7 @@ bool VimaProcessor::movePattern (int from, int to)
 bool VimaProcessor::copyPatternTo (int from, int to)
 {
     const Lock sl (lock);
-    if (from == to || from < 0 || to < 0 || from >= vima::numPatterns || to >= vima::numPatterns
-        || ! project.patterns[(size_t) to].isEmpty())
+    if (from == to || from < 0 || to < 0 || from >= vima::numPatterns || to >= vima::numPatterns)
         return false;
     undo.push (project, to, "COPY PATTERN " + vima::patternLabel (from) + " > " + vima::patternLabel (to));
     project.patterns[(size_t) to] = project.patterns[(size_t) from];

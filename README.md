@@ -369,11 +369,12 @@ There are multiple ways to move, copy and paste cells around.
   <em>Pattern 1 drag dropping into pattern 2</em>
 </p>
 
-- **Drag a cell** onto an **empty** cell to **move** the pattern there. The cell it came from becomes empty.
+- **Drag a cell** onto another cell to **move** the pattern there. The cell it came from becomes empty.
 - **Ctrl + drag** (Cmd + drag on a Mac) to **copy** it instead; the original stays.
+- While you drag, the cell under the mouse gets a white outline: that is where the pattern lands. A pattern already in that cell is overwritten.
 - **Drag a cell onto the chain list** to add it to the chain exactly where the line shows.
 
->**design choice:** when dragging a cell, you can only place it on empty cells (contrary to how copy - pasting works via menu or the bottom buttons). This is by design to avoid accidental deletion of patterns. If you do indeed want to overwrite a pattern cell, you can use right-click menu or the bottom buttons.
+>**design choice:** dragging onto a cell that already holds a pattern overwrites it without asking. Everything you do to patterns in the patterns view can be undone, so a slip is always one UNDO away.
 
 3. You can also **right-click** a **cell** to select it and open its menu:
 
@@ -383,7 +384,7 @@ There are multiple ways to move, copy and paste cells around.
 
 - **COPY PATTERN** and **COPY TRACK XX**, work the same as the buttons.
 - **PASTE**, which says what it will paste: **PASTE PATTERN 05** or **PASTE ON TRACK 03**. A PASTE from this menu is a **one-off**: it pastes into the cell you right-clicked, then clears the clipboard.
-- **NEW PATTERN**: resets the pattern to an empty one (all steps off, every setting back to its default).
+- **NEW PATTERN**: resets the pattern to an empty one at once (all steps off, every setting back to its default).
 - **LOAD PATTERN...** and **SAVE PATTERN AS...** (explained later).
 
 NEW PATTERN can be undone.
@@ -615,7 +616,7 @@ Except for the theme and middle C, these settings belong to each Vima in your pr
 | Pencil | click | pattern edit mode on / off |
 | Pattern cell | click / play button | select / select and switch |
 | Pattern cell | right-click | copy, paste, new, load, save menu |
-| Pattern cell | drag / Ctrl + drag | move / copy to an empty cell |
+| Pattern cell | drag / Ctrl + drag | move / copy onto another cell |
 | Pattern cell | drag onto the chain | add it to the chain there |
 | Page buttons | hover while dragging a cell | switch page |
 | Chain entry | drag the grip | reorder |

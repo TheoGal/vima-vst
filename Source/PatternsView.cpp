@@ -109,14 +109,13 @@ void PatternSlot::paint (juce::Graphics& g)
     // queued = blinking play button.
     auto b = getLocalBounds().toFloat();
     const auto fill = playing ? t.selected : (used ? t.tile : t.panel);
-    // Drag and drop (SPEC.md 7.1.3): empty slots are drop targets (a mid outline), the one under
-    // the mouse gets the selected outline; stored slots get none. The selection outline is hidden.
+    // Drag and drop (SPEC.md 7.1.3): the cell under the mouse (any cell but the source) gets the
+    // selected outline; the selection outline is hidden meanwhile.
     const bool slotDrag = ctx.ui.slotDragSource >= 0;
     const bool target = slotDrag && idx == ctx.ui.slotDropTarget;
-    const bool allowed = slotDrag && ! used && idx != ctx.ui.slotDragSource;
     const bool outlined = slotDrag ? target : sel;
-    const auto border = outlined ? t.neutral : (allowed ? t.muted : t.border3);
-    const float bw = outlined ? 2.0f : (allowed ? 1.5f : 1.0f);
+    const auto border = outlined ? t.neutral : t.border3;
+    const float bw = outlined ? 2.0f : 1.0f;
     g.setColour (fill);
     g.fillRoundedRectangle (b, 7.0f);
     g.setColour (border);
@@ -564,7 +563,13 @@ void PatternsView::showSlotMenu (int pattern)
         else if (r == 3) safe->copyPattern (pattern);
         else if (r == 4) safe->copyTrack (pattern);
         else if (r == 5) safe->pasteTo (pattern, true);
-        else if (r == 6) safe->fileActions.newPattern (pattern);
+        else if (r == 6)
+        {
+            // NEW PATTERN here empties the cell at once (undoable); FILE > PATTERN > NEW still asks
+            safe->ctx.proc.newPattern (pattern);
+            safe->ctx.ui.selection = 0;
+            safe->ctx.changed();
+        }
     });
 }
 
@@ -767,10 +772,10 @@ void PatternsView::slotDragMoved (int pattern, juce::Point<int> pos, bool copy)
         if (pageBtns[b]->getBounds().contains (pos) && ctx.ui.viewPage != b)
             ctx.ui.viewPage = b;
 
-    // a drop target: an empty slot other than the source
+    // the drop target: any cell other than the source (a stored pattern there is overwritten; undoable)
     ctx.ui.slotDropTarget = -1;
     const int over = slotIndexAt (pos);
-    if (over >= 0 && over != pattern && ctx.proc.read ([over] (const Project& p) { return p.patterns[(size_t) over].isEmpty(); }))
+    if (over >= 0 && over != pattern)
         ctx.ui.slotDropTarget = over;
 
     // over the chain panel: where the pattern would be added

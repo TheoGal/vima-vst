@@ -2195,8 +2195,11 @@ int main (int argc, char** argv)
                        "Ctrl / Cmd + drag copies the pattern (the source stays)");
                 const auto before = proc->read ([] (const Project& p) { return p.patterns[2]; });
                 dragTo (*s1, findChild<PatternSlot> (*pv, 2)->getBounds().getCentre(), left, nullptr);
+                check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[2], p2) && p.patterns[1].isEmpty(); }),
+                       "a move onto a stored cell overwrites it (the source becomes empty)");
+                proc->performUndo();
                 check (proc->read ([&] (const Project& p) { return samePattern (p.patterns[2], before) && samePattern (p.patterns[1], p2); }),
-                       "a drop on a stored slot is refused");
+                       "UNDO restores both cells after overwriting a stored one");
                 proc->edit (-1, [] (Project& p) { p.globals.chain.clear(); p.globals.chain.add ({ 22, 1 }); p.globals.chain.add ({ 23, 1 }); });
                 pv->refreshState();
                 ChainRow* row0 = nullptr;
