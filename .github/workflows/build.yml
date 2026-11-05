@@ -236,11 +236,16 @@ jobs:
         uses: softprops/action-gh-release@v3
         with:
           name: Vima VST ${{ github.ref_name }}
+          # keep what was written when publishing (release notes) and add the standard part under it
+          append_body: true
           files: |
             release/Vima-Windows-x64.zip
             release/Vima-macOS-plugin.zip
             release/Vima-Linux-x64.zip
           body: |
+
+            ---
+
             Vima is an 8-track melodic MIDI step sequencer (VST3) for your DAW.
 
             Downloads:
