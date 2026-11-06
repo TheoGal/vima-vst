@@ -578,7 +578,7 @@ The **settings** pop up opens with the **SETTINGS** button (the gear icon). Clic
 
 **USER SCALE**: build your own scale. Choose the **root** and switch the 12 notes on or off (the root is always on). Then pick **USER** in the SCALE pop up. The root here is the same as the one in the SCALE pop up.
 
-**CC OUTPUT: Smooth between steps**: By default, each CC step sends a CC value so when two adjacent steps have a big difference in values the controlled parameter "jumps". Target a synth parameter with the CC steps and you'll see at once what I mean.  When "smoothing" is on, each track's CC glides from one CC step's value to the next instead of jumping with a linear interpolation. Which mode you prefer depends on the actual synth parameter controlled and personal taste and the sound you're after.
+**CC OUTPUT: Smooth between steps**: Smoothing is on by default: each track's CC glides from one CC step's value to the next with a linear interpolation, instead of jumping. With smoothing off, each CC step sends its CC value as is, so when two adjacent steps have a big difference in values the controlled parameter "jumps" - which is what you want for stepped parameters like a waveform selector or a switch. Target a synth parameter with the CC steps and you'll see at once what I mean. Which mode you prefer depends on the actual synth parameter controlled and personal taste and the sound you're after.
 
 **PATTERN CHANGE**:
 **From incoming CC**: You can use this setting to switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.

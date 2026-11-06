@@ -179,7 +179,7 @@ struct Globals
     std::uint16_t userScale = 0b010110101101;   // natural minor shape by default, root always on
     int octaveOffset() const { return userSettings::middleC() - 3; }   // middle C is user-wide
 
-    bool ccSmoothing = false;      // glide over the whole gap between two CC-on steps
+    bool ccSmoothing = true;       // glide over the whole gap between two CC-on steps (on by default)
 
     bool patternCC = false;
     int patternCCChannel = 16;

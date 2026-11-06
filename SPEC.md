@@ -83,7 +83,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Current pattern | 01 |
 | Global scale / root / user scale | minor / C / natural minor shape |
 | Middle C | C3 (user-wide, 11) |
-| CC smoothing | off |
+| CC smoothing | on |
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
@@ -334,7 +334,7 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 
 - One CC per track (CC NUM), on the track's MIDI channel, when the track's CC OUT is on.
 - Without smoothing: each step with its CC on sends its CC value at the step's time, if its CC probability roll passes. Steps with the CC off send nothing.
-- **Smoothing** (Settings, on / off): the CC glides from one CC-on step's value to the next, over the whole time between them, passing over CC-off steps and over steps whose CC probability roll failed (the roll is made once per step play, so the glide and the step agree). Messages are sent about every 32 samples, only when the value changes. There is no smoothing time setting.
+- **Smoothing** (Settings, on / off, on by default): the CC glides from one CC-on step's value to the next, over the whole time between them, passing over CC-off steps and over steps whose CC probability roll failed (the roll is made once per step play, so the glide and the step agree). Messages are sent about every 32 samples, only when the value changes. There is no smoothing time setting.
 - The note probability does not affect CC, and the CC probability does not affect notes (5).
 
 ## 11. Settings dialog
@@ -760,3 +760,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: CC mode gets a per-step **CC probability** (1-100%, rolled apart from the note probability; with smoothing the glide passes over steps whose roll failed): SLIDER VAL / PROB, PARAMS ON / VAL / PROB, a PROB range (25-100%), SHIFT VAL / PROB, a CC PROB macro target. PROB is amber in both modes. The CC value is now called **VAL** everywhere (SLIDER, PARAMS, RANGES, SHIFT, undo labels, macros; host name "Val"); CC stays only for NOTES / CC, CC OUT and CC NUM. The CC number knob moved into the CC OUT tile, so CC mode has a SLIDER tile like note mode.
 - 2026-11-06: VAL / PROB / ON only inside CC mode's own controls (SLIDER, PARAMS, RANGES, SHIFT); undo labels and macros say CC VAL, CC PROB, CC ON (host names "CCVal", "CCProb"), since they are read outside CC mode.
 - 2026-11-06: Loading still reads step data saved before CC probability (9 bytes per step; CC PROB then 100%), and the older 9 PARAMS flags and 6 ranges.
+- 2026-11-06: CC smoothing is on by default (most CC targets are continuous, like filter cutoff); switch it off in Settings for stepped targets. Projects keep their own setting.

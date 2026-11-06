@@ -1190,8 +1190,8 @@ void testInitAndGate()
                    && g.rangePitch.min == 0 && g.rangePitch.max == 11 && g.rangeOct.min == 2 && g.rangeOct.max == 4
                    && g.rangeVel.min == 70 && g.rangeVel.max == 127 && g.rangeGate.min == 25 && g.rangeGate.max == 150
                    && g.rangeProb.min == 25 && g.rangeProb.max == 100 && g.rangeCC.min == 0 && g.rangeCC.max == 127
-                   && g.onChance == 70 && ! g.ccSmoothing && userSettings::middleC() == 3,
-               "init globals: ON and PITCH armed (CC mode: CC), default ranges (ON 70 %, OCT 2-4, VEL 70-127, GATE 25-150 %, PROB 25-100 %), CC smoothing off, middle C = C3");
+                   && g.onChance == 70 && g.ccSmoothing && userSettings::middleC() == 3,
+               "init globals: ON and PITCH armed (CC mode: CC), default ranges (ON 70 %, OCT 2-4, VEL 70-127, GATE 25-150 %, PROB 25-100 %), CC smoothing on, middle C = C3");
     }
     {
         Project p;
@@ -1925,6 +1925,10 @@ int main (int argc, char** argv)
         ed.refreshAll();
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-cc-prob@2x.png"));
         ed.context().ui.ccSliderProb = false;
+        ed.context().ui.ccMode = false;
+        ed.refreshAll();
+        ed.context().openSettings();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-settings@2x.png"));
         ed.context().ui.ccMode = false;
         ed.refreshAll();
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-new-notes@2x.png"));
