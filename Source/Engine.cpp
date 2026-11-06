@@ -247,7 +247,9 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
             const double glide = t1 - t0;   // the whole gap
             if (x <= t0 || glide <= 0.0)
                 return v0;
-            const double f = (x - t0) / glide;
+            double f = (x - t0) / glide;
+            if (g.ccCurve == CCCurve::exp) f = f * f * f;                             // slow start, fast arrival
+            else if (g.ccCurve == CCCurve::log) f = 1.0 - (1.0 - f) * (1.0 - f) * (1.0 - f);   // fast start, slow arrival
             return juce::jlimit (0, 127, (int) std::lround (v0 + (v1 - v0) * f));
         };
 

@@ -108,6 +108,7 @@ struct ScaleInfo
 const ScaleInfo& scaleInfo (int index);
 
 enum class Quantize : std::uint8_t { off, beat, bar, patternEnd };
+enum class CCCurve : std::uint8_t { linear, exp, log };   // shape of the CC smoothing glide
 
 struct ChainEntry
 {
@@ -180,6 +181,7 @@ struct Globals
     int octaveOffset() const { return userSettings::middleC() - 3; }   // middle C is user-wide
 
     bool ccSmoothing = true;       // glide over the whole gap between two CC-on steps (on by default)
+    CCCurve ccCurve = CCCurve::linear;   // glide shape: LINEAR, EXP (slow start), LOG (fast start)
 
     bool patternCC = false;
     int patternCCChannel = 16;

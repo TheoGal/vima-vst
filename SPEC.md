@@ -83,7 +83,7 @@ A new instance, NEW in the FILE menu, and a right-click / Alt + click on any con
 | Current pattern | 01 |
 | Global scale / root / user scale | minor / C / natural minor shape |
 | Middle C | C3 (user-wide, 11) |
-| CC smoothing | on |
+| CC smoothing | on, curve LINEAR |
 | Pattern change by CC | off, channel 16, CC 20 |
 | Quantize | 1 BAR |
 | Chain | off, loop on, empty |
@@ -128,7 +128,7 @@ There is no step skip, no chords per step and no drum mode.
 - The scale is **selected in the main window** (SCALE tile popover, 12.2), never in the Settings dialog. The root can be set in the SCALE popover and in the Settings user scale editor (the same global value).
 - **User scale**: 12 note toggles. It is **edited only in the Settings dialog**, and **selected** (as "USER") from the main window.
 - **Middle C** (display only): C3, C4 or C5 (11). A **user-wide** preference like the theme, not part of projects or presets.
-- **CC smoothing** on/off (10).
+- **CC smoothing** on/off and its curve (10).
 - **Pattern change from incoming CC**: on/off, MIDI channel and CC number (7.3).
 - **Pattern change quantize**: OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
 
@@ -335,19 +335,20 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 - One CC per track (CC NUM), on the track's MIDI channel, when the track's CC OUT is on.
 - Without smoothing: each step with its CC on sends its CC value at the step's time, if its CC probability roll passes. Steps with the CC off send nothing.
 - **Smoothing** (Settings, on / off, on by default): the CC glides from one CC-on step's value to the next, over the whole time between them, passing over CC-off steps and over steps whose CC probability roll failed (the roll is made once per step play, so the glide and the step agree). Messages are sent about every 32 samples, only when the value changes. There is no smoothing time setting.
+- **Curve** (Settings, global like smoothing): the glide's shape. **LINEAR** (default) moves evenly; **EXP** starts slow and speeds into the next value (cubic, a quarter of the way through it has moved under 2%, halfway 12.5%); **LOG** moves fast first and settles into the next value (the mirror: halfway 87.5%). The curve applies the same way to rising and falling glides.
 - The note probability does not affect CC, and the CC probability does not affect notes (5).
 
 ## 11. Settings dialog
 
-Opened with the SETTINGS button. A 600 x 700 dialog over the main window, same style. Sections, top to bottom:
+Opened with the SETTINGS button. A 600 x 646 dialog over the main window, same style. Sections, top to bottom:
 
 - **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\Vima\Settings.xml`, macOS `~/Library/Application Support/Vima/Settings.xml`; no permission prompts, unlike Documents) and used by every Vima instance; switching it in one instance switches all open Vima windows. Projects and presets do not carry it.
 - **MIDDLE C**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. Like the theme, middle C is a **user-wide preference**: stored once in Settings.xml and used by every Vima instance (changing it in one changes all open windows); projects and presets do not carry it. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
-- **CC OUTPUT**: Smooth between steps ON / OFF (10).
+- **CC OUTPUT**: Smooth between steps ON / OFF, and Curve LINEAR / EXP / LOG (cyan buttons, each with a small drawing of its curve before the name; dimmed while smoothing is off) (10).
 - **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
 - No close (×) button: every setting applies the moment it is clicked, so **DONE** or a click outside the dialog closes it.
-- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
+- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing and its curve, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
 
 ## 12. UI
 
@@ -503,7 +504,7 @@ Not exposed (set in the plugin only):
 - Track routing: MIDI channel, CC number.
 - Scale and pitch: the selected scale, the root, the user scale notes, middle C.
 - Chain: LOOP on/off, the chain entries and their repeats.
-- Settings: CC smoothing, pattern change by CC (on/off, channel, CC number), quantize, theme.
+- Settings: CC smoothing and its curve, pattern change by CC (on/off, channel, CC number), quantize, theme.
 - Editing tools: PARAMS (armed params, ALL), RANGES, SLIDER lane, NOTES / CC view, the selection, the track shown, the patterns view page.
 - Actions: RANDOMIZE, SMOOTH, the curves (shapes, rotate, invert), SHIFT, COPY / PASTE / CLEAR, COPY TRACK, undo, the start / stop button, preset, pattern and mapping-set new / load / save.
 
@@ -539,7 +540,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 - **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens one flat menu with three sections, each under its own header: **PRESET**, **PATTERN**, **MACROS**.
 - **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first: "Clear all patterns, chain and settings? Macro mappings are kept."; resets what a preset holds to the init values (4.1), keeps the mappings and everything a preset does not hold), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
-  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
+  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing and its curve, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
   - Dialogs start in **Documents/Vima/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
 - **PATTERN** (header "PATTERN 05", the slot only, no file name) acts on the **selected pattern**: the one in the PATTERN box, or the selected slot in the patterns view. NEW (asks first: "Reset Pattern 05? You can undo this"; an empty pattern: all steps off, settings and values at init, 4.1), LOAD... (asks before replacing a pattern that has steps on), SAVE AS... There is no plain SAVE: a file would have to be linked to each of the 64 slots. NEW and LOAD are one undo step each.
   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals: a loaded pattern plays in the current preset's scale.
@@ -759,5 +760,5 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: Releases keep the notes written when publishing; the build appends the standard downloads part under them (title still set by the build).
 - 2026-11-06: CC mode gets a per-step **CC probability** (1-100%, rolled apart from the note probability; with smoothing the glide passes over steps whose roll failed): SLIDER VAL / PROB, PARAMS ON / VAL / PROB, a PROB range (25-100%), SHIFT VAL / PROB, a CC PROB macro target. PROB is amber in both modes. The CC value is now called **VAL** everywhere (SLIDER, PARAMS, RANGES, SHIFT, undo labels, macros; host name "Val"); CC stays only for NOTES / CC, CC OUT and CC NUM. The CC number knob moved into the CC OUT tile, so CC mode has a SLIDER tile like note mode.
 - 2026-11-06: VAL / PROB / ON only inside CC mode's own controls (SLIDER, PARAMS, RANGES, SHIFT); undo labels and macros say CC VAL, CC PROB, CC ON (host names "CCVal", "CCProb"), since they are read outside CC mode.
-- 2026-11-06: Loading still reads step data saved before CC probability (9 bytes per step; CC PROB then 100%), and the older 9 PARAMS flags and 6 ranges.
 - 2026-11-06: CC smoothing is on by default (most CC targets are continuous, like filter cutoff); switch it off in Settings for stepped targets. Projects keep their own setting.
+- 2026-11-06: Vima 2 (a breaking change: earlier projects and files do not load; no backwards compatibility). CC smoothing gets a global **Curve**: LINEAR / EXP / LOG, buttons with a small drawing of the curve.

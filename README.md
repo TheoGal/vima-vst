@@ -536,7 +536,7 @@ Clicking the **file** button (with a folder icon) at the top of the plugin opens
 **PRESET**: the music of the whole instance.
 
 - Holds all 64 patterns, the chain, the track routing, the scale, root and user scale, the PARAMS and RANGES, and the current pattern.
-- Does **not** hold the macro mappings, the settings found only in the Settings dialog (CC smoothing, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
+- Does **not** hold the macro mappings, the settings found only in the Settings dialog (CC smoothing and its curve, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
 - **NEW** starts over (pattern 1 ready, the rest empty) and asks first. **LOAD...**, **SAVE** (overwrites the current preset; greyed out if it has never been saved) and **SAVE AS...**
 - The menu header shows the current preset's name, or "UNSAVED".
 - Files end in **.vima** and are kept in Documents/Vima/Presets by default.
@@ -579,7 +579,9 @@ The **settings** pop up opens with the **SETTINGS** button (the gear icon). Clic
 
 **USER SCALE**: build your own scale. Choose the **root** and switch the 12 notes on or off (the root is always on). Then pick **USER** in the SCALE pop up. The root here is the same as the one in the SCALE pop up.
 
-**CC OUTPUT: Smooth between steps**: Smoothing is on by default: each track's CC glides from one CC step's value to the next with a linear interpolation, instead of jumping. With smoothing off, each CC step sends its CC value as is, so when two adjacent steps have a big difference in values the controlled parameter "jumps" - which is what you want for stepped parameters like a waveform selector or a switch. Target a synth parameter with the CC steps and you'll see at once what I mean. Which mode you prefer depends on the actual synth parameter controlled and personal taste and the sound you're after.
+**CC OUTPUT: Smooth between steps**: Smoothing is on by default: each track's CC glides from one CC step's value to the next instead of jumping. With smoothing off, each CC step sends its CC value as is, so when two adjacent steps have a big difference in values the controlled parameter "jumps" - which is what you want for stepped parameters like a waveform selector or a switch. Target a synth parameter with the CC steps and you'll see at once what I mean. Which mode you prefer depends on the actual synth parameter controlled and personal taste and the sound you're after.
+
+**Curve**: the shape of the glide while smoothing is on. **LINEAR** moves evenly from one value to the next. **EXP** starts slow and speeds up into the next value, **LOG** moves fast first and then settles into it. Parameters like filter cutoff often sound more natural with EXP or LOG, since our ears don't hear their changes evenly. Like smoothing, the curve applies to every track.
 
 **PATTERN CHANGE**:
 **From incoming CC**: You can use this setting to switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.

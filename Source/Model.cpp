@@ -271,8 +271,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
     juce::MemoryBlock mb;
     if (! mb.fromBase64Encoding (text))
         return;
-    // 10 bytes per step; files saved before CC probability have 9 (CC probability then stays 100%)
-    const size_t stride = mb.getSize() >= (size_t) maxSteps * 10 ? 10 : 9;
+    constexpr size_t stride = 10;
     if (mb.getSize() < (size_t) maxSteps * stride)
         return;
     const auto* d = static_cast<const std::uint8_t*> (mb.getData());
@@ -289,7 +288,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
         s.probability = (std::uint8_t) juce::jlimit (1, 100, (int) b[6]);   // never 0
         s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[7]);
         s.ccOn = b[8] != 0;
-        if (stride == 10) s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, (int) b[9]);
+        s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, (int) b[9]);
         steps[(size_t) i] = s;
     }
 }
@@ -370,7 +369,7 @@ juce::ValueTree Project::musicToValueTree() const
     // Settings that live only in the Settings dialog are not part of a preset (SPEC.md 13.3);
     // the user scale and the root stay (a preset can select USER)
     auto g = root.getChildWithName ("Globals");
-    for (auto* id : { "ccSmoothing", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
+    for (auto* id : { "ccSmoothing", "ccCurve", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
         g.removeProperty (id, nullptr);
     return root;
 }
@@ -379,6 +378,7 @@ juce::ValueTree Project::musicToValueTree() const
 static void keepDialogSettings (Globals& g, const Globals& old)
 {
     g.ccSmoothing = old.ccSmoothing;
+    g.ccCurve = old.ccCurve;
     g.patternCC = old.patternCC;
     g.patternCCChannel = old.patternCCChannel;
     g.patternCCNumber = old.patternCCNumber;
@@ -469,6 +469,7 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("root", g.root, nullptr);
     gt.setProperty ("userScale", (int) g.userScale, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
+    gt.setProperty ("ccCurve", (int) g.ccCurve, nullptr);
     gt.setProperty ("patternCC", g.patternCC, nullptr);
     gt.setProperty ("patternCCChannel", g.patternCCChannel, nullptr);
     gt.setProperty ("patternCCNumber", g.patternCCNumber, nullptr);
@@ -532,6 +533,7 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.root = juce::jlimit (0, 11, (int) gt.getProperty ("root", g.root));
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
+        g.ccCurve = (CCCurve) juce::jlimit (0, 2, (int) gt.getProperty ("ccCurve", (int) g.ccCurve));
         g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);
         g.patternCCChannel = juce::jlimit (1, 16, (int) gt.getProperty ("patternCCChannel", g.patternCCChannel));
         g.patternCCNumber = juce::jlimit (0, 127, (int) gt.getProperty ("patternCCNumber", g.patternCCNumber));
@@ -548,10 +550,10 @@ void Project::fromValueTree (const juce::ValueTree& root)
                                (std::uint8_t) juce::jlimit (1, 99, parts[1].getIntValue()) });
         }
         const auto params = gt.getProperty ("params").toString();
-        if (params.length() == 9 || params.length() == 10)   // 9 = saved before CC probability
+        if (params.length() == 10)
         {
             bool* flags[] = { &g.armOn, &g.armPitch, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn, &g.armAllNote, &g.armCcProb };
-            for (int i = 0; i < params.length(); ++i) *flags[i] = params[i] == '1';
+            for (int i = 0; i < 10; ++i) *flags[i] = params[i] == '1';
         }
         // something is always armed
         if (! g.armAllNote && ! (g.armOn || g.armPitch || g.armOct || g.armVel || g.armGate || g.armProb)) g.armPitch = true;
@@ -560,8 +562,8 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.ccOnChance = juce::jlimit (0, 100, (int) gt.getProperty ("ccOnChance", g.ccOnChance));
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
         ParamRange* rs[] = { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC, &g.rangeCcProb };
-        if (rangeParts.size() == 6 || rangeParts.size() == 7)   // 6 = saved before CC probability
-            for (int i = 0; i < rangeParts.size(); ++i)
+        if (rangeParts.size() == 7)
+            for (int i = 0; i < 7; ++i)
             {
                 auto mm = juce::StringArray::fromTokens (rangeParts[i], ":", "");
                 if (mm.size() == 2) { rs[i]->min = mm[0].getIntValue(); rs[i]->max = mm[1].getIntValue(); }

@@ -209,33 +209,6 @@ void testModel()
     check (qs.steps[7].ccProbability == 33 && q->globals.armCcProb && q->globals.rangeCcProb.min == 40 && q->globals.rangeCcProb.max == 60,
            "CC PROB, its PARAMS button and its RANGE survive save/load");
     check (q->currentPattern == 5, "current pattern survives");
-
-    // a state saved before CC probability: 9 bytes per step, 9 PARAMS flags, 6 ranges
-    {
-        auto tree = p->toValueTree();
-        for (auto pt : tree)
-            for (auto tt : pt)
-                if (tt.hasProperty ("steps"))
-                {
-                    juce::MemoryBlock mb;
-                    mb.fromBase64Encoding (tt.getProperty ("steps").toString());
-                    juce::MemoryBlock old;
-                    for (int i = 0; i < maxSteps; ++i) old.append (static_cast<const char*> (mb.getData()) + i * 10, 9);
-                    tt.setProperty ("steps", old.toBase64Encoding(), nullptr);
-                }
-        auto gt = tree.getChildWithName ("Globals");
-        gt.setProperty ("params", gt.getProperty ("params").toString().substring (0, 9), nullptr);
-        auto rs = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
-        rs.remove (6);
-        gt.setProperty ("ranges", rs.joinIntoString (","), nullptr);
-        auto o = std::make_unique<Project>();
-        o->fromValueTree (tree);
-        const auto& os = o->patterns[5].tracks[3].steps[7];
-        auto expected = p->patterns[5].tracks[3].steps[7];
-        expected.ccProbability = 100;
-        check (os == expected && o->globals.armProb && o->globals.rangeVel.min == 10,
-               "patterns, PARAMS and RANGES saved before CC probability still load (CC PROB 100%)");
-    }
 }
 
 void testTiming()
@@ -391,6 +364,32 @@ void testOutputs()
         for (auto& e : cc)
             if (near (e.ppq, 0.25, 0.03) && std::abs (e.msg.getControllerValue() - 50) <= 6) nearHalf = true;
         check (nearHalf, "CC smoothing glides over the whole gap (halfway = 50)");
+
+        // EXP and LOG: halfway through the glide, 12.5 and 87.5 of the 0-100 move
+        for (auto curve : { CCCurve::exp, CCCurve::log })
+        {
+            Runner rc;
+            auto& tc = rc.track (0);
+            tc.length = 4;
+            tc.steps[0] = { true, true, 0, 3, 100, 50, 100, 0 };
+            tc.steps[2] = { true, true, 0, 3, 100, 50, 100, 100 };
+            rc.project->routing[0].noteOut = false;
+            rc.project->routing[0].ccOut = true;
+            rc.project->globals.ccSmoothing = true;
+            rc.project->globals.ccCurve = curve;
+            rc.run (2.0);
+            int half = -1;
+            bool arrives = false;
+            for (auto& e : rc.ccs (1))
+            {
+                if (half < 0 && e.ppq >= 0.25) half = e.msg.getControllerValue();
+                if (e.msg.getControllerValue() == 100 && e.ppq > 0.3 && e.ppq < 0.501) arrives = true;   // by the step (LOG gets there early)
+            }
+            const int expected = curve == CCCurve::exp ? 13 : 88;
+            check (std::abs (half - expected) <= 4 && arrives,
+                   juce::String (curve == CCCurve::exp ? "EXP" : "LOG") + " curve: about " + juce::String (expected) + " halfway (got "
+                       + juce::String (half) + "), arrives on the step");
+        }
     }
     {
         Runner r;

@@ -50,7 +50,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         {
             const Globals d;
             auto& g = p.globals;
-            g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing;
+            g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing; g.ccCurve = d.ccCurve;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
         });
         Theme::setLight (false);       // the theme default: dark (all instances)
@@ -202,6 +202,38 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     smoothBtn->text = [this] { return juce::String (ctx.globalsCopy().ccSmoothing ? "ON" : "OFF"); };
     smoothBtn->onClick = [this] { ctx.edit (false, [] (Project& p) { p.globals.ccSmoothing = ! p.globals.ccSmoothing; }); };
 
+    // the glide's curve: LINEAR / EXP / LOG, each with a small drawing of its shape; dimmed while
+    // smoothing is off (it only applies to the glide)
+    const char* curveNames[] = { "LINEAR", "EXP", "LOG" };
+    for (int i = 0; i < 3; ++i)
+    {
+        auto& p = pill();
+        const juce::String name (curveNames[i]);
+        p.text = [name] { return name; };
+        p.font = [] { return Fonts::monoSemi (10.0f); };
+        p.look = [this, i, C] { return choice ((int) ctx.globalsCopy().ccCurve == i, C()); };
+        p.alpha = [this] { return ctx.globalsCopy().ccSmoothing ? 1.0f : 0.4f; };
+        p.icon = [i, name] (juce::Graphics& g, juce::Rectangle<float> b, juce::Colour c)
+        {
+            auto box = juce::Rectangle<float> (b.getX() + 10.0f, b.getCentreY() - 5.0f, 16.0f, 10.0f);
+            juce::Path path;
+            for (int k = 0; k <= 16; ++k)
+            {
+                const double f = k / 16.0;
+                const double v = i == 1 ? f * f * f : i == 2 ? 1.0 - (1.0 - f) * (1.0 - f) * (1.0 - f) : f;
+                const float x = box.getX() + box.getWidth() * (float) f, y = box.getBottom() - box.getHeight() * (float) v;
+                if (k == 0) path.startNewSubPath (x, y); else path.lineTo (x, y);
+            }
+            g.setColour (c);
+            g.strokePath (path, juce::PathStrokeType (1.4f, juce::PathStrokeType::curved, juce::PathStrokeType::rounded));
+            g.setFont (Fonts::monoSemi (10.0f));
+            g.drawText (name, b.withTrimmedLeft (32.0f), juce::Justification::centredLeft, false);
+        };
+        p.setTitle (name.toLowerCase() + " curve");
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.ccCurve = (CCCurve) i; }); };
+        curveBtns.add (&p);
+    }
+
     // Pattern change
     patternCCBtn = &pill();
     patternCCBtn->radius = 4.0f;
@@ -238,7 +270,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
 
 juce::Rectangle<int> SettingsDialog::panelBounds() const
 {
-    return getLocalBounds().withSizeKeepingCentre (600, 604);   // sized to its content
+    return getLocalBounds().withSizeKeepingCentre (600, 646);   // sized to its content
 }
 
 void SettingsDialog::mouseDown (const juce::MouseEvent& e)
@@ -314,6 +346,7 @@ void SettingsDialog::resized()
 
     section ("CC OUTPUT");
     smoothBtn->setBounds (rowArea ("Smooth between steps", 24).withWidth (60));
+    segment (rowArea ("Curve", 32), curveBtns, 86);
     divider();
 
     section ("PATTERN CHANGE");
@@ -359,6 +392,7 @@ void SettingsDialog::paint (juce::Graphics& g)
     {
         float a = 1.0f;
         if (r.text == "MIDI CH" || r.text == "CC") a = gl.patternCC ? 1.0f : 0.4f;
+        if (r.text == "Curve") a = gl.ccSmoothing ? 1.0f : 0.4f;
         if (r.section) draw::label (g, r.text, r.area, t.muted.withMultipliedAlpha (a));
         else
         {
@@ -369,7 +403,7 @@ void SettingsDialog::paint (juce::Graphics& g)
     }
 
     // segment frames
-    for (auto* group : { &themeBtns, &midCBtns, &quantBtns })
+    for (auto* group : { &themeBtns, &midCBtns, &quantBtns, &curveBtns })
     {
         auto first = (*group)[0]->getBounds(), last = (*group)[group->size() - 1]->getBounds();
         auto frame = first.getUnion (last).expanded (3);
