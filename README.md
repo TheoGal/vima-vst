@@ -306,7 +306,7 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 
 ## Working with patterns
 
-At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. In the patterns view the cells are already in front of you, so there the number opens nothing. 
+At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. 
 
 When changing patterns manually the **Quantize** setting is considered. See also **Settings window**.
 
