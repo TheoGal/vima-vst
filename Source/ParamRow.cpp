@@ -215,17 +215,20 @@ ParamRow::ParamRow (Context& c) : ctx (c)
         ctx.edit (false, [t] (Project& p) { p.routing[(size_t) t].ccOut = ! p.routing[(size_t) t].ccOut; });
     };
     ccOutTile.addAndMakeVisible (ccOutBtn);
-    ccNumberTile.knob.minValue = 0; ccNumberTile.knob.maxValue = 127; ccNumberTile.knob.defaultValue = 102;
-    ccNumberTile.knob.fontSize = 10.0f;
-    ccNumberTile.knob.colour = [] { return Theme::current().cyan; };
-    ccNumberTile.knob.getValue = [this] { return (int) ctx.routingCopy().ccNumber; };
-    ccNumberTile.knob.setValue = [this] (int v)
+    // the CC number: a small knob in the CC OUT tile, next to the ON button
+    ccNumberKnob.minValue = 0; ccNumberKnob.maxValue = 127; ccNumberKnob.defaultValue = 102;
+    ccNumberKnob.thickness = 3.0f;
+    ccNumberKnob.fontSize = 10.0f;
+    ccNumberKnob.colour = [] { return Theme::current().cyan; };
+    ccNumberKnob.getValue = [this] { return (int) ctx.routingCopy().ccNumber; };
+    ccNumberKnob.setValue = [this] (int v)
     {
         const int t = ctx.ui.track;
         ctx.edit (false, [t, v] (Project& p) { p.routing[(size_t) t].ccNumber = (std::uint8_t) v; });
     };
-    ccNumberTile.knob.onGestureStart = [this] { ccNumberTile.knob.defaultValue = 102 + ctx.ui.track; };   // init: 102-109
-    addAndMakeVisible (ccNumberTile);
+    ccNumberKnob.onGestureStart = [this] { ccNumberKnob.defaultValue = 102 + ctx.ui.track; };   // init: 102-109
+    ccNumberKnob.setTitle ("CC number");
+    ccOutTile.addAndMakeVisible (ccNumberKnob);
     addAndMakeVisible (ccOutTile);
 
     // SLIDER param switch (note mode)
@@ -250,6 +253,25 @@ ParamRow::ParamRow (Context& c) : ctx (c)
     }
     addAndMakeVisible (sliderTile);
 
+    // SLIDER param switch (CC mode): VAL or PROB
+    const char* ccNames[] = { "VAL", "PROB" };
+    for (int i = 0; i < 2; ++i)
+    {
+        auto* p = new Pill();
+        p->radius = 4.0f;
+        p->font = [] { return Fonts::monoSemi (10.0f); };
+        p->text = [n = juce::String (ccNames[i])] { return n; };
+        p->look = [this, i]
+        {
+            const auto& t = Theme::current();
+            return segmentLook (ctx.ui.ccSliderProb == (i == 1), i == 0 ? t.cyan : t.amber);
+        };
+        p->onClick = [this, i] { ctx.ui.ccSliderProb = i == 1; ctx.changed(); };
+        ccSliderBtns.add (p);
+        ccSliderTile.addAndMakeVisible (p);
+    }
+    addAndMakeVisible (ccSliderTile);
+
     // LEARN targets (SPEC.md 13.1)
     setLearnTarget (lengthTile, MacroTarget::length);
     setLearnTarget (swingTile, MacroTarget::swing);
@@ -270,7 +292,7 @@ void ParamRow::updateVisibility()
     noteOutTile.setVisible (! cc);
     sliderTile.setVisible (! cc);
     ccOutTile.setVisible (cc);
-    ccNumberTile.setVisible (cc);
+    ccSliderTile.setVisible (cc);
 }
 
 void ParamRow::resized()
@@ -287,13 +309,13 @@ void ParamRow::resized()
     int x = 0;
     scaleTile.setBounds (getWidth() - 108, 0, 108, getHeight());   // far right, under SETTINGS; same top and bottom as the frames
 
-    // Track group: MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC OUT and CC NUM. The
-    // group keeps the width of its wider mode, so the frame never changes size.
+    // Track group: MIDI CH, then note mode NOTE OUT and SLIDER, or CC mode CC OUT (with the CC
+    // number) and SLIDER. Both modes have the same width, so the frame never changes size.
     x = trackX;
     put (channelTile, x, 106);
-    if (ctx.ui.ccMode) { put (ccOutTile, x, 88); put (ccNumberTile, x, 110); }   // the output toggle right after MIDI CH, as in note mode
+    if (ctx.ui.ccMode) { put (ccOutTile, x, 127); put (ccSliderTile, x, 93); }   // the output toggle right after MIDI CH, as in note mode
     else { put (noteOutTile, x, 88); put (sliderTile, x, 132); }
-    trackTiles = { trackX, tileInset, 106 + 8 + juce::jmax (110 + 8 + 88, 88 + 8 + 132), full.getHeight() };
+    trackTiles = { trackX, tileInset, 106 + 8 + juce::jmax (127 + 8 + 93, 88 + 8 + 132), full.getHeight() };
 
     x = patternX;
     put (lengthTile, x, 100);
@@ -313,7 +335,13 @@ void ParamRow::resized()
     scaleNameBtn.setBounds (scaleTile.getLocalBounds().reduced (8, 0).withTrimmedTop (28).withHeight (20));
     scaleOnBtn.setBounds (useScaleTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
     noteOutBtn.setBounds (noteOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
-    ccOutBtn.setBounds (ccOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20));
+    ccOutBtn.setBounds (ccOutTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20).withWidth (52));
+    ccNumberKnob.setBounds (ccOutTile.getLocalBounds().withTrimmedLeft (72).withTrimmedRight (10).reduced (0, 5));
+    {
+        auto b = ccSliderTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20);
+        const int w = (b.getWidth() - 3) / 2;
+        for (int i = 0; i < 2; ++i) ccSliderBtns[i]->setBounds (b.getX() + i * (w + 3), b.getY(), w, 20);
+    }
     {
         auto b = sliderTile.getLocalBounds().reduced (8, 0).withTrimmedTop (22).withHeight (20);
         const int w = (b.getWidth() - 6) / 3;

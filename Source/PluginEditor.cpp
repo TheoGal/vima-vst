@@ -62,6 +62,7 @@ LearnOverlay::Hit LearnOverlay::resolve (juce::Component* c)
             hit.component = c;
             const int v = props["learnTarget"];
             if (v >= 0) hit.target = (MacroTarget) v;
+            else if (ctx.ui.ccMode) hit.target = ctx.ui.ccSliderProb ? MacroTarget::ccProbability : MacroTarget::cc;
             else hit.target = ctx.ui.slider == SliderParam::velocity ? MacroTarget::velocity
                             : ctx.ui.slider == SliderParam::gate     ? MacroTarget::gate
                                                                     : MacroTarget::probability;

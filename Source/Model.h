@@ -39,12 +39,13 @@ struct Step
     std::uint8_t velocity = 100;  // 1-127 (never 0: velocity 0 is a note-off in MIDI)
     std::uint16_t gate = 100;     // 1-400 % of one step
     std::uint8_t probability = 100; // 0-100 %
-    std::uint8_t cc = 64;         // 0-127
+    std::uint8_t cc = 64;         // 0-127 (VAL)
+    std::uint8_t ccProbability = 100; // 1-100 %: chance the CC is sent, rolled apart from the note (SPEC.md 5)
 
     bool operator== (const Step& o) const
     {
         return on == o.on && ccOn == o.ccOn && pitchClass == o.pitchClass && octave == o.octave && velocity == o.velocity
-            && gate == o.gate && probability == o.probability && cc == o.cc;
+            && gate == o.gate && probability == o.probability && cc == o.cc && ccProbability == o.ccProbability;
     }
     bool operator!= (const Step& o) const { return ! (*this == o); }
 };
@@ -193,11 +194,11 @@ struct Globals
     // ALL is its own state per mode; something is always armed.
     bool armAllNote = false;   // ALL in note mode (CC mode has only ON and CC, no ALL)
     bool armCcOn = false;         // the ON param in CC mode (CC on/off)
-    bool armOn = true, armPitch = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true;
+    bool armOn = true, armPitch = true, armOct = false, armVel = false, armGate = false, armProb = false, armCC = true, armCcProb = false;
     // Default ranges (SPEC.md 4.1), chosen to sound musical at the default 1/16: three octaves
     // around middle C, audible velocities, staccato to slight overlap, no vanishing steps
     ParamRange rangePitch { 0, 11 }, rangeOct { 2, 4 }, rangeVel { 70, 127 }, rangeGate { 25, 150 },
-              rangeProb { 25, 100 }, rangeCC { 0, 127 };
+              rangeProb { 25, 100 }, rangeCC { 0, 127 }, rangeCcProb { 25, 100 };
     int onChance = 70, ccOnChance = 70;   // RANDOMIZE: chance (0-100 %) that a step is switched on (ON range bar)
 
     std::uint16_t scaleMask() const;   // current scale mask (relative to root)
@@ -225,9 +226,9 @@ enum class MacroTarget : std::uint8_t
     pattern, chainOn,                                                      // global
     noteOut, ccOut, length, division, direction, swing, scaleOn,           // track
     stepOn, pitch, octave, velocity, gate, probability, cc,                 // step
-    ccStepOn                                                               // step (CC part)
+    ccStepOn, ccProbability                                                // step (CC part)
 };
-constexpr int numMacroTargets = 18;
+constexpr int numMacroTargets = 19;
 
 struct MacroMap
 {

@@ -16,6 +16,7 @@ struct UiState
     int track = 0;               // selected track (0..7)
     bool ccMode = false;         // NOTES / CC view
     SliderParam slider = SliderParam::velocity;
+    bool ccSliderProb = false;   // CC mode SLIDER: VAL (false) or PROB (true)
 
     std::uint32_t selection = 0;     // selected steps (bit n = step n); 0 = none = all steps
 
@@ -40,7 +41,8 @@ struct UiState
     int slotDragSource = -1;     // pattern being dragged, -1 = none
     int slotDropTarget = -1;     // allowed (empty) slot under the mouse, -1 = none
 
-    Param shiftParam = Param::pitch;   // SHIFT param in note mode (CC mode always shifts CC)
+    Param shiftParam = Param::pitch;   // SHIFT param in note mode
+    Param ccShiftParam = Param::cc;    // SHIFT param in CC mode: VAL or PROB
     int shiftAmount = 0;           // running offset while the shift knob is dragged
 
     bool macrosView = false;

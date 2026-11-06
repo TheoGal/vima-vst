@@ -57,6 +57,7 @@ std::vector<Param> armedParams (const Globals& g, bool ccMode)
     {
         if (g.armCcOn) params.push_back (Param::ccOn);
         if (g.armCC) params.push_back (Param::cc);
+        if (g.armCcProb) params.push_back (Param::ccProb);
         return params;
     }
     if (g.armOn) params.push_back (Param::on);
@@ -169,6 +170,7 @@ void randomize (Project& p, const Scope& sc, bool ccMode, juce::Random& r)
                 case Param::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, randomIn (r, g.rangeGate.min, g.rangeGate.max)); break;
                 case Param::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, randomIn (r, g.rangeProb.min, g.rangeProb.max)); break;
                 case Param::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, randomIn (r, g.rangeCC.min, g.rangeCC.max)); break;
+                case Param::ccProb:      s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, randomIn (r, g.rangeCcProb.min, g.rangeCcProb.max)); break;
             }
         }
     }
@@ -195,6 +197,7 @@ static int paramValue (const Project& p, const TrackPattern& tp, const Step& s, 
         case Param::gate:        return s.gate;
         case Param::probability: return s.probability;
         case Param::cc:          return s.cc;
+        case Param::ccProb:      return s.ccProbability;
         case Param::on:          return s.on ? 1 : 0;
         case Param::ccOn:        return s.ccOn ? 1 : 0;
     }
@@ -229,6 +232,7 @@ static void paramLimits (const Project& p, const TrackPattern& tp, Param param, 
         case Param::gate:        lo = 1; hi = maxGate; return;
         case Param::probability: lo = 1; hi = 100; return;   // never 0 (like velocity)
         case Param::cc:          lo = 0; hi = 127; return;
+        case Param::ccProb:      lo = 1; hi = 100; return;
         case Param::on:
         case Param::ccOn:        lo = 0; hi = 1; return;
     }
@@ -250,6 +254,7 @@ static void setParamValue (const Project& p, const TrackPattern& tp, Step& s, Pa
         case Param::gate:        s.gate = (std::uint16_t) v; break;
         case Param::probability: s.probability = (std::uint8_t) v; break;
         case Param::cc:          s.cc = (std::uint8_t) v; break;
+        case Param::ccProb:      s.ccProbability = (std::uint8_t) v; break;
         case Param::on:          s.on = v != 0; break;
         case Param::ccOn:        s.ccOn = v != 0; break;
     }
@@ -283,7 +288,7 @@ void smooth (Project& p, const Scope& sc, bool ccMode, juce::Random* rnd)
             continue;
         }
         // the CC param follows the CC on/off, the note params the note on/off
-        auto active = [param] (const Step& st) { return param == Param::cc ? st.ccOn : st.on; };
+        auto active = [param] (const Step& st) { return param == Param::cc || param == Param::ccProb ? st.ccOn : st.on; };
         long long sum = 0;
         int n = 0;
         for (int i = 0; i < maxSteps; ++i)
@@ -315,6 +320,7 @@ namespace
             case Param::gate:        return g.rangeGate;
             case Param::probability: return g.rangeProb;
             case Param::cc:          return g.rangeCC;
+            case Param::ccProb:      return g.rangeCcProb;
             case Param::on: case Param::ccOn: break;
         }
         return { 0, 1 };
@@ -347,6 +353,7 @@ namespace
             case Param::gate:        return s.gate;
             case Param::probability: return s.probability;
             case Param::cc:          return s.cc;
+            case Param::ccProb:      return s.ccProbability;
         }
         return 0;
     }
@@ -363,6 +370,7 @@ namespace
             case Param::gate:        s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v); break;
             case Param::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, v); break;
             case Param::cc:          s.cc = (std::uint8_t) juce::jlimit (0, 127, v); break;
+            case Param::ccProb:      s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, v); break;
         }
     }
 
@@ -520,6 +528,7 @@ std::uint32_t pasteSteps (Project& p, int pattern, int track, int start, const s
                 case Param::gate:        s.gate = c.step.gate; break;
                 case Param::probability: s.probability = c.step.probability; break;
                 case Param::cc:          s.cc = c.step.cc; break;
+                case Param::ccProb:      s.ccProbability = c.step.ccProbability; break;
             }
         }
         written |= (1u << i);

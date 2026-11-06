@@ -16,6 +16,7 @@ namespace
             case Param::probability: return g.armProb;
             case Param::cc:          return g.armCC;
             case Param::ccOn:        return g.armCcOn;
+            case Param::ccProb:      return g.armCcProb;
         }
         return g.armOn;
     }
@@ -30,6 +31,7 @@ namespace
             case Param::gate:        return g.rangeGate;
             case Param::probability: return g.rangeProb;
             case Param::cc:          return g.rangeCC;
+            case Param::ccProb:      return g.rangeCcProb;
             case Param::on: case Param::ccOn: break;
         }
         return g.rangeVel;
@@ -56,8 +58,9 @@ namespace
             case Param::octave:      return "OCT";
             case Param::velocity:    return "VEL";
             case Param::gate:        return "GATE";
-            case Param::probability: return "PROB";
-            case Param::cc:          return "CC";
+            case Param::probability:
+            case Param::ccProb:      return "PROB";
+            case Param::cc:          return "VAL";
         }
         return "";
     }
@@ -69,7 +72,7 @@ namespace
         {
             case Param::pitch: case Param::octave: case Param::velocity: return t.green;
             case Param::gate:        return t.purple;
-            case Param::probability: return t.amber;
+            case Param::probability: case Param::ccProb: return t.amber;
             case Param::cc: case Param::ccOn: return t.cyan;
             case Param::on:          return t.green;
         }
@@ -83,7 +86,7 @@ namespace
     }
     const std::vector<Param>& ccParams()
     {
-        static const std::vector<Param> l { Param::ccOn, Param::cc };
+        static const std::vector<Param> l { Param::ccOn, Param::cc, Param::ccProb };
         return l;
     }
 
@@ -166,6 +169,7 @@ void RangeBar::axis (int& lo, int& hi) const
         case Param::gate:        lo = 1; hi = maxGate; return;
         case Param::probability: lo = 1; hi = 100; return;
         case Param::cc:          lo = 0; hi = 127; return;
+        case Param::ccProb:      lo = 1; hi = 100; return;
         case Param::on: case Param::ccOn: lo = 0; hi = 100; return;   // on chance, %
     }
 }
@@ -180,7 +184,7 @@ juce::String RangeBar::valueText (int v) const
             return pitchClassName (pcs[(size_t) juce::jlimit (0, (int) pcs.size() - 1, v)]);
         }
         case Param::octave: return juce::String (v + ctx.globalsCopy().octaveOffset());
-        case Param::gate: case Param::probability: case Param::on: case Param::ccOn: return juce::String (v) + "%";
+        case Param::gate: case Param::probability: case Param::ccProb: case Param::on: case Param::ccOn: return juce::String (v) + "%";
         case Param::velocity: case Param::cc: break;
     }
     return juce::String (v);
@@ -221,6 +225,7 @@ void RangeBar::mouseDown (const juce::MouseEvent& e)
                 case Param::gate:        g.rangeGate = d.rangeGate; break;
                 case Param::probability: g.rangeProb = d.rangeProb; break;
                 case Param::cc:          g.rangeCC = d.rangeCC; break;
+                case Param::ccProb:      g.rangeCcProb = d.rangeCcProb; break;
             }
         });
         return;
@@ -315,7 +320,7 @@ ShiftKnob::ShiftKnob (Context& c) : ctx (c)
 void ShiftKnob::mouseDown (const juce::MouseEvent& e)
 {
     if (e.mods.isPopupMenu()) return;
-    const auto param = ctx.ui.ccMode ? Param::cc : ctx.ui.shiftParam;
+    const auto param = ctx.ui.ccMode ? ctx.ui.ccShiftParam : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
     ctx.beginGesture ("SHIFT " + juce::String (paramName (param)) + Context::dot() + ctx.scopeText() + ctx.where());   // the whole drag is one undo entry
     gesture = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
@@ -347,7 +352,7 @@ void ShiftKnob::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const float d = std::abs (w.deltaY) > std::abs (w.deltaX) ? w.deltaY : -w.deltaX;
     if (juce::exactlyEqual (d, 0.0f) || active) return;
     const int k = (d > 0.0f) != w.isReversed ? 1 : -1;
-    const auto param = ctx.ui.ccMode ? Param::cc : ctx.ui.shiftParam;
+    const auto param = ctx.ui.ccMode ? ctx.ui.ccShiftParam : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
     ctx.beginGesture ("SHIFT " + juce::String (paramName (param)) + Context::dot() + ctx.scopeText() + ctx.where());
     const auto g = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
@@ -452,8 +457,8 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     };
     addAndMakeVisible (clearBtn);
 
-    // PARAMS buttons (ALL first). Note mode: ALL, ON, NOTE, OCT, VEL, GATE, PROB; CC mode: ON, CC.
-    std::vector<Param> all { Param::on, Param::ccOn, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc };
+    // PARAMS buttons (ALL first). Note mode: ALL, ON, NOTE, OCT, VEL, GATE, PROB; CC mode: ON, VAL, PROB.
+    std::vector<Param> all { Param::on, Param::ccOn, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc, Param::ccProb };
     {
         auto* p = paramBtns.add (new Pill());
         p->text = [] { return juce::String ("ALL"); };
@@ -519,8 +524,8 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     }
     for (auto* p : paramBtns) { p->font = [] { return Fonts::monoSemi (11.0f); }; p->radius = 5.0f; }
 
-    // RANGES: note mode ON, NOTE, OCT, VEL, GATE, PROB; CC mode ON, CC (ON = the chance a step is switched on)
-    for (auto l : { Param::on, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::ccOn, Param::cc })
+    // RANGES: note mode ON, NOTE, OCT, VEL, GATE, PROB; CC mode ON, VAL, PROB (ON = the chance a step is switched on)
+    for (auto l : { Param::on, Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::ccOn, Param::cc, Param::ccProb })
         addAndMakeVisible (ranges.add (new RangeBar (ctx, l)));
 
     randomBtn.text = [] { return juce::String ("RANDOMIZE"); };
@@ -617,15 +622,18 @@ OpsPanel::OpsPanel (Context& c) : ctx (c), shiftKnob (c)
     }
 
     addAndMakeVisible (shiftKnob);
-    for (auto l : { Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability })   // note mode only
+    // note mode: NOTE, OCT, VEL, GATE, PROB; CC mode: VAL, PROB
+    for (auto l : { Param::pitch, Param::octave, Param::velocity, Param::gate, Param::probability, Param::cc, Param::ccProb })
     {
+        const bool ccChip = l == Param::cc || l == Param::ccProb;
         auto* p = shiftChips.add (new Pill());
         p->getProperties().set ("param", (int) l);
+        p->getProperties().set ("cc", ccChip);
         p->radius = 4.0f;
         p->font = [] { return Fonts::monoSemi (10.0f); };
         p->text = [l] { return juce::String (paramName (l)); };
-        p->look = [this, l] { return chipLook (ctx.ui.shiftParam == l, ctx.modeAccent()); };
-        p->onClick = [this, l] { ctx.ui.shiftParam = l; ctx.changed(); };
+        p->look = [this, l, ccChip] { return chipLook ((ccChip ? ctx.ui.ccShiftParam : ctx.ui.shiftParam) == l, ctx.modeAccent()); };
+        p->onClick = [this, l, ccChip] { (ccChip ? ctx.ui.ccShiftParam : ctx.ui.shiftParam) = l; ctx.changed(); };
         addAndMakeVisible (p);
     }
 }
@@ -653,13 +661,14 @@ void OpsPanel::refreshState()
     for (auto* p : paramBtns)
     {
         const int l = p->getProperties()["param"];
-        // CC mode has only ON and CC: no ALL there (SPEC.md 9.2)
-        p->setVisible (l < 0 ? ! cc : (cc ? (l == (int) Param::ccOn || l == (int) Param::cc) : (l != (int) Param::cc && l != (int) Param::ccOn)));
+        // CC mode has only ON, VAL and PROB: no ALL there (SPEC.md 9.2)
+        const bool ccParam = l == (int) Param::ccOn || l == (int) Param::cc || l == (int) Param::ccProb;
+        p->setVisible (l < 0 ? ! cc : ccParam == cc);
     }
     for (int i = 0; i < ranges.size(); ++i)
         ranges[i]->setVisible (cc ? i >= 6 : i < 6);
     for (auto* p : shiftChips)
-        p->setVisible (! cc);   // CC mode: the knob alone shifts the CC value (SPEC.md 9.4)
+        p->setVisible ((bool) p->getProperties()["cc"] == cc);   // SPEC.md 9.4
     resized();
     repaint();
 }
@@ -701,7 +710,7 @@ void OpsPanel::resized()
     }
     {
         // the bars spread evenly from under the title down to near the panel's bottom edge
-        // (into the bottom padding, SPEC.md 12.6); in CC mode the two bars keep a natural spacing
+        // (into the bottom padding, SPEC.md 12.6); in CC mode the three bars keep a natural spacing
         const auto c = rangesCol.withTrimmedTop (19).withBottom (getHeight() - 5);
         std::vector<RangeBar*> shown;
         for (auto* rb : ranges) if (rb->isVisible()) shown.push_back (rb);
@@ -734,7 +743,7 @@ void OpsPanel::resized()
         const int cols = 3;
         const int w = (row.getWidth() - 4 * (cols - 1)) / cols;
         int i = 0;
-        const int visibleCount = ctx.ui.ccMode ? 0 : 5;
+        const int visibleCount = ctx.ui.ccMode ? 2 : 5;
         const int rows = (visibleCount + cols - 1) / cols;
         int y = row.getCentreY() - (rows * 22 + (rows - 1) * 4) / 2;
         for (auto* p : shiftChips)

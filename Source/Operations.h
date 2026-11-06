@@ -9,7 +9,7 @@
 
 namespace vima
 {
-enum class Param { on, pitch, octave, velocity, gate, probability, cc, ccOn };   // on = note on/off, ccOn = CC on/off
+enum class Param { on, pitch, octave, velocity, gate, probability, cc, ccOn, ccProb };   // on = note on/off, ccOn = CC on/off, cc = VAL, ccProb = CC PROB
 
 // The steps an operation acts on: a set of steps (bit n = step n), always within the track length
 struct Scope

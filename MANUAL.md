@@ -70,7 +70,7 @@ The step sequencer consists of two rows of 16 steps, each row with a thin **LED 
 There are two modes available: **Note Mode** and **CC Mode** which share the same length, time division and direction. 
 
 - In **note mode** the steps show pitch and octave knobs and one slider (velocity, gate or probability).
-- In **CC mode** each step shows one tall slider for its CC value.
+- In **CC mode** each step shows one tall slider: its CC value (VAL) or its CC probability (PROB).
 
 <p align="center">
   <img src="docs/images/vima-ccmode.png" width="800" alt="Vima steps in CC mode"><br>
@@ -97,7 +97,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
  <img src="docs/images/step-detail-cc.png" align="left" width="80" alt="CC step detailed">
 
  - **The step on-off button**: click to switch the step's CC on or off.
- - **The CC value**: defines what CC value this step will send.
+ - **The slider**: VAL (the CC value this step sends) or PROB (the chance it is sent), as chosen with SLIDER *(see also Track controls)*. VAL is cyan, PROB amber like the note probability. **Click and drag across several sliders to draw** here too.
 
  <br clear="left"><br />
 
@@ -114,7 +114,8 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
 | Note mode | Velocity | 1-127 | How hard the note is played *(actually it's how fast a key travelled when played on a physical piano keyboard, but let's not get into that)*. |
 | Note mode | Gate | 1-400% | How long the note lasts, in steps: 100% is one step, 50% half a step, 400% four steps (legato and long notes). |
 | Note mode | Probability | 1-100% | The chance that the note plays each time the step comes round.|
-| CC mode | CC value | 0-127 | The value sent when the step's CC is on. |
+| CC mode | VAL (CC value) | 0-127 | The value sent when the step's CC is on. |
+| CC mode | PROB (CC probability) | 1-100% | The chance that the CC value is sent each time the step comes round. Rolled on its own, apart from the note probability. |
 
 - **Long gates** (over 100%) let notes overlap into the next steps. This is particularly useful with monophonic synths that have a legato ("slide") option: when a held note overlaps a next note with a different pitch, the synth glides (portamento) into it. If the same note plays again on the same channel while the old one is still held, the old one ends just before the new one starts, so nothing gets stuck.
 
@@ -147,7 +148,8 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 - **SLIDER**: which value the step sliders show: VELocity, GATE or PROBability.<br />
 **In CC mode:**
 - **CC OUT** (on / off): whether the track's CC values are sent. Independent of NOTE OUT.
-- **CC NUM** (0-127): which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
+- **CC NUM** (0-127): the small knob next to the CC OUT button: which controller the track's CC part sends. One CC per track, on the track's MIDI channel.
+- **SLIDER**: which value the step sliders show: VAL (the CC value) or PROB (the CC probability).
 
 >**design choice:** A new Vima starts with track 1 playing notes on channel 1 (so you can quickly check if MIDI routing in your DAW is set correctly and an instrument is receiving notes). Tracks 2-8 start empty but with their notes output on, so a step you switch on is heard at once. CC output is off and CC numbers 102-109 are assigned to all 8 tracks (numbers that are unassigned in the MIDI standard). So loading Vima won't accidentally mess up your carefully designed synth sound. The tracks are assigned to MIDI channels 1 to 8.
 
@@ -183,7 +185,7 @@ Clicking on **PATTERN** opens a pop up to quickly select one of the 64 patterns.
 >- **White / neutral**: settings for the whole track, pattern or the whole instance (length, division, direction, swing, MIDI channel, scale).
 >- **Green**: the note part (note steps, notes, octaves, velocity, NOTE OUT, USE SCALE).
 >- **Cyan**: the CC part (CC steps, CC values, CC NUM, CC OUT).
->- **Purple**: gate. **Amber**: probability.
+>- **Purple**: gate. **Amber**: probability (of the notes in note mode, of the CC values in CC mode).
 
 
 ## Step operations
@@ -219,7 +221,7 @@ By default, **step operations** act on all the steps visible and inside the leng
  <img src="docs/images/params-section.png" align="left" width="220" alt="Params section">
 
 You can select which parameters to "arm" for operation - for example you might want to randomize notes, but not octaves or step on - off and velocities but not anything else. 
-In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode just **ON** and **CC**. Note mode and CC mode remember their own choice.
+In note mode: **ALL, ON, PITCH, OCT, VEL, GATE, PROB**. In CC mode **ON**, **VAL** and **PROB**. Note mode and CC mode remember their own choice.
 <br clear="left"><br />
 
 PARAMS are shared by COPY-PASTE, RANDOMIZE, SMOOTH and the CURVES. By default, note on - off and pitch are armed for quickly generating melodies.
@@ -281,7 +283,7 @@ Under RANDOMIZE and SMOOTH buttons, there are 4 buttons with predefined curves t
 - **Shapes**: **SINE**, **TRIANGLE**, **RAMP** and **SQUARE** draw one cycle of that shape over the steps in scope, between each armed value's range limits. Want a ramp down? RAMP, then INV.
 - With **ON** armed, the curves follow the **chance** setting: a step is on where the curve is above 100% minus the chance. With a 50% chance the upper half of the curve is on, with 70% everything above 30%, with 25% only the top quarter.
 - **‹ ›** (rotate): moves the armed values one step left or right, the end wrapping round to the start. Arm only ON to shift the rhythm under fixed notes, or only PITCH to move the melody over a fixed rhythm. Having applied a curve, **rotate** helps timing the curve's phase as desired.
-- **INV** (invert): flips the armed values around the middle of their range. With a CC range of 0-100, 30 becomes 70.
+- **INV** (invert): flips the armed values around the middle of their range. With a VAL range of 0-100, 30 becomes 70.
 
 Each press is one undo step.
 
@@ -292,7 +294,7 @@ Each press is one undo step.
 
 ### SHIFT
 
-Finally, the **Shift** knob is an endless knob that moves one value of all steps in scope up or down together, keeping the shape: PITCH (in scale steps), OCT, VEL, GATE or PROB in note mode. Shift works with its own parameters selection which is exclusive - you cannot shift ALL parameters at once. In CC mode it always moves the CC value, so the knob stands alone. 
+Finally, the **Shift** knob is an endless knob that moves one value of all steps in scope up or down together, keeping the shape: PITCH (in scale steps), OCT, VEL, GATE or PROB in note mode, VAL or PROB in CC mode. Shift works with its own parameters selection which is exclusive - you cannot shift ALL parameters at once. 
 
 >**design choice:** Steps on - off are not an option in Shift - you can easily drag switch all of them on or off. Shift works with its own parameter selection because there really is no need to select ALL parameters to shift up or down - such a thing would be an accident waiting to happen and I doubt it would be a happy one.
 
@@ -446,7 +448,7 @@ What can be mapped:
 
 - **Global:** Pattern (which pattern plays), Chain On.
 - **Track:** Notes Out, CC Out; and per pattern: Length, Division, Direction, Swing, Scale On.
-- **Step:** Note On (note on / off), Pitch, Octave, Velocity, Gate, Probability, CC On (CC on / off), CC Value.
+- **Step:** Note On, Pitch, Octave, Velocity, Gate, Probability, CC On, VAL (the CC value), CC PROB.
 
 
 A **Pitch** macro follows the scale like the pitch knob: in C minor it moves through the 7 notes of the scale.

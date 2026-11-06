@@ -251,16 +251,16 @@ void Project::resetToDefaults()
     for (auto& m : macros) m = MacroMap();
 }
 
-// Steps are stored as 9 bytes each (gate in two bytes, little endian).
+// Steps are stored as 10 bytes each (gate in two bytes, little endian).
 static juce::String encodeSteps (const std::array<Step, maxSteps>& steps)
 {
     juce::MemoryBlock mb;
     for (const auto& s : steps)
     {
-        const std::uint8_t bytes[9] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
+        const std::uint8_t bytes[10] = { (std::uint8_t) (s.on ? 1 : 0), (std::uint8_t) s.pitchClass,
                                         (std::uint8_t) (s.octave - minOctave), s.velocity,
                                         (std::uint8_t) (s.gate & 0xFF), (std::uint8_t) (s.gate >> 8), s.probability, s.cc,
-                                        (std::uint8_t) (s.ccOn ? 1 : 0) };
+                                        (std::uint8_t) (s.ccOn ? 1 : 0), s.ccProbability };
         mb.append (bytes, sizeof (bytes));
     }
     return mb.toBase64Encoding();
@@ -271,7 +271,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
     juce::MemoryBlock mb;
     if (! mb.fromBase64Encoding (text))
         return;
-    constexpr size_t stride = 9;
+    constexpr size_t stride = 10;
     if (mb.getSize() < (size_t) maxSteps * stride)
         return;
     const auto* d = static_cast<const std::uint8_t*> (mb.getData());
@@ -288,6 +288,7 @@ static void decodeSteps (const juce::String& text, std::array<Step, maxSteps>& s
         s.probability = (std::uint8_t) juce::jlimit (1, 100, (int) b[6]);   // never 0
         s.cc = (std::uint8_t) juce::jlimit (0, 127, (int) b[7]);
         s.ccOn = b[8] != 0;
+        s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, (int) b[9]);
         steps[(size_t) i] = s;
     }
 }
@@ -477,11 +478,11 @@ juce::ValueTree Project::toValueTree() const
     for (const auto& e : g.chain) chainText.add (juce::String (e.pattern) + ":" + juce::String (e.repeats));
     gt.setProperty ("chain", chainText.joinIntoString (","), nullptr);
     juce::String params;
-    for (bool b : { g.armOn, g.armPitch, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote })
+    for (bool b : { g.armOn, g.armPitch, g.armOct, g.armVel, g.armGate, g.armProb, g.armCC, g.armCcOn, g.armAllNote, g.armCcProb })
         params << (b ? "1" : "0");
     gt.setProperty ("params", params, nullptr);
     juce::StringArray ranges;
-    for (const auto* r : { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC })
+    for (const auto* r : { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC, &g.rangeCcProb })
         ranges.add (juce::String (r->min) + ":" + juce::String (r->max));
     gt.setProperty ("onChance", g.onChance, nullptr);
     gt.setProperty ("ccOnChance", g.ccOnChance, nullptr);
@@ -546,26 +547,28 @@ void Project::fromValueTree (const juce::ValueTree& root)
                                (std::uint8_t) juce::jlimit (1, 99, parts[1].getIntValue()) });
         }
         const auto params = gt.getProperty ("params").toString();
-        if (params.length() == 9)
+        if (params.length() == 10)
         {
-            bool* flags[] = { &g.armOn, &g.armPitch, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn, &g.armAllNote };
-            for (int i = 0; i < 9; ++i) *flags[i] = params[i] == '1';
+            bool* flags[] = { &g.armOn, &g.armPitch, &g.armOct, &g.armVel, &g.armGate, &g.armProb, &g.armCC, &g.armCcOn, &g.armAllNote, &g.armCcProb };
+            for (int i = 0; i < 10; ++i) *flags[i] = params[i] == '1';
         }
         // something is always armed
         if (! g.armAllNote && ! (g.armOn || g.armPitch || g.armOct || g.armVel || g.armGate || g.armProb)) g.armPitch = true;
-        if (! (g.armCcOn || g.armCC)) g.armCC = true;
+        if (! (g.armCcOn || g.armCC || g.armCcProb)) g.armCC = true;
         g.onChance = juce::jlimit (0, 100, (int) gt.getProperty ("onChance", g.onChance));
         g.ccOnChance = juce::jlimit (0, 100, (int) gt.getProperty ("ccOnChance", g.ccOnChance));
         auto rangeParts = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
-        ParamRange* rs[] = { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC };
-        if (rangeParts.size() == 6)
-            for (int i = 0; i < 6; ++i)
+        ParamRange* rs[] = { &g.rangePitch, &g.rangeOct, &g.rangeVel, &g.rangeGate, &g.rangeProb, &g.rangeCC, &g.rangeCcProb };
+        if (rangeParts.size() == 7)
+            for (int i = 0; i < 7; ++i)
             {
                 auto mm = juce::StringArray::fromTokens (rangeParts[i], ":", "");
                 if (mm.size() == 2) { rs[i]->min = mm[0].getIntValue(); rs[i]->max = mm[1].getIntValue(); }
             }
         g.rangeProb.min = juce::jlimit (1, 100, g.rangeProb.min);
         g.rangeProb.max = juce::jlimit (1, 100, g.rangeProb.max);
+        g.rangeCcProb.min = juce::jlimit (1, 100, g.rangeCcProb.min);
+        g.rangeCcProb.max = juce::jlimit (1, 100, g.rangeCcProb.max);
     }
 
     for (auto rt : root)

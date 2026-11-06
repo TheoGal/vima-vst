@@ -8,6 +8,7 @@ Engine::Engine()
     for (auto& s : playStep) s = -1;
     lastCCSent.fill (-1);
     random.setSeedRandomly();
+    ccRollSeed = (std::uint32_t) random.nextInt();
 }
 
 void Engine::prepare (double newSampleRate)
@@ -190,7 +191,7 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
                 }
             }
 
-            if (step.ccOn && route.ccOut && ! g.ccSmoothing)
+            if (step.ccOn && route.ccOut && ! g.ccSmoothing && ccRollPasses (step, t, n))
             {
                 out.addEvent (juce::MidiMessage::controllerEvent (channel, route.ccNumber, step.cc), s);
                 lastCCSent[(size_t) t] = step.cc;
@@ -223,6 +224,7 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
 
         auto stepAt = [&] (long long n) -> const Step& { return tp.steps[(size_t) stepIndexFor (n, length, tp.direction)]; };
         auto timeOf = [&] (long long n) { return (double) n * stepLen + swingOffset (n, stepLen, tp.swing); };
+        auto ccPlays = [&] (long long n) { const auto& st = stepAt (n); return st.ccOn && ccRollPasses (st, t, n); };
 
         auto valueAt = [&] (double x) -> int
         {
@@ -230,13 +232,13 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
             long long n0 = 0;
             bool found0 = false;
             for (long long n = base + 1; n >= base - searchRange; --n)
-                if (timeOf (n) <= x + 1.0e-9 && stepAt (n).ccOn) { n0 = n; found0 = true; break; }
+                if (timeOf (n) <= x + 1.0e-9 && ccPlays (n)) { n0 = n; found0 = true; break; }
             if (! found0)
                 return -1;
             long long n1 = 0;
             bool found1 = false;
             for (long long n = base - 1; n <= base + searchRange; ++n)
-                if (timeOf (n) > x + 1.0e-9 && stepAt (n).ccOn) { n1 = n; found1 = true; break; }
+                if (timeOf (n) > x + 1.0e-9 && ccPlays (n)) { n1 = n; found1 = true; break; }
             const int v0 = stepAt (n0).cc;
             if (! found1)
                 return v0;
@@ -307,7 +309,8 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
     const bool chainEnabled = g.chainOn && ! g.chain.isEmpty();
     if (! wasPlaying)
     {
-        // Transport start: a chain starts from its first entry
+        // Transport start: a chain starts from its first entry; fresh CC probability rolls
+        ccRollSeed = (std::uint32_t) random.nextInt();
         chainActive = chainEnabled;
         chainFinished = chainJoinPending = inserting = false;
         if (chainActive)

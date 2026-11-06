@@ -193,7 +193,10 @@ void testModel()
     p->globals.scale = 4;
     p->globals.root = 7;
     p->globals.armProb = true;
+    p->globals.armCcProb = true;
     p->globals.rangeVel = { 10, 20 };
+    p->globals.rangeCcProb = { 40, 60 };
+    p->patterns[5].tracks[3].steps[7].ccProbability = 33;
     p->currentPattern = 5;
     auto q = std::make_unique<Project>();
     q->fromValueTree (p->toValueTree());
@@ -203,6 +206,8 @@ void testModel()
     check (q->routing[3].midiChannel == 9 && q->routing[3].ccOut && q->routing[3].ccNumber == 21, "routing survives save/load");
     check (q->globals.chain.size() == 1 && q->globals.chain[0].repeats == 3 && q->globals.quantize == Quantize::off, "chain and quantize survive");
     check (q->globals.scale == 4 && q->globals.root == 7 && q->globals.armProb && q->globals.rangeVel.min == 10, "globals survive");
+    check (qs.steps[7].ccProbability == 33 && q->globals.armCcProb && q->globals.rangeCcProb.min == 40 && q->globals.rangeCcProb.max == 60,
+           "CC PROB, its PARAMS button and its RANGE survive save/load");
     check (q->currentPattern == 5, "current pattern survives");
 }
 
@@ -284,6 +289,24 @@ void testOutputs()
         r.run (64.0);
         const auto n = (int) r.noteOns().size();
         check (n > 98 && n < 158, "probability 50% plays about half (" + juce::String (n) + " of 256)");
+    }
+    {
+        // CC probability: rolled apart from the note; the notes all play
+        Runner r;
+        fillOn (r.track (0));
+        r.project->routing[0].ccOut = true;
+        r.project->globals.ccSmoothing = false;
+        for (auto& s : r.track (0).steps) s.ccProbability = 50;
+        r.run (64.0);
+        const auto n = (int) r.ccs (1).size();
+        check (n > 98 && n < 158 && r.noteOns().size() == 256, "CC PROB 50% sends about half the CCs (" + juce::String (n) + " of 256), notes unaffected");
+        Runner r2;
+        fillOn (r2.track (0));
+        r2.project->routing[0].ccOut = true;
+        r2.project->globals.ccSmoothing = false;
+        for (auto& s : r2.track (0).steps) s.ccProbability = 1;
+        r2.run (64.0);
+        check (r2.ccs (1).size() < 15, "CC PROB 1% (the lowest) sends rarely");
     }
     {
         Runner r;
@@ -777,6 +800,9 @@ void testMacros()
     check (macro (4)->getCurrentValueAsText() == "-", "an unmapped macro shows -");
     check (juce::String (macroTargetInfo (MacroTarget::stepOn).name) == "NOTE ON" && juce::String (macroTargetInfo (MacroTarget::ccStepOn).name) == "CC ON",
            "step on/off macros are named NOTE ON and CC ON");
+    check (juce::String (macroTargetInfo (MacroTarget::cc).name) == "VAL" && juce::String (macroTargetInfo (MacroTarget::ccProbability).name) == "CC PROB"
+               && macroTargetInfo (MacroTarget::ccProbability).min == 1 && macroTargetInfo (MacroTarget::ccProbability).max == 100,
+           "the CC step macros are named VAL and CC PROB (1-100)");
 
     // map: M1 = velocity of track 4 step 5; M2 = length of track 3 in pattern 10;
     // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2; M6 = probability of track 4 step 1
@@ -1243,7 +1269,7 @@ void testCurves()
     auto only = [&] (std::initializer_list<Param> params)
     {
         g.armAllNote = false;
-        g.armOn = g.armPitch = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = g.armCcOn = false;
+        g.armOn = g.armPitch = g.armOct = g.armVel = g.armGate = g.armProb = g.armCC = g.armCcOn = g.armCcProb = false;
         for (auto l : params)
             switch (l)
             {
@@ -1251,6 +1277,7 @@ void testCurves()
                 case Param::octave: g.armOct = true; break;     case Param::velocity: g.armVel = true; break;
                 case Param::gate: g.armGate = true; break;      case Param::probability: g.armProb = true; break;
                 case Param::cc: g.armCC = true; break;          case Param::ccOn: g.armCcOn = true; break;
+                case Param::ccProb: g.armCcProb = true; break;
             }
     };
     const auto all = makeScope (*p, 0, 0, -1, -1);
@@ -1341,6 +1368,20 @@ void testCurves()
     for (auto& st : tp.steps) st.probability = 100;
     invertSteps (*p, all, false);
     check (tp.steps[0].probability == 1, "INV on PROB: 100% becomes 1%, never 0");
+
+    only ({ Param::ccProb });
+    g.rangeCcProb = { 1, 100 };
+    applyCurve (*p, all, true, CurveShape::ramp);
+    check (tp.steps[0].ccProbability == 1 && tp.steps[15].ccProbability == 100 && tp.steps[0].probability == 1,
+           "CC PROB: RAMP 1% to 100%, the note probability untouched");
+    {
+        juce::Random rnd (7);
+        g.rangeCcProb = { 30, 40 };
+        randomize (*p, all, true, rnd);
+        bool inRange = true;
+        for (int i = 0; i < 16; ++i) inRange = inRange && tp.steps[(size_t) i].ccProbability >= 30 && tp.steps[(size_t) i].ccProbability <= 40;
+        check (inRange, "RANDOMIZE in CC mode with PROB armed stays in its RANGE (30-40%)");
+    }
 }
 
 int main (int argc, char** argv)
@@ -1842,6 +1883,18 @@ int main (int argc, char** argv)
 
     section ("Editor screenshots");
     {
+        // a new instance in CC mode at 2x, for the manual's track controls picture
+        auto proc = std::make_unique<VimaProcessor>();
+        std::unique_ptr<juce::AudioProcessorEditor> base (proc->createEditor());
+        auto& ed = *dynamic_cast<VimaEditor*> (base.get());
+        ed.context().ui.ccMode = true;
+        ed.refreshAll();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-new-cc@2x.png"));
+        ed.context().ui.ccMode = false;
+        ed.refreshAll();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-new-notes@2x.png"));
+    }
+    {
         auto proc = std::make_unique<VimaProcessor>();
         proc->edit (-1, [] (Project& p) { p.currentPattern = 22; fillDemo (p); });
         std::unique_ptr<juce::AudioProcessorEditor> base (proc->createEditor());
@@ -1955,6 +2008,20 @@ int main (int argc, char** argv)
         ctx.ui.ccMode = true;
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-dark-cc.png"));
+        ctx.ui.ccSliderProb = true;
+        ctx.ui.ccShiftParam = Param::ccProb;
+        const auto savedSteps = proc->read ([] (const Project& p) { return p.patterns[(size_t) p.currentPattern].tracks[2].steps; });
+        proc->edit (-1, [] (Project& p)
+        {
+            p.globals.armCcProb = true;
+            auto& st = p.patterns[(size_t) p.currentPattern].tracks[2].steps;
+            for (int i = 0; i < maxSteps; ++i) st[(size_t) i].ccProbability = (std::uint8_t) (100 - (i % 8) * 10);
+        });
+        ed.refreshAll();
+        snapshot (ed, outDir.getChildFile ("main-dark-cc-prob.png"));
+        proc->edit (-1, [&savedSteps] (Project& p) { p.globals.armCcProb = false; p.patterns[(size_t) p.currentPattern].tracks[2].steps = savedSteps; });
+        ctx.ui.ccSliderProb = false;
+        ctx.ui.ccShiftParam = Param::cc;
         ctx.ui.ccMode = false;
 
         // popovers

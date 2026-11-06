@@ -20,8 +20,9 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
     { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
     { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  1, 100 },
-    { MacroTarget::cc,          MacroKind::step,   "CC VALUE",   "CC Value",    true,  0, 127 },
+    { MacroTarget::cc,          MacroKind::step,   "VAL",        "Value",       true,  0, 127 },
     { MacroTarget::ccStepOn,    MacroKind::step,   "CC ON",      "CC On",       true,  0, 1 },
+    { MacroTarget::ccProbability, MacroKind::step, "CC PROB",    "CC Probability", true, 1, 100 },
 };
 
 const MacroTargetInfo& macroTargetInfo (MacroTarget t)
@@ -95,6 +96,7 @@ std::optional<int> macroTargetValue (const Project& p, const MacroMap& m, int qu
         case MacroTarget::gate:        return (int) s.gate;
         case MacroTarget::probability: return (int) s.probability;
         case MacroTarget::cc:          return (int) s.cc;
+        case MacroTarget::ccProbability: return (int) s.ccProbability;
     }
     return std::nullopt;
 }
@@ -137,6 +139,7 @@ bool applyMacroValue (Project& p, std::atomic<int>& queuedPattern, const MacroMa
         case MacroTarget::gate:        s.gate = (std::uint16_t) v; break;
         case MacroTarget::probability: s.probability = (std::uint8_t) juce::jlimit (1, 100, v); break;
         case MacroTarget::cc:          s.cc = (std::uint8_t) v; break;
+        case MacroTarget::ccProbability: s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, v); break;
     }
     return true;
 }
@@ -235,7 +238,8 @@ static juce::String plainText (const MacroMap& m, int v, int octaveOffset)
         case MacroTarget::direction:   return v == 0 ? "FWD" : v == 1 ? "BWD" : "PING";
         case MacroTarget::swing:
         case MacroTarget::gate:
-        case MacroTarget::probability: return juce::String (v) + "%";
+        case MacroTarget::probability:
+        case MacroTarget::ccProbability: return juce::String (v) + "%";
         case MacroTarget::octave:      return juce::String (v + octaveOffset);
         case MacroTarget::pitch:        return pitchClassName (((v % 12) + 12) % 12);
         case MacroTarget::length:
@@ -267,7 +271,8 @@ static const char* shortName (MacroTarget t)
         case MacroTarget::velocity:    return "VEL";
         case MacroTarget::gate:        return "GATE";
         case MacroTarget::probability: return "PROB";
-        case MacroTarget::cc:          return "CC";
+        case MacroTarget::cc:          return "VAL";
+        case MacroTarget::ccProbability: return "CC PROB";
         case MacroTarget::none:
         case MacroTarget::pattern:
         case MacroTarget::chainOn:
@@ -335,8 +340,9 @@ juce::String macroHostName (const MacroMap& m, int index)
         case MacroTarget::velocity:    return "Vel" + st + tr + pat;
         case MacroTarget::gate:        return "Gate" + st + tr + pat;
         case MacroTarget::probability: return "Prob" + st + tr + pat;
-        case MacroTarget::cc:          return "CCval" + st + tr + pat;
+        case MacroTarget::cc:          return "Val" + st + tr + pat;
         case MacroTarget::ccStepOn:    return "CCOn" + st + tr + pat;
+        case MacroTarget::ccProbability: return "CCProb" + st + tr + pat;
     }
     return "Macro " + juce::String (index + 1);
 }

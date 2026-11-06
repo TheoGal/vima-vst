@@ -78,7 +78,7 @@ public:
     }
 
     // Testing hook: deterministic probability rolls
-    void setRandomSeed (juce::int64 seed) { random.setSeed (seed); }
+    void setRandomSeed (juce::int64 seed) { random.setSeed (seed); ccRollSeed = (std::uint32_t) random.nextInt(); }
 
 private:
     struct PendingOff
@@ -119,5 +119,17 @@ private:
     double insertStart = 0.0;
 
     juce::Random random;
+
+    // CC probability (SPEC.md 5): one roll per step play, apart from the note roll. A hash of the
+    // step's position in the song, so the CC smoothing glide and the step send agree on it.
+    std::uint32_t ccRollSeed = 0;
+    bool ccRollPasses (const Step& step, int track, long long n) const
+    {
+        if (step.ccProbability >= 100)
+            return true;
+        auto h = (std::uint64_t) n * 0x9E3779B97F4A7C15ull ^ ((std::uint64_t) (track + 1) << 56) ^ ccRollSeed;
+        h ^= h >> 33; h *= 0xFF51AFD7ED558CCDull; h ^= h >> 33; h *= 0xC4CEB9FE1A85EC53ull; h ^= h >> 33;
+        return (int) (h % 100) < (int) step.ccProbability;
+    }
 };
 } // namespace vima

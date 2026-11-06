@@ -108,7 +108,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     auto stepLabel = [this] (const juce::String& what) { return "STEP " + juce::String (index + 1).paddedLeft ('0', 2) + " " + what + ctx.where(); };
     auto sliderName = [this]
     {
-        if (ctx.ui.ccMode) return juce::String ("CC");
+        if (ctx.ui.ccMode) return juce::String (ctx.ui.ccSliderProb ? "CC PROB" : "VAL");
         return juce::String (ctx.ui.slider == SliderParam::velocity ? "VEL" : ctx.ui.slider == SliderParam::gate ? "GATE" : "PROB");
     };
 
@@ -191,11 +191,11 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     octave.pixelsPerStep = 10.0f;
     addAndMakeVisible (octave);
 
-    // Step slider: velocity / gate / probability in note mode, the CC value in CC mode
+    // Step slider: velocity / gate / probability in note mode, VAL / PROB in CC mode
     slider.getValue = [this]
     {
         const auto s = stepCopy();
-        if (ctx.ui.ccMode) return (int) s.cc;
+        if (ctx.ui.ccMode) return ctx.ui.ccSliderProb ? (int) s.ccProbability : (int) s.cc;
         switch (ctx.ui.slider)
         {
             case SliderParam::velocity:    return (int) s.velocity;
@@ -207,11 +207,12 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     slider.setValue = [this] (int v)
     {
         const auto param = ctx.ui.slider;
-        const bool ccMode = ctx.ui.ccMode;
-        ctx.edit (false, [this, param, ccMode, v] (Project& p)
+        const bool ccMode = ctx.ui.ccMode, ccProb = ctx.ui.ccSliderProb;
+        ctx.edit (false, [this, param, ccMode, ccProb, v] (Project& p)
         {
             auto& s = ctx.liveTrack (p).steps[(size_t) index];
-            if (ccMode) s.cc = (std::uint8_t) juce::jlimit (0, 127, v);
+            if (ccMode && ccProb) s.ccProbability = (std::uint8_t) juce::jlimit (1, 100, v);   // never 0
+            else if (ccMode) s.cc = (std::uint8_t) juce::jlimit (0, 127, v);
             else if (param == SliderParam::velocity) s.velocity = (std::uint8_t) juce::jlimit (1, 127, v);
             else if (param == SliderParam::gate) s.gate = (std::uint16_t) juce::jlimit (1, maxGate, v);
             else s.probability = (std::uint8_t) juce::jlimit (1, 100, v);   // never 0
@@ -220,7 +221,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     slider.barColour = [this]
     {
         const auto& t = Theme::current();
-        if (ctx.ui.ccMode) return t.cyan;
+        if (ctx.ui.ccMode) return ctx.ui.ccSliderProb ? t.amber : t.cyan;
         return ctx.ui.slider == SliderParam::velocity ? t.green : ctx.ui.slider == SliderParam::gate ? t.purple : t.amber;
     };
     slider.onGestureStart = [this, stepLabel, sliderName] { ctx.beginGesture (stepLabel (sliderName())); };
@@ -272,10 +273,11 @@ void StepCell::refreshState()
     octave.setVisible (! cc_);
 
     const auto param = ctx.ui.slider;
-    slider.minValue = cc_ ? 0 : 1;   // velocity and probability never 0
-    slider.maxValue = cc_ ? 127 : param == SliderParam::velocity ? 127 : param == SliderParam::gate ? maxGate : 100;
-    slider.defaultValue = cc_ ? 64 : 100;   // init values: CC 64; velocity 100, gate 100 %, probability 100 %
-    setLearnTarget (slider, cc_ ? (int) MacroTarget::cc : -1);
+    const bool ccProb = cc_ && ctx.ui.ccSliderProb;
+    slider.minValue = cc_ && ! ccProb ? 0 : 1;   // velocity and both probabilities never 0
+    slider.maxValue = ccProb ? 100 : cc_ ? 127 : param == SliderParam::velocity ? 127 : param == SliderParam::gate ? maxGate : 100;
+    slider.defaultValue = cc_ && ! ccProb ? 64 : 100;   // init values: VAL 64, PROB 100 %; velocity 100, gate 100 %, probability 100 %
+    setLearnTarget (slider, ccProb ? (int) MacroTarget::ccProbability : cc_ ? (int) MacroTarget::cc : -1);
     octave.defaultValue = 3 + ctx.globalsCopy().octaveOffset();   // the octave of middle C, as shown
     octave.textColour = Theme::current().text2;
 
@@ -321,14 +323,14 @@ void StepCell::paint (juce::Graphics& g)
     {
         const auto s = stepCopy();
         juce::String text;
-        if (ctx.ui.ccMode) text = juce::String ((int) s.cc);
+        if (ctx.ui.ccMode) text = ctx.ui.ccSliderProb ? juce::String ((int) s.ccProbability) + "%" : juce::String ((int) s.cc);
         else switch (ctx.ui.slider)
         {
             case SliderParam::velocity:    text = juce::String ((int) s.velocity); break;
             case SliderParam::gate:        text = juce::String ((int) s.gate) + "%"; break;
             case SliderParam::probability: text = juce::String ((int) s.probability) + "%"; break;
         }
-        // the value in its param's color (velocity green, gate purple, probability amber, CC cyan)
+        // the value in its param's color (velocity green, gate purple, probability amber, VAL cyan)
         const auto colour = slider.barColour ? slider.barColour() : t.muted;
         g.setColour (colour.withMultipliedAlpha ((ctx.ui.ccMode ? s.ccOn : s.on) ? 1.0f : 0.32f));
         g.setFont (Fonts::mono (10.0f));
@@ -438,7 +440,7 @@ void StepGrid::relabelStroke()
     if (drawingToggles)
         label = steps + (ctx.ui.ccMode ? " CC " : " NOTE ") + (toggleValue ? "ON" : "OFF");
     else
-        label = "DRAW " + juce::String (ctx.ui.ccMode ? "CC" : ctx.ui.slider == SliderParam::velocity ? "VEL"
+        label = "DRAW " + juce::String (ctx.ui.ccMode ? (ctx.ui.ccSliderProb ? "CC PROB" : "VAL") : ctx.ui.slider == SliderParam::velocity ? "VEL"
                                                          : ctx.ui.slider == SliderParam::gate ? "GATE" : "PROB")
               + Context::dot() + steps;
     ctx.proc.relabelUndo (label + ctx.where());
