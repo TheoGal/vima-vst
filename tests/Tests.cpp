@@ -209,6 +209,33 @@ void testModel()
     check (qs.steps[7].ccProbability == 33 && q->globals.armCcProb && q->globals.rangeCcProb.min == 40 && q->globals.rangeCcProb.max == 60,
            "CC PROB, its PARAMS button and its RANGE survive save/load");
     check (q->currentPattern == 5, "current pattern survives");
+
+    // a state saved before CC probability: 9 bytes per step, 9 PARAMS flags, 6 ranges
+    {
+        auto tree = p->toValueTree();
+        for (auto pt : tree)
+            for (auto tt : pt)
+                if (tt.hasProperty ("steps"))
+                {
+                    juce::MemoryBlock mb;
+                    mb.fromBase64Encoding (tt.getProperty ("steps").toString());
+                    juce::MemoryBlock old;
+                    for (int i = 0; i < maxSteps; ++i) old.append (static_cast<const char*> (mb.getData()) + i * 10, 9);
+                    tt.setProperty ("steps", old.toBase64Encoding(), nullptr);
+                }
+        auto gt = tree.getChildWithName ("Globals");
+        gt.setProperty ("params", gt.getProperty ("params").toString().substring (0, 9), nullptr);
+        auto rs = juce::StringArray::fromTokens (gt.getProperty ("ranges").toString(), ",", "");
+        rs.remove (6);
+        gt.setProperty ("ranges", rs.joinIntoString (","), nullptr);
+        auto o = std::make_unique<Project>();
+        o->fromValueTree (tree);
+        const auto& os = o->patterns[5].tracks[3].steps[7];
+        auto expected = p->patterns[5].tracks[3].steps[7];
+        expected.ccProbability = 100;
+        check (os == expected && o->globals.armProb && o->globals.rangeVel.min == 10,
+               "patterns, PARAMS and RANGES saved before CC probability still load (CC PROB 100%)");
+    }
 }
 
 void testTiming()
