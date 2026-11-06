@@ -549,7 +549,10 @@ Clicking the **file** button (with a folder icon) at the top of the plugin opens
 
 - Works on the **selected pattern** (the one in the PATTERN box, or the selected cell in the patterns view).
 - Holds the pattern's 8 tracks: their steps and their length, division, direction, swing and use scale. No routing, no scale: a loaded pattern plays in the current scale.
-- **NEW** resets the pattern to an empty one (all steps off, every setting back to its default) and asks first. **LOAD...** asks before replacing a pattern that has steps. **SAVE AS...** saves it. Both NEW and LOAD can be undone.
+- **NEW** resets the pattern to an empty one (all steps off, every setting back to its default).
+- **LOAD...** loads a saved pattern.
+- **SAVE AS...** saves the current pattern to a file.
+- Both NEW and LOAD can be undone.
 - Files end in **.vimapattern**, in Documents/Vima/Patterns.
 
 You can also save or load a pattern by right-clicking a cell in the patterns view.
