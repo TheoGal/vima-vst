@@ -95,7 +95,7 @@ Each of the modes can be set to output MIDI messages or not - so a sequence (a t
  
 **CC mode:** 
 
- <img src="docs/images/step-detail-cc.png" align="left" width="80" alt="CC step detailed">
+ <img src="docs/images/step-detail-cc.png" align="left" width="167" alt="CC step detailed">
 
  - **The step on-off button**: click to switch the step's CC on or off.
  - **The slider**: VAL (the CC value this step sends) or PROB (the chance it is sent), as chosen with SLIDER *(see also Track controls)*. VAL is cyan, PROB amber like the note probability. **Click and drag across several sliders to draw** here too.

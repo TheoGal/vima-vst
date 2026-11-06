@@ -1917,6 +1917,14 @@ int main (int argc, char** argv)
         ed.context().ui.ccMode = true;
         ed.refreshAll();
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-new-cc@2x.png"));
+        // step 01 with VAL 76 and CC PROB 50%, for the manual's CC step picture
+        proc->edit (-1, [] (Project& p) { auto& st = p.patterns[0].tracks[0].steps[0]; st.cc = 76; st.ccProbability = 50; });
+        ed.refreshAll();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-cc-val@2x.png"));
+        ed.context().ui.ccSliderProb = true;
+        ed.refreshAll();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-cc-prob@2x.png"));
+        ed.context().ui.ccSliderProb = false;
         ed.context().ui.ccMode = false;
         ed.refreshAll();
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-new-notes@2x.png"));
