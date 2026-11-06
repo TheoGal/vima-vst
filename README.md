@@ -538,7 +538,10 @@ Clicking the **file** button (with a folder icon) at the top of the plugin opens
 
 - Holds all 64 patterns, the chain, the track routing, the scale, root and user scale, the PARAMS and RANGES, and the current pattern.
 - Does **not** hold the macro mappings, the settings found only in the Settings dialog (CC smoothing and its curve, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
-- **NEW** starts over (pattern 1 ready, the rest empty) and asks first. **LOAD...**, **SAVE** (overwrites the current preset; greyed out if it has never been saved) and **SAVE AS...**
+- **NEW** loads a new init preset: all tracks 16 steps long, 1/16 division, track 1 with all its note steps on.
+- **LOAD...** loads a saved preset.
+- **SAVE** saves changes to a loaded preset (greyed out if no saved preset is loaded).
+- **SAVE AS...** saves the current preset to a new file.
 - The menu header shows the current preset's name, or "UNSAVED".
 - Files end in **.vima** and are kept in Documents/Vima/Presets by default.
 
