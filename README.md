@@ -306,7 +306,7 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 
 ## Working with patterns
 
-At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. 
+At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. In the patterns view the cells are already in front of you, so there the number opens nothing. 
 
 When changing patterns manually the **Quantize** setting is considered. See also **Settings window**.
 
@@ -428,6 +428,7 @@ Normally the main window always shows the pattern that is playing: when the chai
 While edit mode is on:
 
 - The **PATTERN** selection now chooses the pattern you edit (indicated by the pink outline). The arrows and the quick picker change it **at once**, whatever the Quantize setting, and the playing pattern does not change (to change it, use the play buttons in the patterns view or wait for the chain to progress).
+- In the patterns view, the **PATTERN** box shows the selected cell - the one **STEPS** takes you back to - and the arrows move the selection.
 - The BPM display switches to a "currently playing pattern indication" - it shows the number of the pattern that is playing. **Click it** to jump to the playing pattern and edit that one.
 
 Switch the pencil off and the main window goes back to the pattern that is playing.

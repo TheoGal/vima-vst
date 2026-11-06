@@ -1967,7 +1967,15 @@ int main (int argc, char** argv)
             ctx.showPatterns (true);
             check (ctx.ui.selectedPattern == 0, "edit mode: the patterns view opens on the edited pattern");
             ctx.ui.selectedPattern = 5;
+            if (auto* nb = findByTitle (ed, "Next pattern")) click (*nb);
+            check (ctx.ui.selectedPattern == 6 && ctx.currentPattern() == 22 && proc->engine.queuedPattern.load() < 0,
+                   "patterns view + edit mode: the header arrows move the selected slot, playback untouched");
+            auto* picker = findByTitle (ed, "Pattern picker");
+            auto clickable = [] (juce::Component* c) { bool self = false, kids = false; if (c != nullptr) c->getInterceptsMouseClicks (self, kids); return self; };
+            check (picker != nullptr && ! clickable (picker), "patterns view: the header PATTERN number opens no picker");
+            ctx.ui.selectedPattern = 5;
             ctx.showPatterns (false);
+            check (picker != nullptr && clickable (picker), "step view: the header PATTERN number opens the picker");
             check (ctx.ui.editPattern == 5, "edit mode: STEPS opens the selected slot");
             Theme::setLight (true);
             ed.refreshAll();

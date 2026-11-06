@@ -220,7 +220,7 @@ Works like step copy / paste (9.1):
 ### 7.4 Quick pattern picker (main window header)
 
 - The PATTERN box in the header has **‹ and › arrows** for the previous / next pattern (crossing pages, wrapping from 64 to 01 and back). Each click queues that pattern (quantize applies).
-- The box is sized for two-digit numbers; the number has a chevron after it. Clicking the number opens a **popover** (styled like the DIVISION and SCALE popovers): a PAGE row (1 - 16 to 49 - 64; a dot marks the page with the playing or queued pattern), the 16 slots of that page with the patterns' own numbers (playing = outlined with a play icon, like the chain list, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button.
+- The box is sized for two-digit numbers; the number has a chevron after it. Clicking the number opens a **popover** (styled like the DIVISION and SCALE popovers): a PAGE row (1 - 16 to 49 - 64; a dot marks the page with the playing or queued pattern), the 16 slots of that page with the patterns' own numbers (playing = outlined with a play icon, like the chain list, queued = dashed outline, empty = dim), and an "OPEN PATTERNS VIEW" button. In the patterns view the number is display only (no chevron, no popover): the slots are already on screen.
 - Picking a slot queues it (quantize applies) and closes the popover. In pattern edit mode (7.5), the arrows and the popover only choose the pattern to edit, at once.
 - While a pattern is queued, the PATTERN box keeps showing the current pattern and **blinks** until the switch happens. It does not show the next pattern's number. The same applies in the patterns view and on the Macros page.
 
@@ -230,7 +230,7 @@ Edit one pattern while another plays (for example, edit pattern 01 while the cha
 
 - A small **pencil button** between the PATTERN box (right after its arrows) and CHAIN, on every screen. Edit mode has its **own color, pink** (dark theme `#FF6BAE`, light theme `#D6267A`). Off: plain outline, grey pencil. On: **filled pink**.
 - **Edit mode off**: the view follows the playing pattern; the header arrows and picker play the picked pattern (7.4); the PATTERN box number blinks while a picked pattern waits for quantize, and also just before a chain switch (see the switch blink below).
-- **Edit mode on**: the header PATTERN arrows and picker only choose the **pattern to edit**. The change is **instant, never quantized**, and playback is not touched. The PATTERN box gets a **pink stroke** and its number is the edited pattern (steady, no blink). Playing is left to the patterns view play buttons, the chain, the Pattern macro and incoming CC.
+- **Edit mode on**: the header PATTERN arrows and picker only choose the **pattern to edit**. In the patterns view, the PATTERN box shows the **selected slot** (the one STEPS opens) and the arrows move that selection (and the page with it), so the box always shows the pattern the step view will show. The change is **instant, never quantized**, and playback is not touched. The PATTERN box gets a **pink stroke** and its number is the edited pattern (steady, no blink). Playing is left to the patterns view play buttons, the chain, the Pattern macro and incoming CC.
 - **Edit mode on, BPM box**: the "120.00 BPM" text is replaced by **PLAYING nn** (the playing pattern), always, also when it is the edited one; the start / stop button stays. No NEXT readout. **Clicking PLAYING** makes the playing pattern the edited one (edit mode stays on).
 - **Switch blink**: during the last three 8th notes (1.5 beats) before a scheduled switch to a different pattern (a chain switch, or a picked pattern waiting for quantize), the PATTERN box number (edit mode off, chain switches) or the PLAYING label (edit mode on) blinks: a plain blink (dims and comes back, no color change), three times, one per 8th note. No blink when the playing pattern (a chain entry: with its repeats) lasts 1.5 beats or less, when the next pattern is the same one, or for a switch that happens at once (quantize off). Nothing happens after the switch.
 - The grid's **running step light** only shows when the edited pattern is the playing one.
@@ -444,7 +444,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 
 **Header**
 - TRACK: click for the track list. NOTES / CC: click to switch.
-- PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker. CHAIN: click to switch chain playback on / off.
+- PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker (step view and Macros page). CHAIN: click to switch chain playback on / off.
 - Start / stop button: see 3.
 - FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back; right-click: one step forward (redo) (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings dialog.
 
@@ -762,3 +762,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: VAL / PROB / ON only inside CC mode's own controls (SLIDER, PARAMS, RANGES, SHIFT); undo labels and macros say CC VAL, CC PROB, CC ON (host names "CCVal", "CCProb"), since they are read outside CC mode.
 - 2026-11-06: CC smoothing is on by default (most CC targets are continuous, like filter cutoff); switch it off in Settings for stepped targets. Projects keep their own setting.
 - 2026-11-06: Vima 2 (a breaking change: earlier projects and files do not load; no backwards compatibility). CC smoothing gets a global **Curve**: LINEAR / EXP / LOG, buttons with a small drawing of the curve.
+- 2026-11-06: The header PATTERN number opens no picker in the patterns view. In the patterns view with edit mode on, the PATTERN box shows the selected slot (what STEPS opens) and the arrows move it.

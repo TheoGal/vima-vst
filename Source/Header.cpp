@@ -157,20 +157,31 @@ Header::Header (Context& c) : ctx (c)
     prevBtn.radius = nextBtn.radius = 4.0f;
     // Edit mode off: the arrows play the previous / next pattern (quantize applies).
     // Edit mode on: they only choose the pattern to edit, at once (SPEC.md 7.5).
+    // Patterns view + edit mode: the arrows move the selected slot, which STEPS opens (SPEC.md 7.5)
     auto step = [this] (int d)
     {
+        if (ctx.ui.patternsView && ctx.ui.editMode)
+        {
+            ctx.ui.selectedPattern = (ctx.ui.selectedPattern + d + numPatterns) % numPatterns;
+            ctx.ui.viewPage = ctx.ui.selectedPattern / patternsPerPage;
+            ctx.changed();
+            return;
+        }
         const int i = ((ctx.ui.editMode ? ctx.shown() : ctx.currentPattern()) + d + numPatterns) % numPatterns;
         if (ctx.ui.editMode) pickToEdit (i);
         else ctx.proc.queuePattern (i);
         ctx.changed();
     };
     prevBtn.onClick = [step] { step (-1); };
+    prevBtn.setTitle ("Previous pattern");
+    nextBtn.setTitle ("Next pattern");
     nextBtn.onClick = [step] { step (1); };
     addAndMakeVisible (prevBtn);
     addAndMakeVisible (nextBtn);
     patternBtn.look = arrowLook;
     patternBtn.onClick = [this]
     {
+        if (ctx.ui.patternsView) return;   // the patterns view shows the slots itself: no picker there
         if (Popover::isOpen (*ctx.root, "patternPicker")) { Popover::closeAll (*ctx.root); return; }
         ctx.ui.pickerPage = ctx.shown() / patternsPerPage;
         const auto sz = PatternPickerPopover::size();
@@ -179,6 +190,7 @@ Header::Header (Context& c) : ctx (c)
                        { area.getRight() - sz.x, area.getBottom() + 8, sz.x, sz.y }, [this] { repaint(); });
         repaint();
     };
+    patternBtn.setTitle ("Pattern picker");
     addAndMakeVisible (patternBtn);
 
     // Transport: play / stop button inside the HOST box
@@ -345,6 +357,7 @@ void Header::resized()
     prevBtn.setBounds (pa.removeFromLeft (24));
     nextBtn.setBounds (pa.removeFromRight (24));
     patternBtn.setBounds (pa);
+    patternBtn.setInterceptsMouseClicks (! ctx.ui.patternsView, false);   // display only in the patterns view
 }
 
 void Header::showTrackMenu()
@@ -510,12 +523,14 @@ void Header::paintOverChildren (juce::Graphics& g)
         const bool dim = ! ctx.ui.editMode && (queued ? ctx.ui.blink : ctx.switchPulseDim());
         g.setColour (t.text.withAlpha (dim ? 0.2f : 1.0f));
         g.setFont (Fonts::monoSemi (13.0f));
-        const auto num = patternLabel (ctx.shown());
+        // patterns view + edit mode: the selected slot (what STEPS opens), like the step view shows the edited pattern
+        const auto num = patternLabel (ctx.ui.patternsView && ctx.ui.editMode ? ctx.ui.selectedPattern : ctx.shown());
         const int nx = pb.getX() + 8 + lw + 6;
         const int nw = juce::GlyphArrangement::getStringWidthInt (g.getCurrentFont(), num);
         g.drawText (num, pb.withX (nx).withWidth (nw + 2), juce::Justification::centredLeft);
-        // chevron after the number: the number opens the pattern picker
-        draw::chevronDown (g, { (float) (nx + nw + 11), (float) pb.getCentreY() }, t.text2, 10.0f);
+        // chevron after the number: the number opens the pattern picker (not in the patterns view)
+        if (! ctx.ui.patternsView)
+            draw::chevronDown (g, { (float) (nx + nw + 11), (float) pb.getCentreY() }, t.text2, 10.0f);
     }
 
     // transport and BPM
