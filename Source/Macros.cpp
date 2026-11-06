@@ -20,7 +20,7 @@ static const MacroTargetInfo infos[numMacroTargets] = {
     { MacroTarget::velocity,    MacroKind::step,   "VELOCITY",   "Velocity",    true,  1, 127 },
     { MacroTarget::gate,        MacroKind::step,   "GATE",       "Gate",        true,  1, maxGate },
     { MacroTarget::probability, MacroKind::step,   "PROB",       "Probability", true,  1, 100 },
-    { MacroTarget::cc,          MacroKind::step,   "VAL",        "Value",       true,  0, 127 },
+    { MacroTarget::cc,          MacroKind::step,   "CC VAL",     "CC Value",    true,  0, 127 },
     { MacroTarget::ccStepOn,    MacroKind::step,   "CC ON",      "CC On",       true,  0, 1 },
     { MacroTarget::ccProbability, MacroKind::step, "CC PROB",    "CC Probability", true, 1, 100 },
 };
@@ -271,7 +271,7 @@ static const char* shortName (MacroTarget t)
         case MacroTarget::velocity:    return "VEL";
         case MacroTarget::gate:        return "GATE";
         case MacroTarget::probability: return "PROB";
-        case MacroTarget::cc:          return "VAL";
+        case MacroTarget::cc:          return "CC VAL";
         case MacroTarget::ccProbability: return "CC PROB";
         case MacroTarget::none:
         case MacroTarget::pattern:
@@ -340,7 +340,7 @@ juce::String macroHostName (const MacroMap& m, int index)
         case MacroTarget::velocity:    return "Vel" + st + tr + pat;
         case MacroTarget::gate:        return "Gate" + st + tr + pat;
         case MacroTarget::probability: return "Prob" + st + tr + pat;
-        case MacroTarget::cc:          return "Val" + st + tr + pat;
+        case MacroTarget::cc:          return "CCVal" + st + tr + pat;
         case MacroTarget::ccStepOn:    return "CCOn" + st + tr + pat;
         case MacroTarget::ccProbability: return "CCProb" + st + tr + pat;
     }

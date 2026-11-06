@@ -110,8 +110,8 @@ Per step values:
 | Velocity | 1-127 | Never 0: in MIDI a Note On with velocity 0 is a Note Off. Every operation clamps velocity to 1-127. |
 | Gate | 1-400% | Percentage of one step at the track's division: 100% = one step (for 1/16, a 1/16 note), 50% = half a step, up to 400% = four steps (legato and long notes). When a note is still held and the same pitch plays again on the same channel, the old note ends just before the new one. |
 | Probability | 1-100% | Chance that an "on" step actually plays its note each time it is reached. 100% = always. **Never 0%** (like velocity): every operation clamps it to 1-100%; a step that should not play is switched off instead. **Strictly a note-mode parameter**: it never affects CC, which has its own CC probability (below). |
-| CC value (VAL) | 0-127 | Sent when the track's CC output and the step's CC are on (10), and the CC probability roll passes. Named **VAL** everywhere in the UI (SLIDER, PARAMS, RANGES, SHIFT, undo labels, macros). |
-| CC probability (CC PROB) | 1-100% | Chance that a CC-on step actually sends its CC value each time it is reached, **rolled apart from the note probability**. 100% = always. Never 0%, like the note probability. Shown as PROB in CC mode, in amber like its note-mode counterpart. |
+| CC value (VAL) | 0-127 | Sent when the track's CC output and the step's CC are on (10), and the CC probability roll passes. Shown as **VAL** in CC mode's own controls (SLIDER, PARAMS, RANGES, SHIFT), where CC is already the context, and as **CC VAL** wherever it is read outside CC mode (undo labels, macros). |
+| CC probability (CC PROB) | 1-100% | Chance that a CC-on step actually sends its CC value each time it is reached, **rolled apart from the note probability**. 100% = always. Never 0%, like the note probability. Shown as PROB in CC mode's own controls and as **CC PROB** elsewhere (undo labels, macros), in amber like its note-mode counterpart. |
 
 Pitch display and scale behavior:
 
@@ -487,7 +487,7 @@ Targets:
 | GLOBAL | Pattern (switches follow the quantize setting), Chain On | - | - | - |
 | TRACK | Notes Out, CC Out | 1-8 | - | - |
 | TRACK | Length, Division, Direction, Swing, Scale On | 1-8 | 01 to 64 | - |
-| STEP | Note On, Pitch, Octave, Velocity, Gate, Probability, CC On, VAL, CC PROB | 1-8 | 01 to 64 | 1-32 |
+| STEP | Note On, Pitch, Octave, Velocity, Gate, Probability, CC On, CC Value, CC Probability | 1-8 | 01 to 64 | 1-32 |
 
 **Exposed vs not exposed (checklist)**
 
@@ -496,7 +496,7 @@ Exposed as macro targets (the table above, nothing else):
 - Global: Pattern (which pattern plays), Chain On.
 - Track routing (the same in every pattern): Notes Out, CC Out.
 - Track settings (per pattern): Length, Division, Direction, Swing, Scale On.
-- Step values (per pattern and step): Note On (note on/off), Pitch, Octave, Velocity, Gate, Probability, CC On (CC on/off), VAL (CC value), CC PROB (CC probability).
+- Step values (per pattern and step): Note On (note on/off), Pitch, Octave, Velocity, Gate, Probability, CC On (CC on/off), CC Value, CC Probability.
 
 Not exposed (set in the plugin only):
 
@@ -513,7 +513,7 @@ Not exposed (set in the plugin only):
 - **Pitch** follows the scale like the step's pitch knob: when the target track's scale is on (in the mapped pattern), the macro moves only through the in-scale notes (C minor = 7 positions, C fully down to A# fully up, spread over the whole travel); with the scale off, through all 12. **Octave** covers the whole MIDI range.
 - **Pattern macro**: moving it queues the picked pattern (quantize applies, in the background), and the macro shows the **picked** pattern at once, not the one still playing; turning it back to the playing pattern cancels the queued switch.
 - **Two-way**: a macro move from the host changes the target on the next audio block. When the target changes inside Vima (editing it, undo, loading a preset, remapping, a pattern switch or chain step for the Pattern target), the macro moves to match, as a short gesture so hosts can record it.
-- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Pitch, NoteOn, Oct, Vel, Gate, Prob, Val, CCOn, CCProb); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, Vima tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
+- **Host names follow the mapping**: a mapped macro is named after what it controls, param first so short displays keep the important part: step targets "Vel St05 Tr03 Pat23" (Pitch, NoteOn, Oct, Vel, Gate, Prob, CCOn, CCVal, CCProb); track settings stored per pattern "Swing Tr03 Pat23" (Length, Div, Dir, Swing, Scale); routing "NotesOut Tr03", "CCOut Tr03"; global "Pattern", "Chain On". Unmapped macros are "Macro 1" ... "Macro 128". When a mapping changes, Vima tells the host the names changed; automation stays linked through the fixed IDs (macro001 ... macro128), so renaming never breaks it. The macro number is not part of the name: macros are the go-between, the user looks for the controlled param. Hosts asking for a short name get the first characters ("Vel St05").
 - The host shows the target value as the macro's value text ("96", "1/16", "05"); unmapped macros show "-".
 - Host changes are not added to undo.
 
@@ -524,16 +524,16 @@ Opened with the MACROS button in the header; STEPS goes back.
 - **Left**: page buttons (1 - 32, 33 - 64, 65 - 96, 97 - 128; outlined, the chosen page filled, like the patterns view's page buttons), "N OF 128 MAPPED" (all pages), LEARN. Mapping sets are loaded and saved from the FILE menu (13.3). A grid of 32 macro cells: macro number ("M005"), a color dot when mapped, a knob with the target's value (drag or wheel to move the macro), the target name ("STEP 05 VEL") and where it points ("T04 · 06" = track 4, pattern 06; "T02" for routing targets; "GLOBAL").
 - **Right**: the mapping editor for the selected macro ("M017", with its host name "MACRO 17"):
   - **TARGET**: GLOBAL / TRACK / STEP (none lit for an unmapped macro). Outlined buttons, the chosen one filled, like the PARAMETER and TRACK buttons below.
-  - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE ON, PITCH, OCTAVE, VELOCITY, GATE, PROB, CC ON, VAL, CC PROB. A new mapping starts on the track and pattern on screen.
+  - **PARAMETER**: the targets of that type. Step parameters in this order: NOTE ON, PITCH, OCTAVE, VELOCITY, GATE, PROB, CC ON, CC VAL, CC PROB. A new mapping starts on the track and pattern on screen.
   - **TRACK** (1-8), **PATTERN** (a knob, 01 to 64, for targets stored per pattern), **STEP** (a knob, 1-32, for step targets).
   - Footer: **CLEAR MAPPING** (unmaps the macro) and the current value ("NOW 16").
 - **LEARN**: press LEARN; the selected macro listens (if it is already mapped, the next free one does). Go back to STEPS (or the patterns view) and click a control: the listening macro is mapped to it (the track and pattern on screen at that moment, and that step, all fixed), and LEARN moves on to the **next free macro** (wrapping around; it never overwrites a mapping). When no macro is free, LEARN switches itself off. The header button reads "LEARN M005" in amber. A banner on the Macros page explains it while listening.
 - While learning: clicks map instead of editing; an amber frame marks the view (in the step view the whole window, up to the top edge; in the patterns view the area below the flat header). In the step view's top band, learnable header controls (CHAIN) are mapped like the rest, while the other header buttons (LEARN, FILE, UNDO, SETTINGS...) keep working; the control under the mouse is highlighted; **every mapped control keeps an amber outline with its macro number** (for example "M005"), following the track and pattern on screen.
 - **A mapped control cannot be mapped again**: clicking it does nothing (the outline flashes). **Right-click** a mapped control to free it (unmap its macro).
-- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability; VAL or CC PROB in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON (the patterns view button or the header CHAIN toggle).
+- Learnable: step on/off (note or CC, following the mode), note, octave, the step slider (its current param: velocity, gate, probability; CC VAL or CC PROB in CC mode), LENGTH, DIVISION, DIRECTION, SWING, USE SCALE (Scale On), NOTE OUT, CC OUT, pattern slots (Pattern) and CHAIN ON (the patterns view button or the header CHAIN toggle).
 - **No duplicates in the editor either**: a change in the mapping editor that would point a second macro at a control that already has one is refused, and the footer shows "ALREADY ON M003".
 - Outside LEARN, controls show **no indicator** when they are mapped to a macro.
-- Colors follow the params: note on, pitch, octave and velocity green, gate purple, probability and CC PROB amber, CC on and VAL cyan, track and global targets neutral.
+- Colors follow the params: note on, pitch, octave and velocity green, gate purple, probability and CC PROB amber, CC on and CC VAL cyan, track and global targets neutral.
 
 ### 13.3 Presets, patterns and macro mapping sets
 
@@ -758,3 +758,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: Patterns view: everything is undoable, so cell operations do not ask. NEW PATTERN in the cell menu empties the cell at once (FILE > PATTERN > NEW still asks). Dragging onto any cell overwrites it (move and copy); the grey "allowed" outline is gone, only the cell under the mouse is outlined.
 - 2026-11-06: Releases keep the notes written when publishing; the build appends the standard downloads part under them (title still set by the build).
 - 2026-11-06: CC mode gets a per-step **CC probability** (1-100%, rolled apart from the note probability; with smoothing the glide passes over steps whose roll failed): SLIDER VAL / PROB, PARAMS ON / VAL / PROB, a PROB range (25-100%), SHIFT VAL / PROB, a CC PROB macro target. PROB is amber in both modes. The CC value is now called **VAL** everywhere (SLIDER, PARAMS, RANGES, SHIFT, undo labels, macros; host name "Val"); CC stays only for NOTES / CC, CC OUT and CC NUM. The CC number knob moved into the CC OUT tile, so CC mode has a SLIDER tile like note mode.
+- 2026-11-06: VAL / PROB / ON only inside CC mode's own controls (SLIDER, PARAMS, RANGES, SHIFT); undo labels and macros say CC VAL, CC PROB, CC ON (host names "CCVal", "CCProb"), since they are read outside CC mode.

@@ -39,12 +39,26 @@ namespace
 
     const char* paramName (Param l);
 
-    // The armed params for an undo label: "ALL", "VEL", "NOTE, OCT"
+    // Undo labels name the CC params in full ("CC VAL"), since the UNDO box is read in either mode;
+    // the buttons say just VAL / PROB / ON, being in CC mode already
+    juce::String labelName (Param l)
+    {
+        switch (l)
+        {
+            case Param::ccOn:   return "CC ON";
+            case Param::cc:     return "CC VAL";
+            case Param::ccProb: return "CC PROB";
+            case Param::on: case Param::pitch: case Param::octave: case Param::velocity: case Param::gate: case Param::probability: break;
+        }
+        return paramName (l);
+    }
+
+    // The armed params for an undo label: "ALL", "VEL", "NOTE, OCT", "CC VAL, CC PROB"
     juce::String paramsText (const std::vector<Param>& params, bool all)
     {
         if (all) return "ALL";
         juce::StringArray names;
-        for (auto l : params) names.addIfNotAlreadyThere (paramName (l));
+        for (auto l : params) names.addIfNotAlreadyThere (labelName (l));
         return names.joinIntoString (", ");
     }
 
@@ -322,7 +336,7 @@ void ShiftKnob::mouseDown (const juce::MouseEvent& e)
     if (e.mods.isPopupMenu()) return;
     const auto param = ctx.ui.ccMode ? ctx.ui.ccShiftParam : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
-    ctx.beginGesture ("SHIFT " + juce::String (paramName (param)) + Context::dot() + ctx.scopeText() + ctx.where());   // the whole drag is one undo entry
+    ctx.beginGesture ("SHIFT " + labelName (param) + Context::dot() + ctx.scopeText() + ctx.where());   // the whole drag is one undo entry
     gesture = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
     startY = e.getScreenY();
     active = true;
@@ -354,7 +368,7 @@ void ShiftKnob::mouseWheelMove (const juce::MouseEvent&, const juce::MouseWheelD
     const int k = (d > 0.0f) != w.isReversed ? 1 : -1;
     const auto param = ctx.ui.ccMode ? ctx.ui.ccShiftParam : ctx.ui.shiftParam;
     const auto sc = ctx.scope();
-    ctx.beginGesture ("SHIFT " + juce::String (paramName (param)) + Context::dot() + ctx.scopeText() + ctx.where());
+    ctx.beginGesture ("SHIFT " + labelName (param) + Context::dot() + ctx.scopeText() + ctx.where());
     const auto g = ctx.proc.read ([&] (const Project& p) { return beginShift (p, sc, param); });
     ctx.edit (false, [&g, k] (Project& p) { applyShift (p, g, k); });
 }

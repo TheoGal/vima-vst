@@ -449,7 +449,7 @@ What can be mapped:
 
 - **Global:** Pattern (which pattern plays), Chain On.
 - **Track:** Notes Out, CC Out; and per pattern: Length, Division, Direction, Swing, Scale On.
-- **Step:** Note On, Pitch, Octave, Velocity, Gate, Probability, CC On, VAL (the CC value), CC PROB.
+- **Step:** Note On, Pitch, Octave, Velocity, Gate, Probability, CC On, CC Value, CC Probability.
 
 
 A **Pitch** macro follows the scale like the pitch knob: in C minor it moves through the 7 notes of the scale.

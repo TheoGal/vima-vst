@@ -108,7 +108,7 @@ StepCell::StepCell (Context& c, int i) : ctx (c), index (i)
     auto stepLabel = [this] (const juce::String& what) { return "STEP " + juce::String (index + 1).paddedLeft ('0', 2) + " " + what + ctx.where(); };
     auto sliderName = [this]
     {
-        if (ctx.ui.ccMode) return juce::String (ctx.ui.ccSliderProb ? "CC PROB" : "VAL");
+        if (ctx.ui.ccMode) return juce::String (ctx.ui.ccSliderProb ? "CC PROB" : "CC VAL");
         return juce::String (ctx.ui.slider == SliderParam::velocity ? "VEL" : ctx.ui.slider == SliderParam::gate ? "GATE" : "PROB");
     };
 
@@ -440,7 +440,7 @@ void StepGrid::relabelStroke()
     if (drawingToggles)
         label = steps + (ctx.ui.ccMode ? " CC " : " NOTE ") + (toggleValue ? "ON" : "OFF");
     else
-        label = "DRAW " + juce::String (ctx.ui.ccMode ? (ctx.ui.ccSliderProb ? "CC PROB" : "VAL") : ctx.ui.slider == SliderParam::velocity ? "VEL"
+        label = "DRAW " + juce::String (ctx.ui.ccMode ? (ctx.ui.ccSliderProb ? "CC PROB" : "CC VAL") : ctx.ui.slider == SliderParam::velocity ? "VEL"
                                                          : ctx.ui.slider == SliderParam::gate ? "GATE" : "PROB")
               + Context::dot() + steps;
     ctx.proc.relabelUndo (label + ctx.where());

@@ -800,9 +800,9 @@ void testMacros()
     check (macro (4)->getCurrentValueAsText() == "-", "an unmapped macro shows -");
     check (juce::String (macroTargetInfo (MacroTarget::stepOn).name) == "NOTE ON" && juce::String (macroTargetInfo (MacroTarget::ccStepOn).name) == "CC ON",
            "step on/off macros are named NOTE ON and CC ON");
-    check (juce::String (macroTargetInfo (MacroTarget::cc).name) == "VAL" && juce::String (macroTargetInfo (MacroTarget::ccProbability).name) == "CC PROB"
+    check (juce::String (macroTargetInfo (MacroTarget::cc).name) == "CC VAL" && juce::String (macroTargetInfo (MacroTarget::ccProbability).name) == "CC PROB"
                && macroTargetInfo (MacroTarget::ccProbability).min == 1 && macroTargetInfo (MacroTarget::ccProbability).max == 100,
-           "the CC step macros are named VAL and CC PROB (1-100)");
+           "the CC step macros are named CC VAL and CC PROB (1-100)");
 
     // map: M1 = velocity of track 4 step 5; M2 = length of track 3 in pattern 10;
     // M3 = pattern; M4 = chain on; M5 = note of step 1 on track 2; M6 = probability of track 4 step 1
