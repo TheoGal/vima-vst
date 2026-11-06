@@ -559,7 +559,10 @@ You can also save or load a pattern by right-clicking a cell in the patterns vie
 **MACROS**: all 128 macro mappings, as a set.
 
 - Handy for a mapping you use with a hardware controller, or a standard set of automation targets.
-- **NEW** clears all mappings and asks first. **LOAD...** asks before replacing existing mappings. **SAVE** and **SAVE AS...** work like presets.
+- **NEW** clears all mappings.
+- **LOAD...** loads a saved set of macros.
+- **SAVE** saves changes to a loaded set of macros.
+- **SAVE AS...** saves a set of macros to a file.
 - Loading a macro set never touches your music, and loading a preset never touches your mappings.
 - Files end in **.vimamacros**, in Documents/Vima/Macros.
 
