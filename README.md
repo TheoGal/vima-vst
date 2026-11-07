@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">
-Vima v1.5.0 Manual
+Vima User Manual
 </h1>
 
 <p align="center">
