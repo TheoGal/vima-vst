@@ -120,12 +120,31 @@ jobs:
           -DCMAKE_OSX_DEPLOYMENT_TARGET=10.13
 
       - name: Build
-        run: cmake --build build --config Release --parallel 3 --target Vima_VST3
+        run: cmake --build build --config Release --parallel 3 --target Vima_VST3 VimaMidiFX_AU
 
       # Ad-hoc signature: required for Apple Silicon to load the code at all.
       # (Not notarized: that needs a paid Apple Developer account. See README.txt in the zip.)
       - name: Sign (ad-hoc)
-        run: codesign --force --deep --sign - build/Vima_artefacts/Release/VST3/Vima.vst3
+        run: |
+          codesign --force --deep --sign - build/Vima_artefacts/Release/VST3/Vima.vst3
+          codesign --force --deep --sign - build/VimaMidiFX_artefacts/Release/AU/Vima.component
+
+      # Apple's Audio Unit validator, as Logic runs it before loading a plugin (type aumi = MIDI effect)
+      - name: Validate the Audio Unit with auval
+        continue-on-error: true
+        run: |
+          mkdir -p ~/Library/Audio/Plug-Ins/Components
+          ditto build/VimaMidiFX_artefacts/Release/AU/Vima.component ~/Library/Audio/Plug-Ins/Components/Vima.component
+          killall -9 AudioComponentRegistrar 2>/dev/null || true
+          set +e
+          auval -v aumi VimM Thgl 2>&1 | tee auval-out.txt
+          code=${PIPESTATUS[0]}
+          if [ "$code" -ne 0 ] || ! grep -q "AU VALIDATION SUCCEEDED" auval-out.txt; then
+            grep -E "FAIL|ERROR|WARNING" auval-out.txt | head -25 | while read -r l; do echo "::warning title=auval::$l"; done
+            echo "::warning title=auval::validation did not succeed (exit code $code)"
+            exit 1
+          fi
+          echo "::notice title=auval::AU VALIDATION SUCCEEDED"
 
       - name: Validate with pluginval
         continue-on-error: true
@@ -148,6 +167,7 @@ jobs:
           OUT=Vima-macOS-universal
           mkdir -p "$OUT"
           ditto build/Vima_artefacts/Release/VST3/Vima.vst3 "$OUT/Vima.vst3"
+          ditto build/VimaMidiFX_artefacts/Release/AU/Vima.component "$OUT/Vima.component"
           cp LICENSE "$OUT"/ 2>/dev/null || true
           cp build/README.txt "$OUT"/
           cp Resources/fonts/OFL-IBMPlex.txt "$OUT"/

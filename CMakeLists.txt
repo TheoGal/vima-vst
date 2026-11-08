@@ -53,6 +53,25 @@ juce_add_plugin(Vima
     VST3_CATEGORIES             Instrument Generator
     COPY_PLUGIN_AFTER_BUILD     FALSE)
 
+# macOS: the same plugin as an Audio Unit MIDI effect (type aumi) for Logic Pro, which loads
+# Audio Units only. It goes in a track's MIDI FX slot and sends its MIDI to that track's instrument.
+if(APPLE)
+    juce_add_plugin(VimaMidiFX
+        PRODUCT_NAME                "Vima"
+        COMPANY_NAME                "TheoGal"
+        BUNDLE_ID                   "gr.cnnbl.vima.midifx"
+        PLUGIN_MANUFACTURER_CODE    Thgl
+        PLUGIN_CODE                 VimM
+        FORMATS                     AU
+        IS_SYNTH                    FALSE
+        NEEDS_MIDI_INPUT            TRUE
+        NEEDS_MIDI_OUTPUT           TRUE
+        IS_MIDI_EFFECT              TRUE
+        EDITOR_WANTS_KEYBOARD_FOCUS FALSE
+        AU_MAIN_TYPE                kAudioUnitType_MIDIProcessor
+        COPY_PLUGIN_AFTER_BUILD     FALSE)
+endif()
+
 juce_add_binary_data(VimaData SOURCES
     Resources/fonts/IBMPlexSans-Regular.ttf
     Resources/fonts/IBMPlexSans-SemiBold.ttf
@@ -82,22 +101,29 @@ set(VIMA_SOURCES
     Source/PluginProcessor.cpp
     Source/PluginEditor.cpp)
 
-target_sources(Vima PRIVATE ${VIMA_SOURCES})
+set(VIMA_PLUGIN_TARGETS Vima)
+if(APPLE)
+    list(APPEND VIMA_PLUGIN_TARGETS VimaMidiFX)
+endif()
 
-target_compile_definitions(Vima PUBLIC
-    JUCE_WEB_BROWSER=0
-    JUCE_USE_CURL=0
-    JUCE_VST3_CAN_REPLACE_VST2=0
-    JUCE_DISPLAY_SPLASH_SCREEN=0)
+foreach(t IN LISTS VIMA_PLUGIN_TARGETS)
+    target_sources(${t} PRIVATE ${VIMA_SOURCES})
 
-target_link_libraries(Vima
-    PRIVATE
-        VimaData
-        juce::juce_audio_utils
-    PUBLIC
-        juce::juce_recommended_config_flags
-        juce::juce_recommended_lto_flags
-        juce::juce_recommended_warning_flags)
+    target_compile_definitions(${t} PUBLIC
+        JUCE_WEB_BROWSER=0
+        JUCE_USE_CURL=0
+        JUCE_VST3_CAN_REPLACE_VST2=0
+        JUCE_DISPLAY_SPLASH_SCREEN=0)
+
+    target_link_libraries(${t}
+        PRIVATE
+            VimaData
+            juce::juce_audio_utils
+        PUBLIC
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_lto_flags
+            juce::juce_recommended_warning_flags)
+endforeach()
 
 # README.txt for the release zips, with the project version filled in (docs/release/README.txt.in)
 configure_file ("${CMAKE_SOURCE_DIR}/docs/release/README.txt.in" "${CMAKE_BINARY_DIR}/README.txt" @ONLY)
@@ -108,6 +134,12 @@ add_custom_command(TARGET Vima_VST3 POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:Vima_VST3>/../Resources"
     COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/docs/Vima Manual.pdf" "$<TARGET_FILE_DIR:Vima_VST3>/../Resources/Vima Manual.pdf"
     VERBATIM)
+if(APPLE)
+    add_custom_command(TARGET VimaMidiFX_AU POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:VimaMidiFX_AU>/../Resources"
+        COMMAND ${CMAKE_COMMAND} -E copy "${CMAKE_SOURCE_DIR}/docs/Vima Manual.pdf" "$<TARGET_FILE_DIR:VimaMidiFX_AU>/../Resources/Vima Manual.pdf"
+        VERBATIM)
+endif()
 
 # Optional test harness: offline engine checks and rendered screenshots of the UI
 option(VIMA_BUILD_TESTS "Build the test harness" OFF)

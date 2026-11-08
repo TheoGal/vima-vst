@@ -32,10 +32,8 @@ So, even though I've dipped my toes into coding I am not a C++ developer. I alwa
 
 - Get Vima for your platform from the [latest release](https://github.com/TheoGal/vima-vst/releases/latest) and unzip it.
 - **Windows:** copy the `Vima.vst3` folder to `C:\Program Files\Common Files\VST3\`.
-- **macOS:** copy `Vima.vst3` to `/Library/Audio/Plug-Ins/VST3/`. Test builds are not notarized by Apple, so the first time you may need to remove the quarantine flag (see INSTALL-macOS.txt in the download).
+- **macOS:** copy `Vima.vst3` to `/Library/Audio/Plug-Ins/VST3/`. For **Logic Pro**, which only loads Audio Units, copy the Audio Unit MIDI effect `Vima.component` to `/Library/Audio/Plug-Ins/Components/`. The builds are not notarized by Apple, so the first time you may need to remove the quarantine flag (see README.txt in the download).
 - **Linux:** copy the `Vima.vst3` folder to `~/.vst3/` (just for you) or `/usr/lib/vst3/` (for all users). Create the folder if it does not exist yet. Bitwig Studio and Reaper both host Vima on Linux.
-
-Vima is a VST3 plugin only. There is no Audio Unit version, because an AU plugin cannot send MIDI out.
 
 ### Getting MIDI out of Vima
 
@@ -46,12 +44,13 @@ Your DAW lists Vima as an **instrument**. Put it on its own track, then route th
 **Ableton Live:** Add Vima to your project as an instrument track. On the target instrument track (the instrument you wish to control), set "MIDI From" to the Vima track, choose Vima in the lower chooser, and set monitoring to "In".
 Other DAWs have a similar "MIDI input from another track" option.
 
+ <img src="docs/images/vima-in-live.png" align="left" width="170" alt="Vima setup in Ableton Live">
+
 **Note for Ableton Live users.** Live strips the MIDI channel from MIDI data internally. All 8 tracks of one Vima arrive mixed together on the receiving track, whatever their MIDI channels. So in Live, use **one Vima per instrument track**: its 8 tracks can still play that one instrument and create complex polyrhythmic patterns. (Hosts such as Bitwig and Reaper keep the channels, so there one Vima can feed several instruments by channel. In Live, that would need a Max for Live device.)
 
-<p align="center">
-  <img src="docs/images/vima-in-live.png" width="200" alt="Vima setup in Ableton Live"><br>
-  <em>Vima setup in Ableton Live</em>
-</p>
+**Logic Pro:** create a software instrument track with the instrument you want to play, then click its **MIDI FX** slot and choose Audio Units > TheoGal > Vima. Vima's MIDI goes to that track's instrument, so, like in Live, its 8 tracks play that one instrument (a multitimbral instrument can tell them apart by MIDI channel). If Vima does not show up, open Logic Pro > Settings > Plug-in Manager, select Vima and click "Reset & Rescan Selection".
+
+ <br clear="left"><br />
 
 
 ## The steps view

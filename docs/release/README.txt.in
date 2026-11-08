@@ -1,5 +1,5 @@
 VIMA VST
-8-track melodic MIDI step sequencer (VST3)
+8-track melodic MIDI step sequencer (VST3; Audio Unit MIDI effect on macOS)
 Version @PROJECT_VERSION@
 
 
@@ -11,15 +11,19 @@ Windows
 
 macOS
   Copy Vima.vst3 to /Library/Audio/Plug-Ins/VST3/
+  For Logic Pro, copy Vima.component to /Library/Audio/Plug-Ins/Components/
   This build is not notarized by Apple, so macOS blocks it at first.
   Open Terminal and run:
   xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/VST3/Vima.vst3
+  xattr -dr com.apple.quarantine /Library/Audio/Plug-Ins/Components/Vima.component
 
 Linux
   Copy the Vima.vst3 folder to ~/.vst3/ (just for you)
   or /usr/lib/vst3/ (all users). Create the folder if needed.
 
 Then restart your DAW or rescan plugins. Vima shows up as an instrument.
+In Logic Pro it is a MIDI effect: put it in a software instrument track's
+MIDI FX slot (Audio Units > TheoGal > Vima).
 
 
 MANUAL

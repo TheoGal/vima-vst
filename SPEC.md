@@ -18,7 +18,7 @@ Last updated: 2026-10-24 (checked against the code at that date).
 ## 2. Plugin format and hosting
 
 - Built with JUCE and CMake (details in 14).
-- Format: **VST3** only. Built for **Windows (x64)**, **macOS (universal: Apple Silicon and Intel)** and **Linux (x64)**. Windows is the primary target (the developer has no Mac). There is no Audio Unit version: an AU cannot send MIDI out of a plugin.
+- Format: **VST3** only. Built for **Windows (x64)**, **macOS (universal: Apple Silicon and Intel)** and **Linux (x64)**. Windows is the primary target (the developer has no Mac). On macOS there is also an **Audio Unit MIDI effect** (type aumi, code VimM) for Logic Pro, which loads Audio Units only: it goes in a track's MIDI FX slot and its MIDI reaches that track's instrument (the 8 tracks by MIDI channel). Same code and UI; the AU has no audio buses, the VST3 keeps its silent stereo output.
 - The host sees Vima as an **instrument (synth) plugin**, not a MIDI effect.
 - It produces no audio. It outputs MIDI only (notes and CC). A silent stereo output bus exists only so hosts accept it as an instrument.
 - Incoming MIDI is used only for pattern change by CC (6, 7.3); it is not passed through.
@@ -567,7 +567,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 - Runs on every push to main, on pull requests and on demand. A tag like `v1.0.0` also publishes both zips to a GitHub Release.
 - **tests** (Linux): builds and runs the test harness under xvfb; uploads the rendered screenshots as "Vima-test-screenshots".
 - **windows**: builds the x64 VST3, runs pluginval (strictness 10; does not fail the build), uploads the folder **Vima-Windows-x64** (the download is a single zip; uploading a zip gave a zip inside a zip).
-- **macos**: builds a universal VST3 (macOS 10.13+), signs it ad-hoc (needed for Apple Silicon; not notarized), runs pluginval, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
+- **macos**: builds a universal VST3 and the Audio Unit MIDI effect (macOS 10.13+), signs both ad-hoc (needed for Apple Silicon; not notarized), runs pluginval on the VST3 and auval on the AU, and uploads **Vima-macOS-universal** containing `Vima-macOS-plugin.zip` (the inner zip keeps file permissions, which GitHub's artifact zip drops; its own name avoids a clash when unzipping).
 - **linux**: builds the x64 VST3 on ubuntu (same JUCE dependencies as the tests job), runs pluginval under xvfb (does not fail the build), uploads the folder **Vima-Linux-x64**.
 - **README.txt in every zip**: a short plain-text file (install steps for all three platforms, where the manual is, the GitHub link) made by CMake from `docs/release/README.txt.in` with the project version filled in. The repo's README.md (the GitHub page) is not shipped.
 - **The manual inside the bundle**: a CMake post-build step copies `docs/Vima Manual.pdf` into each bundle's `Contents/Resources` (all three platforms, before the macOS signing). The PDF is built from MANUAL.md with `tools/manual-pdf/make_pdf.py` (Markdown, then Chromium print to A4; the layout lives only there) and committed: rebuild and commit it after editing MANUAL.md.
@@ -764,3 +764,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: Vima 2 (a breaking change: earlier projects and files do not load; no backwards compatibility). CC smoothing gets a global **Curve**: LINEAR / EXP / LOG, buttons with a small drawing of the curve.
 - 2026-11-06: The header PATTERN number opens no picker in the patterns view. In the patterns view with edit mode on, the PATTERN box shows the selected slot (what STEPS opens) and the arrows move it.
 - 2026-11-06: Reversed the v2 break: projects, presets and pattern files from v1.0.x load in v2 (CC PROB 100%, curve LINEAR, their own smoothing setting kept).
+- 2026-11-08: Audio Unit MIDI effect build for Logic Pro (macOS), next to the VST3; shipped in the macOS zip as Vima.component, checked with auval in CI. (The earlier claim that an AU cannot send MIDI was wrong.)

@@ -1,8 +1,11 @@
 #include "PluginProcessor.h"
 #include "PluginEditor.h"
 
+// The VST3 is an instrument with a silent stereo output (so hosts accept it); the Audio Unit
+// build for Logic is a MIDI effect, which has no audio buses at all
 VimaProcessor::VimaProcessor()
-    : AudioProcessor (BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
+    : AudioProcessor (JucePlugin_IsMidiEffect ? BusesProperties()
+                                              : BusesProperties().withOutput ("Output", juce::AudioChannelSet::stereo(), true))
 {
     outBuffer.ensureSize (8192);
     startTimerHz (20);
@@ -19,6 +22,8 @@ void VimaProcessor::syncParamsToHost()
 
 bool VimaProcessor::isBusesLayoutSupported (const BusesLayout& layouts) const
 {
+    if (JucePlugin_IsMidiEffect)
+        return layouts.inputBuses.isEmpty() && layouts.outputBuses.isEmpty();
     const auto& out = layouts.getMainOutputChannelSet();
     return out == juce::AudioChannelSet::stereo() || out == juce::AudioChannelSet::mono();
 }

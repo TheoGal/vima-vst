@@ -1,6 +1,10 @@
 #pragma once
 
 #include <juce_audio_processors/juce_audio_processors.h>
+
+#ifndef JucePlugin_IsMidiEffect   // the test harness is not a plugin build
+ #define JucePlugin_IsMidiEffect 0
+#endif
 #include "Model.h"
 #include "Engine.h"
 #include "Operations.h"
@@ -30,7 +34,7 @@ public:
     const juce::String getName() const override { return JucePlugin_Name; }
     bool acceptsMidi() const override { return true; }
     bool producesMidi() const override { return true; }
-    bool isMidiEffect() const override { return false; }
+    bool isMidiEffect() const override { return JucePlugin_IsMidiEffect; }   // true in the Audio Unit build for Logic
     double getTailLengthSeconds() const override { return 0.0; }
 
     int getNumPrograms() override { return 1; }
