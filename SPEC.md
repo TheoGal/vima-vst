@@ -638,7 +638,19 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **MIDI THRU** (Settings, global, ON / OFF): incoming MIDI (notes, CC, pitch bend, everything) passes to the output, mixed with what Vima generates. Pattern-change CC messages are always consumed. While the note trigger is GLOBAL, THRU shows OFF and is greyed out (its own setting is kept and comes back when the trigger changes). With the trigger PER CHANNEL, only channels not used as MIDI CH by any of the 8 tracks pass through (when THRU is on). Default: decide at build (proposal: ON for the Audio Unit, so Logic's keyboard still reaches the instrument; OFF for the VST3).
+2. **Note trigger** (Settings, global): OFF / GLOBAL / PER CHANNEL. Hold only (no toggle).
+   - Holding a key starts Vima if it was stopped (regardless of the DAW state); releasing all keys stops it. Start and stop follow the Quantize setting; a start begins at step 1.
+   - If Vima is already playing (DAW or play button), keys only transpose it: they never start or stop it, and releasing all keys leaves it running.
+   - Independent of the play-stop button mechanism.
+   - Transposition: the **base note** plays the pattern untransposed; each semitone above or below = +1 / -1, exactly like one SHIFT step on PITCH (tracks with USE SCALE on move one scale step, others one semitone). So on scale tracks an octave on the keyboard is 12 scale steps. CC is never transposed. A new transposition applies from the next step.
+   - Several keys held: last note wins; releasing it falls back to the most recent key still held. Releasing all keys returns to no transposition.
+   - GLOBAL: any note affects all 8 tracks. PER CHANNEL: a note affects only the tracks whose MIDI CH is the note's channel (tracks sharing a channel act together). In Ableton Live everything arrives on channel 1 (manual note).
+   - Notes used by the trigger are never passed through.
+   - The current transposition is shown in the header (for example "+2" by the pattern number).
+3. **Base note** (Settings): two knobs like a step's: NOTE (all 12 notes, not following any scale) and OCT (numbered with the Middle C setting). Default: C in the middle C octave (the init step note). Dimmed while the note trigger is OFF.
+4. **PLAY macro target** (global, on / off): does exactly what the play-stop button does.
+5. **Settings dialog in two columns** (mockup approved, 1100 x 536): left APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT; right MIDI INPUT (MIDI thru, Note trigger, Base note), PATTERN CHANGE (from incoming CC), QUANTIZE (its own section, "Start, stop, change": it now also times note trigger starts and stops).
 
 ### 15.2 Open
 
