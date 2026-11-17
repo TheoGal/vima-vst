@@ -649,8 +649,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
    - Notes used by the trigger are never passed through.
    - The current transposition is shown in the header (for example "+2" by the pattern number).
 3. **Base note** (Settings): two knobs like a step's: NOTE (all 12 notes, not following any scale) and OCT (numbered with the Middle C setting). Default: C in the middle C octave (the init step note). Dimmed while the note trigger is OFF.
-4. **PLAY macro target** (global, on / off): does exactly what the play-stop button does.
-5. **Settings dialog in two columns** (mockup approved, 1100 x 536): left APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT; right MIDI INPUT (MIDI thru, Note trigger, Base note), PATTERN CHANGE (from incoming CC), QUANTIZE (its own section, "Start, stop, change": it now also times note trigger starts and stops).
+4. **Settings dialog in two columns** (mockup approved, 1100 x 536): left APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT; right MIDI INPUT (MIDI thru, Note trigger, Base note), PATTERN CHANGE (from incoming CC), QUANTIZE (its own section, "Start, stop, change": it now also times note trigger starts and stops).
 
 ### 15.2 Open
 
@@ -777,3 +776,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: The header PATTERN number opens no picker in the patterns view. In the patterns view with edit mode on, the PATTERN box shows the selected slot (what STEPS opens) and the arrows move it.
 - 2026-11-06: Reversed the v2 break: projects, presets and pattern files from v1.0.x load in v2 (CC PROB 100%, curve LINEAR, their own smoothing setting kept).
 - 2026-11-08: Audio Unit MIDI effect build for Logic Pro (macOS), next to the VST3; shipped in the macOS zip as Vima.component, checked with auval in CI. (The earlier claim that an AU cannot send MIDI was wrong.)
+- 2026-11-18: Play / stop is not automatable: no PLAY macro target and no automation parameter.
