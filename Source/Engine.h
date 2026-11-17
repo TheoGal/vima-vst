@@ -16,7 +16,8 @@ class Engine
 public:
     struct Host
     {
-        bool playing = false;
+        bool playing = false;       // Vima runs (the DAW, or the play button): all tracks play
+        bool dawPlaying = false;    // the DAW itself rolls (ppq is then the DAW's position), even while Vima is held
         double ppq = 0.0;
         double bpm = 120.0;
         int timeSigNumerator = 4;
@@ -39,6 +40,8 @@ public:
     // Audio thread -> message thread: display state
     std::array<std::atomic<int>, numTracks> playStep;   // -1 when stopped
     std::atomic<bool> isPlaying { false };
+    // Note trigger (SPEC.md 3.1): the transposition each track plays with, in SHIFT steps (display)
+    std::array<std::atomic<int>, numTracks> shownTranspose;
     std::atomic<int> chainPosition { 0 };
     std::atomic<float> chainEntryProgress { 0.0f };
     std::atomic<int> chainRepeat { 0 };
@@ -98,6 +101,27 @@ private:
     void releaseSameNote (int channel, int note, int samplePos, juce::MidiBuffer& out);
 
     double nextQuantizePoint (const Project& project, const Host& host, double ppq) const;
+
+    // Note trigger and MIDI thru (SPEC.md 3.1)
+    void readTriggerNotes (const Project& project, const juce::MidiBuffer& midiIn);
+    void passThru (const Project& project, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out) const;
+    void updateTriggerTracks (const Project& project, const Host& host, double a, double ppqPerSample);
+    void finishTriggerBlock (double ppqEnd);
+    int scopeOf (const Project& project, int track) const;
+    static int transposeNote (int pitch, int steps, bool inScale, std::uint16_t mask, int root);
+
+    static constexpr int numScopes = 17;   // 0 = GLOBAL, 1-16 = MIDI channels (PER CHANNEL)
+    static constexpr int maxHeld = 16;
+    std::array<std::array<int, maxHeld>, numScopes> held {};   // held keys, oldest first (last note wins)
+    std::array<int, numScopes> numHeld {};
+    std::array<int, numScopes> pressSample {};                 // first key press in this block (-1 = none)
+    std::array<int, numTracks> transpose {};                   // per track, in SHIFT steps
+    NoteTrigger lastTriggerMode = NoteTrigger::off;
+    bool trigRunning = false;      // Vima runs because keys started it (not the DAW or the play button)
+    bool trigUsesDaw = false;      // ... on the DAW's clock (the DAW rolls, Vima was held) or its own
+    double trigClock = 0.0;
+    std::array<bool, numTracks> trackOn {}, startPending {}, stopPending {};
+    std::array<double, numTracks> trackFrom {}, trackTo {}, trackOrigin {};   // play window and step 1 time
     double chainEntryEnd (const Project& project) const;
 
     double sampleRate = 44100.0;

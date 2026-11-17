@@ -52,6 +52,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
             auto& g = p.globals;
             g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing; g.ccCurve = d.ccCurve;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
+            g.midiThru = d.midiThru; g.noteTrigger = d.noteTrigger; g.basePitchClass = d.basePitchClass; g.baseOctave = d.baseOctave;
         });
         Theme::setLight (false);       // the theme default: dark (all instances)
         userSettings::setMiddleC (3);  // middle C = C3 (all instances)
@@ -266,11 +267,78 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.quantize = (Quantize) i; }); };
         quantBtns.add (&p);
     }
+
+    // MIDI input (SPEC.md 3.1): MIDI thru, note trigger, base note
+    thruBtn = &pill();
+    thruBtn->radius = 4.0f;
+    thruBtn->font = [] { return Fonts::monoSemi (10.0f); };
+    thruBtn->look = [this, N]
+    {
+        const auto& t = Theme::current();
+        const auto g = ctx.globalsCopy();
+        const bool on = g.midiThru && g.noteTrigger != NoteTrigger::global;
+        return on ? Pill::Look { N(), N(), t.onNeutral, 1.5f, false } : Pill::Look { juce::Colours::transparentBlack, t.dim, t.muted, 1.5f, false };
+    };
+    // a GLOBAL note trigger uses every incoming note: THRU shows OFF and is greyed out (its own value is kept)
+    thruBtn->alpha = [this] { return ctx.globalsCopy().noteTrigger == NoteTrigger::global ? 0.4f : 1.0f; };
+    thruBtn->text = [this] { const auto g = ctx.globalsCopy(); return juce::String (g.midiThru && g.noteTrigger != NoteTrigger::global ? "ON" : "OFF"); };
+    thruBtn->onClick = [this]
+    {
+        if (ctx.globalsCopy().noteTrigger == NoteTrigger::global) return;
+        ctx.edit (false, [] (Project& p) { p.globals.midiThru = ! p.globals.midiThru; });
+    };
+    thruBtn->setTitle ("MIDI thru");
+    const char* tNames[] = { "OFF", "GLOBAL", "PER CHANNEL" };
+    for (int i = 0; i < 3; ++i)
+    {
+        auto& p = pill();
+        const juce::String name (tNames[i]);
+        p.text = [name] { return name; };
+        p.font = [] { return Fonts::monoSemi (10.0f); };
+        p.look = [this, i, N] { return choice ((int) ctx.globalsCopy().noteTrigger == i, N()); };
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.noteTrigger = (NoteTrigger) i; }); };
+        p.setTitle ("Note trigger " + name.toLowerCase());
+        trigBtns.add (&p);
+    }
+    // base note: a note knob (all 12 notes) and an octave knob, as on a step
+    basePitch = &knob();
+    basePitch->thickness = 4.0f;
+    basePitch->fontSize = 12.0f;
+    basePitch->colour = [] { return Theme::current().green; };
+    basePitch->minValue = 0; basePitch->maxValue = 11; basePitch->defaultValue = 0;
+    basePitch->getValue = [this] { return (int) ctx.globalsCopy().basePitchClass; };
+    basePitch->format = [] (int pc) { return juce::String (pitchClassName (pc)); };
+    basePitch->setValue = [this] (int pc) { ctx.edit (false, [pc] (Project& p) { p.globals.basePitchClass = (std::int8_t) pc; }); };   // all 12 notes
+    basePitch->parse = [] (const juce::String& txt)
+    {
+        const auto u = txt.toUpperCase().trim();
+        for (int pc = 11; pc >= 0; --pc)
+            if (u.startsWith (pitchClassName (pc)) && (juce::String (pitchClassName (pc)).length() == 2 || ! u.contains ("#")))
+                return pc;
+        return 0;
+    };
+    basePitch->pixelsPerStep = 8.0f;
+    baseOctave = &knob();
+    baseOctave->thickness = 3.0f;
+    baseOctave->fontSize = 11.0f;
+    baseOctave->textColour = Theme::current().text2;
+    baseOctave->colour = [] { return Theme::current().green; };
+    baseOctave->minValue = minOctave; baseOctave->maxValue = maxOctave + 2; baseOctave->defaultValue = 3;
+    baseOctave->getValue = [this] { const auto g = ctx.globalsCopy(); return g.baseOctave + g.octaveOffset(); };
+    baseOctave->fraction = [this] { return (float) (ctx.globalsCopy().baseOctave - minOctave) / (float) (maxOctave - minOctave); };
+    baseOctave->setValue = [this] (int shown)
+    {
+        ctx.edit (false, [shown] (Project& p)
+        {
+            p.globals.baseOctave = (std::int8_t) juce::jlimit (minOctave, maxOctave, shown - p.globals.octaveOffset());
+        });
+    };
+    baseOctave->pixelsPerStep = 10.0f;
 }
 
 juce::Rectangle<int> SettingsDialog::panelBounds() const
 {
-    return getLocalBounds().withSizeKeepingCentre (600, 646);   // sized to its content
+    return getLocalBounds().withSizeKeepingCentre (1100, 536);   // two columns (SPEC.md 11)
 }
 
 void SettingsDialog::mouseDown (const juce::MouseEvent& e)
@@ -293,8 +361,11 @@ void SettingsDialog::resized()
     footer.removeFromRight (4);
     manualBtn->setBounds (footer.removeFromRight (100));
 
-    auto body = panel.withTrimmedTop (54).withTrimmedBottom (60).reduced (20, 14);
-    const int labelW = 150;
+    auto inner = panel.withTrimmedTop (54).withTrimmedBottom (60).reduced (24, 14);
+    const int colGap = 40, colW = (inner.getWidth() - colGap) / 2;
+    auto leftCol = inner.withWidth (colW), rightCol = inner.withTrimmedLeft (colW + colGap);
+    juce::Rectangle<int> body;
+    const int labelW = 140;
     auto section = [&] (const juce::String& name)
     {
         rows.add ({ name, body.removeFromTop (12), 1.0f, true });
@@ -311,7 +382,7 @@ void SettingsDialog::resized()
     auto divider = [&]
     {
         body.removeFromTop (2);
-        dividers.add (body.getY());
+        dividers.add (body.withHeight (1));
         body.removeFromTop (12);
     };
     auto segment = [] (juce::Rectangle<int> r, juce::Array<Pill*>& btns, int w)
@@ -322,12 +393,14 @@ void SettingsDialog::resized()
         return box;
     };
 
+    // left column: how Vima looks and sounds
+    body = leftCol;
     section ("APPEARANCE");
     segment (rowArea ("Theme", 32), themeBtns, 64);
     divider();
 
     section ("MIDDLE C");   // not "PITCH": that is the name of the step knob
-    segment (rowArea ("Middle C is", 32), midCBtns, 120);
+    segment (rowArea ("Middle C is", 32), midCBtns, 108);
     divider();
 
     section ("USER SCALE");
@@ -347,6 +420,22 @@ void SettingsDialog::resized()
     section ("CC OUTPUT");
     smoothBtn->setBounds (rowArea ("Smooth between steps", 24).withWidth (60));
     segment (rowArea ("Curve", 32), curveBtns, 86);
+
+    // right column: incoming MIDI and timing
+    body = rightCol;
+    section ("MIDI INPUT");
+    thruBtn->setBounds (rowArea ("MIDI thru", 24).withWidth (60));
+    segment (rowArea ("Note trigger", 32), trigBtns, 92);
+    {
+        auto r = rowArea ("Base note", 46);
+        basePitch->setBounds (r.removeFromLeft (46));
+        r.removeFromLeft (8);
+        rows.add ({ "NOTE", r.removeFromLeft (40), 1.0f, true });
+        r.removeFromLeft (14);
+        baseOctave->setBounds (r.removeFromLeft (34).withSizeKeepingCentre (34, 34));
+        r.removeFromLeft (8);
+        rows.add ({ "OCT", r.removeFromLeft (30), 1.0f, true });
+    }
     divider();
 
     section ("PATTERN CHANGE");
@@ -362,8 +451,11 @@ void SettingsDialog::resized()
         r.removeFromLeft (8);
         rows.add ({ "CC", r.removeFromLeft (30), 1.0f, true });
     }
+    divider();
+
+    section ("QUANTIZE");
     {
-        auto r = rowArea ("Quantize changes to", 32);
+        auto r = rowArea ("Start, stop, change", 32);
         auto box = r.withWidth (6 + 52 + 3 + 64 + 3 + 58 + 3 + 104).withSizeKeepingCentre (6 + 52 + 3 + 64 + 3 + 58 + 3 + 104, 32);
         const int widths[] = { 52, 64, 58, 104 };
         int x = box.getX() + 3;
@@ -384,8 +476,9 @@ void SettingsDialog::paint (juce::Graphics& g)
     g.setColour (t.border);
     g.fillRect (panel.getX(), panel.getY() + 54, panel.getWidth(), 1);
     g.fillRect (panel.getX(), panel.getBottom() - 60, panel.getWidth(), 1);
-    for (int y : dividers)
-        g.fillRect (panel.getX() + 20, y, panel.getWidth() - 40, 1);
+    for (auto d : dividers)
+        g.fillRect (d);
+    g.fillRect (panel.getCentreX(), panel.getY() + 68, 1, panel.getHeight() - 54 - 60 - 28);   // the column split
 
     const auto gl = ctx.globalsCopy();
     for (const auto& r : rows)
@@ -393,6 +486,8 @@ void SettingsDialog::paint (juce::Graphics& g)
         float a = 1.0f;
         if (r.text == "MIDI CH" || r.text == "CC") a = gl.patternCC ? 1.0f : 0.4f;
         if (r.text == "Curve") a = gl.ccSmoothing ? 1.0f : 0.4f;
+        if (r.text == "MIDI thru") a = gl.noteTrigger == NoteTrigger::global ? 0.4f : 1.0f;
+        if (r.text == "Base note" || r.text == "NOTE" || r.text == "OCT") a = gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f;
         if (r.section) draw::label (g, r.text, r.area, t.muted.withMultipliedAlpha (a));
         else
         {
@@ -403,7 +498,7 @@ void SettingsDialog::paint (juce::Graphics& g)
     }
 
     // segment frames
-    for (auto* group : { &themeBtns, &midCBtns, &quantBtns, &curveBtns })
+    for (auto* group : { &themeBtns, &midCBtns, &quantBtns, &curveBtns, &trigBtns })
     {
         auto first = (*group)[0]->getBounds(), last = (*group)[group->size() - 1]->getBounds();
         auto frame = first.getUnion (last).expanded (3);
@@ -416,10 +511,12 @@ void SettingsDialog::paint (juce::Graphics& g)
     g.setFont (Fonts::mono (10.0f));
     for (const auto& r : rows)
         if (r.text == "USER SCALE")
-            g.drawText (juce::String (count) + " OF 12 NOTES", r.area.withX (panel.getX() + 20).withWidth (panel.getWidth() - 40),
+            g.drawText (juce::String (count) + " OF 12 NOTES", r.area.withX (panel.getX() + 24).withWidth (panel.getWidth() / 2 - 44),
                         juce::Justification::centredRight);
 
     pcChannel->setAlpha (gl.patternCC ? 1.0f : 0.4f);
     pcNumber->setAlpha (gl.patternCC ? 1.0f : 0.4f);
+    basePitch->setAlpha (gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f);
+    baseOctave->setAlpha (gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f);
 }
 } // namespace vima

@@ -552,7 +552,17 @@ void Header::paintOverChildren (juce::Graphics& g)
         }
         else
         {
-            g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
+            // note trigger (SPEC.md 3.1): while keys transpose the selected track, the transposition
+            // replaces the word BPM, in SHIFT steps ("+2")
+            const int tr = ctx.globalsCopy().noteTrigger != NoteTrigger::off ? ctx.proc.engine.shownTranspose[(size_t) ctx.ui.track].load() : 0;
+            if (tr != 0)
+            {
+                g.drawText (juce::String (ctx.proc.hostBpm.load(), 2), hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
+                g.setColour (ctx.modeAccent());
+                g.drawText ((tr > 0 ? "+" : "") + juce::String (tr), hostArea.withTrimmedRight (10), juce::Justification::centredRight);
+            }
+            else
+                g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
         }
     }
 

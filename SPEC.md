@@ -21,7 +21,7 @@ Last updated: 2026-10-24 (checked against the code at that date).
 - Format: **VST3** only. Built for **Windows (x64)**, **macOS (universal: Apple Silicon and Intel)** and **Linux (x64)**. Windows is the primary target (the developer has no Mac). On macOS there is also an **Audio Unit MIDI effect** (type aumi, code VimM) for Logic Pro, which loads Audio Units only: it goes in a track's MIDI FX slot and its MIDI reaches that track's instrument (the 8 tracks by MIDI channel). Same code and UI; the AU has no audio buses, the VST3 keeps its silent stereo output.
 - The host sees Vima as an **instrument (synth) plugin**, not a MIDI effect.
 - It produces no audio. It outputs MIDI only (notes and CC). A silent stereo output bus exists only so hosts accept it as an instrument.
-- Incoming MIDI is used only for pattern change by CC (6, 7.3); it is not passed through.
+- Incoming MIDI is used for pattern change by CC (6, 7.3) and the note trigger (3.1), and is passed through only when MIDI THRU is on (3.1, off by default).
 - In the DAW, other tracks receive Vima's MIDI output (for example in Ableton Live: "MIDI From" = the Vima track, the lower chooser = Vima, monitor "In").
 
 ### 2.1 Ableton Live and MIDI channels (tested and confirmed)
@@ -41,6 +41,20 @@ Last updated: 2026-10-24 (checked against the code at that date).
   - The hold is not saved: it is released when the project is reopened.
 - The icon shows whether Vima is playing (play icon, mode accent), stopped (grey stop icon) or held (amber stop icon). The BPM shown is the host's.
 - On stop, on a jump and on an instant pattern switch, every sounding note gets its note-off.
+
+### 3.1 MIDI input: MIDI THRU and note trigger
+
+- **MIDI THRU** (Settings, global, ON / OFF, **off by default**): incoming MIDI (notes, CC, pitch bend, everything) passes to the output, mixed with what Vima generates. Pattern-change CC messages (7.3) are always consumed. While the note trigger is **GLOBAL** every incoming note is the trigger's: THRU shows OFF and is greyed out (its own value is kept and comes back when the trigger changes), and nothing passes. With the trigger **PER CHANNEL**, only messages on channels no track uses as its MIDI CH pass (when THRU is on).
+- **Note trigger** (Settings, global): **OFF** (default) / **GLOBAL** / **PER CHANNEL**. Hold only (no toggle):
+  - Pressing a key while Vima is stopped starts it, whatever the DAW is doing (on the DAW's clock when the DAW rolls and Vima is held, else on its own clock at the DAW's tempo). Releasing all keys stops it. Start and stop follow the **Quantize** setting (7.3; OFF = at once); a start begins at step 1 of each track.
+  - If Vima is already playing (the DAW or the play button), keys only transpose it: they never start or stop it, and releasing all keys leaves it running.
+  - Independent of the play-stop button: the button's own states (held, running on its own) are unchanged.
+  - **Transposition**: the **base note** plays the pattern untransposed; each semitone above or below it = +1 / -1, exactly like one SHIFT step on PITCH (9): tracks with USE SCALE on move one scale step, the others one semitone. So on scale tracks an octave on the keyboard is 12 scale steps. CC is never transposed. A new transposition applies from the next step.
+  - Several keys held: the last note wins; releasing it falls back to the most recent key still held. Releasing all keys returns to no transposition.
+  - **GLOBAL**: every note acts on all 8 tracks. **PER CHANNEL**: a note acts only on the tracks whose MIDI CH is the note's channel (tracks sharing a channel act together; each starts and stops on its own, from its own step 1); notes on channels no track uses are ignored by the trigger. Ableton Live passes everything to plugins on channel 1 (manual note).
+  - Notes used by the trigger are never passed through.
+  - While keys transpose the selected track, the BPM box shows the transposition in place of the word BPM ("120.00 +2", in the mode accent); not in edit mode (PLAYING nn).
+- **Base note** (Settings): two knobs like a step's: **NOTE** (all 12 notes, not following any scale: tracks differ in using the scale) and **OCT** (numbered with the Middle C setting). Default: C in the middle C octave (MIDI 60, the init step note). Dimmed while the note trigger is OFF.
 
 ## 4. Tracks
 
@@ -130,7 +144,8 @@ There is no step skip, no chords per step and no drum mode.
 - **Middle C** (display only): C3, C4 or C5 (11). A **user-wide** preference like the theme, not part of projects or presets.
 - **CC smoothing** on/off and its curve (10).
 - **Pattern change from incoming CC**: on/off, MIDI channel and CC number (7.3).
-- **Pattern change quantize**: OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
+- **Quantize**: OFF, 1 BEAT, 1 BAR or PATTERN END: pattern changes (7.3) and note trigger starts and stops (3.1).
+- **MIDI THRU**, **note trigger** and **base note** (3.1).
 
 ## 7. Patterns
 
@@ -340,15 +355,17 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 
 ## 11. Settings dialog
 
-Opened with the SETTINGS button. A 600 x 646 dialog over the main window, same style. Sections, top to bottom:
+Opened with the SETTINGS button. A 1100 x 536 dialog over the main window, same style, in **two columns** split by a thin line. Left column, top to bottom: APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT. Right column: MIDI INPUT, PATTERN CHANGE, QUANTIZE.
 
 - **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\Vima\Settings.xml`, macOS `~/Library/Application Support/Vima/Settings.xml`; no permission prompts, unlike Documents) and used by every Vima instance; switching it in one instance switches all open Vima windows. Projects and presets do not carry it.
 - **MIDDLE C**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. Like the theme, middle C is a **user-wide preference**: stored once in Settings.xml and used by every Vima instance (changing it in one changes all open windows); projects and presets do not carry it. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF, and Curve LINEAR / EXP / LOG (cyan buttons, each with a small drawing of its curve before the name; dimmed while smoothing is off) (10).
-- **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off). Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
+- **MIDI INPUT**: MIDI thru ON / OFF; Note trigger OFF / GLOBAL / PER CHANNEL; Base note NOTE and OCT knobs (green, like a step's) (3.1). All neutral apart from the base note knobs.
+- **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off) (7.3).
+- **QUANTIZE**: "Start, stop, change": OFF, 1 BEAT, 1 BAR or PATTERN END: pattern changes (7.3) and note trigger starts and stops (3.1).
 - No close (×) button: every setting applies the moment it is clicked, so **DONE** or a click outside the dialog closes it.
-- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing and its curve, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
+- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing and its curve, MIDI thru, note trigger, base note, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
 
 ## 12. UI
 
@@ -540,7 +557,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 - **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens one flat menu with three sections, each under its own header: **PRESET**, **PATTERN**, **MACROS**.
 - **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first: "Clear all patterns, chain and settings? Macro mappings are kept."; resets what a preset holds to the init values (4.1), keeps the mappings and everything a preset does not hold), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
-  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing and its curve, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
+  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing and its curve, MIDI thru, note trigger, base note, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
   - Dialogs start in **Documents/Vima/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
 - **PATTERN** (header "PATTERN 05", the slot only, no file name) acts on the **selected pattern**: the one in the PATTERN box, or the selected slot in the patterns view. NEW (asks first: "Reset Pattern 05? You can undo this"; an empty pattern: all steps off, settings and values at init, 4.1), LOAD... (asks before replacing a pattern that has steps on), SAVE AS... There is no plain SAVE: a file would have to be linked to each of the 64 slots. NEW and LOAD are one undo step each.
   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals: a loaded pattern plays in the current preset's scale.
@@ -638,18 +655,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **MIDI THRU** (Settings, global, ON / OFF): incoming MIDI (notes, CC, pitch bend, everything) passes to the output, mixed with what Vima generates. Pattern-change CC messages are always consumed. While the note trigger is GLOBAL, THRU shows OFF and is greyed out (its own setting is kept and comes back when the trigger changes). With the trigger PER CHANNEL, only channels not used as MIDI CH by any of the 8 tracks pass through (when THRU is on). Default: decide at build (proposal: ON for the Audio Unit, so Logic's keyboard still reaches the instrument; OFF for the VST3).
-2. **Note trigger** (Settings, global): OFF / GLOBAL / PER CHANNEL. Hold only (no toggle).
-   - Holding a key starts Vima if it was stopped (regardless of the DAW state); releasing all keys stops it. Start and stop follow the Quantize setting; a start begins at step 1.
-   - If Vima is already playing (DAW or play button), keys only transpose it: they never start or stop it, and releasing all keys leaves it running.
-   - Independent of the play-stop button mechanism.
-   - Transposition: the **base note** plays the pattern untransposed; each semitone above or below = +1 / -1, exactly like one SHIFT step on PITCH (tracks with USE SCALE on move one scale step, others one semitone). So on scale tracks an octave on the keyboard is 12 scale steps. CC is never transposed. A new transposition applies from the next step.
-   - Several keys held: last note wins; releasing it falls back to the most recent key still held. Releasing all keys returns to no transposition.
-   - GLOBAL: any note affects all 8 tracks. PER CHANNEL: a note affects only the tracks whose MIDI CH is the note's channel (tracks sharing a channel act together). In Ableton Live everything arrives on channel 1 (manual note).
-   - Notes used by the trigger are never passed through.
-   - The current transposition is shown in the header (for example "+2" by the pattern number).
-3. **Base note** (Settings): two knobs like a step's: NOTE (all 12 notes, not following any scale) and OCT (numbered with the Middle C setting). Default: C in the middle C octave (the init step note). Dimmed while the note trigger is OFF.
-4. **Settings dialog in two columns** (mockup approved, 1100 x 536): left APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT; right MIDI INPUT (MIDI thru, Note trigger, Base note), PATTERN CHANGE (from incoming CC), QUANTIZE (its own section, "Start, stop, change": it now also times note trigger starts and stops).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -777,3 +783,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-06: Reversed the v2 break: projects, presets and pattern files from v1.0.x load in v2 (CC PROB 100%, curve LINEAR, their own smoothing setting kept).
 - 2026-11-08: Audio Unit MIDI effect build for Logic Pro (macOS), next to the VST3; shipped in the macOS zip as Vima.component, checked with auval in CI. (The earlier claim that an AU cannot send MIDI was wrong.)
 - 2026-11-18: Play / stop is not automatable: no PLAY macro target and no automation parameter.
+- 2026-11-18: Built: MIDI THRU (off by default) and the note trigger (OFF / GLOBAL / PER CHANNEL, hold only, base note NOTE + OCT knobs, one SHIFT step per semitone) (3.1); the Settings dialog in two columns with QUANTIZE as its own section (11).

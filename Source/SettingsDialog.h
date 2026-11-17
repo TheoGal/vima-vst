@@ -34,9 +34,13 @@ private:
     Pill* patternCCBtn = nullptr;
     Knob* pcChannel = nullptr;
     Knob* pcNumber = nullptr;
+    Pill* thruBtn = nullptr;            // MIDI thru (SPEC.md 3.1)
+    juce::Array<Pill*> trigBtns;        // note trigger OFF / GLOBAL / PER CHANNEL
+    Knob* basePitch = nullptr;          // base note, note
+    Knob* baseOctave = nullptr;         // base note, octave
 
     struct Row { juce::String text; juce::Rectangle<int> area; float alpha = 1.0f; bool section = false; };
     juce::Array<Row> rows;
-    juce::Array<int> dividers;
+    juce::Array<juce::Rectangle<int>> dividers;   // one line per column
 };
 } // namespace vima

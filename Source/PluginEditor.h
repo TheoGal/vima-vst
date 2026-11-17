@@ -107,6 +107,7 @@ private:
     int lastInsertKey = -1;         // the chain list's insertion row (SPEC.md 7.2)          // last-beat blink before a switch (SPEC.md 7.5)
     int lastPlayingPattern = -1;
     double lastBpm = 0.0;
+    int lastTransposed = 0;
     float lastProgress = -1.0f;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (VimaEditor)

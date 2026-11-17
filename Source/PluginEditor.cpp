@@ -439,9 +439,11 @@ void VimaEditor::timerCallback()
     const int playingPattern = ctx.currentPattern();
     // the last-beat blink before a switch (SPEC.md 7.5), and the PLAYING readout in edit mode
     const bool warn = proc.engine.beatsToSwitch.load() > 0.0;
+    const int transposed = proc.engine.shownTranspose[(size_t) ctx.ui.track].load();   // note trigger
     if (queued || warn || warn != lastWarn || queued != lastQueued || playing != lastPlaying
-        || playingPattern != lastPlayingPattern || ! juce::exactlyEqual (bpm, lastBpm))
+        || playingPattern != lastPlayingPattern || ! juce::exactlyEqual (bpm, lastBpm) || transposed != lastTransposed)
         header.repaint();
+    lastTransposed = transposed;
     lastWarn = warn;
     lastPlayingPattern = playingPattern;
     lastQueued = queued;

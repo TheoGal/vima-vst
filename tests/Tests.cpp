@@ -1316,6 +1316,125 @@ void testCcOnOff()
     check (Step().ccOn, "init: CC steps are on");
 }
 
+void testNoteTrigger()
+{
+    section ("Note trigger and MIDI thru");
+    auto noteIn = [] (int ch, int note, bool on)
+    {
+        juce::MidiBuffer b;
+        b.addEvent (on ? juce::MidiMessage::noteOn (ch, note, (juce::uint8) 100) : juce::MidiMessage::noteOff (ch, note), 0);
+        return b;
+    };
+    auto setup = [] (Runner& r, NoteTrigger mode)
+    {
+        fillOn (r.track (0));
+        r.track (0).length = 4;
+        r.track (0).scaleOn = false;
+        r.project->routing[0].midiChannel = 1;
+        r.project->routing[0].noteOut = true;
+        r.project->globals.noteTrigger = mode;
+        r.project->globals.quantize = Quantize::off;
+        r.host.playing = false;   // Vima stopped, the DAW stopped
+        r.host.dawPlaying = false;
+    };
+    {
+        Runner r;
+        setup (r, NoteTrigger::global);
+        r.run (1.0);
+        check (r.noteOns().empty(), "note trigger: nothing plays before a key");
+        r.run (1.0, noteIn (1, 60, true));
+        const auto held = r.noteOns();
+        check (held.size() == 4 && held[0].msg.getNoteNumber() == 60, "holding the base note starts Vima (DAW stopped), untransposed");
+        r.run (1.0, noteIn (1, 60, false));
+        r.run (1.0);
+        check (r.noteOns().size() == 4, "releasing all keys stops it (quantize off: at once)");
+        check (r.engine.isPlaying.load() == false, "... and Vima reports stopped");
+    }
+    {
+        Runner r;
+        setup (r, NoteTrigger::global);
+        r.run (1.0, noteIn (1, 63, true));   // +3 semitones, a chromatic track
+        check (! r.noteOns().empty() && r.noteOns()[0].msg.getNoteNumber() == 63, "chromatic track: +3 keys = +3 semitones");
+        Runner rs;
+        setup (rs, NoteTrigger::global);
+        rs.track (0).scaleOn = true;
+        rs.project->globals.scale = 0;   // C major
+        rs.project->globals.root = 0;
+        rs.run (1.0, noteIn (1, 62, true));   // +2 keys: two scale steps, C -> E
+        check (! rs.noteOns().empty() && rs.noteOns()[0].msg.getNoteNumber() == 64, "scale track: +2 keys = two scale steps (C to E in C major)");
+        rs.run (0.5, noteIn (1, 59, true));   // B below the base: -1 step, last note wins
+        check (rs.noteOns().back().msg.getNoteNumber() == 59, "last note wins: -1 key = one scale step down (B)");
+        rs.run (0.5, noteIn (1, 59, false));   // back to the key still held (D): E again
+        check (rs.noteOns().back().msg.getNoteNumber() == 64, "releasing the newest key falls back to the one still held");
+    }
+    {
+        // Vima already playing: keys only transpose, never start or stop
+        Runner r;
+        setup (r, NoteTrigger::global);
+        r.host.playing = true;
+        r.host.dawPlaying = true;
+        r.run (1.0, noteIn (1, 64, true));
+        check (r.noteOns().size() > 1 && r.noteOns()[1].msg.getNoteNumber() == 64, "while playing, a key transposes (from the next step)");
+        r.run (1.0, noteIn (1, 64, false));
+        const auto all = r.noteOns();
+        check (all.size() == 8 && all.back().msg.getNoteNumber() == 60, "releasing it: back to the base, and Vima keeps playing");
+    }
+    {
+        // Vima held while the DAW rolls: the trigger starts on the DAW clock, on the Quantize setting
+        Runner r;
+        setup (r, NoteTrigger::global);
+        r.project->globals.quantize = Quantize::bar;
+        r.host.dawPlaying = true;
+        r.host.ppq = 1.0;
+        r.run (4.0, noteIn (1, 60, true));
+        const auto ons = r.noteOns();
+        check (! ons.empty() && near (ons[0].ppq, 4.0, 0.01), "quantize 1 BAR: a key pressed in beat 2 starts on the next bar, from step 1");
+    }
+    {
+        // PER CHANNEL: a key only starts the tracks on its channel
+        Runner r;
+        setup (r, NoteTrigger::perChannel);
+        fillOn (r.track (1));
+        r.track (1).length = 4;
+        r.track (1).scaleOn = false;
+        r.project->routing[1].midiChannel = 2;
+        r.project->routing[1].noteOut = true;
+        r.run (1.0, noteIn (2, 62, true));
+        check (r.noteOns (1).empty() && r.noteOns (2).size() == 4 && r.noteOns (2)[0].msg.getNoteNumber() == 62,
+               "PER CHANNEL: a key on channel 2 starts and transposes only the channel 2 track");
+    }
+    {
+        // MIDI THRU
+        juce::MidiBuffer in;
+        in.addEvent (juce::MidiMessage::controllerEvent (5, 1, 77), 0);
+        in.addEvent (juce::MidiMessage::controllerEvent (16, 20, 3), 0);   // the pattern-change CC (default ch 16, CC 20)
+        in.addEvent (juce::MidiMessage::noteOn (9, 40, (juce::uint8) 90), 0);
+        in.addEvent (juce::MidiMessage::noteOn (1, 41, (juce::uint8) 90), 0);
+        auto passed = [&] (bool thru, NoteTrigger mode)
+        {
+            Runner r;
+            r.project->globals.midiThru = thru;
+            r.project->globals.noteTrigger = mode;
+            r.project->globals.patternCC = true;
+            for (auto& rt : r.project->routing) rt.midiChannel = 1;
+            r.host.playing = false;
+            r.run (0.25, in);
+            juce::String sig;
+            for (auto& e : r.events)
+                if (e.msg.isController()) sig << "cc" << e.msg.getChannel() << " ";
+                else if (e.msg.isNoteOn()) sig << "n" << e.msg.getChannel() << " ";
+            return sig.trim();
+        };
+        check (passed (false, NoteTrigger::off).isEmpty(), "MIDI THRU off (default): nothing passes");
+        check (passed (true, NoteTrigger::off) == "cc5 n9 n1", "MIDI THRU on: everything passes except the pattern-change CC (" + passed (true, NoteTrigger::off) + ")");
+        check (passed (true, NoteTrigger::global).isEmpty(), "note trigger GLOBAL: nothing passes, whatever THRU says");
+        check (passed (true, NoteTrigger::perChannel) == "cc5 n9", "note trigger PER CHANNEL: only channels no track uses pass (" + passed (true, NoteTrigger::perChannel) + ")");
+        check (! Globals().midiThru && Globals().noteTrigger == NoteTrigger::off && Globals().baseNote() == 60,
+               "init: MIDI THRU off, note trigger off, base note C (middle C octave)");
+    }
+}
+
+
 void testCurves()
 {
     section ("Curves, rotate, invert");
@@ -1459,6 +1578,7 @@ int main (int argc, char** argv)
     testInitAndGate();
     testCcOnOff();
     testCurves();
+    testNoteTrigger();
 
     section ("Editor interactions (simulated mouse)");
     {

@@ -6,7 +6,10 @@ namespace vima
 Engine::Engine()
 {
     for (auto& s : playStep) s = -1;
+    for (auto& s : shownTranspose) s = 0;
     lastCCSent.fill (-1);
+    trackFrom.fill (-1.0e18);
+    trackTo.fill (1.0e18);
     random.setSeedRandomly();
     ccRollSeed = (std::uint32_t) random.nextInt();
 }
@@ -31,6 +34,12 @@ void Engine::reset()
     for (auto& s : playStep) s = -1;
     isPlaying = false;
     beatsToSwitch = -1.0;
+    numHeld.fill (0);
+    transpose.fill (0);
+    for (auto& s : shownTranspose) s = 0;
+    trigRunning = trigUsesDaw = false;
+    trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
+    trackFrom.fill (-1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
 }
 
 int Engine::stepIndexFor (long long n, int length, Direction dir)
@@ -157,14 +166,20 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
         const double stepLen = divisionInfo (tp.division).stepPpq;
         const int length = juce::jlimit (minLength, maxSteps, (int) tp.length);
 
-        const auto nFirst = (long long) std::floor ((a - 0.5 * stepLen) / stepLen) - 1;
-        const auto nLast = (long long) std::floor (b / stepLen) + 1;
+        // the track's play window and its step 1 time (both open while Vima simply runs; set by the note trigger)
+        const double o = trackOrigin[(size_t) t];
+        const double la = juce::jmax (a, trackFrom[(size_t) t]) - o, lb = juce::jmin (b, trackTo[(size_t) t]) - o;
+        if (lb <= la)
+            continue;
+        const auto nFirst = (long long) std::floor ((la - 0.5 * stepLen) / stepLen) - 1;
+        const auto nLast = (long long) std::floor (lb / stepLen) + 1;
 
         for (auto n = nFirst; n <= nLast; ++n)
         {
-            const double tn = (double) n * stepLen + swingOffset (n, stepLen, tp.swing);
-            if (tn < a - 1.0e-9 || tn >= b - 1.0e-9)
+            const double tl = (double) n * stepLen + swingOffset (n, stepLen, tp.swing);
+            if (tl < la - 1.0e-9 || tl >= lb - 1.0e-9)
                 continue;
+            const double tn = tl + o;
 
             const int idx = stepIndexFor (n, length, tp.direction);
             playStep[(size_t) t] = idx;
@@ -182,6 +197,7 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
                 int pitch = midiNote (step.octave, step.pitchClass);
                 if (tp.scaleOn)
                     pitch = quantizeToScale (mask, g.root, pitch);
+                pitch = transposeNote (pitch, transpose[(size_t) t], tp.scaleOn, mask, g.root);   // note trigger
                 if (pitch >= 0 && pitch <= 127)
                 {
                     releaseSameNote (channel, pitch, s, out);
@@ -222,13 +238,17 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
         const int searchRange = 2 * length + 2;
         const int channel = juce::jlimit (1, 16, (int) route.midiChannel);
 
+        const double o = trackOrigin[(size_t) t];
+        const double ta = juce::jmax (a, trackFrom[(size_t) t]), tb = juce::jmin (b, trackTo[(size_t) t]);
+        if (tb <= ta)
+            continue;
         auto stepAt = [&] (long long n) -> const Step& { return tp.steps[(size_t) stepIndexFor (n, length, tp.direction)]; };
-        auto timeOf = [&] (long long n) { return (double) n * stepLen + swingOffset (n, stepLen, tp.swing); };
+        auto timeOf = [&] (long long n) { return o + (double) n * stepLen + swingOffset (n, stepLen, tp.swing); };
         auto ccPlays = [&] (long long n) { const auto& st = stepAt (n); return st.ccOn && ccRollPasses (st, t, n); };
 
         auto valueAt = [&] (double x) -> int
         {
-            const auto base = (long long) std::floor (x / stepLen);
+            const auto base = (long long) std::floor ((x - o) / stepLen);
             long long n0 = 0;
             bool found0 = false;
             for (long long n = base + 1; n >= base - searchRange; --n)
@@ -253,8 +273,8 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
             return juce::jlimit (0, 127, (int) std::lround (v0 + (v1 - v0) * f));
         };
 
-        const int s0 = juce::jlimit (0, numSamples - 1, (int) std::ceil ((a - blockStartPpq) / ppqPerSample - 1.0e-6));
-        const int s1 = juce::jlimit (0, numSamples, (int) std::ceil ((b - blockStartPpq) / ppqPerSample - 1.0e-6));
+        const int s0 = juce::jlimit (0, numSamples - 1, (int) std::ceil ((ta - blockStartPpq) / ppqPerSample - 1.0e-6));
+        const int s1 = juce::jlimit (0, numSamples, (int) std::ceil ((tb - blockStartPpq) / ppqPerSample - 1.0e-6));
         for (int s = s0; s < s1; s += resolution)
         {
             const int v = valueAt (blockStartPpq + s * ppqPerSample);
@@ -268,12 +288,244 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
 }
 
 // ---------------------------------------------------------------------------------------
-void Engine::process (Project& project, const Host& host, int numSamples, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out)
+// Note trigger and MIDI thru (SPEC.md 3.1)
+int Engine::scopeOf (const Project& project, int track) const
+{
+    switch (project.globals.noteTrigger)
+    {
+        case NoteTrigger::off:        return -1;
+        case NoteTrigger::global:     return 0;
+        case NoteTrigger::perChannel: return juce::jlimit (1, 16, (int) project.routing[(size_t) track].midiChannel);
+    }
+    return -1;
+}
+
+static bool channelUsedByTracks (const Project& project, int channel)
+{
+    for (const auto& r : project.routing)
+        if ((int) r.midiChannel == channel)
+            return true;
+    return false;
+}
+
+// One SHIFT step per semitone from the base note: a scale step on tracks using the scale, else a semitone
+int Engine::transposeNote (int pitch, int steps, bool inScaleTrack, std::uint16_t mask, int root)
+{
+    if (steps == 0)
+        return pitch;
+    if (! inScaleTrack || (mask & 0x0FFF) == 0)
+        return pitch + steps;
+    const int dir = steps > 0 ? 1 : -1;
+    for (int k = 0; k < std::abs (steps); ++k)
+    {
+        int guard = 0;
+        do { pitch += dir; } while (! inScale (mask, root, ((pitch % 12) + 12) % 12) && ++guard < 12);
+    }
+    return pitch;
+}
+
+void Engine::passThru (const Project& project, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out) const
+{
+    const auto& g = project.globals;
+    if (! g.midiThru || g.noteTrigger == NoteTrigger::global)
+        return;   // a GLOBAL note trigger uses every note: nothing passes
+    for (const auto m : midiIn)
+    {
+        const auto& msg = m.getMessage();
+        if (g.patternCC && msg.isController() && msg.getChannel() == g.patternCCChannel && msg.getControllerNumber() == g.patternCCNumber)
+            continue;   // pattern changes are always consumed
+        const int ch = msg.getChannel();
+        if (g.noteTrigger == NoteTrigger::perChannel && ch > 0 && channelUsedByTracks (project, ch))
+            continue;   // PER CHANNEL: the tracks' channels belong to the trigger
+        out.addEvent (msg, m.samplePosition);
+    }
+}
+
+void Engine::readTriggerNotes (const Project& project, const juce::MidiBuffer& midiIn)
+{
+    const auto& g = project.globals;
+    pressSample.fill (-1);
+    if (g.noteTrigger != lastTriggerMode)
+    {
+        numHeld.fill (0);   // a mode change forgets the held keys
+        lastTriggerMode = g.noteTrigger;
+    }
+    if (g.noteTrigger != NoteTrigger::off)
+    {
+        for (const auto m : midiIn)
+        {
+            const auto& msg = m.getMessage();
+            if (! msg.isNoteOnOrOff())
+                continue;
+            int s = 0;
+            if (g.noteTrigger == NoteTrigger::perChannel)
+            {
+                s = msg.getChannel();
+                if (s < 1 || s > 16 || ! channelUsedByTracks (project, s))
+                    continue;
+            }
+            auto& h = held[(size_t) s];
+            auto& n = numHeld[(size_t) s];
+            const int note = msg.getNoteNumber();
+            for (int i = 0; i < n; ++i)
+                if (h[(size_t) i] == note)
+                {
+                    for (int j = i; j < n - 1; ++j) h[(size_t) j] = h[(size_t) j + 1];
+                    --n;
+                    break;
+                }
+            if (msg.isNoteOn())
+            {
+                if (n == maxHeld)
+                {
+                    for (int j = 0; j < n - 1; ++j) h[(size_t) j] = h[(size_t) j + 1];
+                    --n;
+                }
+                h[(size_t) n++] = note;   // the newest key wins
+                if (pressSample[(size_t) s] < 0)
+                    pressSample[(size_t) s] = m.samplePosition;
+            }
+        }
+    }
+    const int base = g.baseNote();
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const int s = scopeOf (project, t);
+        transpose[(size_t) t] = (s >= 0 && numHeld[(size_t) s] > 0) ? held[(size_t) s][(size_t) numHeld[(size_t) s] - 1] - base : 0;
+        shownTranspose[(size_t) t] = transpose[(size_t) t];
+    }
+}
+
+// Before rendering a block of a trigger run: start and stop tracks as their keys go down and up
+void Engine::updateTriggerTracks (const Project& project, const Host& host, double a, double ppqPerSample)
+{
+    const auto& g = project.globals;
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto i = (size_t) t;
+        const int s = scopeOf (project, t);
+        const bool keys = s >= 0 && numHeld[(size_t) s] > 0;
+        if (! trackOn[i] && ! startPending[i] && keys)
+        {
+            // starts on the Quantize setting, from step 1
+            double at = a;
+            if (g.quantize == Quantize::off)
+                at = a + juce::jmax (0, pressSample[(size_t) s]) * ppqPerSample;
+            else
+                at = nextQuantizePoint (project, host, a);
+            startPending[i] = true;
+            trackFrom[i] = at;
+            trackTo[i] = 1.0e18;
+            trackOrigin[i] = at;
+        }
+        else if (startPending[i] && ! keys)
+        {
+            startPending[i] = false;
+            trackFrom[i] = 1.0e18;
+        }
+        if (trackOn[i] && ! stopPending[i] && ! keys)
+        {
+            // stops on the Quantize setting (pattern end: the end of the track's pattern run)
+            double at = a;
+            if (g.quantize == Quantize::patternEnd)
+            {
+                const double len = juce::jmax (1.0e-6, project.patterns[(size_t) project.currentPattern].lengthPpq());
+                at = trackOrigin[i] + std::ceil ((a - trackOrigin[i] - 1.0e-9) / len) * len;
+            }
+            else if (g.quantize != Quantize::off)
+                at = nextQuantizePoint (project, host, a);
+            stopPending[i] = true;
+            trackTo[i] = at;
+        }
+        else if (stopPending[i] && keys)
+        {
+            stopPending[i] = false;
+            trackTo[i] = 1.0e18;
+        }
+    }
+}
+
+void Engine::finishTriggerBlock (double ppqEnd)
+{
+    bool anyTrack = false;
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto i = (size_t) t;
+        if (startPending[i] && trackFrom[i] < ppqEnd)
+        {
+            startPending[i] = false;
+            trackOn[i] = true;
+        }
+        if (stopPending[i] && trackTo[i] < ppqEnd)
+        {
+            stopPending[i] = false;
+            trackOn[i] = false;
+            trackFrom[i] = trackTo[i] = 1.0e18;
+            playStep[i] = -1;
+        }
+        anyTrack = anyTrack || trackOn[i] || startPending[i];
+    }
+    bool anyKeys = false;
+    for (int s = 0; s < numScopes; ++s) anyKeys = anyKeys || numHeld[(size_t) s] > 0;
+    if (! anyTrack && ! anyKeys)
+        trigRunning = false;   // the next block stops (all notes released)
+    if (! trigUsesDaw)
+        trigClock = ppqEnd;
+}
+
+// ---------------------------------------------------------------------------------------
+void Engine::process (Project& project, const Host& hostIn, int numSamples, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out)
 {
     if (numSamples <= 0)
         return;
 
     auto& g = project.globals;
+    passThru (project, midiIn, out);
+    readTriggerNotes (project, midiIn);
+
+    // Note trigger (SPEC.md 3.1): while Vima is stopped, a key press starts a trigger run, on the
+    // DAW's clock if the DAW rolls (Vima held), else on its own from 0. While Vima runs anyway, keys
+    // only transpose.
+    Host host = hostIn;
+    bool trigMode = false;
+    if (host.playing || g.noteTrigger == NoteTrigger::off)
+    {
+        if (trigRunning || trackFrom[0] != -1.0e18)
+        {
+            trigRunning = false;
+            trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
+            trackFrom.fill (-1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
+        }
+    }
+    else
+    {
+        bool press = false;
+        for (int t = 0; t < numTracks; ++t)
+        {
+            const int s = scopeOf (project, t);
+            press = press || (s >= 0 && pressSample[(size_t) s] >= 0);
+        }
+        if (! trigRunning && press)
+        {
+            trigRunning = true;
+            trigUsesDaw = hostIn.dawPlaying;
+            trigClock = 0.0;
+            trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
+            trackFrom.fill (1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
+        }
+        if (trigRunning)
+        {
+            if (trigUsesDaw && ! hostIn.dawPlaying)
+            {
+                trigUsesDaw = false;   // the DAW stopped: carry on with Vima's own clock
+                trigClock = lastPpqEnd >= 0.0 ? lastPpqEnd : 0.0;
+            }
+            host.playing = true;
+            if (! trigUsesDaw)
+                host.ppq = trigClock;
+            trigMode = true;
+        }
+    }
 
     if (! host.playing)
     {
@@ -300,6 +552,8 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
     const double ppqPerSample = (host.bpm / 60.0) / sampleRate;
     const double ppq = host.ppq;
     const double ppqEnd = ppq + numSamples * ppqPerSample;
+    if (trigMode)
+        updateTriggerTracks (project, host, ppq, ppqPerSample);
 
     const bool jumped = wasPlaying && lastPpqEnd >= 0.0 && std::abs (ppq - lastPpqEnd) > 0.02;
     if (jumped)
@@ -507,5 +761,7 @@ void Engine::process (Project& project, const Host& host, int numSamples, const 
 
     wasPlaying = true;
     lastPpqEnd = ppqEnd;
+    if (trigMode)
+        finishTriggerBlock (ppqEnd);
 }
 } // namespace vima

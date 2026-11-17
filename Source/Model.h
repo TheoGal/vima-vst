@@ -109,6 +109,7 @@ const ScaleInfo& scaleInfo (int index);
 
 enum class Quantize : std::uint8_t { off, beat, bar, patternEnd };
 enum class CCCurve : std::uint8_t { linear, exp, log };   // shape of the CC smoothing glide
+enum class NoteTrigger : std::uint8_t { off, global, perChannel };   // incoming notes start / stop / transpose (SPEC.md 3.1)
 
 struct ChainEntry
 {
@@ -182,6 +183,11 @@ struct Globals
 
     bool ccSmoothing = true;       // glide over the whole gap between two CC-on steps (on by default)
     CCCurve ccCurve = CCCurve::linear;   // glide shape: LINEAR, EXP (slow start), LOG (fast start)
+    bool midiThru = false;              // incoming MIDI passes to the output (SPEC.md 3.1)
+    NoteTrigger noteTrigger = NoteTrigger::off;
+    std::int8_t basePitchClass = 0;     // the base note: played = no transposition (init: the init step note)
+    std::int8_t baseOctave = 3;         // minOctave..maxOctave, 3 = the middle C octave
+    int baseNote() const { return juce::jlimit (0, 127, midiNote (baseOctave, basePitchClass)); }
 
     bool patternCC = false;
     int patternCCChannel = 16;

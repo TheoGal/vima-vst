@@ -46,9 +46,10 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
         if (auto pos = head->getPosition())
         {
             host.playing = pos->getIsPlaying();
+            host.dawPlaying = host.playing;   // stays true while Vima is held (the note trigger runs on the DAW clock then)
             if (auto b = pos->getBpm()) host.bpm = *b;
             if (auto p = pos->getPpqPosition()) host.ppq = *p;
-            else host.playing = false;   // cannot sync without a musical position
+            else host.playing = host.dawPlaying = false;   // cannot sync without a musical position
             if (auto ts = pos->getTimeSignature())
             {
                 host.timeSigNumerator = ts->numerator;
@@ -81,7 +82,7 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
             ++revision;
         engine.process (project, host, buffer.getNumSamples(), midi, outBuffer);
     }
-    midi.swapWith (outBuffer);   // incoming MIDI is consumed, not passed through
+    midi.swapWith (outBuffer);   // incoming MIDI is consumed, except what MIDI THRU passes (SPEC.md 3.1)
 }
 
 juce::AudioProcessorEditor* VimaProcessor::createEditor()

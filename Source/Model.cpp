@@ -370,7 +370,7 @@ juce::ValueTree Project::musicToValueTree() const
     // Settings that live only in the Settings dialog are not part of a preset (SPEC.md 13.3);
     // the user scale and the root stay (a preset can select USER)
     auto g = root.getChildWithName ("Globals");
-    for (auto* id : { "ccSmoothing", "ccCurve", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
+    for (auto* id : { "ccSmoothing", "ccCurve", "midiThru", "noteTrigger", "basePitchClass", "baseOctave", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
         g.removeProperty (id, nullptr);
     return root;
 }
@@ -380,6 +380,10 @@ static void keepDialogSettings (Globals& g, const Globals& old)
 {
     g.ccSmoothing = old.ccSmoothing;
     g.ccCurve = old.ccCurve;
+    g.midiThru = old.midiThru;
+    g.noteTrigger = old.noteTrigger;
+    g.basePitchClass = old.basePitchClass;
+    g.baseOctave = old.baseOctave;
     g.patternCC = old.patternCC;
     g.patternCCChannel = old.patternCCChannel;
     g.patternCCNumber = old.patternCCNumber;
@@ -471,6 +475,10 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("userScale", (int) g.userScale, nullptr);
     gt.setProperty ("ccSmoothing", g.ccSmoothing, nullptr);
     gt.setProperty ("ccCurve", (int) g.ccCurve, nullptr);
+    gt.setProperty ("midiThru", g.midiThru, nullptr);
+    gt.setProperty ("noteTrigger", (int) g.noteTrigger, nullptr);
+    gt.setProperty ("basePitchClass", (int) g.basePitchClass, nullptr);
+    gt.setProperty ("baseOctave", (int) g.baseOctave, nullptr);
     gt.setProperty ("patternCC", g.patternCC, nullptr);
     gt.setProperty ("patternCCChannel", g.patternCCChannel, nullptr);
     gt.setProperty ("patternCCNumber", g.patternCCNumber, nullptr);
@@ -535,6 +543,10 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.userScale = (std::uint16_t) (((int) gt.getProperty ("userScale", (int) g.userScale) | 1) & 0xFFF);
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.ccCurve = (CCCurve) juce::jlimit (0, 2, (int) gt.getProperty ("ccCurve", (int) g.ccCurve));
+        g.midiThru = (bool) gt.getProperty ("midiThru", g.midiThru);
+        g.noteTrigger = (NoteTrigger) juce::jlimit (0, 2, (int) gt.getProperty ("noteTrigger", (int) g.noteTrigger));
+        g.basePitchClass = (std::int8_t) juce::jlimit (0, 11, (int) gt.getProperty ("basePitchClass", (int) g.basePitchClass));
+        g.baseOctave = (std::int8_t) juce::jlimit (minOctave, maxOctave, (int) gt.getProperty ("baseOctave", (int) g.baseOctave));
         g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);
         g.patternCCChannel = juce::jlimit (1, 16, (int) gt.getProperty ("patternCCChannel", g.patternCCChannel));
         g.patternCCNumber = juce::jlimit (0, 127, (int) gt.getProperty ("patternCCNumber", g.patternCCNumber));
