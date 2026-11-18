@@ -44,17 +44,18 @@ Last updated: 2026-10-24 (checked against the code at that date).
 
 ### 3.1 MIDI input: MIDI THRU and note trigger
 
-- **MIDI THRU** (Settings, global, ON / OFF, **off by default**): incoming MIDI (notes, CC, pitch bend, everything) passes to the output, mixed with what Vima generates. Pattern-change CC messages (7.3) are always consumed. While the note trigger is **GLOBAL** every incoming note is the trigger's: THRU shows OFF and is greyed out (its own value is kept and comes back when the trigger changes), and nothing passes. With the trigger **PER CHANNEL**, only messages on channels no track uses as its MIDI CH pass (when THRU is on).
-- **Note trigger** (Settings, global): **OFF** (default) / **GLOBAL** / **PER CHANNEL**. Hold only (no toggle):
-  - Pressing a key while Vima is stopped starts it, whatever the DAW is doing (on the DAW's clock when the DAW rolls and Vima is held, else on its own clock at the DAW's tempo). Releasing all keys stops it. Start and stop follow the **Quantize** setting (7.3; OFF = at once); a start begins at step 1 of each track.
-  - If Vima is already playing (the DAW or the play button), keys only transpose it: they never start or stop it, and releasing all keys leaves it running.
+- **MIDI THRU** (Settings, global, ON / OFF, **off by default**): incoming MIDI (notes, CC, pitch bend, everything) passes to the output, mixed with what Vima generates. Pattern-change CC messages (7.3) are always consumed. While the note trigger is **ON** every incoming note is the trigger's: THRU shows OFF and is greyed out (its own value is kept and comes back when the trigger is switched off), and nothing passes.
+- **Note trigger** (Settings, global): **OFF** (default) / **ON**, with **Tracks**: 8 toggles 01-08 choosing the tracks the keys drive (default all 8). Notes on any MIDI channel count. Hold only (no toggle):
+  - Pressing a key while Vima is stopped starts the chosen tracks, whatever the DAW is doing (on the DAW's clock when the DAW rolls and Vima is held, else on Vima's own clock at the DAW's tempo). Releasing all keys stops them. All chosen tracks start and stop together, each from its step 1.
+  - **Quantize** (the trigger's own): OFF, 1/32, 1/16 (default), 1/8, 1 BEAT, 1 BAR. It times the starts and stops; a start from silence (Vima and the DAW stopped) is immediate, as there is no grid yet.
+  - If Vima is already playing (the DAW or the play button), keys only transpose the chosen tracks: they never start or stop it, and releasing all keys leaves it running.
+  - Unchosen tracks ignore the keys: when keys started Vima from stopped they stay silent; when Vima runs normally they play as usual, untransposed.
   - Independent of the play-stop button: the button's own states (held, running on its own) are unchanged.
-  - **Transposition**: the **base note** plays the pattern untransposed; each semitone above or below it = +1 / -1, exactly like one SHIFT step on PITCH (9): tracks with USE SCALE on move one scale step, the others one semitone. So on scale tracks an octave on the keyboard is 12 scale steps. CC is never transposed. A new transposition applies from the next step.
+  - **Transposition**: the **base note** plays the pattern untransposed; each semitone above or below it = +1 / -1, exactly like one SHIFT step on PITCH (9): tracks with USE SCALE on move one scale step, the others one semitone. So on scale tracks an octave on the keyboard is 12 scale steps. CC is never transposed. A new transposition is not quantized: it applies from the next step.
   - Several keys held: the last note wins; releasing it falls back to the most recent key still held. Releasing all keys returns to no transposition.
-  - **GLOBAL**: every note acts on all 8 tracks. **PER CHANNEL**: a note acts only on the tracks whose MIDI CH is the note's channel (tracks sharing a channel act together; each starts and stops on its own, from its own step 1); notes on channels no track uses are ignored by the trigger. Ableton Live passes everything to plugins on channel 1 (manual note).
-  - Notes used by the trigger are never passed through.
   - While keys transpose the selected track, the BPM box shows the transposition in place of the word BPM ("120.00 +2", in the mode accent); not in edit mode (PLAYING nn).
-- **Base note** (Settings): two knobs like a step's: **NOTE** (all 12 notes, not following any scale: tracks differ in using the scale) and **OCT** (numbered with the Middle C setting). Default: C in the middle C octave (MIDI 60, the init step note). Dimmed while the note trigger is OFF.
+- **Base note** (Settings): two knobs like a step's: **NOTE** (all 12 notes, not following any scale: tracks differ in using the scale) and **OCT** (numbered with the Middle C setting). Default: C in the middle C octave (MIDI 60, the init step note).
+- Tracks, Quantize and Base note are dimmed while the note trigger is OFF.
 
 ## 4. Tracks
 
@@ -144,8 +145,8 @@ There is no step skip, no chords per step and no drum mode.
 - **Middle C** (display only): C3, C4 or C5 (11). A **user-wide** preference like the theme, not part of projects or presets.
 - **CC smoothing** on/off and its curve (10).
 - **Pattern change from incoming CC**: on/off, MIDI channel and CC number (7.3).
-- **Quantize**: OFF, 1 BEAT, 1 BAR or PATTERN END: pattern changes (7.3) and note trigger starts and stops (3.1).
-- **MIDI THRU**, **note trigger** and **base note** (3.1).
+- **Pattern change quantize**: OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
+- **MIDI THRU**, **note trigger** (tracks, quantize) and **base note** (3.1).
 
 ## 7. Patterns
 
@@ -355,17 +356,16 @@ Buttons under RANDOMIZE and SMOOTH. All act on the steps in scope (8.2) and the 
 
 ## 11. Settings dialog
 
-Opened with the SETTINGS button. A 1100 x 536 dialog over the main window, same style, in **two columns** split by a thin line. Left column, top to bottom: APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT. Right column: MIDI INPUT, PATTERN CHANGE, QUANTIZE.
+Opened with the SETTINGS button. A 1100 x 536 dialog over the main window, same style, in **two columns** split by a thin line. Left column, top to bottom: APPEARANCE, MIDDLE C, USER SCALE, CC OUTPUT. Right column: MIDI INPUT, PATTERN CHANGE.
 
 - **APPEARANCE**: Theme, DARK / LIGHT. The theme is a **user-wide preference**: it is stored once in the app settings folder (Windows `%APPDATA%\Vima\Settings.xml`, macOS `~/Library/Application Support/Vima/Settings.xml`; no permission prompts, unlike Documents) and used by every Vima instance; switching it in one instance switches all open Vima windows. Projects and presets do not carry it.
 - **MIDDLE C**: "Middle C is" (how octaves are numbered on screen; MIDI note 60 is always middle C): **C3 (LOWEST C-2)**, **C4 (LOWEST C-1)** or **C5 (LOWEST C0)**. C3 matches Live, Bitwig, Logic, Cubase, Studio One, Pro Tools and Reason; C4 matches Reaper, Tracktion and scientific pitch notation; C5 matches FL Studio, Cakewalk and Renoise. Default C3. Like the theme, middle C is a **user-wide preference**: stored once in Settings.xml and used by every Vima instance (changing it in one changes all open windows); projects and presets do not carry it. There is no octave range setting: octaves always cover the whole MIDI range.
 - **USER SCALE**: a ROOT row (C to B; the same global root as in the SCALE popover: changing it in either place changes both) and a NOTES row of 12 toggles with a count ("7 OF 12 NOTES"). The toggles are relative to the root (the first toggle is the root, which is always included); their labels follow the root (root D shows D, D#, E, ...). Selected in the main window as "USER".
 - **CC OUTPUT**: Smooth between steps ON / OFF, and Curve LINEAR / EXP / LOG (cyan buttons, each with a small drawing of its curve before the name; dimmed while smoothing is off) (10).
-- **MIDI INPUT**: MIDI thru ON / OFF; Note trigger OFF / GLOBAL / PER CHANNEL; Base note NOTE and OCT knobs (green, like a step's) (3.1). All neutral apart from the base note knobs.
-- **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off) (7.3).
-- **QUANTIZE**: "Start, stop, change": OFF, 1 BEAT, 1 BAR or PATTERN END: pattern changes (7.3) and note trigger starts and stops (3.1).
+- **MIDI INPUT**: MIDI thru ON / OFF; Note trigger OFF / ON; Tracks 01-08 (filled when chosen); Quantize OFF, 1/32, 1/16, 1/8, 1 BEAT, 1 BAR; Base note NOTE and OCT knobs (green, like a step's) (3.1). All neutral apart from the base note knobs.
+- **PATTERN CHANGE**: From incoming CC ON / OFF, with MIDI CH and CC knobs (dimmed when off), and Quantize changes to OFF, 1 BEAT, 1 BAR or PATTERN END (7.3).
 - No close (×) button: every setting applies the moment it is clicked, so **DONE** or a click outside the dialog closes it.
-- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing and its curve, MIDI thru, note trigger, base note, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
+- Footer: on the left **RESET DEFAULTS** (resets the settings in this dialog to their init values: theme (dark) and middle C (C3), both for all instances; root, user scale, CC smoothing and its curve, MIDI thru, note trigger (tracks, quantize), base note, pattern change by CC and quantize; the selected scale is not changed) and **DONE** next to it; on the right a **MANUAL** link (a small document icon; opens the PDF manual from the plugin bundle's `Contents/Resources/Vima Manual.pdf` in the default PDF viewer, or the online MANUAL.md on GitHub when the PDF is missing, 14.8) and a **VIMA ON GITHUB** link with a small generic open-link icon (a box with an outgoing arrow, not GitHub's logo), dim, brighter on hover, which opens https://github.com/TheoGal/vima-vst in the browser.
 
 ## 12. UI
 
@@ -655,13 +655,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Note trigger by track, not by MIDI channel** (mockup approved). MIDI INPUT reads: MIDI thru, Note trigger, Tracks, Quantize, Base note.
-   - **Note trigger**: OFF / ON (PER CHANNEL is dropped: channel matching was complicated and does not work in Ableton Live, which passes everything on channel 1).
-   - **Tracks**: 8 toggles 01-08 (filled when selected), default all 8 on; dimmed while the trigger is OFF. Saved like the other dialog settings.
-   - Selected tracks follow the keys: a key while Vima is stopped starts them (from step 1), releasing all keys stops them, keys transpose them. All selected tracks start and stop together.
-   - Unselected tracks ignore the keys: when keys started Vima from stopped they stay silent; when Vima runs normally (DAW or play button) they play as usual, untransposed.
-   - **MIDI THRU**: while the trigger is ON every note is a trigger note, so THRU shows OFF, greyed out, and nothing passes (as GLOBAL today). With the trigger OFF, THRU works normally.
-2. **Note trigger quantize** (mockup approved): its own row in MIDI INPUT: **Quantize** OFF, 1/32, 1/16, 1/8, 1 BEAT, 1 BAR (no PATTERN END). Default **1/16**. Dimmed while the trigger is OFF. Times the trigger's starts and stops (3.1); starting from silence (Vima and the DAW stopped) is still immediate. The PATTERN CHANGE quantize goes back to pattern changes only: the QUANTIZE section is removed and its row returns to PATTERN CHANGE as "Quantize changes to" (OFF, 1 BEAT, 1 BAR, PATTERN END).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -790,3 +784,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-08: Audio Unit MIDI effect build for Logic Pro (macOS), next to the VST3; shipped in the macOS zip as Vima.component, checked with auval in CI. (The earlier claim that an AU cannot send MIDI was wrong.)
 - 2026-11-18: Play / stop is not automatable: no PLAY macro target and no automation parameter.
 - 2026-11-18: Built: MIDI THRU (off by default) and the note trigger (OFF / GLOBAL / PER CHANNEL, hold only, base note NOTE + OCT knobs, one SHIFT step per semitone) (3.1); the Settings dialog in two columns with QUANTIZE as its own section (11).
+- 2026-11-18: Note trigger by track: OFF / ON plus Tracks 01-08 (PER CHANNEL dropped: complicated, and Live passes everything on channel 1); its own Quantize (OFF, 1/32, 1/16 default, 1/8, 1 BEAT, 1 BAR); the pattern change quantize is back in PATTERN CHANGE (3.1, 11). Fixed: a button's dimmed look (PASTE, CLEAR, the curve buttons) was drawn at full strength.

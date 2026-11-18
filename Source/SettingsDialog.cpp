@@ -52,7 +52,7 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
             auto& g = p.globals;
             g.root = d.root; g.userScale = d.userScale; g.ccSmoothing = d.ccSmoothing; g.ccCurve = d.ccCurve;
             g.patternCC = d.patternCC; g.patternCCChannel = d.patternCCChannel; g.patternCCNumber = d.patternCCNumber; g.quantize = d.quantize;
-            g.midiThru = d.midiThru; g.noteTrigger = d.noteTrigger; g.basePitchClass = d.basePitchClass; g.baseOctave = d.baseOctave;
+            g.midiThru = d.midiThru; g.noteTrigger = d.noteTrigger; g.triggerTracks = d.triggerTracks; g.triggerQuantize = d.triggerQuantize; g.basePitchClass = d.basePitchClass; g.baseOctave = d.baseOctave;
         });
         Theme::setLight (false);       // the theme default: dark (all instances)
         userSettings::setMiddleC (3);  // middle C = C3 (all instances)
@@ -268,6 +268,36 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
         quantBtns.add (&p);
     }
 
+    // the tracks the note trigger drives (SPEC.md 3.1)
+    for (int i = 0; i < numTracks; ++i)
+    {
+        auto& p = pill();
+        p.text = [i] { return juce::String (i + 1).paddedLeft ('0', 2); };
+        p.font = [] { return Fonts::monoSemi (10.0f); };
+        p.look = [this, i, N]
+        {
+            const auto& t = Theme::current();
+            return ((ctx.globalsCopy().triggerTracks >> i) & 1) ? Pill::Look { N(), N(), t.onNeutral, 1.5f, false } : Pill::outline (t.border2, t.muted);
+        };
+        p.alpha = [this] { return ctx.globalsCopy().noteTrigger == NoteTrigger::off ? 0.4f : 1.0f; };
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.triggerTracks = (std::uint8_t) (pr.globals.triggerTracks ^ (1 << i)); }); };
+        p.setTitle ("Trigger track " + juce::String (i + 1));
+        trigTrackBtns.add (&p);
+    }
+
+    // the note trigger's own quantize (its starts and stops)
+    const char* tqNames[] = { "OFF", "1/32", "1/16", "1/8", "1 BEAT", "1 BAR" };
+    for (int i = 0; i < 6; ++i)
+    {
+        auto& p = pill();
+        p.text = [n = juce::String (tqNames[i])] { return n; };
+        p.look = [this, i, N] { return choice ((int) ctx.globalsCopy().triggerQuantize == i, N()); };
+        p.alpha = [this] { return ctx.globalsCopy().noteTrigger == NoteTrigger::off ? 0.4f : 1.0f; };
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.triggerQuantize = (TriggerQuantize) i; }); };
+        p.setTitle ("Trigger quantize " + juce::String (tqNames[i]));
+        trigQuantBtns.add (&p);
+    }
+
     // MIDI input (SPEC.md 3.1): MIDI thru, note trigger, base note
     thruBtn = &pill();
     thruBtn->radius = 4.0f;
@@ -276,27 +306,27 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     {
         const auto& t = Theme::current();
         const auto g = ctx.globalsCopy();
-        const bool on = g.midiThru && g.noteTrigger != NoteTrigger::global;
+        const bool on = g.midiThru && g.noteTrigger != NoteTrigger::on;
         return on ? Pill::Look { N(), N(), t.onNeutral, 1.5f, false } : Pill::Look { juce::Colours::transparentBlack, t.dim, t.muted, 1.5f, false };
     };
-    // a GLOBAL note trigger uses every incoming note: THRU shows OFF and is greyed out (its own value is kept)
-    thruBtn->alpha = [this] { return ctx.globalsCopy().noteTrigger == NoteTrigger::global ? 0.4f : 1.0f; };
-    thruBtn->text = [this] { const auto g = ctx.globalsCopy(); return juce::String (g.midiThru && g.noteTrigger != NoteTrigger::global ? "ON" : "OFF"); };
+    // the note trigger uses every incoming note: THRU shows OFF and is greyed out (its own value is kept)
+    thruBtn->alpha = [this] { return ctx.globalsCopy().noteTrigger == NoteTrigger::on ? 0.4f : 1.0f; };
+    thruBtn->text = [this] { const auto g = ctx.globalsCopy(); return juce::String (g.midiThru && g.noteTrigger != NoteTrigger::on ? "ON" : "OFF"); };
     thruBtn->onClick = [this]
     {
-        if (ctx.globalsCopy().noteTrigger == NoteTrigger::global) return;
+        if (ctx.globalsCopy().noteTrigger == NoteTrigger::on) return;
         ctx.edit (false, [] (Project& p) { p.globals.midiThru = ! p.globals.midiThru; });
     };
     thruBtn->setTitle ("MIDI thru");
-    const char* tNames[] = { "OFF", "GLOBAL", "PER CHANNEL" };
-    for (int i = 0; i < 3; ++i)
+    const char* tNames[] = { "OFF", "ON" };
+    for (int i = 0; i < 2; ++i)
     {
         auto& p = pill();
         const juce::String name (tNames[i]);
         p.text = [name] { return name; };
         p.font = [] { return Fonts::monoSemi (10.0f); };
-        p.look = [this, i, N] { return choice ((int) ctx.globalsCopy().noteTrigger == i, N()); };
-        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.noteTrigger = (NoteTrigger) i; }); };
+        p.look = [this, i, N] { return choice ((ctx.globalsCopy().noteTrigger != NoteTrigger::off) == (i == 1), N()); };
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.noteTrigger = i == 1 ? NoteTrigger::on : NoteTrigger::off; }); };
         p.setTitle ("Note trigger " + name.toLowerCase());
         trigBtns.add (&p);
     }
@@ -425,7 +455,20 @@ void SettingsDialog::resized()
     body = rightCol;
     section ("MIDI INPUT");
     thruBtn->setBounds (rowArea ("MIDI thru", 24).withWidth (60));
-    segment (rowArea ("Note trigger", 32), trigBtns, 92);
+    segment (rowArea ("Note trigger", 32), trigBtns, 60);
+    {
+        auto r = rowArea ("Tracks", 26);
+        for (int i = 0; i < numTracks; ++i) trigTrackBtns[i]->setBounds (r.getX() + i * 40, r.getY(), 36, 26);
+    }
+    {
+        auto r = rowArea ("Quantize", 32);
+        const int widths[] = { 46, 50, 50, 44, 66, 58 };
+        int total = 6 + 5 * 3;
+        for (int w : widths) total += w;
+        auto box = r.withWidth (total).withSizeKeepingCentre (total, 32);
+        int x = box.getX() + 3;
+        for (int i = 0; i < 6; ++i) { trigQuantBtns[i]->setBounds (x, box.getY() + 3, widths[i], 26); x += widths[i] + 3; }
+    }
     {
         auto r = rowArea ("Base note", 46);
         basePitch->setBounds (r.removeFromLeft (46));
@@ -451,11 +494,8 @@ void SettingsDialog::resized()
         r.removeFromLeft (8);
         rows.add ({ "CC", r.removeFromLeft (30), 1.0f, true });
     }
-    divider();
-
-    section ("QUANTIZE");
     {
-        auto r = rowArea ("Start, stop, change", 32);
+        auto r = rowArea ("Quantize changes to", 32);
         auto box = r.withWidth (6 + 52 + 3 + 64 + 3 + 58 + 3 + 104).withSizeKeepingCentre (6 + 52 + 3 + 64 + 3 + 58 + 3 + 104, 32);
         const int widths[] = { 52, 64, 58, 104 };
         int x = box.getX() + 3;
@@ -486,7 +526,8 @@ void SettingsDialog::paint (juce::Graphics& g)
         float a = 1.0f;
         if (r.text == "MIDI CH" || r.text == "CC") a = gl.patternCC ? 1.0f : 0.4f;
         if (r.text == "Curve") a = gl.ccSmoothing ? 1.0f : 0.4f;
-        if (r.text == "MIDI thru") a = gl.noteTrigger == NoteTrigger::global ? 0.4f : 1.0f;
+        if (r.text == "MIDI thru") a = gl.noteTrigger == NoteTrigger::on ? 0.4f : 1.0f;
+        if (r.text == "Quantize" || r.text == "Tracks") a = gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f;
         if (r.text == "Base note" || r.text == "NOTE" || r.text == "OCT") a = gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f;
         if (r.section) draw::label (g, r.text, r.area, t.muted.withMultipliedAlpha (a));
         else
@@ -498,7 +539,7 @@ void SettingsDialog::paint (juce::Graphics& g)
     }
 
     // segment frames
-    for (auto* group : { &themeBtns, &midCBtns, &quantBtns, &curveBtns, &trigBtns })
+    for (auto* group : { &themeBtns, &midCBtns, &quantBtns, &curveBtns, &trigBtns, &trigQuantBtns })
     {
         auto first = (*group)[0]->getBounds(), last = (*group)[group->size() - 1]->getBounds();
         auto frame = first.getUnion (last).expanded (3);

@@ -109,8 +109,9 @@ private:
     void finishTriggerBlock (double ppqEnd);
     int scopeOf (const Project& project, int track) const;
     static int transposeNote (int pitch, int steps, bool inScale, std::uint16_t mask, int root);
+    static double triggerQuantizePoint (const Globals& g, const Host& host, double ppq);
 
-    static constexpr int numScopes = 17;   // 0 = GLOBAL, 1-16 = MIDI channels (PER CHANNEL)
+    static constexpr int numScopes = 1;    // one scope: the tracks the keys drive
     static constexpr int maxHeld = 16;
     std::array<std::array<int, maxHeld>, numScopes> held {};   // held keys, oldest first (last note wins)
     std::array<int, numScopes> numHeld {};

@@ -291,21 +291,8 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
 // Note trigger and MIDI thru (SPEC.md 3.1)
 int Engine::scopeOf (const Project& project, int track) const
 {
-    switch (project.globals.noteTrigger)
-    {
-        case NoteTrigger::off:        return -1;
-        case NoteTrigger::global:     return 0;
-        case NoteTrigger::perChannel: return juce::jlimit (1, 16, (int) project.routing[(size_t) track].midiChannel);
-    }
-    return -1;
-}
-
-static bool channelUsedByTracks (const Project& project, int channel)
-{
-    for (const auto& r : project.routing)
-        if ((int) r.midiChannel == channel)
-            return true;
-    return false;
+    const auto& g = project.globals;
+    return g.noteTrigger == NoteTrigger::on && ((g.triggerTracks >> track) & 1) ? 0 : -1;   // one scope: the chosen tracks
 }
 
 // One SHIFT step per semitone from the base note: a scale step on tracks using the scale, else a semitone
@@ -327,16 +314,13 @@ int Engine::transposeNote (int pitch, int steps, bool inScaleTrack, std::uint16_
 void Engine::passThru (const Project& project, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out) const
 {
     const auto& g = project.globals;
-    if (! g.midiThru || g.noteTrigger == NoteTrigger::global)
-        return;   // a GLOBAL note trigger uses every note: nothing passes
+    if (! g.midiThru || g.noteTrigger == NoteTrigger::on)
+        return;   // the note trigger uses every incoming note: nothing passes
     for (const auto m : midiIn)
     {
         const auto& msg = m.getMessage();
         if (g.patternCC && msg.isController() && msg.getChannel() == g.patternCCChannel && msg.getControllerNumber() == g.patternCCNumber)
             continue;   // pattern changes are always consumed
-        const int ch = msg.getChannel();
-        if (g.noteTrigger == NoteTrigger::perChannel && ch > 0 && channelUsedByTracks (project, ch))
-            continue;   // PER CHANNEL: the tracks' channels belong to the trigger
         out.addEvent (msg, m.samplePosition);
     }
 }
@@ -357,13 +341,7 @@ void Engine::readTriggerNotes (const Project& project, const juce::MidiBuffer& m
             const auto& msg = m.getMessage();
             if (! msg.isNoteOnOrOff())
                 continue;
-            int s = 0;
-            if (g.noteTrigger == NoteTrigger::perChannel)
-            {
-                s = msg.getChannel();
-                if (s < 1 || s > 16 || ! channelUsedByTracks (project, s))
-                    continue;
-            }
+            const int s = 0;   // one scope: every note, any channel
             auto& h = held[(size_t) s];
             auto& n = numHeld[(size_t) s];
             const int note = msg.getNoteNumber();
@@ -407,12 +385,10 @@ void Engine::updateTriggerTracks (const Project& project, const Host& host, doub
         const bool keys = s >= 0 && numHeld[(size_t) s] > 0;
         if (! trackOn[i] && ! startPending[i] && keys)
         {
-            // starts on the Quantize setting, from step 1
-            double at = a;
-            if (g.quantize == Quantize::off)
+            // starts on the trigger's Quantize setting, from step 1; from silence (the run's first block) at once
+            double at = triggerQuantizePoint (g, host, a);
+            if (g.triggerQuantize == TriggerQuantize::off || (! wasPlaying && ! trigUsesDaw))
                 at = a + juce::jmax (0, pressSample[(size_t) s]) * ppqPerSample;
-            else
-                at = nextQuantizePoint (project, host, a);
             startPending[i] = true;
             trackFrom[i] = at;
             trackTo[i] = 1.0e18;
@@ -425,15 +401,8 @@ void Engine::updateTriggerTracks (const Project& project, const Host& host, doub
         }
         if (trackOn[i] && ! stopPending[i] && ! keys)
         {
-            // stops on the Quantize setting (pattern end: the end of the track's pattern run)
-            double at = a;
-            if (g.quantize == Quantize::patternEnd)
-            {
-                const double len = juce::jmax (1.0e-6, project.patterns[(size_t) project.currentPattern].lengthPpq());
-                at = trackOrigin[i] + std::ceil ((a - trackOrigin[i] - 1.0e-9) / len) * len;
-            }
-            else if (g.quantize != Quantize::off)
-                at = nextQuantizePoint (project, host, a);
+            // stops on the trigger's Quantize setting
+            const double at = triggerQuantizePoint (g, host, a);
             stopPending[i] = true;
             trackTo[i] = at;
         }
@@ -443,6 +412,22 @@ void Engine::updateTriggerTracks (const Project& project, const Host& host, doub
             trackTo[i] = 1.0e18;
         }
     }
+}
+
+double Engine::triggerQuantizePoint (const Globals& g, const Host& host, double ppq)
+{
+    const double beat = 4.0 / juce::jmax (1, host.timeSigDenominator);
+    double unit = 0.0;
+    switch (g.triggerQuantize)
+    {
+        case TriggerQuantize::off:  return ppq;
+        case TriggerQuantize::q32:  unit = 0.125; break;
+        case TriggerQuantize::q16:  unit = 0.25; break;
+        case TriggerQuantize::q8:   unit = 0.5; break;
+        case TriggerQuantize::beat: unit = beat; break;
+        case TriggerQuantize::bar:  unit = beat * juce::jmax (1, host.timeSigNumerator); break;
+    }
+    return std::ceil ((ppq - 1.0e-9) / unit) * unit;
 }
 
 void Engine::finishTriggerBlock (double ppqEnd)

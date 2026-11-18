@@ -209,7 +209,14 @@ void Pill::paint (juce::Graphics& g)
         const bool surface = l.fill.isTransparent() || l.fill == t.bg || l.fill == t.panel || l.fill == t.tile || l.fill == t.tileAlt;
         l.fill = surface ? t.selected : l.fill.interpolatedWith (juce::Colours::white, 0.14f);
     }
-    if (alpha) g.setOpacity (alpha());
+    // dimmed buttons: the whole drawing goes through one transparency layer (setOpacity alone
+    // would be undone by every setColour below)
+    struct Layer
+    {
+        juce::Graphics& g; bool on;
+        Layer (juce::Graphics& gr, float a) : g (gr), on (a < 0.999f) { if (on) g.beginTransparencyLayer (a); }
+        ~Layer() { if (on) g.endTransparencyLayer(); }
+    } layer (g, alpha ? alpha() : 1.0f);
     auto b = getLocalBounds().toFloat();
     if (! l.fill.isTransparent())
     {

@@ -370,7 +370,7 @@ juce::ValueTree Project::musicToValueTree() const
     // Settings that live only in the Settings dialog are not part of a preset (SPEC.md 13.3);
     // the user scale and the root stay (a preset can select USER)
     auto g = root.getChildWithName ("Globals");
-    for (auto* id : { "ccSmoothing", "ccCurve", "midiThru", "noteTrigger", "basePitchClass", "baseOctave", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
+    for (auto* id : { "ccSmoothing", "ccCurve", "midiThru", "noteTrigger", "triggerTracks", "triggerQuantize", "basePitchClass", "baseOctave", "patternCC", "patternCCChannel", "patternCCNumber", "quantize" })
         g.removeProperty (id, nullptr);
     return root;
 }
@@ -382,6 +382,8 @@ static void keepDialogSettings (Globals& g, const Globals& old)
     g.ccCurve = old.ccCurve;
     g.midiThru = old.midiThru;
     g.noteTrigger = old.noteTrigger;
+    g.triggerTracks = old.triggerTracks;
+    g.triggerQuantize = old.triggerQuantize;
     g.basePitchClass = old.basePitchClass;
     g.baseOctave = old.baseOctave;
     g.patternCC = old.patternCC;
@@ -477,6 +479,8 @@ juce::ValueTree Project::toValueTree() const
     gt.setProperty ("ccCurve", (int) g.ccCurve, nullptr);
     gt.setProperty ("midiThru", g.midiThru, nullptr);
     gt.setProperty ("noteTrigger", (int) g.noteTrigger, nullptr);
+    gt.setProperty ("triggerTracks", (int) g.triggerTracks, nullptr);
+    gt.setProperty ("triggerQuantize", (int) g.triggerQuantize, nullptr);
     gt.setProperty ("basePitchClass", (int) g.basePitchClass, nullptr);
     gt.setProperty ("baseOctave", (int) g.baseOctave, nullptr);
     gt.setProperty ("patternCC", g.patternCC, nullptr);
@@ -544,7 +548,9 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.ccCurve = (CCCurve) juce::jlimit (0, 2, (int) gt.getProperty ("ccCurve", (int) g.ccCurve));
         g.midiThru = (bool) gt.getProperty ("midiThru", g.midiThru);
-        g.noteTrigger = (NoteTrigger) juce::jlimit (0, 2, (int) gt.getProperty ("noteTrigger", (int) g.noteTrigger));
+        g.noteTrigger = (NoteTrigger) juce::jlimit (0, 1, (int) gt.getProperty ("noteTrigger", (int) g.noteTrigger));
+        g.triggerTracks = (std::uint8_t) ((int) gt.getProperty ("triggerTracks", (int) g.triggerTracks) & 0xFF);
+        g.triggerQuantize = (TriggerQuantize) juce::jlimit (0, 5, (int) gt.getProperty ("triggerQuantize", (int) g.triggerQuantize));
         g.basePitchClass = (std::int8_t) juce::jlimit (0, 11, (int) gt.getProperty ("basePitchClass", (int) g.basePitchClass));
         g.baseOctave = (std::int8_t) juce::jlimit (minOctave, maxOctave, (int) gt.getProperty ("baseOctave", (int) g.baseOctave));
         g.patternCC = (bool) gt.getProperty ("patternCC", g.patternCC);

@@ -35,6 +35,8 @@ private:
     Knob* pcChannel = nullptr;
     Knob* pcNumber = nullptr;
     Pill* thruBtn = nullptr;            // MIDI thru (SPEC.md 3.1)
+    juce::Array<Pill*> trigQuantBtns;   // note trigger quantize
+    juce::Array<Pill*> trigTrackBtns;   // note trigger tracks 01-08
     juce::Array<Pill*> trigBtns;        // note trigger OFF / GLOBAL / PER CHANNEL
     Knob* basePitch = nullptr;          // base note, note
     Knob* baseOctave = nullptr;         // base note, octave
