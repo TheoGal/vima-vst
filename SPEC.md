@@ -655,7 +655,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Note trigger quantize** (mockup approved): its own row in MIDI INPUT, under Note trigger: **Quantize** OFF, 1/32, 1/16, 1/8, 1 BEAT, 1 BAR (no PATTERN END). Default **1/16**. Dimmed while the note trigger is OFF. Times the trigger's starts and stops (3.1); starting from silence (Vima and the DAW stopped) is still immediate. The PATTERN CHANGE quantize goes back to pattern changes only: the QUANTIZE section is removed and its row returns to PATTERN CHANGE as "Quantize changes to" (OFF, 1 BEAT, 1 BAR, PATTERN END).
 
 ### 15.2 Open
 
