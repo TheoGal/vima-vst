@@ -655,7 +655,10 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+1. **Note trigger modes: OFF / TRANSPOSE / TRIGGER** (replaces OFF / ON), so a key always does the same thing whatever Vima's state:
+   - **TRANSPOSE**: keys only transpose the chosen tracks (one SHIFT step per semitone from the base note, from the next step); they never start or stop anything. Releasing all keys returns to no transposition.
+   - **TRIGGER**: the chosen tracks play only while a key is held, always, DAW playing or stopped, and the key also transposes them. A press restarts them from step 1 at the next trigger Quantize point (from silence, with Vima and the DAW stopped: at once, on Vima's own clock); releasing all keys stops them at the next Quantize point. While the DAW plays, the chosen tracks are silent until a key is held. Unchosen tracks follow the DAW / play button as usual, untransposed.
+   - Tracks, Quantize and Base note apply to both modes (Quantize only matters in TRIGGER). MIDI THRU is greyed out in both modes (every note is the trigger's).
 
 ### 15.2 Open
 
