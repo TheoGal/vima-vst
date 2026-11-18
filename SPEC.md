@@ -655,7 +655,13 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-1. **Note trigger quantize** (mockup approved): its own row in MIDI INPUT, under Note trigger: **Quantize** OFF, 1/32, 1/16, 1/8, 1 BEAT, 1 BAR (no PATTERN END). Default **1/16**. Dimmed while the note trigger is OFF. Times the trigger's starts and stops (3.1); starting from silence (Vima and the DAW stopped) is still immediate. The PATTERN CHANGE quantize goes back to pattern changes only: the QUANTIZE section is removed and its row returns to PATTERN CHANGE as "Quantize changes to" (OFF, 1 BEAT, 1 BAR, PATTERN END).
+1. **Note trigger by track, not by MIDI channel** (mockup approved). MIDI INPUT reads: MIDI thru, Note trigger, Tracks, Quantize, Base note.
+   - **Note trigger**: OFF / ON (PER CHANNEL is dropped: channel matching was complicated and does not work in Ableton Live, which passes everything on channel 1).
+   - **Tracks**: 8 toggles 01-08 (filled when selected), default all 8 on; dimmed while the trigger is OFF. Saved like the other dialog settings.
+   - Selected tracks follow the keys: a key while Vima is stopped starts them (from step 1), releasing all keys stops them, keys transpose them. All selected tracks start and stop together.
+   - Unselected tracks ignore the keys: when keys started Vima from stopped they stay silent; when Vima runs normally (DAW or play button) they play as usual, untransposed.
+   - **MIDI THRU**: while the trigger is ON every note is a trigger note, so THRU shows OFF, greyed out, and nothing passes (as GLOBAL today). With the trigger OFF, THRU works normally.
+2. **Note trigger quantize** (mockup approved): its own row in MIDI INPUT: **Quantize** OFF, 1/32, 1/16, 1/8, 1 BEAT, 1 BAR (no PATTERN END). Default **1/16**. Dimmed while the trigger is OFF. Times the trigger's starts and stops (3.1); starting from silence (Vima and the DAW stopped) is still immediate. The PATTERN CHANGE quantize goes back to pattern changes only: the QUANTIZE section is removed and its row returns to PATTERN CHANGE as "Quantize changes to" (OFF, 1 BEAT, 1 BAR, PATTERN END).
 
 ### 15.2 Open
 
