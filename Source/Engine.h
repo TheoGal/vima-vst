@@ -105,7 +105,9 @@ private:
     // Note trigger and MIDI thru (SPEC.md 3.1)
     void readTriggerNotes (const Project& project, const juce::MidiBuffer& midiIn);
     void passThru (const Project& project, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out) const;
-    void updateTriggerTracks (const Project& project, const Host& host, double a, double ppqPerSample);
+    void updateTriggerTracks (const Project& project, const Host& host, double a, double ppqPerSample, bool openUnchosen);
+    void scheduleTranspose (const Project& project, const Host& host, double a, bool running);
+    void commitTranspose (double ppqEnd);
     void finishTriggerBlock (double ppqEnd);
     int scopeOf (const Project& project, int track) const;
     static int transposeNote (int pitch, int steps, bool inScale, std::uint16_t mask, int root);
@@ -116,7 +118,11 @@ private:
     std::array<std::array<int, maxHeld>, numScopes> held {};   // held keys, oldest first (last note wins)
     std::array<int, numScopes> numHeld {};
     std::array<int, numScopes> pressSample {};                 // first key press in this block (-1 = none)
-    std::array<int, numTracks> transpose {};                   // per track, in SHIFT steps
+    std::array<int, numTracks> transpose {};                   // per track, in SHIFT steps (sounding)
+    std::array<int, numTracks> targetTranspose {};             // what the keys ask for
+    std::array<int, numTracks> pendTranspose {};               // ... scheduled at pendAt (Quantize)
+    std::array<double, numTracks> pendAt {};
+    bool gating = false;           // TRIGGER mode while Vima runs: the chosen tracks play only while keys are held
     NoteTrigger lastTriggerMode = NoteTrigger::off;
     bool trigRunning = false;      // Vima runs because keys started it (not the DAW or the play button)
     bool trigUsesDaw = false;      // ... on the DAW's clock (the DAW rolls, Vima was held) or its own

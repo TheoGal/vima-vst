@@ -35,7 +35,8 @@ void Engine::reset()
     isPlaying = false;
     beatsToSwitch = -1.0;
     numHeld.fill (0);
-    transpose.fill (0);
+    transpose.fill (0); targetTranspose.fill (0); pendTranspose.fill (0); pendAt.fill (1.0e18);
+    gating = false;
     for (auto& s : shownTranspose) s = 0;
     trigRunning = trigUsesDaw = false;
     trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
@@ -197,7 +198,8 @@ void Engine::renderSegment (const Project& project, int patternIndex, double a, 
                 int pitch = midiNote (step.octave, step.pitchClass);
                 if (tp.scaleOn)
                     pitch = quantizeToScale (mask, g.root, pitch);
-                pitch = transposeNote (pitch, transpose[(size_t) t], tp.scaleOn, mask, g.root);   // note trigger
+                const int k = tn >= pendAt[(size_t) t] - 1.0e-9 ? pendTranspose[(size_t) t] : transpose[(size_t) t];
+                pitch = transposeNote (pitch, k, tp.scaleOn, mask, g.root);   // NOTE INPUT (quantized)
                 if (pitch >= 0 && pitch <= 127)
                 {
                     releaseSameNote (channel, pitch, s, out);
@@ -292,7 +294,7 @@ void Engine::renderCCSmoothing (const Project& project, int patternIndex, double
 int Engine::scopeOf (const Project& project, int track) const
 {
     const auto& g = project.globals;
-    return g.noteTrigger == NoteTrigger::on && ((g.triggerTracks >> track) & 1) ? 0 : -1;   // one scope: the chosen tracks
+    return g.noteTrigger != NoteTrigger::off && ((g.triggerTracks >> track) & 1) ? 0 : -1;   // one scope: the chosen tracks
 }
 
 // One SHIFT step per semitone from the base note: a scale step on tracks using the scale, else a semitone
@@ -314,7 +316,7 @@ int Engine::transposeNote (int pitch, int steps, bool inScaleTrack, std::uint16_
 void Engine::passThru (const Project& project, const juce::MidiBuffer& midiIn, juce::MidiBuffer& out) const
 {
     const auto& g = project.globals;
-    if (! g.midiThru || g.noteTrigger == NoteTrigger::on)
+    if (! g.midiThru || g.noteTrigger != NoteTrigger::off)
         return;   // the note trigger uses every incoming note: nothing passes
     for (const auto m : midiIn)
     {
@@ -369,19 +371,27 @@ void Engine::readTriggerNotes (const Project& project, const juce::MidiBuffer& m
     for (int t = 0; t < numTracks; ++t)
     {
         const int s = scopeOf (project, t);
-        transpose[(size_t) t] = (s >= 0 && numHeld[(size_t) s] > 0) ? held[(size_t) s][(size_t) numHeld[(size_t) s] - 1] - base : 0;
-        shownTranspose[(size_t) t] = transpose[(size_t) t];
+        targetTranspose[(size_t) t] = (s >= 0 && numHeld[(size_t) s] > 0) ? held[(size_t) s][(size_t) numHeld[(size_t) s] - 1] - base : 0;
     }
 }
 
 // Before rendering a block of a trigger run: start and stop tracks as their keys go down and up
-void Engine::updateTriggerTracks (const Project& project, const Host& host, double a, double ppqPerSample)
+void Engine::updateTriggerTracks (const Project& project, const Host& host, double a, double ppqPerSample, bool openUnchosen)
 {
     const auto& g = project.globals;
     for (int t = 0; t < numTracks; ++t)
     {
         const auto i = (size_t) t;
         const int s = scopeOf (project, t);
+        if (s < 0)
+        {
+            // unchosen tracks: play as usual while Vima runs, silent in a run the keys started
+            trackOn[i] = startPending[i] = stopPending[i] = false;
+            trackFrom[i] = openUnchosen ? -1.0e18 : 1.0e18;
+            trackTo[i] = 1.0e18;
+            trackOrigin[i] = 0.0;
+            continue;
+        }
         const bool keys = s >= 0 && numHeld[(size_t) s] > 0;
         if (! trackOn[i] && ! startPending[i] && keys)
         {
@@ -393,6 +403,8 @@ void Engine::updateTriggerTracks (const Project& project, const Host& host, doub
             trackFrom[i] = at;
             trackTo[i] = 1.0e18;
             trackOrigin[i] = at;
+            transpose[i] = targetTranspose[i];   // it starts with the key's transposition
+            pendAt[i] = 1.0e18;
         }
         else if (startPending[i] && ! keys)
         {
@@ -430,6 +442,37 @@ double Engine::triggerQuantizePoint (const Globals& g, const Host& host, double 
     return std::ceil ((ppq - 1.0e-9) / unit) * unit;
 }
 
+// A new transposition starts at the first step on or after the next Quantize point (OFF: the next step)
+void Engine::scheduleTranspose (const Project& project, const Host& host, double a, bool running)
+{
+    for (int t = 0; t < numTracks; ++t)
+    {
+        const auto i = (size_t) t;
+        const int planned = pendAt[i] < 1.0e17 ? pendTranspose[i] : transpose[i];
+        if (! running)
+        {
+            transpose[i] = targetTranspose[i];
+            pendAt[i] = 1.0e18;
+        }
+        else if (targetTranspose[i] != planned)
+        {
+            pendTranspose[i] = targetTranspose[i];
+            pendAt[i] = triggerQuantizePoint (project.globals, host, a);
+        }
+        shownTranspose[i] = pendAt[i] < 1.0e17 ? pendTranspose[i] : transpose[i];
+    }
+}
+
+void Engine::commitTranspose (double ppqEnd)
+{
+    for (int t = 0; t < numTracks; ++t)
+        if (pendAt[(size_t) t] < ppqEnd)
+        {
+            transpose[(size_t) t] = pendTranspose[(size_t) t];
+            pendAt[(size_t) t] = 1.0e18;
+        }
+}
+
 void Engine::finishTriggerBlock (double ppqEnd)
 {
     bool anyTrack = false;
@@ -454,7 +497,7 @@ void Engine::finishTriggerBlock (double ppqEnd)
     for (int s = 0; s < numScopes; ++s) anyKeys = anyKeys || numHeld[(size_t) s] > 0;
     if (! anyTrack && ! anyKeys)
         trigRunning = false;   // the next block stops (all notes released)
-    if (! trigUsesDaw)
+    if (trigRunning && ! trigUsesDaw)
         trigClock = ppqEnd;
 }
 
@@ -468,22 +511,45 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
     passThru (project, midiIn, out);
     readTriggerNotes (project, midiIn);
 
-    // Note trigger (SPEC.md 3.1): while Vima is stopped, a key press starts a trigger run, on the
-    // DAW's clock if the DAW rolls (Vima held), else on its own from 0. While Vima runs anyway, keys
-    // only transpose.
+    // NOTE INPUT (SPEC.md 3.1). TRANSPOSE: keys only transpose. TRIGGER: the chosen tracks play only
+    // while keys are held: while Vima runs anyway they are gated; while it is stopped a key press starts
+    // a run of its own (on the DAW's clock if the DAW rolls with Vima held, else on Vima's own clock).
     Host host = hostIn;
     bool trigMode = false;
-    if (host.playing || g.noteTrigger == NoteTrigger::off)
+    const bool resetWindows = trackFrom[0] != -1.0e18 || trigRunning || gating;
+    if (g.noteTrigger != NoteTrigger::trigger)
     {
-        if (trigRunning || trackFrom[0] != -1.0e18)
+        if (resetWindows)
         {
-            trigRunning = false;
+            trigRunning = gating = false;
             trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
             trackFrom.fill (-1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
         }
     }
+    else if (host.playing)
+    {
+        if (! gating)
+        {
+            // Vima (re)started by the DAW or the play button: the chosen tracks wait for keys
+            gating = true;
+            trigRunning = false;
+            trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
+            trackFrom.fill (1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
+        }
+        trigMode = true;
+    }
     else
     {
+        if (gating)
+        {
+            // the DAW stopped: tracks the keys still hold carry on, on Vima's own clock
+            gating = false;
+            bool any = false;
+            for (int t = 0; t < numTracks; ++t) any = any || trackOn[(size_t) t] || startPending[(size_t) t];
+            trigRunning = any;
+            trigUsesDaw = false;
+            trigClock = lastPpqEnd >= 0.0 ? lastPpqEnd : 0.0;
+        }
         bool press = false;
         for (int t = 0; t < numTracks; ++t)
         {
@@ -514,6 +580,7 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
 
     if (! host.playing)
     {
+        scheduleTranspose (project, host, 0.0, false);
         if (wasPlaying)
             flushAllNotes (out, 0);
         wasPlaying = false;
@@ -538,7 +605,8 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
     const double ppq = host.ppq;
     const double ppqEnd = ppq + numSamples * ppqPerSample;
     if (trigMode)
-        updateTriggerTracks (project, host, ppq, ppqPerSample);
+        updateTriggerTracks (project, host, ppq, ppqPerSample, gating);
+    scheduleTranspose (project, host, ppq, true);
 
     const bool jumped = wasPlaying && lastPpqEnd >= 0.0 && std::abs (ppq - lastPpqEnd) > 0.02;
     if (jumped)
@@ -746,6 +814,7 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
 
     wasPlaying = true;
     lastPpqEnd = ppqEnd;
+    commitTranspose (ppqEnd);
     if (trigMode)
         finishTriggerBlock (ppqEnd);
 }

@@ -109,7 +109,7 @@ const ScaleInfo& scaleInfo (int index);
 
 enum class Quantize : std::uint8_t { off, beat, bar, patternEnd };
 enum class CCCurve : std::uint8_t { linear, exp, log };   // shape of the CC smoothing glide
-enum class NoteTrigger : std::uint8_t { off, on };   // incoming notes start / stop / transpose the chosen tracks (SPEC.md 3.1)
+enum class NoteTrigger : std::uint8_t { off, transpose, trigger };   // NOTE INPUT: what incoming notes do to the chosen tracks (SPEC.md 3.1)
 enum class TriggerQuantize : std::uint8_t { off, q32, q16, q8, beat, bar };   // the note trigger's starts and stops
 
 struct ChainEntry
@@ -187,7 +187,7 @@ struct Globals
     bool midiThru = false;              // incoming MIDI passes to the output (SPEC.md 3.1)
     NoteTrigger noteTrigger = NoteTrigger::off;
     std::uint8_t triggerTracks = 0xFF;  // bit per track: the tracks the keys drive (init: all 8)
-    TriggerQuantize triggerQuantize = TriggerQuantize::q16;
+    TriggerQuantize triggerQuantize = TriggerQuantize::off;   // OFF = from the next step
     std::int8_t basePitchClass = 0;     // the base note: played = no transposition (init: the init step note)
     std::int8_t baseOctave = 3;         // minOctave..maxOctave, 3 = the middle C octave
     int baseNote() const { return juce::jlimit (0, 127, midiNote (baseOctave, basePitchClass)); }

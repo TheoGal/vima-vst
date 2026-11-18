@@ -306,28 +306,28 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     {
         const auto& t = Theme::current();
         const auto g = ctx.globalsCopy();
-        const bool on = g.midiThru && g.noteTrigger != NoteTrigger::on;
+        const bool on = g.midiThru && g.noteTrigger == NoteTrigger::off;
         return on ? Pill::Look { N(), N(), t.onNeutral, 1.5f, false } : Pill::Look { juce::Colours::transparentBlack, t.dim, t.muted, 1.5f, false };
     };
-    // the note trigger uses every incoming note: THRU shows OFF and is greyed out (its own value is kept)
-    thruBtn->alpha = [this] { return ctx.globalsCopy().noteTrigger == NoteTrigger::on ? 0.4f : 1.0f; };
-    thruBtn->text = [this] { const auto g = ctx.globalsCopy(); return juce::String (g.midiThru && g.noteTrigger != NoteTrigger::on ? "ON" : "OFF"); };
+    // NOTE INPUT uses every incoming note: THRU shows OFF and is greyed out (its own value is kept)
+    thruBtn->alpha = [this] { return ctx.globalsCopy().noteTrigger != NoteTrigger::off ? 0.4f : 1.0f; };
+    thruBtn->text = [this] { const auto g = ctx.globalsCopy(); return juce::String (g.midiThru && g.noteTrigger == NoteTrigger::off ? "ON" : "OFF"); };
     thruBtn->onClick = [this]
     {
-        if (ctx.globalsCopy().noteTrigger == NoteTrigger::on) return;
+        if (ctx.globalsCopy().noteTrigger != NoteTrigger::off) return;
         ctx.edit (false, [] (Project& p) { p.globals.midiThru = ! p.globals.midiThru; });
     };
     thruBtn->setTitle ("MIDI thru");
-    const char* tNames[] = { "OFF", "ON" };
-    for (int i = 0; i < 2; ++i)
+    const char* tNames[] = { "OFF", "TRANSPOSE", "TRIGGER" };   // NOTE INPUT (SPEC.md 3.1)
+    for (int i = 0; i < 3; ++i)
     {
         auto& p = pill();
         const juce::String name (tNames[i]);
         p.text = [name] { return name; };
         p.font = [] { return Fonts::monoSemi (10.0f); };
-        p.look = [this, i, N] { return choice ((ctx.globalsCopy().noteTrigger != NoteTrigger::off) == (i == 1), N()); };
-        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.noteTrigger = i == 1 ? NoteTrigger::on : NoteTrigger::off; }); };
-        p.setTitle ("Note trigger " + name.toLowerCase());
+        p.look = [this, i, N] { return choice ((int) ctx.globalsCopy().noteTrigger == i, N()); };
+        p.onClick = [this, i] { ctx.edit (false, [i] (Project& pr) { pr.globals.noteTrigger = (NoteTrigger) i; }); };
+        p.setTitle ("Note input " + name.toLowerCase());
         trigBtns.add (&p);
     }
     // base note: a note knob (all 12 notes) and an octave knob, as on a step
@@ -455,7 +455,7 @@ void SettingsDialog::resized()
     body = rightCol;
     section ("MIDI INPUT");
     thruBtn->setBounds (rowArea ("MIDI thru", 24).withWidth (60));
-    segment (rowArea ("Note trigger", 32), trigBtns, 60);
+    segment (rowArea ("Note input", 32), trigBtns, 86);
     {
         auto r = rowArea ("Tracks", 26);
         for (int i = 0; i < numTracks; ++i) trigTrackBtns[i]->setBounds (r.getX() + i * 40, r.getY(), 36, 26);
@@ -526,7 +526,7 @@ void SettingsDialog::paint (juce::Graphics& g)
         float a = 1.0f;
         if (r.text == "MIDI CH" || r.text == "CC") a = gl.patternCC ? 1.0f : 0.4f;
         if (r.text == "Curve") a = gl.ccSmoothing ? 1.0f : 0.4f;
-        if (r.text == "MIDI thru") a = gl.noteTrigger == NoteTrigger::on ? 0.4f : 1.0f;
+        if (r.text == "MIDI thru") a = gl.noteTrigger != NoteTrigger::off ? 0.4f : 1.0f;
         if (r.text == "Quantize" || r.text == "Tracks") a = gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f;
         if (r.text == "Base note" || r.text == "NOTE" || r.text == "OCT") a = gl.noteTrigger == NoteTrigger::off ? 0.4f : 1.0f;
         if (r.section) draw::label (g, r.text, r.area, t.muted.withMultipliedAlpha (a));

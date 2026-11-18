@@ -548,7 +548,7 @@ void Project::fromValueTree (const juce::ValueTree& root)
         g.ccSmoothing = (bool) gt.getProperty ("ccSmoothing", g.ccSmoothing);
         g.ccCurve = (CCCurve) juce::jlimit (0, 2, (int) gt.getProperty ("ccCurve", (int) g.ccCurve));
         g.midiThru = (bool) gt.getProperty ("midiThru", g.midiThru);
-        g.noteTrigger = (NoteTrigger) juce::jlimit (0, 1, (int) gt.getProperty ("noteTrigger", (int) g.noteTrigger));
+        g.noteTrigger = (NoteTrigger) juce::jlimit (0, 2, (int) gt.getProperty ("noteTrigger", (int) g.noteTrigger));
         g.triggerTracks = (std::uint8_t) ((int) gt.getProperty ("triggerTracks", (int) g.triggerTracks) & 0xFF);
         g.triggerQuantize = (TriggerQuantize) juce::jlimit (0, 5, (int) gt.getProperty ("triggerQuantize", (int) g.triggerQuantize));
         g.basePitchClass = (std::int8_t) juce::jlimit (0, 11, (int) gt.getProperty ("basePitchClass", (int) g.basePitchClass));

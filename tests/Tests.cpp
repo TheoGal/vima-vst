@@ -1339,7 +1339,7 @@ void testNoteTrigger()
     };
     {
         Runner r;
-        setup (r, NoteTrigger::on);
+        setup (r, NoteTrigger::trigger);
         r.run (1.0);
         check (r.noteOns().empty(), "note trigger: nothing plays before a key");
         r.run (1.0, noteIn (1, 60, true));
@@ -1352,11 +1352,11 @@ void testNoteTrigger()
     }
     {
         Runner r;
-        setup (r, NoteTrigger::on);
+        setup (r, NoteTrigger::trigger);
         r.run (1.0, noteIn (1, 63, true));   // +3 semitones, a chromatic track
         check (! r.noteOns().empty() && r.noteOns()[0].msg.getNoteNumber() == 63, "chromatic track: +3 keys = +3 semitones");
         Runner rs;
-        setup (rs, NoteTrigger::on);
+        setup (rs, NoteTrigger::trigger);
         rs.track (0).scaleOn = true;
         rs.project->globals.scale = 0;   // C major
         rs.project->globals.root = 0;
@@ -1368,21 +1368,25 @@ void testNoteTrigger()
         check (rs.noteOns().back().msg.getNoteNumber() == 64, "releasing the newest key falls back to the one still held");
     }
     {
-        // Vima already playing: keys only transpose, never start or stop
+        // TRANSPOSE: keys only transpose, never start or stop
+        Runner r0;
+        setup (r0, NoteTrigger::transpose);
+        r0.run (1.0, noteIn (1, 64, true));
+        check (r0.noteOns().empty(), "TRANSPOSE: a key does not start a stopped Vima");
         Runner r;
-        setup (r, NoteTrigger::on);
+        setup (r, NoteTrigger::transpose);
         r.host.playing = true;
         r.host.dawPlaying = true;
         r.run (1.0, noteIn (1, 64, true));
-        check (r.noteOns().size() > 1 && r.noteOns()[1].msg.getNoteNumber() == 64, "while playing, a key transposes (from the next step)");
+        check (r.noteOns().size() > 1 && r.noteOns()[1].msg.getNoteNumber() == 64, "TRANSPOSE: while playing, a key transposes (from the next step)");
         r.run (1.0, noteIn (1, 64, false));
         const auto all = r.noteOns();
-        check (all.size() == 8 && all.back().msg.getNoteNumber() == 60, "releasing it: back to the base, and Vima keeps playing");
+        check (all.size() == 8 && all.back().msg.getNoteNumber() == 60, "TRANSPOSE: releasing it: back to the base, and Vima keeps playing");
     }
     {
         // Vima held while the DAW rolls: the trigger starts on the DAW clock, on the Quantize setting
         Runner r;
-        setup (r, NoteTrigger::on);
+        setup (r, NoteTrigger::trigger);
         r.project->globals.triggerQuantize = TriggerQuantize::bar;
         r.host.dawPlaying = true;
         r.host.ppq = 1.0;
@@ -1393,7 +1397,7 @@ void testNoteTrigger()
     {
         // Tracks: only the chosen tracks follow the keys
         Runner r;
-        setup (r, NoteTrigger::on);
+        setup (r, NoteTrigger::trigger);
         fillOn (r.track (1));
         r.track (1).length = 4;
         r.track (1).scaleOn = false;
@@ -1404,7 +1408,7 @@ void testNoteTrigger()
         check (r.noteOns (1).empty() && r.noteOns (2).size() == 4 && r.noteOns (2)[0].msg.getNoteNumber() == 62,
                "Tracks: from stopped, a key starts and transposes only the chosen track; the other stays silent");
         Runner rp;
-        setup (rp, NoteTrigger::on);
+        setup (rp, NoteTrigger::transpose);
         fillOn (rp.track (1));
         rp.track (1).length = 4;
         rp.track (1).scaleOn = false;
@@ -1414,19 +1418,49 @@ void testNoteTrigger()
         rp.host.playing = rp.host.dawPlaying = true;
         rp.run (1.0, noteIn (1, 65, true));
         check (rp.noteOns (1).size() == 4 && rp.noteOns (1)[1].msg.getNoteNumber() == 60 && rp.noteOns (2)[1].msg.getNoteNumber() == 65,
-               "while Vima plays, an unchosen track plays on untransposed");
+               "TRANSPOSE: while Vima plays, an unchosen track plays on untransposed");
     }
     {
         // the trigger's own quantize: 1/16 while the DAW rolls (Vima held)
         Runner r;
-        setup (r, NoteTrigger::on);
+        setup (r, NoteTrigger::trigger);
         r.project->globals.triggerQuantize = TriggerQuantize::q16;
         r.host.dawPlaying = true;
         r.host.ppq = 1.1;
         r.run (1.0, noteIn (1, 60, true));
         const auto ons = r.noteOns();
         check (! ons.empty() && near (ons[0].ppq, 1.25, 0.01), "trigger quantize 1/16: starts on the next sixteenth");
-        check (TriggerQuantize::q16 == Globals().triggerQuantize && Globals().triggerTracks == 0xFF, "init: trigger quantize 1/16, all 8 tracks chosen");
+        check (TriggerQuantize::off == Globals().triggerQuantize && Globals().triggerTracks == 0xFF, "init: note input quantize OFF (next step), all 8 tracks chosen");
+    }
+    {
+        // TRIGGER while the DAW plays: the chosen tracks are silent until a key, restart from step 1, stop on release
+        Runner r;
+        setup (r, NoteTrigger::trigger);
+        r.host.playing = r.host.dawPlaying = true;
+        r.run (1.1);
+        check (r.noteOns().empty(), "TRIGGER while playing: the chosen tracks wait for a key");
+        r.run (0.9, noteIn (1, 60, true));
+        auto ons = r.noteOns();
+        check (! ons.empty() && near (ons[0].ppq, 1.1, 0.01), "TRIGGER while playing: a key restarts them at once (quantize OFF), from step 1");
+        r.run (1.0, noteIn (1, 60, false));
+        r.run (1.0);
+        check (r.noteOns().size() == ons.size(), "TRIGGER while playing: releasing the key stops them");
+    }
+    {
+        // the quantize also times transpositions: 1 BAR, key pressed in beat 2, the key changes on the bar line
+        Runner r;
+        setup (r, NoteTrigger::transpose);
+        r.project->globals.triggerQuantize = TriggerQuantize::bar;
+        r.host.playing = r.host.dawPlaying = true;
+        r.run (1.0);
+        r.run (5.0, noteIn (1, 64, true));
+        bool before = true, after = true;
+        for (auto& e : r.noteOns())
+        {
+            if (e.ppq < 3.99) before = before && e.msg.getNoteNumber() == 60;
+            else after = after && e.msg.getNoteNumber() == 64;
+        }
+        check (before && after, "quantize 1 BAR: a new transposition starts on the next bar line");
     }
     {
         // MIDI THRU
@@ -1452,7 +1486,7 @@ void testNoteTrigger()
         };
         check (passed (false, NoteTrigger::off).isEmpty(), "MIDI THRU off (default): nothing passes");
         check (passed (true, NoteTrigger::off) == "cc5 n9 n1", "MIDI THRU on: everything passes except the pattern-change CC (" + passed (true, NoteTrigger::off) + ")");
-        check (passed (true, NoteTrigger::on).isEmpty(), "note trigger ON: nothing passes, whatever THRU says");
+        check (passed (true, NoteTrigger::trigger).isEmpty(), "NOTE INPUT on: nothing passes, whatever THRU says");
         check (! Globals().midiThru && Globals().noteTrigger == NoteTrigger::off && Globals().baseNote() == 60,
                "init: MIDI THRU off, note trigger off, base note C (middle C octave)");
     }
