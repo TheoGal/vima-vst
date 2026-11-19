@@ -1410,6 +1410,7 @@ void testNoteTrigger()
         r.project->globals.triggerTracks = 0b11;
         r.run (1.0);
         check (r.noteOns (2).size() == 4, "Tracks live: choosing a track while TRIGGER is on silences it at once (waits for keys)");
+        check (r.engine.playStep[1].load() == -1, "Tracks live: ... and its playhead LED goes off while it waits");
         r.run (1.0, noteIn (1, 60, true));
         check (r.noteOns (1).size() == 4 && r.noteOns (2).size() == 8, "Tracks live: ... and a key now starts it with the others");
         r.run (1.0, noteIn (1, 60, false));

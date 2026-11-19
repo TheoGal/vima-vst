@@ -792,3 +792,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-19: Fixed: a track switched on in NOTE INPUT Tracks while TRIGGER was on kept playing as usual until the mode was switched OFF and back; it now goes silent at once and waits for keys (3.1).
 - 2026-11-19: Step view: the NOTES / CC switch made narrower; the space holds a green tile in the track frame: TRIG / TRANSP with the selected track's transposition (+0 with none) while NOTE INPUT drives it, else MIDI THRU while thru passes notes, else empty (no grey "off" state). The transposition left the BPM box (3.1, 12.2).
 - 2026-11-19: Docs show the version next to the Vima title from v1.7.0 on (MANUAL.md, README.md, the PDF), applied with the 1.7.0 docs update (15.1).
+- 2026-11-19: Fixed (display only): a track switched on for TRIGGER while playing kept its playhead LED lit on the last step; it now goes off while the track waits for keys (3.1).
