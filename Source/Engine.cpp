@@ -331,11 +331,9 @@ void Engine::readTriggerNotes (const Project& project, const juce::MidiBuffer& m
 {
     const auto& g = project.globals;
     pressSample.fill (-1);
-    if (g.noteTrigger != lastTriggerMode)
-    {
-        numHeld.fill (0);   // a mode change forgets the held keys
-        lastTriggerMode = g.noteTrigger;
-    }
+    if (g.noteTrigger == NoteTrigger::off)
+        numHeld.fill (0);   // OFF forgets the held keys; TRANSPOSE <-> TRIGGER keeps them
+    lastTriggerMode = g.noteTrigger;
     if (g.noteTrigger != NoteTrigger::off)
     {
         for (const auto m : midiIn)

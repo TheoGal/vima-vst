@@ -1447,6 +1447,24 @@ void testNoteTrigger()
         check (r.noteOns().size() == ons.size(), "TRIGGER while playing: releasing the key stops them");
     }
     {
+        // switching TRANSPOSE -> TRIGGER with a key held: the chosen track starts, the unchosen one plays on
+        Runner r;
+        setup (r, NoteTrigger::transpose);
+        fillOn (r.track (1));
+        r.track (1).length = 4;
+        r.track (1).scaleOn = false;
+        r.project->routing[1].midiChannel = 2;
+        r.project->routing[1].noteOut = true;
+        r.project->globals.triggerTracks = 0b01;
+        r.host.playing = r.host.dawPlaying = true;
+        r.run (1.0, noteIn (1, 62, true));
+        r.project->globals.noteTrigger = NoteTrigger::trigger;
+        const auto c1 = r.noteOns (1).size(), c2 = r.noteOns (2).size();
+        r.run (1.0);
+        check (r.noteOns (1).size() == c1 + 4 && r.noteOns (2).size() == c2 + 4,
+               "TRANSPOSE -> TRIGGER with a key held: the chosen track keeps playing, the unchosen one too");
+    }
+    {
         // the quantize also times transpositions: 1 BAR, key pressed in beat 2, the key changes on the bar line
         Runner r;
         setup (r, NoteTrigger::transpose);
