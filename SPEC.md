@@ -141,8 +141,8 @@ There is no step skip, no chords per step and no drum mode.
 ## 6. Global settings
 
 - **Scale**: 13 built-in scales plus 1 user scale, with a root note: Major, Minor, Harmonic minor, Melodic minor, Dorian, Phrygian, Lydian, Mixolydian, Locrian, Major pentatonic, Minor pentatonic, Blues, Whole tone, plus USER. There is no Chromatic scale: a track with its scale OFF plays all 12 notes. The scale and root are **global** (all tracks, all patterns) and apply to every track whose USE SCALE is on in that pattern.
-- The scale is **selected in the main window** (SCALE tile popover, 12.2), never in the Settings dialog. The root can be set in the SCALE popover and in the Settings user scale editor (the same global value).
-- **User scale**: 12 note toggles. It is **edited only in the Settings dialog**, and **selected** (as "USER") from the main window.
+- The scale is **selected in the main window** (SCALE tile popover, 12.2), never in the Settings view. The root can be set in the SCALE popover and in the Settings user scale editor (the same global value).
+- **User scale**: 12 note toggles. It is **edited only in the Settings view**, and **selected** (as "USER") from the main window.
 - **Middle C** (display only): C3, C4 or C5 (11). A **user-wide** preference like the theme, not part of projects or presets.
 - **CC smoothing** on/off and its curve (10).
 - **Pattern change from incoming CC**: on/off, MIDI channel and CC number (7.3).
@@ -464,7 +464,7 @@ On macOS, Alt is Option, Ctrl-click for selection is Cmd-click, and Ctrl-click a
 - TRACK: click for the track list. NOTES / CC: click to switch.
 - PATTERN: ‹ › queue the previous / next pattern; click the number for the pattern picker (step view and Macros page). CHAIN: click to switch chain playback on / off.
 - Start / stop button: see 3.
-- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back; right-click: one step forward (redo) (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings dialog.
+- FILE: the preset, pattern and macro files menu (13.3). UNDO: one step back; right-click: one step forward (redo) (9). MACROS: Macros page; reads "LEARN M005" in amber while learning. SETTINGS (gear icon): settings view (toggles it, 11).
 
 **Patterns view**
 - Pattern slot: click to select it (also where PASTE writes). The play button at the top center selects it and queues it.
@@ -558,7 +558,7 @@ Opened with the MACROS button in the header; STEPS goes back.
 
 - **FILE** button (folder icon) in the header, between the BPM box and UNDO, opens one flat menu with three sections, each under its own header: **PRESET**, **PATTERN**, **MACROS**.
 - **PRESET** (header "PRESET: SONG", or "PRESET: UNSAVED"): NEW (asks first: "Clear all patterns, chain and settings? Macro mappings are kept."; resets what a preset holds to the init values (4.1), keeps the mappings and everything a preset does not hold), LOAD..., SAVE (overwrites the current preset file; dimmed when there is none), SAVE AS...
-  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings dialog (CC smoothing and its curve, MIDI thru, note input, base note, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the dialog settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
+  - Presets hold the music: all 64 patterns, the chain, track routing and the musical settings (scale, root, user scale notes, armed params and ranges), plus the current pattern. They do **not** hold the settings found only in the Settings view (CC smoothing and its curve, MIDI thru, note input, base note, pattern change by CC, quantize), the user-wide theme and middle C, macro mappings or the window size: preset LOAD leaves those as they are and preset NEW does not reset them. The user scale notes are the exception among the Settings view settings: a preset can select USER, so it carries its notes. Everything is still saved with the DAW project (13).
   - Dialogs start in **Documents/Vima/Presets**; extension **.vima** (XML). Loading a preset or preset NEW clears undo. The current preset file is remembered with the DAW project.
 - **PATTERN** (header "PATTERN 05", the slot only, no file name) acts on the **selected pattern**: the one in the PATTERN box, or the selected slot in the patterns view. NEW (asks first: "Reset Pattern 05? You can undo this"; an empty pattern: all steps off, settings and values at init, 4.1), LOAD... (asks before replacing a pattern that has steps on), SAVE AS... There is no plain SAVE: a file would have to be linked to each of the 64 slots. NEW and LOAD are one undo step each.
   - A pattern file holds the pattern only: the 8 tracks' steps and each track's length, division, direction, swing and scale on / off. No routing, chain, scale or other globals: a loaded pattern plays in the current preset's scale.
