@@ -391,6 +391,12 @@ void Engine::updateTriggerTracks (const Project& project, const Host& host, doub
             continue;
         }
         const bool keys = s >= 0 && numHeld[(size_t) s] > 0;
+        if (! trackOn[i] && ! startPending[i] && ! keys)
+        {
+            // a chosen track with no keys is silent, also one just chosen while it was playing as usual
+            trackFrom[i] = trackTo[i] = 1.0e18;
+            continue;
+        }
         if (! trackOn[i] && ! startPending[i] && keys)
         {
             // starts on the trigger's Quantize setting, from step 1; from silence (the run's first block) at once

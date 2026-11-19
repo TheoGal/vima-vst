@@ -19,7 +19,7 @@ public:
     void paintOverChildren (juce::Graphics&) override;
     // Step view: the TRACK box with the NOTES / CC switch, and the PATTERN box. Their frames
     // continue down around the track and pattern tiles of the parameter row (SPEC.md 12.2).
-    juce::Rectangle<int> trackGroupTop() const { return trackBox.getBounds().getUnion (modeArea); }
+    juce::Rectangle<int> trackGroupTop() const { return trackBox.getBounds().getUnion (modeArea).getUnion (niArea); }
     juce::Rectangle<int> patternGroupTop() const { return chainBtn.isVisible() ? patternArea.getUnion (chainBtn.getBounds()) : patternArea; }
     // The "βήμα" wordmark (SPEC.md 12.1), fitted into `area`, left-aligned and centred vertically
     static void drawWordmark (juce::Graphics&, juce::Rectangle<float> area);
@@ -28,6 +28,7 @@ public:
 
 private:
     void showTrackMenu();
+    void paintNoteInputTile (juce::Graphics&);
     void showFileMenu();
 public:
     int fileMenuPattern();   // the pattern the FILE menu's PATTERN section acts on
@@ -37,6 +38,6 @@ private:
     Context& ctx;
     FileActions fileActions { ctx, *this };
     Pill trackBox, notesBtn, ccBtn, stepsBtn, prevBtn, nextBtn, patternBtn, undoBtn, macrosBtn, settingsBtn, transportBtn, fileBtn, chainBtn, editBtn, playingBtn;
-    juce::Rectangle<int> modeArea, patternArea, hostArea, nameArea;
+    juce::Rectangle<int> modeArea, patternArea, hostArea, nameArea, niArea;
 };
 } // namespace vima

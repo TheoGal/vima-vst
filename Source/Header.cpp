@@ -309,13 +309,17 @@ void Header::resized()
     else
     {
         r = r.withLeft (128);   // over the track tiles; the wordmark column holds SCALE below
+        // narrow NOTES / CC, then the NOTE INPUT / MIDI THRU tile up to the right edge of the track tiles below
+        const int right = r.getX() + 106 + 8 + 228;
         trackBox.setBounds (r.removeFromLeft (100).withSizeKeepingCentre (100, 32));
-        r.removeFromLeft (14);
-        modeArea = r.removeFromLeft (172).withSizeKeepingCentre (172, 34);
+        r.removeFromLeft (8);
+        modeArea = r.removeFromLeft (136).withSizeKeepingCentre (136, 34);
         auto m = modeArea.reduced (4);
-        notesBtn.setBounds (m.removeFromLeft (92));
+        notesBtn.setBounds (m.removeFromLeft (74));
         m.removeFromLeft (3);
         ccBtn.setBounds (m);
+        r.removeFromLeft (8);
+        niArea = r.withRight (right).withSizeKeepingCentre (right - r.getX(), 32);
     }
 
     auto right = r;
@@ -406,6 +410,34 @@ void Header::showFileMenu()
 }
 
 void Header::mouseDown (const juce::MouseEvent&) {}
+
+// Step view, track frame (SPEC.md 12.2): TRIG / TRANSP with the selected track's transposition while
+// NOTE INPUT drives it, else MIDI THRU while thru passes notes, else nothing
+void Header::paintNoteInputTile (juce::Graphics& g)
+{
+    const auto& t = Theme::current();
+    const auto& gg = ctx.globalsCopy();
+    const bool noteInput = gg.noteTrigger != NoteTrigger::off && ((gg.triggerTracks >> ctx.ui.track) & 1);
+    const bool thru = gg.midiThru && gg.noteTrigger == NoteTrigger::off;
+    if (! noteInput && ! thru)
+        return;
+    const auto na = niArea.toFloat();
+    g.setColour (t.green.withAlpha (0.12f));
+    g.fillRoundedRectangle (na, 6.0f);
+    g.setColour (t.green.withAlpha (0.55f));
+    g.drawRoundedRectangle (na.reduced (0.5f), 6.0f, 1.0f);
+    g.setColour (t.green);
+    g.setFont (Fonts::label (10.0f));
+    if (! noteInput)
+    {
+        g.drawText ("MIDI THRU", na, juce::Justification::centred);
+        return;
+    }
+    g.drawText (gg.noteTrigger == NoteTrigger::trigger ? "TRIG" : "TRANSP", na.withTrimmedLeft (10.0f), juce::Justification::centredLeft);
+    const int tr = ctx.proc.engine.shownTranspose[(size_t) ctx.ui.track].load();   // in SHIFT steps
+    g.setFont (Fonts::monoSemi (13.0f));
+    g.drawText ((tr >= 0 ? "+" : "") + juce::String (tr), na.withTrimmedRight (10.0f), juce::Justification::centredRight);
+}
 
 void Header::drawWordmark (juce::Graphics& g, juce::Rectangle<float> area)
 {
@@ -508,6 +540,7 @@ void Header::paintOverChildren (juce::Graphics& g)
         g.setFont (Fonts::monoSemi (14.0f));
         g.drawText (juce::String (ctx.ui.track + 1).paddedLeft ('0', 2), tb.withTrimmedLeft (12 + lw + 6).withWidth (24), juce::Justification::centredLeft);
         draw::chevronDown (g, { (float) tb.getRight() - 14.0f, (float) tb.getCentreY() }, t.text2, 10.0f);
+        paintNoteInputTile (g);
     }
 
     // pattern box content
@@ -552,17 +585,8 @@ void Header::paintOverChildren (juce::Graphics& g)
         }
         else
         {
-            // note trigger (SPEC.md 3.1): while keys transpose the selected track, the transposition
-            // replaces the word BPM, in SHIFT steps ("+2")
-            const int tr = ctx.globalsCopy().noteTrigger != NoteTrigger::off ? ctx.proc.engine.shownTranspose[(size_t) ctx.ui.track].load() : 0;
-            if (tr != 0)
-            {
-                g.drawText (juce::String (ctx.proc.hostBpm.load(), 2), hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
-                g.setColour (ctx.modeAccent());
-                g.drawText ((tr > 0 ? "+" : "") + juce::String (tr), hostArea.withTrimmedRight (10), juce::Justification::centredRight);
-            }
-            else
-                g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
+            // the transposition shows in the track frame tile (paintNoteInputTile)
+            g.drawText (juce::String (ctx.proc.hostBpm.load(), 2) + " BPM", hostArea.withTrimmedLeft (36), juce::Justification::centredLeft);
         }
     }
 

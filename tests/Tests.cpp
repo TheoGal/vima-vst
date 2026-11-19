@@ -1395,6 +1395,43 @@ void testNoteTrigger()
         check (! ons.empty() && near (ons[0].ppq, 4.0, 0.01), "trigger quantize 1 BAR: a key pressed in beat 2 starts on the next bar, from step 1");
     }
     {
+        // Tracks changed while TRIGGER is on take effect at once (no OFF -> TRIGGER needed)
+        Runner r;
+        setup (r, NoteTrigger::trigger);
+        fillOn (r.track (1));
+        r.track (1).length = 4;
+        r.track (1).scaleOn = false;
+        r.project->routing[1].midiChannel = 2;
+        r.project->routing[1].noteOut = true;
+        r.project->globals.triggerTracks = 0b01;
+        r.host.playing = r.host.dawPlaying = true;
+        r.run (1.0);
+        check (r.noteOns (1).empty() && r.noteOns (2).size() == 4, "Tracks live: Vima playing, the unchosen track plays, the chosen waits");
+        r.project->globals.triggerTracks = 0b11;
+        r.run (1.0);
+        check (r.noteOns (2).size() == 4, "Tracks live: choosing a track while TRIGGER is on silences it at once (waits for keys)");
+        r.run (1.0, noteIn (1, 60, true));
+        check (r.noteOns (1).size() == 4 && r.noteOns (2).size() == 8, "Tracks live: ... and a key now starts it with the others");
+        r.run (1.0, noteIn (1, 60, false));
+        const auto before = r.noteOns (1).size();
+        r.project->globals.triggerTracks = 0b10;
+        r.run (1.0);
+        check (r.noteOns (1).size() == before + 4, "Tracks live: un-choosing a track while TRIGGER is on lets it play as usual at once");
+
+        Runner rk;
+        setup (rk, NoteTrigger::trigger);
+        fillOn (rk.track (1));
+        rk.track (1).length = 4;
+        rk.track (1).scaleOn = false;
+        rk.project->routing[1].midiChannel = 2;
+        rk.project->routing[1].noteOut = true;
+        rk.project->globals.triggerTracks = 0b01;
+        rk.run (1.0, noteIn (1, 60, true));
+        rk.project->globals.triggerTracks = 0b11;
+        rk.run (1.0);
+        check (rk.noteOns (1).size() == 8 && rk.noteOns (2).size() == 4, "Tracks live: a track chosen while a key holds a run joins it");
+    }
+    {
         // Tracks: only the chosen tracks follow the keys
         Runner r;
         setup (r, NoteTrigger::trigger);
@@ -2196,6 +2233,16 @@ int main (int argc, char** argv)
         ctx.ui.selection = rangeMask (4, 11);
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-dark-notes.png"));
+        {
+            auto relayout = [&ed] { for (int i = 0; i < ed.getNumChildComponents(); ++i) ed.getChildComponent (i)->resized(); ed.refreshAll(); };
+            proc->edit (-1, [] (Project& p) { p.globals.noteTrigger = NoteTrigger::trigger; p.globals.triggerTracks = 0xFF; });
+            proc->engine.shownTranspose[2] = 2;
+            relayout();
+            snapshot (ed, outDir.getChildFile ("main-note-input-tile.png"));
+            proc->edit (-1, [] (Project& p) { p.globals.noteTrigger = NoteTrigger::off; p.globals.triggerTracks = 0xFF; });
+            proc->engine.shownTranspose[2] = 0;
+            relayout();
+        }
         proc->edit (-1, [] (Project& p) { p.globals.chainOn = true; });
         ed.refreshAll();
         snapshot (ed, outDir.getChildFile ("main-chain-on.png"));
