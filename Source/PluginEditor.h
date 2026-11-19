@@ -75,6 +75,7 @@ private:
     void setMacrosView (bool);
     void openSettings();
     void closeSettings();
+    void closeSettingsNow();
 
     struct Content : public juce::Component
     {

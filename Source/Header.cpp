@@ -147,7 +147,7 @@ Header::Header (Context& c) : ctx (c)
     stepsBtn.onClick = [this]
     {
         if (ctx.ui.macrosView && ctx.showMacros) ctx.showMacros (false);
-        else if (ctx.showPatterns) ctx.showPatterns (false);
+        else if (ctx.showPatterns) ctx.showPatterns (false);   // also leaves the Settings view
     };
     addChildComponent (stepsBtn);
 
@@ -248,7 +248,7 @@ Header::Header (Context& c) : ctx (c)
     macrosBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (ctx.showMacros) ctx.showMacros (! ctx.ui.macrosView); };
     addAndMakeVisible (macrosBtn);
 
-    settingsBtn.look = plainOutline;
+    settingsBtn.look = [this] { const auto& t = Theme::current(); return Pill::outline (ctx.ui.settingsView ? t.neutral : t.border, t.text2); };   // lit in the Settings view
     // SETTINGS: icon only (a gear), like FILE
     settingsBtn.radius = 6.0f;
     settingsBtn.onClick = [this] { Popover::closeAll (*ctx.root); if (ctx.openSettings) ctx.openSettings(); };
@@ -291,7 +291,7 @@ Header::Header (Context& c) : ctx (c)
 
 void Header::resized()
 {
-    const bool pv = ctx.ui.patternsView || ctx.ui.macrosView;
+    const bool pv = ctx.ui.patternsView || ctx.ui.macrosView || ctx.ui.settingsView;
     auto r = getLocalBounds().withTrimmedBottom (1).reduced (20, 0);
 
     nameArea = r.removeFromLeft (60);
@@ -448,7 +448,7 @@ void Header::paint (juce::Graphics& g)
     // Backgrounds only. Everything drawn on the buttons (texts, chevrons, icons) is drawn in
     // paintOverChildren, so a button's hover fill (SPEC.md 12.5) never covers it.
     const auto& t = Theme::current();
-    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
+    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView && ! ctx.ui.settingsView;
     if (! stepView)   // the step view's top band is drawn by the editor, with the group frames
     {
         g.fillAll (t.panel);
@@ -470,11 +470,11 @@ void Header::paint (juce::Graphics& g)
         draw::tile (g, trackBox.getBounds().toFloat(), t.tile, t.border, 6.0f);
         draw::tile (g, modeArea.toFloat(), t.tile, t.border, 7.0f);   // mode switch frame
     }
-    else if (ctx.ui.macrosView)
+    else if (ctx.ui.macrosView || ctx.ui.settingsView)
     {
         g.setColour (t.text);
         g.setFont (Fonts::sansSemi (13.0f).withExtraKerningFactor (0.14f));
-        g.drawText ("MACROS", stepsBtn.getBounds().withX (stepsBtn.getRight() + 14).withWidth (120), juce::Justification::centredLeft);
+        g.drawText (ctx.ui.settingsView ? "SETTINGS" : "MACROS", stepsBtn.getBounds().withX (stepsBtn.getRight() + 14).withWidth (120), juce::Justification::centredLeft);
     }
 
     const bool pickerOpen = Popover::isOpen (*ctx.root, "patternPicker");
@@ -492,7 +492,7 @@ void Header::paint (juce::Graphics& g)
 void Header::paintOverChildren (juce::Graphics& g)
 {
     const auto& t = Theme::current();
-    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
+    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView && ! ctx.ui.settingsView;
 
     // the STEPS chevron sits on the button's green fill
     if (stepsBtn.isVisible())

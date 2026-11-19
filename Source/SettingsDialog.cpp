@@ -366,32 +366,28 @@ SettingsDialog::SettingsDialog (Context& c) : ctx (c)
     baseOctave->pixelsPerStep = 10.0f;
 }
 
+// The Settings view fills the area below the header (SPEC.md 11)
 juce::Rectangle<int> SettingsDialog::panelBounds() const
 {
-    return getLocalBounds().withSizeKeepingCentre (1100, 536);   // two columns (SPEC.md 11)
+    return getLocalBounds();
 }
 
-void SettingsDialog::mouseDown (const juce::MouseEvent& e)
-{
-    if (! panelBounds().contains (e.getPosition()) && onClose)
-        onClose();
-}
+void SettingsDialog::mouseDown (const juce::MouseEvent&) {}
 
 void SettingsDialog::resized()
 {
     rows.clear();
     dividers.clear();
     const auto panel = panelBounds();
-    // footer: RESET DEFAULTS and DONE on the left, the MANUAL and VIMA ON GITHUB links on the right
+    // footer: RESET DEFAULTS on the left, the MANUAL and VIMA ON GITHUB links on the right
     auto footer = panel.withTop (panel.getBottom() - 60).reduced (20, 13);
     resetBtn->setBounds (footer.removeFromLeft (140));
-    footer.removeFromLeft (8);
-    doneBtn->setBounds (footer.removeFromLeft (90));
+    doneBtn->setVisible (false);   // a view, not a dialog: SETTINGS or another view's button leaves it
     githubBtn->setBounds (footer.removeFromRight (150));
     footer.removeFromRight (4);
     manualBtn->setBounds (footer.removeFromRight (100));
 
-    auto inner = panel.withTrimmedTop (54).withTrimmedBottom (60).reduced (24, 14);
+    auto inner = panel.withTrimmedBottom (60).reduced (40, 24);
     const int colGap = 40, colW = (inner.getWidth() - colGap) / 2;
     auto leftCol = inner.withWidth (colW), rightCol = inner.withTrimmedLeft (colW + colGap);
     juce::Rectangle<int> body;
@@ -506,19 +502,13 @@ void SettingsDialog::resized()
 void SettingsDialog::paint (juce::Graphics& g)
 {
     const auto& t = Theme::current();
-    g.fillAll (juce::Colours::black.withAlpha (Theme::isLight() ? 0.25f : 0.55f));
+    g.fillAll (t.bg);   // a view, like PATTERNS and MACROS
     const auto panel = panelBounds();
-    paintPanel (g, panel.toFloat(), 10.0f);
-
-    g.setColour (t.text);
-    g.setFont (Fonts::sansSemi (13.0f).withExtraKerningFactor (0.14f));
-    g.drawText ("SETTINGS", panel.withHeight (54).withTrimmedLeft (20), juce::Justification::centredLeft);
     g.setColour (t.border);
-    g.fillRect (panel.getX(), panel.getY() + 54, panel.getWidth(), 1);
     g.fillRect (panel.getX(), panel.getBottom() - 60, panel.getWidth(), 1);
     for (auto d : dividers)
         g.fillRect (d);
-    g.fillRect (panel.getCentreX(), panel.getY() + 68, 1, panel.getHeight() - 54 - 60 - 28);   // the column split
+    g.fillRect (panel.getCentreX(), panel.getY() + 24, 1, panel.getHeight() - 60 - 48);   // the column split
 
     const auto gl = ctx.globalsCopy();
     for (const auto& r : rows)

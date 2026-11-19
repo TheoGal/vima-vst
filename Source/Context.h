@@ -46,6 +46,7 @@ struct UiState
     int shiftAmount = 0;           // running offset while the shift knob is dragged
 
     bool macrosView = false;
+    bool settingsView = false;   // the Settings view, over whichever view it was opened from (SPEC.md 11)
     int macroPage = 0;             // page shown on the Macros page (32 macros each)
     int selectedMacro = 0;
     bool macroLearn = false;       // LEARN: the next touched control is mapped to selectedMacro

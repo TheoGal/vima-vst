@@ -220,7 +220,7 @@ VimaEditor::VimaEditor (VimaProcessor& p)
     {
         const auto& t = Theme::current();
         g.fillAll (t.bg);
-        if (ctx.ui.patternsView || ctx.ui.macrosView)
+        if (ctx.ui.patternsView || ctx.ui.macrosView || ctx.ui.settingsView)
             return;
         // Step view: the header and the parameter row form one band. The TRACK box and the
         // PATTERN box each sit in a rounded frame that flows down around their tiles (SPEC.md 12.2).
@@ -311,7 +311,7 @@ void VimaEditor::layoutContent()
 {
     // Step view (SPEC.md 12.2): a small top padding above the top band; the step grid close to
     // the operations panel. The patterns view and the Macros page keep a flat header at the top.
-    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView;
+    const bool stepView = ! ctx.ui.patternsView && ! ctx.ui.macrosView && ! ctx.ui.settingsView;
     auto r = content.getLocalBounds();
     const auto views = r.withTrimmedTop (headerHeight);
     patterns.setBounds (views);
@@ -327,7 +327,7 @@ void VimaEditor::layoutContent()
     body.removeFromTop (14);
     grid.setBounds (body.removeFromTop (2 * (StepGrid::ledHeight + StepGrid::ledGap + StepGrid::cellHeight) + StepGrid::rowGap));
     ops.setBounds (body.removeFromBottom (140));
-    if (settings) settings->setBounds (content.getLocalBounds());
+    if (settings) settings->setBounds (views);
 }
 
 void VimaEditor::refreshAll()
@@ -337,14 +337,15 @@ void VimaEditor::refreshAll()
         lastTheme = Theme::revision();
         lnf.updateColours();
     }
-    const bool mv = ctx.ui.macrosView;
-    const bool pv = ctx.ui.patternsView && ! mv;
-    paramRow.setVisible (! pv && ! mv);
-    grid.setVisible (! pv && ! mv);
-    ops.setVisible (! pv && ! mv);
+    const bool sv = ctx.ui.settingsView && settings != nullptr;
+    const bool mv = ctx.ui.macrosView && ! sv;
+    const bool pv = ctx.ui.patternsView && ! mv && ! sv;
+    paramRow.setVisible (! pv && ! mv && ! sv);
+    grid.setVisible (! pv && ! mv && ! sv);
+    ops.setVisible (! pv && ! mv && ! sv);
     patterns.setVisible (pv);
     macrosView.setVisible (mv);
-    learnOverlay.setVisible (ctx.ui.macroLearn && ! mv);
+    learnOverlay.setVisible (ctx.ui.macroLearn && ! mv && ! sv);
     if (learnOverlay.isVisible()) learnOverlay.toFront (false);
     proc.uiTrack = ctx.ui.track;
     layoutContent();   // the header moves with the view (top padding in the step view only)
@@ -365,6 +366,7 @@ void VimaEditor::refreshAll()
 void VimaEditor::setPatternsView (bool show)
 {
     ctx.ui.patternsView = show;
+    closeSettingsNow();
     if (show) ctx.ui.macrosView = false;
     if (show)
     {
@@ -382,6 +384,7 @@ void VimaEditor::setPatternsView (bool show)
 void VimaEditor::setMacrosView (bool show)
 {
     ctx.ui.macrosView = show;
+    closeSettingsNow();
     if (show)
     {
         ctx.ui.patternsView = false;
@@ -391,13 +394,29 @@ void VimaEditor::setMacrosView (bool show)
     refreshAll();
 }
 
+// SETTINGS is a view like PATTERNS and MACROS (SPEC.md 11): the button toggles it, and leaving it
+// returns to the view it was opened from
 void VimaEditor::openSettings()
 {
+    if (settings != nullptr)
+    {
+        closeSettings();
+        return;
+    }
+    Popover::closeAll (content);
     settings = std::make_unique<SettingsDialog> (ctx);
     settings->onClose = [this] { closeSettings(); };
+    ctx.ui.settingsView = true;
     content.addAndMakeVisible (*settings);
-    settings->setBounds (content.getLocalBounds());
-    settings->toFront (true);
+    refreshAll();
+    settings->toFront (false);
+    if (learnOverlay.isVisible()) learnOverlay.toFront (false);
+}
+
+void VimaEditor::closeSettingsNow()
+{
+    ctx.ui.settingsView = false;
+    settings.reset();
 }
 
 void VimaEditor::closeSettings()
@@ -405,7 +424,7 @@ void VimaEditor::closeSettings()
     juce::Component::SafePointer<VimaEditor> safe (this);
     juce::MessageManager::callAsync ([safe]
     {
-        if (safe != nullptr) { safe->settings.reset(); safe->refreshAll(); }
+        if (safe != nullptr) { safe->closeSettingsNow(); safe->refreshAll(); }
     });
 }
 
