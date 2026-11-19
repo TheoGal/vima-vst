@@ -656,7 +656,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-Nothing at the moment.
+- **Docs for v1.7.0** (only when the user has settled the text; MANUAL.md, README.md, the PDF): the version next to the Vima title from now on ("1.7.0"); NOTE INPUT (TRANSPOSE / TRIGGER, Tracks, Quantize, base note), MIDI THRU, the track frame TRIG / TRANSP / MIDI THRU tile, the Settings view in two columns, and a new Settings screenshot (docs/images/vima-settings.png).
 
 ### 15.2 Open
 
@@ -791,3 +791,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-19: Settings is a full view instead of a pop-up dialog (the two columns had made it too wide): opened and closed with the SETTINGS button, header as in the patterns and macros views (STEPS, title, no TRACK selector), no DONE button (11).
 - 2026-11-19: Fixed: a track switched on in NOTE INPUT Tracks while TRIGGER was on kept playing as usual until the mode was switched OFF and back; it now goes silent at once and waits for keys (3.1).
 - 2026-11-19: Step view: the NOTES / CC switch made narrower; the space holds a green tile in the track frame: TRIG / TRANSP with the selected track's transposition (+0 with none) while NOTE INPUT drives it, else MIDI THRU while thru passes notes, else empty (no grey "off" state). The transposition left the BPM box (3.1, 12.2).
+- 2026-11-19: Docs show the version next to the Vima title from v1.7.0 on (MANUAL.md, README.md, the PDF), applied with the 1.7.0 docs update (15.1).
