@@ -39,7 +39,9 @@ public:
 
     // Audio thread -> message thread: display state
     std::array<std::atomic<int>, numTracks> playStep;   // -1 when stopped
-    std::atomic<bool> isPlaying { false };
+    std::atomic<bool> isPlaying { false };       // Vima's own play state (the DAW, the play button): never set by keys
+    std::atomic<bool> triggerPlaying { false };  // NOTE INPUT TRIGGER: keys play the chosen tracks while Vima itself is stopped
+    std::atomic<double> triggerClock { -1.0 };   // ... the position of that run on Vima's own clock (-1: none), so the play button can pick it up
     // Note trigger (SPEC.md 3.1): the transposition each track plays with, in SHIFT steps (display)
     std::array<std::atomic<int>, numTracks> shownTranspose;
     std::atomic<int> chainPosition { 0 };
@@ -122,6 +124,7 @@ private:
     std::array<int, numTracks> targetTranspose {};             // what the keys ask for
     std::array<int, numTracks> pendTranspose {};               // ... scheduled at pendAt (Quantize)
     std::array<double, numTracks> pendAt {};
+    double unchosenOrigin = 0.0;   // step 1 time of the unchosen tracks when Vima's play joined a key run
     bool gating = false;           // TRIGGER mode while Vima runs: the chosen tracks play only while keys are held
     NoteTrigger lastTriggerMode = NoteTrigger::off;
     bool trigRunning = false;      // Vima runs because keys started it (not the DAW or the play button)

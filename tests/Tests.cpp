@@ -1465,6 +1465,34 @@ void testNoteTrigger()
                "TRANSPOSE -> TRIGGER with a key held: the chosen track keeps playing, the unchosen one too");
     }
     {
+        // keys never touch Vima's own play state; the play button picks up the key run in time
+        Runner r;
+        setup (r, NoteTrigger::trigger);
+        fillOn (r.track (1));
+        r.track (1).length = 4;
+        r.track (1).scaleOn = false;
+        r.project->routing[1].midiChannel = 2;
+        r.project->routing[1].noteOut = true;
+        r.project->globals.triggerTracks = 0b01;
+        r.run (1.0, noteIn (1, 60, true));
+        check (! r.engine.isPlaying.load() && r.engine.triggerPlaying.load() && r.noteOns (1).size() == 4 && r.noteOns (2).empty(),
+               "TRIGGER, all stopped: the key plays track 1, Vima itself still shows stopped, track 2 silent");
+        const double tc = r.engine.triggerClock.load();
+        check (near (tc, 1.0, 0.01), "the key run's own clock is exposed for the play button");
+        r.host.ppq = tc;            // the play button: Vima's free run continues the key run's clock
+        r.host.playing = true;
+        r.run (1.0);
+        const auto t1 = r.noteOns (1), t2 = r.noteOns (2);
+        bool steady = t1.size() == 8;
+        for (size_t k = 1; k < t1.size(); ++k) steady = steady && near (t1[k].ppq - t1[k - 1].ppq, 0.25, 0.01);
+        check (steady && r.engine.isPlaying.load(), "pressing play: track 1 carries on without a hiccup");
+        check (t2.size() == 4 && near (t2[0].ppq, 1.0, 0.01), "... and track 2 joins from its step 1");
+        r.host.playing = false;     // the play button again: Vima stops, the key keeps track 1 going
+        r.run (1.0);
+        check (r.noteOns (1).size() == 12 && r.noteOns (2).size() == 4 && ! r.engine.isPlaying.load(),
+               "stopping Vima: track 2 stops, track 1 plays on while the key is held");
+    }
+    {
         // the quantize also times transpositions: 1 BAR, key pressed in beat 2, the key changes on the bar line
         Runner r;
         setup (r, NoteTrigger::transpose);

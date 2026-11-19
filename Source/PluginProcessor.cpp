@@ -69,7 +69,11 @@ void VimaProcessor::processBlock (juce::AudioBuffer<float>& buffer, juce::MidiBu
     }
     else if (freeRun)
     {
-        if (freeRunRestart.exchange (false)) freePpq = 0.0;
+        if (freeRunRestart.exchange (false))
+        {
+            const double tc = engine.triggerClock.load();   // keys already play the chosen tracks: carry on in time
+            freePpq = tc >= 0.0 ? tc : 0.0;
+        }
         host.playing = true;
         host.ppq = freePpq;
         freePpq += buffer.getNumSamples() * (host.bpm / 60.0) / sampleRate;

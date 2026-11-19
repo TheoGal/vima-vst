@@ -385,9 +385,9 @@ void Engine::updateTriggerTracks (const Project& project, const Host& host, doub
         {
             // unchosen tracks: play as usual while Vima runs, silent in a run the keys started
             trackOn[i] = startPending[i] = stopPending[i] = false;
-            trackFrom[i] = openUnchosen ? -1.0e18 : 1.0e18;
+            trackFrom[i] = openUnchosen ? juce::jmax (-1.0e18, unchosenOrigin > 0.0 ? unchosenOrigin : -1.0e18) : 1.0e18;
             trackTo[i] = 1.0e18;
-            trackOrigin[i] = 0.0;
+            trackOrigin[i] = openUnchosen ? unchosenOrigin : 0.0;
             continue;
         }
         const bool keys = s >= 0 && numHeld[(size_t) s] > 0;
@@ -497,6 +497,7 @@ void Engine::finishTriggerBlock (double ppqEnd)
         trigRunning = false;   // the next block stops (all notes released)
     if (trigRunning && ! trigUsesDaw)
         trigClock = ppqEnd;
+    triggerClock = trigRunning && ! trigUsesDaw ? trigClock : -1.0;
 }
 
 // ---------------------------------------------------------------------------------------
@@ -519,6 +520,7 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
     {
         if (resetWindows)
         {
+            unchosenOrigin = 0.0;
             trigRunning = gating = false;
             trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
             trackFrom.fill (-1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
@@ -528,11 +530,19 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
     {
         if (! gating)
         {
-            // Vima (re)started by the DAW or the play button: the chosen tracks wait for keys
+            // Vima's own play starts (the DAW or the play button). If keys are already playing the chosen
+            // tracks on the same clock (no jump), they carry on undisturbed and the other tracks join:
+            // from their step 1 on Vima's own clock, in place on the DAW's. Otherwise the chosen tracks
+            // wait for keys.
+            const bool carryOn = trigRunning && lastPpqEnd >= 0.0 && std::abs (host.ppq - lastPpqEnd) < 0.02;
             gating = true;
+            if (! carryOn)
+            {
+                trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
+                trackFrom.fill (1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
+            }
+            unchosenOrigin = carryOn && ! trigUsesDaw ? host.ppq : 0.0;
             trigRunning = false;
-            trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
-            trackFrom.fill (1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
         }
         trigMode = true;
     }
@@ -545,7 +555,7 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
             bool any = false;
             for (int t = 0; t < numTracks; ++t) any = any || trackOn[(size_t) t] || startPending[(size_t) t];
             trigRunning = any;
-            trigUsesDaw = false;
+            trigUsesDaw = hostIn.dawPlaying;   // Vima held while the DAW rolls: stay on the DAW's clock
             trigClock = lastPpqEnd >= 0.0 ? lastPpqEnd : 0.0;
         }
         bool press = false;
@@ -559,6 +569,7 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
             trigRunning = true;
             trigUsesDaw = hostIn.dawPlaying;
             trigClock = 0.0;
+            unchosenOrigin = 0.0;
             trackOn.fill (false); startPending.fill (false); stopPending.fill (false);
             trackFrom.fill (1.0e18); trackTo.fill (1.0e18); trackOrigin.fill (0.0);
         }
@@ -590,6 +601,8 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
         lastCCSent.fill (-1);
         for (auto& s : playStep) s = -1;
         isPlaying = false;
+        triggerPlaying = false;
+        triggerClock = -1.0;
         beatsToSwitch = -1.0;
         // While stopped, a queued pattern switches immediately (nothing is playing)
         const int q = queuedPattern.exchange (-1);
@@ -598,7 +611,8 @@ void Engine::process (Project& project, const Host& hostIn, int numSamples, cons
         return;
     }
 
-    isPlaying = true;
+    isPlaying = hostIn.playing;   // keys never switch Vima's own play state
+    triggerPlaying = ! hostIn.playing;
     const double ppqPerSample = (host.bpm / 60.0) / sampleRate;
     const double ppq = host.ppq;
     const double ppqEnd = ppq + numSamples * ppqPerSample;

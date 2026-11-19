@@ -533,7 +533,7 @@ void StepGrid::paint (juce::Graphics& g)
     const int len = ctx.trackCopy().length;
     const auto accent = ctx.modeAccent();
     // the running step light only on the playing pattern (edit mode may show another, SPEC.md 7.5)
-    const bool playing = ctx.proc.engine.isPlaying && ctx.showsPlaying();
+    const bool playing = (ctx.proc.engine.isPlaying || ctx.proc.engine.triggerPlaying) && ctx.showsPlaying();
     const int play = playing ? ctx.proc.engine.playStep[(size_t) ctx.ui.track].load() : -1;
     const bool copied = ! ctx.ui.clip.empty();
     const auto sel = copied ? 0u : ctx.ui.selection & rangeMask (0, len - 1);
