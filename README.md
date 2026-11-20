@@ -442,9 +442,7 @@ Vima can listen to the notes you play on your keyboard (any MIDI channel) and ei
 
 - **OFF** (default): incoming notes do nothing (or pass through, with MIDI thru on).
 - **TRANSPOSE**: the keys transpose the chosen tracks while you hold them. Release all keys and the tracks go back to the pattern as written. TRANSPOSE never starts or stops anything; your DAW and Vima's play button still do that.
-- **TRIGGER**: the chosen tracks **only play while you hold a key**, and the key transposes them too. Press a key and they restart from step 1, release all keys and they stop. All chosen tracks start and stop together. The tracks you didn't choose behave as usual:
-  - **Vima playing**: the unchosen tracks keep playing as usual and are never transposed. The chosen ones stay silent until you hold a key.
-  - **Vima stopped**: a key starts the chosen tracks only. If your DAW is rolling they follow its clock, if not they run on Vima's own clock at your DAW's tempo. The play button keeps showing stopped (the keys have their own play), but the running steps still show in the steps view. Press play meanwhile and the other tracks join in without the chosen ones skipping a beat.
+- **TRIGGER**: the chosen tracks **only play while you hold a key**, and the key transposes them too. Press a key and they restart from step 1, release all keys and they stop. All chosen tracks start and stop together. The tracks you didn't choose behave as usual. This *per track* option allows you to have a pattern steadily playing on one track, while triggering a second one with your keys like an arpeggiator on a different track. Experiment with this feature as its very powerful and its easier to understand it by using it.
 
 **Tracks** (01-08): the tracks Note input acts on. All 8 are on by default. Switch a track off and it ignores the keys and just plays its pattern.
 
@@ -620,7 +618,9 @@ The **SETTINGS** button (the gear icon) switches Vima to the **Settings view**, 
 
 **Curve**: the shape of the glide while smoothing is on. **LINEAR** moves evenly from one value to the next. **EXP** starts slow and speeds up into the next value, **LOG** moves fast first and then settles into it. Parameters like filter cutoff often sound more natural with EXP or LOG, since our ears don't hear their changes evenly. Like smoothing, the curve applies to every track.
 
-**MIDI INPUT: MIDI thru**: by default Vima only sends what it generates and ignores whatever arrives at its input. Switch **MIDI thru** on and everything coming in (notes, CC, pitch bend, all of it) passes straight through to Vima's output, mixed with Vima's own notes. Handy when Vima sits on a MIDI track between your controller and your synth: you can play along on top of the sequence without rerouting anything. MIDI thru is off by default. Pattern change CC messages (see below) are always used by Vima and never passed through.
+**MIDI thru**: by default Vima only sends what it generates and ignores whatever arrives at its input. Switch **MIDI thru** on and everything coming in (notes, CC, pitch bend, all of it) passes straight through to Vima's output, mixed with Vima's own notes. Handy when Vima sits on a MIDI track between your controller and your synth: you can play along on top of the sequence without rerouting anything. MIDI thru is off by default. Pattern change CC messages (see below) are always used by Vima and never passed through.
+
+**Note Input**: Settings and options for the **Note Input - Play Vima like an arpeggiator** feature, already described
 
 **Note input**, **Tracks**, **Quantize** and **Base note**: see **Note Input - play Vima as an arpeggiator**. While Note input is on, every incoming note belongs to it: MIDI thru is greyed out and nothing passes through. Your MIDI thru setting is kept and comes back when Note input is OFF.
 
