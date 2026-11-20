@@ -2220,9 +2220,40 @@ int main (int argc, char** argv)
         ed.refreshAll();
         ed.context().openSettings();
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-settings@2x.png"));
+        ed.context().openSettings();   // toggles the Settings view off again
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
         ed.context().ui.ccMode = false;
         ed.refreshAll();
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-new-notes@2x.png"));
+
+        // the manual's track controls picture: notes with TRIG +2, CC with MIDI THRU
+        proc->edit (-1, [] (Project& p) { p.globals.noteTrigger = NoteTrigger::trigger; });
+        proc->engine.shownTranspose[0] = 2;
+        ed.refreshAll();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-tile-trig@2x.png"));
+        proc->edit (-1, [] (Project& p) { p.globals.noteTrigger = NoteTrigger::off; p.globals.midiThru = true; });
+        proc->engine.shownTranspose[0] = 0;
+        ed.context().ui.ccMode = true;
+        ed.refreshAll();
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-tile-thru-cc@2x.png"));
+        ed.context().ui.ccMode = false;
+        proc->edit (-1, [] (Project& p) { p.globals.midiThru = false; });
+
+        // the manual's main screenshot: a 16-step C minor line, playing on step 8
+        proc->edit (-1, [] (Project& p)
+        {
+            const int pcs[16] = { 10, 3, 5, 3, 5, 2, 7, 8, 2, 0, 2, 2, 5, 0, 8, 2 };
+            const bool on[16] = { 1, 1, 1, 1, 1, 0, 1, 1, 0, 1, 1, 1, 0, 0, 1, 0 };
+            auto& tr = p.patterns[0].tracks[0];
+            for (int i = 0; i < 16; ++i) { tr.steps[(size_t) i].pitchClass = (std::int8_t) pcs[i]; tr.steps[(size_t) i].on = on[i]; }
+        });
+        proc->engine.isPlaying = true;
+        proc->engine.playStep[0] = 7;
+        ed.refreshAll();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-main@2x.png"));
+        proc->engine.isPlaying = false;
+        proc->engine.playStep[0] = -1;
     }
     {
         auto proc = std::make_unique<VimaProcessor>();

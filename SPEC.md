@@ -656,7 +656,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-- **Docs for v1.7.0** (only when the user has settled the text; MANUAL.md, README.md, the PDF): the version next to the Vima title from now on ("1.7.0"); NOTE INPUT (TRANSPOSE / TRIGGER, Tracks, Quantize, base note), MIDI THRU, the track frame TRIG / TRANSP / MIDI THRU tile, the Settings view in two columns, and a new Settings screenshot (docs/images/vima-settings.png).
+- **Docs for v1.7.0** (README.md drafted 2026-11-20 for the user's review: version in the title, the "Note Input - play Vima as an arpeggiator" section after Working with patterns, MIDI thru in the Settings view section, new main / track controls / Settings screenshots; MANUAL.md, the PDF and the PDF in the release follow once the user approves the README): the version next to the Vima title from now on ("1.7.0"); NOTE INPUT (TRANSPOSE / TRIGGER, Tracks, Quantize, base note), MIDI THRU, the track frame TRIG / TRANSP / MIDI THRU tile, the Settings view in two columns, and a new Settings screenshot (docs/images/vima-settings.png).
 
 ### 15.2 Open
 
