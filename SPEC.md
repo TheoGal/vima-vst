@@ -656,7 +656,7 @@ The PDF manual is written from this spec. Material that belongs only in the manu
 
 ### 15.1 Decided, not built yet
 
-- **Docs for v1.7.0** (README.md drafted 2026-11-20 for the user's review: version in the title, the "Note Input - play Vima as an arpeggiator" section after Working with patterns, MIDI thru in the Settings view section, new main / track controls / Settings screenshots; MANUAL.md, the PDF and the PDF in the release follow once the user approves the README): the version next to the Vima title from now on ("1.7.0"); NOTE INPUT (TRANSPOSE / TRIGGER, Tracks, Quantize, base note), MIDI THRU, the track frame TRIG / TRANSP / MIDI THRU tile, the Settings view in two columns, and a new Settings screenshot (docs/images/vima-settings.png).
+Nothing at the moment.
 
 ### 15.2 Open
 
@@ -793,3 +793,4 @@ History of decisions, oldest first. Later entries override earlier ones; section
 - 2026-11-19: Step view: the NOTES / CC switch made narrower; the space holds a green tile in the track frame: TRIG / TRANSP with the selected track's transposition (+0 with none) while NOTE INPUT drives it, else MIDI THRU while thru passes notes, else empty (no grey "off" state). The transposition left the BPM box (3.1, 12.2).
 - 2026-11-19: Docs show the version next to the Vima title from v1.7.0 on (MANUAL.md, README.md, the PDF), applied with the 1.7.0 docs update (15.1).
 - 2026-11-19: Fixed (display only): a track switched on for TRIGGER while playing kept its playhead LED lit on the last step; it now goes off while the track waits for keys (3.1).
+- 2026-11-20: v1.7.0 released (Note Input, MIDI thru, Settings view, track frame tile); README, MANUAL.md and the PDF updated with the version in the title.
