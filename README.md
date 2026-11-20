@@ -620,7 +620,7 @@ The **SETTINGS** button (the gear icon) switches Vima to the **Settings view**, 
 
 **MIDI thru**: by default Vima only sends what it generates and ignores whatever arrives at its input. Switch **MIDI thru** on and everything coming in (notes, CC, pitch bend, all of it) passes straight through to Vima's output, mixed with Vima's own notes. Handy when Vima sits on a MIDI track between your controller and your synth: you can play along on top of the sequence without rerouting anything. MIDI thru is off by default. Pattern change CC messages (see below) are always used by Vima and never passed through.
 
-**Note input**, **Tracks**, **Quantize** and **Base note**: see **Note Input - play Vima as an arpeggiator**. While Note input is on, every incoming note belongs to it: MIDI thru is greyed out and nothing passes through. Your MIDI thru setting is kept and comes back when Note input is OFF.
+**Note input**: Options for the feature as explained in **Note Input - play Vima as an arpeggiator**. While Note input is on, every incoming note belongs to it: MIDI thru is greyed out and nothing passes through. Your MIDI thru setting is kept and comes back when Note input is OFF.
 
 **PATTERN CHANGE**:
 **From incoming CC**: You can use this setting to switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.
