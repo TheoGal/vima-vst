@@ -2252,6 +2252,35 @@ int main (int argc, char** argv)
         ed.refreshAll();
         juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
         savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-main@2x.png"));
+        // the manual's light theme picture: the same line, playing on step 10
+        proc->engine.playStep[0] = 9;
+        Theme::setLight (true);
+        ed.refreshAll();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-light@2x.png"));
+        Theme::setLight (false);
+        // the manual's LEARN picture: another line, steps 1-16 ON / PITCH / OCT and VEL 1-4 mapped, learning M053, playing on step 14
+        proc->edit (-1, [] (Project& p)
+        {
+            const int pcs[16] = { 3, 7, 3, 10, 5, 8, 3, 3, 3, 0, 8, 3, 8, 0, 5, 5 };
+            auto& tr = p.patterns[0].tracks[0];
+            for (int i = 0; i < 16; ++i) { tr.steps[(size_t) i].pitchClass = (std::int8_t) pcs[i]; tr.steps[(size_t) i].on = ! (i == 0 || i == 7 || i == 13); }
+            for (int i = 0; i < 16; ++i)
+            {
+                p.macros[(size_t) i] = defaultMacroMap (MacroTarget::stepOn, 0, 0, i, p.globals);
+                p.macros[(size_t) (16 + i)] = defaultMacroMap (MacroTarget::pitch, 0, 0, i, p.globals);
+                p.macros[(size_t) (32 + i)] = defaultMacroMap (MacroTarget::octave, 0, 0, i, p.globals);
+            }
+            for (int i = 0; i < 4; ++i) p.macros[(size_t) (48 + i)] = defaultMacroMap (MacroTarget::velocity, 0, 0, i, p.globals);
+        });
+        proc->engine.playStep[0] = 13;
+        ed.context().ui.selectedMacro = 52;
+        ed.context().ui.macroLearn = true;
+        ed.refreshAll();
+        juce::MessageManager::getInstance()->runDispatchLoopUntil (100);
+        savePng (ed.createComponentSnapshot (ed.getLocalBounds(), true, 2.0f), outDir.getChildFile ("docs-learn@2x.png"));
+        ed.context().ui.macroLearn = false;
+        ed.refreshAll();
         proc->engine.isPlaying = false;
         proc->engine.playStep[0] = -1;
     }
