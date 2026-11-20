@@ -8,6 +8,21 @@ from playwright.sync_api import sync_playwright
 repo = pathlib.Path(sys.argv[1]).resolve()
 out = pathlib.Path(sys.argv[2]).resolve()
 md = (repo / "MANUAL.md").read_text(encoding="utf-8")
+# GitHub starts a list right after a paragraph line; Python-Markdown needs a blank line before it
+lines, prev, in_list = [], "", False
+for line in md.split("\n"):
+    if re.match(r"- ", line) and prev.strip() and not in_list:
+        lines.append("")
+    if not line.strip():
+        in_list = False
+    elif re.match(r"\s*([-*]|\d+\.) ", line):
+        in_list = True
+    lines.append(line)
+    prev = line
+md = "\n".join(lines)
+# the footer carries the manual's title, version included
+m = re.search(r"<h1[^>]*>\s*(.*?)\s*</h1>", md, re.S)
+doc_title = m.group(1).strip() if m else "Vima User Manual"
 
 html_body = markdown.markdown(md, extensions=["tables", "attr_list", "md_in_html", "sane_lists"])
 # bare web addresses in the text (not already in a tag) become links
@@ -105,7 +120,7 @@ page = page.replace('src="docs/images/', f'src="{flat.as_uri()}/')
 tmp.write_text(page, encoding="utf-8")
 
 footer = """<div style="font-family: sans-serif; font-size: 7.5pt; color: #8a94a3; width: 100%; padding: 0 17mm; display: flex; justify-content: space-between;">
-<span>Vima User Manual</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>"""
+<span>""" + doc_title + """</span><span><span class="pageNumber"></span> / <span class="totalPages"></span></span></div>"""
 with sync_playwright() as p:
     b = p.chromium.launch()
     # lay the page out at the printed text width, so measured image sizes match the PDF

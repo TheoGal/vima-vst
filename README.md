@@ -442,7 +442,7 @@ Vima can listen to the notes you play on your keyboard (any MIDI channel) and ei
 
 - **OFF** (default): incoming notes do nothing (or pass through, with MIDI thru on).
 - **TRANSPOSE**: the keys transpose the chosen tracks while you hold them. Release all keys and the tracks go back to the pattern as written. TRANSPOSE never starts or stops anything; your DAW and Vima's play button still do that.
-- **TRIGGER**: the chosen tracks **only play while you hold a key**, and the key transposes them too. Press a key and they restart from step 1, release all keys and they stop. All chosen tracks start and stop together. The tracks you didn't choose behave as usual. This *per track* option allows you to have a pattern steadily playing on one track, while triggering a second one with your keys like an arpeggiator on a different track. Experiment with this feature as its very powerful and its easier to understand it by using it.
+- **TRIGGER**: the chosen tracks **only play while you hold a key**, and the key transposes them too. Press a key and they restart from step 1, release all keys and they stop. All chosen tracks start and stop together. The tracks you didn't choose behave as usual. This *per track* option allows you to have a pattern steadily playing on one track, while triggering a second one with your keys like an arpeggiator on a different track. Experiment with this feature as it's very powerful and it's easier to understand it by using it.
 
 **Tracks** (01-08): the tracks Note input acts on. All 8 are on by default. Switch a track off and it ignores the keys and just plays its pattern.
 

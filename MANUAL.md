@@ -3,7 +3,7 @@
 </p>
 
 <h1 align="center">
-Vima User Manual
+Vima v1.7.0 User Manual
 </h1>
 
 <p align="center">
@@ -141,6 +141,7 @@ Vima has **8 tracks**, shown as 01 to 08. Each one has its own MIDI channel assi
 
 - **TRACK**: pick which of the 8 tracks you see and edit.
 - **NOTES / CC**: switch between note mode and CC mode. Each button has a small light showing whether that output (notes or CC) is on for this track.
+- **The green tile** next to NOTES / CC: shows **TRIG** or **TRANSP** with the current transposition when **Note input** drives the track (see **Note Input - play Vima as an arpeggiator**), or **MIDI THRU** while MIDI thru passes your incoming MIDI through. Empty when neither is on.
 - **MIDI CH** (1-16): the channel the track plays on. Any track can use any channel, and several tracks can share one.<br />
 **In note mode:** 
 - **NOTE OUT** (on / off): whether the track's notes are sent.
@@ -306,7 +307,7 @@ Finally, the **Shift** knob is an endless knob that moves one value of all steps
 
 At the top of the plugin you can use the **pattern selector** button to either move to next or previous pattern (clicking on arrows) or open a quick pattern selector pop up. This will also allow you to switch to the **patterns view**. 
 
-When changing patterns manually the **Quantize** setting is considered. See also **Settings window**.
+When changing patterns manually the **Quantize** setting is considered. See also **Settings view**.
 
 ### The patterns view
 
@@ -432,6 +433,31 @@ While edit mode is on:
 Switch the pencil off and the main window goes back to the pattern that is playing.
 
 
+## Note Input - play Vima as an arpeggiator
+
+Vima can listen to the notes you play on your keyboard (any MIDI channel) and either **transpose** your sequences or **trigger** them, much like an arpeggiator: hold a key and the pattern plays in that key, release it and it stops. All the related options are in the **Settings view**, under **MIDI INPUT**.
+
+**Note input** has three modes:
+
+- **OFF** (default): incoming notes do nothing (or pass through, with MIDI thru on).
+- **TRANSPOSE**: the keys transpose the chosen tracks while you hold them. Release all keys and the tracks go back to the pattern as written. TRANSPOSE never starts or stops anything; your DAW and Vima's play button still do that.
+- **TRIGGER**: the chosen tracks **only play while you hold a key**, and the key transposes them too. Press a key and they restart from step 1, release all keys and they stop. All chosen tracks start and stop together. The tracks you didn't choose behave as usual. This *per track* option allows you to have a pattern steadily playing on one track, while triggering a second one with your keys like an arpeggiator on a different track. Experiment with this feature as it's very powerful and it's easier to understand it by using it.
+
+**Tracks** (01-08): the tracks Note input acts on. All 8 are on by default. Switch a track off and it ignores the keys and just plays its pattern.
+
+**Quantize**: OFF (default), 1/32, 1/16, 1/8, 1 BEAT or 1 BAR. When a key change takes effect: with OFF from the next step, otherwise at the next 1/32, 1/16, 1/8, beat or bar. In TRIGGER it also times when the tracks start and stop. Set it to 1 BAR and your sequence changes key exactly on the bar line, no matter how sloppy your timing on the keyboard is.
+
+**Base note**: the key that plays your patterns as written, set with two knobs like a step's: **NOTE** (any of the 12 notes) and **OCT**. The default is middle C. Every key above or below it shifts the tracks up or down, exactly like one SHIFT step on PITCH:
+- Tracks with USE SCALE on move by **scale steps**, so the sequence stays in the scale and an octave on your keyboard means 12 scale steps.
+- Tracks with USE SCALE off move by **semitones**.
+
+The base note doesn't have to be in your scale, it's only the "zero" point. CC is never transposed. If you hold several keys, the last one you pressed wins; release it and Vima falls back to the most recent key still held.
+
+In the steps view, the green tile in the track controls shows **TRIG** or **TRANSP** and the current transposition of the track you're looking at ("+2", "-3", "+0" with no key held).
+
+>**Design choice: why hold only, and no toggle?** Holding a key is how every synth and arpeggiator behaves, so your hands already know it. Lift your fingers and the tracks stop: no guessing which state a track is in. The Quantize setting is there so you can hold keys loosely and still land on the grid.
+
+
 ## Macros: automating Vima from your DAW
 
 ### One more design choice: Why macros?
@@ -506,7 +532,7 @@ The **transport** section of Vima at the top displays your DAW's BPM. The **play
 
 ## SCALE
 
-Vima can be set to send note messages in a defined scale. Clicking the **SCALE** button on the right opens a pop up to pick a root and one of 13 scales or your own USER scale (defined in Settings window). The mouse wheel over it steps through the scales.
+Vima can be set to send note messages in a defined scale. Clicking the **SCALE** button on the right opens a pop up to pick a root and one of 13 scales or your own USER scale (defined in the Settings view). The mouse wheel over it steps through the scales.
 
 <p align="center">
   <img src="docs/images/scale-popup.png" width="350" alt="Scale">
@@ -535,7 +561,7 @@ Clicking the **file** button (with a folder icon) at the top of the plugin opens
 **PRESET**: the music of the whole instance.
 
 - Holds all 64 patterns, the chain, the track routing, the scale, root and user scale, the PARAMS and RANGES, and the current pattern.
-- Does **not** hold the macro mappings, the settings found only in the Settings dialog (CC smoothing and its curve, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
+- Does **not** hold the macro mappings, the settings found only in the Settings view (CC smoothing and its curve, MIDI thru, Note input, pattern change by CC, quantize), the theme, middle C or the window size. Loading a preset leaves all of those as they are.
 - **NEW** loads a new init preset: all tracks 16 steps long, 1/16 division, track 1 with all its note steps on.
 - **LOAD...** loads a saved preset.
 - **SAVE** saves changes to a loaded preset (greyed out if no saved preset is loaded).
@@ -568,12 +594,12 @@ You can also save or load a pattern by right-clicking a cell in the patterns vie
 Your DAW's own preset system (for example Live's .adv or .vstpreset files) also works and stores everything, mappings included.
 
 
-## The Settings window
+## The Settings view
 
-The **settings** pop up opens with the **SETTINGS** button (the gear icon). Click **DONE** or anywhere outside it to close.
+The **SETTINGS** button (the gear icon) switches Vima to the **Settings view**, just like PATTERNS and MACROS switch to theirs. Click the gear again (or STEPS, PATTERNS, MACROS) to leave it. Every setting applies the moment you click it, so there is nothing to confirm.
 
 <p align="center">
-  <img src="docs/images/vima-settings.png" width="600" alt="Settings pop">
+  <img src="docs/images/vima-settings.png" width="800" alt="Settings view">
 </p>
 
 **APPEARANCE: Theme**, DARK or LIGHT. This is **your** preference: it applies to every Vima in every project, and switching it in one Vima switches all open ones.
@@ -591,6 +617,10 @@ The **settings** pop up opens with the **SETTINGS** button (the gear icon). Clic
 
 **Curve**: the shape of the glide while smoothing is on. **LINEAR** moves evenly from one value to the next. **EXP** starts slow and speeds up into the next value, **LOG** moves fast first and then settles into it. Parameters like filter cutoff often sound more natural with EXP or LOG, since our ears don't hear their changes evenly. Like smoothing, the curve applies to every track.
 
+**MIDI thru**: by default Vima only sends what it generates and ignores whatever arrives at its input. Switch **MIDI thru** on and everything coming in (notes, CC, pitch bend, all of it) passes straight through to Vima's output, mixed with Vima's own notes. Handy when Vima sits on a MIDI track between your controller and your synth: you can play along on top of the sequence without rerouting anything. MIDI thru is off by default. Pattern change CC messages (see below) are always used by Vima and never passed through.
+
+**Note input**: Options for the feature as explained in **Note Input - play Vima as an arpeggiator**. While Note input is on, every incoming note belongs to it: MIDI thru is greyed out and nothing passes through. Your MIDI thru setting is kept and comes back when Note input is OFF.
+
 **PATTERN CHANGE**:
 **From incoming CC**: You can use this setting to switch patterns with a CC message, on the MIDI channel and CC number you set. Value 0 picks pattern 01, value 63 picks pattern 64. Great for switching patterns from a hardware controller or from another track in your DAW.
 
@@ -599,7 +629,7 @@ The **settings** pop up opens with the **SETTINGS** button (the gear icon). Clic
 - **1 BEAT** / **1 BAR**: at the next beat or bar of your DAW's time signature (1 BAR is the default setting).
 - **PATTERN END**: when the playing pattern reaches its end.
 
-**RESET DEFAULTS** puts everything in this dialog back to its starting value. The theme and middle C are reset for every Vima; the scale you selected is kept.
+**RESET DEFAULTS** puts everything in this view back to its starting value. The theme and middle C are reset for every Vima; the scale you selected is kept.
 
 Except for the theme and middle C, these settings belong to each Vima in your project and are saved with the project, but not in presets: a preset is about the MIDI output setup, these are about how the instance is set up.
 
